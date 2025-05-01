@@ -1,0 +1,6 @@
+pandas
+matplotlib
+lxml
+scipy
+GDAL
+shapely
