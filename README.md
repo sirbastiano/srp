@@ -14,8 +14,6 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.placeholder.svg)](https://doi.org/10.5281/zenodo.placeholder)
 
 
-# sarpyx
-
 <p align="center">
     <img src="assets/sarpyx_logo.png" alt="sarpyx logo" width="1200"/>
 </p>
