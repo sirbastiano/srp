@@ -8,7 +8,6 @@ Sentinel-1, COSMO-SkyMed, TerraSAR-X, and other mission data.
 def read_sentinel1():
     """Reader for Sentinel-1 data."""
     # Import decode functionality from core
-    from ..core.decode import *
     pass
 
 def read_cosmo_skymed():

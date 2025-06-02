@@ -18,13 +18,11 @@ Legacy:
 
 # Import main submodules
 from . import core
-from . import autofocus  
-from . import algorithms
+# from . import autofocus  
+# from . import algorithms
 from . import data
 from . import utils
 
-# Keep AutoFocusNet for backward compatibility
-from . import AutoFocusNet
 
 __all__ = [
     'core',
@@ -32,7 +30,6 @@ __all__ = [
     'algorithms', 
     'data',
     'utils',
-    'AutoFocusNet',  # For backward compatibility
 ]
 
 __version__ = "0.2.0"

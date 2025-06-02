@@ -10,7 +10,7 @@ __author__ = "ESA Phi-Lab"
 # Import main components to make them available at package level
 from . import sla
 from . import utils
-# from . import processor # Uncomment when processor has content
+from . import processor # Uncomment when processor has content
 # from . import snap      # Uncomment when snap has content
 
 __all__ = [

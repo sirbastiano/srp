@@ -4,7 +4,7 @@ import lxml.etree as ET2
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
-from osgeo import gdal
+import rasterio
 from shapely.geometry import Point
 import numpy as np
 from scipy import io
@@ -16,12 +16,16 @@ from xml.etree.ElementTree import XML, fromstring
 import shutil
 import argparse
 import copy
-from meta import Handler 
 import warnings
-# Stop GDAL printing both warnings and errors to STDERR
-gdal.PushErrorHandler('CPLQuietErrorHandler')
-# Make GDAL raise python exceptions for errors (warnings won't raise an exception)
-gdal.UseExceptions()
+
+
+
+from. meta import Handler 
+
+
+# Stop printing warnings and errors
+import logging
+logging.getLogger('rasterio').setLevel(logging.ERROR)
 warnings.filterwarnings("ignore")
 
 #######################################|  SETUP |###################################################
@@ -74,8 +78,6 @@ def center_frequency(array, freq_c, printout=False):
      return rotated_array
 
 
-
-
 def DeHammWin(Isign,coeff):
      """
      Applies a modified Hamming window to the input signal and adjusts the imaginary part of the result.
@@ -119,16 +121,16 @@ def DeHammWin(Isign,coeff):
      return changeImag(Isign/w)
 
 
-
-
-
-     
-
-
 ############ DISCRIMINATION PIPELINE #################################
 class SubLookAnalysis:
 
      def __init__(self, productPath: str):
+          """
+          Initialize SubLookAnalysis with the given product path.
+          
+          Args:
+               productPath (str): Path to the product file.
+          """
           # MODE is the modality of the analysis: CSK, SEN, or SAO
           ##### PARAMETER SELECTION #####
           self.choice=1  # Range == 0 | Azimuth == 1
@@ -141,11 +143,9 @@ class SubLookAnalysis:
           # self.choiceDeWe=0 # Ancillary Data': 0 | Perform de-weighting using therorical weigthing function
           self.choiceDeWe=0 # Average Spectrum': 1 | Compute average spectrum 
           # TODO: modify the function to go to the tif file and open it
-          sub_image = gdal.Open(subsetPath)
-          sub_i = sub_image.GetRasterBand(1)
-          sub_q = sub_image.GetRasterBand(2)
-          sub_i = sub_i.ReadAsArray()
-          sub_q = sub_q.ReadAsArray()
+          with rasterio.open(subsetPath) as src:
+               sub_i = src.read(1)
+               sub_q = src.read(2)
           Box = sub_i + 1j * sub_q
           ##### METADATA #####
           self.Box = Box
@@ -480,8 +480,8 @@ class SubLookAnalysis:
                plt.show()
                
                print(f"SubLook Generation successfully ended.")
-          
 
 
-       
-          
+
+
+

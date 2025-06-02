@@ -1,8 +1,0 @@
-pandas
-matplotlib
-lxml
-scipy
-GDAL
-shapely
-torch>=1.9.0
-numpy

@@ -15,6 +15,7 @@ dependencies = [
     "matplotlib",
     "lxml", 
     "scipy",
+    "s1isp @ git+https://github.com/avalentino/s1isp.git",
     "geopandas",
     "shapely",
     "numpy",
@@ -24,7 +25,9 @@ dependencies = [
     "jupyter",
     "torch>=1.9.0",
     "pandas",
-    "gdal"
+    "phidown>=0.1.12",
+    "rasterio>=1.4.3",
+    "zarr>=3.0.8",
 ]
 
 [tool.setuptools]

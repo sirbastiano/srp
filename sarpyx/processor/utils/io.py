@@ -6,7 +6,6 @@ from matplotlib import colors
 import torch
 import pickle
 import rasterio
-import xarray as xr
 
 try:
     import zarr 
@@ -80,12 +79,11 @@ def read_tif(tif_path, verbose=False):
 
 def read_zarr_database():
     file_path = "/home/roberto/PythonProjects/SSFocus/Data/FOCUSED/Mini_R2F.zarr"
-    # To read the root array or group
-    root = read_zarr_file(file_path)
     # To read a specific array or group
     raw = read_zarr_file(file_path, "raw")
     gt = read_zarr_file(file_path, "gt")
     return raw, gt    
+
 
 def read_zarr_file(file_path, array_or_group_key=None):
     """

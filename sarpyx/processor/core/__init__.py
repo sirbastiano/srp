@@ -9,7 +9,7 @@ from .focus import *
 from .decode import *
 from .transforms import *
 from .rda_simple import *
-from . import constants
+from .constants import *
 
 __all__ = [
     # Focus-related exports will be defined in focus.py
