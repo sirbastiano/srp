@@ -3,7 +3,7 @@ import logging
 import os
 import pickle
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union, Optional
 
 import numpy as np
 import pandas as pd
@@ -243,6 +243,190 @@ def decode_radar_file(input_file: Union[str, Path]) -> Tuple[List[Dict[str, Any]
     except Exception as e:
         logger.error(f'Decoding failed for {input_file}: {e}')
         raise RuntimeError(f'File decoding failed: {e}') from e
+
+
+class S1L0Decoder:
+    """Minimal API for decoding Sentinel-1 Level 0 data files."""
+    
+    def __init__(self, log_level: int = logging.INFO):
+        """Initialize the decoder with logging configuration.
+        
+        Args:
+            log_level: Logging level (default: INFO)
+        """
+        logging.basicConfig(level=log_level)
+        self.logger = logging.getLogger(__name__)
+    
+    def decode_file(
+        self, 
+        input_file: Path | str, 
+        output_dir: Optional[Path | str] = None,
+        headers_only: bool = False
+    ) -> Dict[str, Any]:
+        """Decode a Sentinel-1 Level 0 .dat file.
+        
+        Args:
+            input_file: Path to the input .dat file
+            output_dir: Directory to save processed data (optional)
+            headers_only: If True, extract only headers for quick preview
+            
+        Returns:
+            Dictionary containing decoded data with keys:
+            - 'burst_data': List of burst dictionaries (if headers_only=False)
+            - 'headers': DataFrame with header information (if headers_only=True)
+            - 'file_info': Basic file information
+            
+        Raises:
+            FileNotFoundError: If input file doesn't exist
+            ValueError: If decoding fails
+        """
+        input_path = Path(input_file)
+        
+        if not input_path.exists():
+            raise FileNotFoundError(f'Input file not found: {input_path}')
+        
+        self.logger.info(f'Processing file: {input_path}')
+        self.logger.info(f'File size: {input_path.stat().st_size / (1024**2):.1f} MB')
+        
+        result = {
+            'file_info': {
+                'path': str(input_path),
+                'size_mb': input_path.stat().st_size / (1024**2),
+                'filename': input_path.name
+            }
+        }
+        
+        try:
+            if headers_only:
+                # Extract headers only for quick preview
+                self.logger.info('Extracting headers only...')
+                headers_df = extract_headers(input_path, mode='s1isp')
+                
+                result['headers'] = headers_df
+                result['num_records'] = len(headers_df)
+                
+                self.logger.info(f'Extracted {len(headers_df)} header records')
+                
+            else:
+                # Full decoding
+                self.logger.info('Starting full decode process...')
+                burst_data, burst_indexes = decode_radar_file(input_path)
+                
+                result['burst_data'] = burst_data
+                result['burst_indexes'] = burst_indexes
+                result['num_bursts'] = len(burst_data)
+                
+                # Add burst summaries
+                burst_summaries = []
+                for i, burst in enumerate(burst_data):
+                    summary = {
+                        'burst_id': i,
+                        'echo_shape': burst['echo'].shape,
+                        'metadata_records': len(burst['metadata']),
+                        'ephemeris_records': len(burst['ephemeris'])
+                    }
+                    burst_summaries.append(summary)
+                
+                result['burst_summaries'] = burst_summaries
+                
+                self.logger.info(f'Successfully decoded {len(burst_data)} bursts')
+            
+            # Save data if output directory is specified
+            if output_dir is not None:
+                save_path = self._save_data(result, input_path, Path(output_dir))
+                result['saved_to'] = str(save_path)
+            
+            return result
+            
+        except Exception as e:
+            self.logger.error(f'Decoding failed: {e}')
+            raise ValueError(f'Failed to decode file: {e}') from e
+    
+    def _save_data(
+        self, 
+        decoded_data: Dict[str, Any], 
+        input_path: Path, 
+        output_dir: Path
+    ) -> Path:
+        """Save decoded data to pickle files.
+        
+        Args:
+            decoded_data: Dictionary containing decoded data
+            input_path: Original input file path
+            output_dir: Directory to save files
+            
+        Returns:
+            Path to the output directory
+        """
+        output_dir.mkdir(exist_ok=True, parents=True)
+        file_stem = input_path.stem
+        
+        self.logger.info(f'Saving processed data to: {output_dir}')
+        
+        if 'headers' in decoded_data:
+            # Save headers only
+            headers_path = output_dir / f'{file_stem}_headers.pkl'
+            decoded_data['headers'].to_pickle(headers_path)
+            self.logger.info(f'Saved headers: {headers_path}')
+            
+        elif 'burst_data' in decoded_data:
+            # Save full burst data
+            burst_data = decoded_data['burst_data']
+            
+            # Save ephemeris (once for all bursts)
+            if burst_data and not burst_data[0]['ephemeris'].empty:
+                ephemeris_path = output_dir / f'{file_stem}_ephemeris.pkl'
+                burst_data[0]['ephemeris'].to_pickle(ephemeris_path)
+                self.logger.info(f'Saved ephemeris: {ephemeris_path}')
+            
+            # Save each burst
+            for i, burst in enumerate(burst_data):
+                # Save metadata
+                metadata_path = output_dir / f'{file_stem}_burst_{i}_metadata.pkl'
+                burst['metadata'].to_pickle(metadata_path)
+                
+                # Save radar echo data
+                echo_path = output_dir / f'{file_stem}_burst_{i}_echo.pkl'
+                save_pickle_file(echo_path, burst['echo'])
+                
+                self.logger.info(f'Saved burst {i}: metadata and echo data')
+        
+        # Save summary info
+        info_path = output_dir / f'{file_stem}_info.pkl'
+        summary_info = {k: v for k, v in decoded_data.items() 
+                       if k not in ['burst_data', 'headers']}
+        save_pickle_file(info_path, summary_info)
+        
+        total_files = len(list(output_dir.glob(f'{file_stem}*.pkl')))
+        self.logger.info(f'Created {total_files} output files')
+        
+        return output_dir
+
+
+
+
+# Example usage
+if __name__ == '__main__':
+    # Example 1: Quick header preview
+    input_file = 'path/to/your/data.dat'
+    
+    try:
+        # Preview headers only
+        headers = quick_preview(input_file)
+        print(f'File contains {len(headers)} header records')
+        
+        # Full decode and save
+        result = decode_and_save(
+            input_file=input_file,
+            output_dir='./processed_data',
+            headers_only=False
+        )
+        
+        print(f'Processed {result["num_bursts"]} bursts')
+        print(f'Data saved to: {result["saved_to"]}')
+        
+    except (FileNotFoundError, ValueError) as e:
+        print(f'Error: {e}')
 
 
 
