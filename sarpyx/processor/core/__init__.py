@@ -8,7 +8,6 @@ for SAR data manipulation including focusing, decoding, and transformations.
 from .focus import *
 from .decode import *
 from .transforms import *
-from .rda_simple import *
 from .constants import *
 
 __all__ = [
