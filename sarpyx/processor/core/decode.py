@@ -245,6 +245,9 @@ def decode_radar_file(input_file: Union[str, Path]) -> Tuple[List[Dict[str, Any]
         raise RuntimeError(f'File decoding failed: {e}') from e
 
 
+
+
+# ------------- Main Function -------------
 def main() -> None:
     """Main entry point for the radar file decoder.
     

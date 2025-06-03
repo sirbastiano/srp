@@ -1,20 +1,80 @@
-import numpy as np
+"""
+SAR (Synthetic Aperture Radar) data processing module implementing the Coarse Range Doppler Algorithm.
+This module provides functionality for processing raw SAR data, specifically designed for Sentinel-1 data,
+using the Range Doppler Algorithm (RDA). The implementation supports multiple backends (NumPy, PyTorch, 
+and custom) for computational flexibility and performance optimization.
+Main Components:
+    - CoarseRDA: Primary class for SAR data focusing using Range Doppler Algorithm
+    - Utility functions for parameter initialization and data manipulation
+    - Decorators for performance monitoring and memory management
+    - Support for range and azimuth compression, range cell migration correction
+Key Features:
+    - Multi-backend support (NumPy, PyTorch, custom)
+    - Memory-efficient processing with automatic garbage collection
+    - Performance timing and memory usage monitoring
+    - Comprehensive error handling and input validation
+    - Command-line interface for batch processing
+Typical Usage:
+    # Load raw SAR data
+    with open('raw_data.pkl', 'rb') as f:
+        raw_data = pickle.load(f)
+    # Initialize processor
+    processor = CoarseRDA(raw_data, verbose=True, backend='numpy')
+    # Perform SAR focusing
+    # Save processed data
+    processor.save_file('focused_data.pkl')
+Command Line Usage:
+    python focus.py --input raw_data.pkl --output focused_data.pkl --backend numpy --verbose
+Dependencies:
+    - numpy: Core numerical computations
+    - scipy: Interpolation functions
+    - pandas: Data frame operations
+    - torch (optional): GPU acceleration
+    - psutil: Memory monitoring
+Notes:
+    - Designed specifically for Sentinel-1 SAR data format
+    - Requires proper ephemeris data for accurate processing
+    - Memory usage scales with input data size
+    - PyTorch backend provides GPU acceleration when available
+Author: SAR Processing Team
+Version: 1.0
+"""
 import argparse
+from typing import Dict, Any, Optional, Union, Tuple, Callable
 try:
     import torch
-except:
+except ImportError:
     print('Unable to import torch module')
+    torch = None
 import pickle
-# import sentinel1decoder
 import pandas as pd
+import numpy as np
 from scipy.interpolate import interp1d
 import math
 from pathlib import Path 
 import copy 
 import gc
 from functools import wraps
+import psutil
+import time
+from os import environ
 
-def auto_gc(func):
+from .transforms import perform_fft_custom 
+from . import constants as cnst
+from ..utils.io import dump
+
+environ['OMP_NUM_THREADS'] = '8'
+
+
+def auto_gc(func: Callable) -> Callable:
+    """Decorator to automatically run garbage collection after function execution.
+    
+    Args:
+        func: The function to wrap.
+        
+    Returns:
+        The wrapped function with automatic garbage collection.
+    """
     @wraps(func)
     def wrapper(*args, **kwargs):
         result = func(*args, **kwargs)
@@ -22,121 +82,188 @@ def auto_gc(func):
         return result
     return wrapper
 
-# check ram usage:
-import psutil
-import time
 
-from .transforms import perform_fft_custom 
-from . import constants as cnst
-
-from os import environ
-environ['OMP_NUM_THREADS'] = '8'
-
-from ..utils.io import dump
-
-def timing_decorator(func):
-    """
-    A decorator to measure the execution time of a function and print the elapsed time.
+def timing_decorator(func: Callable) -> Callable:
+    """Decorator to measure and print function execution time.
     
-    Parameters:
-        func (callable): The function to measure.
+    Args:
+        func: The function to measure.
         
     Returns:
-        callable: The wrapped function with timing measurement.
+        The wrapped function with timing measurement.
     """
+    @wraps(func)
     def wrapper(*args, **kwargs):
         start_time = time.time()
         result = func(*args, **kwargs)
         elapsed_time = time.time() - start_time
-        print(f"Elapsed time for {func.__name__}: {elapsed_time:.4f} seconds")
+        print(f'Elapsed time for {func.__name__}: {elapsed_time:.4f} seconds')
         return result
     return wrapper
 
-def printmemory():
+
+def print_memory() -> None:
+    """Print current RAM memory usage percentage."""
     print(f'RAM memory usage: {psutil.virtual_memory().percent}%')
-    return
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def initialize_params(
+    device: Optional[torch.device] = None,
+    slant_range_vec: Optional[np.ndarray] = None,
+    D: Optional[np.ndarray] = None,
+    c: Optional[float] = None,
+    len_range_line: Optional[int] = None,
+    range_sample_freq: Optional[float] = None,
+    wavelength: Optional[float] = None
+) -> Dict[str, Any]:
+    """Initialize processing parameters dictionary.
+    
+    Args:
+        device: PyTorch device for computation.
+        slant_range_vec: Slant range vector.
+        D: Cosine of instantaneous squint angle.
+        c: Speed of light.
+        len_range_line: Length of range line.
+        range_sample_freq: Range sampling frequency.
+        wavelength: Radar wavelength.
+        
+    Returns:
+        Dictionary containing all parameters.
+    """
+    return {key: value for key, value in locals().items()}
 
-def initialize_params(device=None, slant_range_vec=None, D=None, c=None, len_range_line=None, range_sample_freq=None, wavelength=None):
-    params = {key: value for key, value in locals().items()}
-    return params
 
 def range_dec_to_sample_rate(rgdec_code: int) -> float:
-    """
-    Convert range decimation code to sample rate.
+    """Convert range decimation code to sample rate.
 
     Args:
-        rgdec_code: Range decimation code
+        rgdec_code: Range decimation code (0-11).
 
     Returns:
         Sample rate for this range decimation code.
-
+        
+    Raises:
+        ValueError: If invalid range decimation code is provided.
     """
-    if rgdec_code == 0:
-        return 3 * cnst.F_REF
-    elif rgdec_code == 1:
-        return (8/3) * cnst.F_REF
-    elif rgdec_code == 3:
-        return (20/9) * cnst.F_REF
-    elif rgdec_code == 4:
-        return (16/9) * cnst.F_REF
-    elif rgdec_code == 5:
-        return (3/2) * cnst.F_REF
-    elif rgdec_code == 6:
-        return (4/3) * cnst.F_REF
-    elif rgdec_code == 7:
-        return (2/3) * cnst.F_REF
-    elif rgdec_code == 8:
-        return (12/7) * cnst.F_REF
-    elif rgdec_code == 9:
-        return (5/4) * cnst.F_REF
-    elif rgdec_code == 10:
-        return (6/13) * cnst.F_REF
-    elif rgdec_code == 11:
-        return (16/11) * cnst.F_REF
-    else:
-        raise Exception(f"Invalid range decimation code {rgdec_code} supplied - valid codes are 0-11")
+    assert isinstance(rgdec_code, int), f'Range decimation code must be integer, got {type(rgdec_code)}'
+    
+    decimation_map = {
+        0: 3 * cnst.F_REF,
+        1: (8/3) * cnst.F_REF,
+        3: (20/9) * cnst.F_REF,
+        4: (16/9) * cnst.F_REF,
+        5: (3/2) * cnst.F_REF,
+        6: (4/3) * cnst.F_REF,
+        7: (2/3) * cnst.F_REF,
+        8: (12/7) * cnst.F_REF,
+        9: (5/4) * cnst.F_REF,
+        10: (6/13) * cnst.F_REF,
+        11: (16/11) * cnst.F_REF,
+    }
+    
+    if rgdec_code not in decimation_map:
+        raise ValueError(f'Invalid range decimation code {rgdec_code} - valid codes are {list(decimation_map.keys())}')
+    
+    return decimation_map[rgdec_code]
 
 
-class coarseRDA:
+def multiply(
+    a: Union[np.ndarray, torch.Tensor], 
+    b: Union[np.ndarray, torch.Tensor]
+) -> Union[np.ndarray, torch.Tensor]:
+    """Multiply two arrays element-wise.
+    
+    Args:
+        a: First array.
+        b: Second array.
+        
+    Returns:
+        Element-wise multiplication result.
+        
+    Raises:
+        ValueError: If arrays have incompatible shapes.
+    """
+    if hasattr(a, 'shape') and hasattr(b, 'shape'):
+        if a.shape != b.shape and b.size != 1 and a.size != 1:
+            # Allow broadcasting for compatible shapes
+            try:
+                return a * b
+            except (ValueError, RuntimeError) as e:
+                raise ValueError(f'Arrays have incompatible shapes: {a.shape} and {b.shape}') from e
+    
+    return a * b
 
-    def __init__(self, raw_data=None, verbose=False, backend='numpy'):
-        ######### Settings Private Variables
+
+class CoarseRDA:
+    """Coarse Range Doppler Algorithm processor for SAR data.
+    
+    This class implements a coarse Range Doppler Algorithm for processing
+    synthetic aperture radar (SAR) data, specifically designed for Sentinel-1 data.
+    """
+
+    def __init__(
+        self, 
+        raw_data: Dict[str, Any], 
+        verbose: bool = False, 
+        backend: str = 'numpy'
+    ) -> None:
+        """Initialize the CoarseRDA processor.
+        
+        Args:
+            raw_data: Dictionary containing 'echo', 'ephemeris', and 'metadata'.
+            verbose: Whether to print verbose output.
+            backend: Backend to use ('numpy', 'torch', or 'custom').
+            
+        Raises:
+            ValueError: If invalid backend is specified.
+            AssertionError: If required data is missing.
+        """
+        # Validate inputs
+        assert isinstance(raw_data, dict), 'raw_data must be a dictionary'
+        assert 'echo' in raw_data, 'raw_data must contain "echo" key'
+        assert 'ephemeris' in raw_data, 'raw_data must contain "ephemeris" key'
+        assert 'metadata' in raw_data, 'raw_data must contain "metadata" key'
+        
+        valid_backends = {'numpy', 'torch', 'custom'}
+        if backend not in valid_backends:
+            raise ValueError(f'Backend must be one of {valid_backends}, got {backend}')
+        
+        # Initialize settings
         self._backend = backend
         self._verbose = verbose
-        ######### Extraction of data
+        
+        # Extract data
         self.radar_data = raw_data['echo']
-        self.ephemeris = raw_data['ephemeris']
+        self.ephemeris = raw_data['ephemeris'].copy()
         self.ephemeris['time_stamp'] /= 2**24
         self.metadata = raw_data['metadata']
-        ######### Preliminary estimations
-        self.len_range_line = self.radar_data.shape[1]
-        self.len_az_line = self.radar_data.shape[0]
+        
+        # Initialize dimensions
+        self.len_az_line, self.len_range_line = self.radar_data.shape
+        
+        # Set up device for torch backend
         if self._backend == 'torch':
-            self.device = self.radar_data.device
-            print('Selected device:', self.device)
+            if torch is None:
+                raise ImportError('PyTorch is required for torch backend but not available')
+            self.device = getattr(self.radar_data, 'device', torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+            if self._verbose:
+                print(f'Selected device: {self.device}')
         
-        ######### Prompting Replica:    
+        # Initialize transmission replica
         self._prompt_tx_replica()
-        
 
     @timing_decorator
     @auto_gc
-    def fft2D(self, w_pad=None, executors=12):
-        # TODO: Test this function
-        """
-        Perform 2D FFT on a radar data array in range and azimuth dimensions.
+    def fft2d(self, w_pad: Optional[int] = None, executors: int = 12) -> None:
+        """Perform 2D FFT on radar data in range and azimuth dimensions.
 
         Args:
-            raw_data (dict): Dict containing: 'echo':2D numpy array of radar data; 'metadata'; 'ephemeris';
-            backend (str, optional): Backend to use for FFT. Defaults to 'numpy'.
-
-        Returns:
-            np.array: 2D numpy array of radar data after 2D FFT.
+            w_pad: Width padding for range FFT.
+            executors: Number of executors for custom backend.
+            
+        Raises:
+            ValueError: If backend is not supported.
         """
-        
         if self._backend == 'numpy':
             self.radar_data = np.ascontiguousarray(self.radar_data)
             # FFT each range line
@@ -148,284 +275,278 @@ class coarseRDA:
             self.radar_data = perform_fft_custom(self.radar_data, num_slices=executors)
             
         elif self._backend == 'torch':
-            def fft2D_in_chunks(radar_data, chunk_size):
-                radar_data = torch.tensor(radar_data, dtype=torch.complex64, device='cuda')
-                num_chunks = (radar_data.shape[0] + chunk_size - 1) // chunk_size
-                result = []
-                
-                for i in range(num_chunks):
-                    chunk = radar_data[i * chunk_size:(i + 1) * chunk_size, :]
-                    chunk_fft = torch.fft.fft(chunk, dim=1)
-                    chunk_fft = torch.fft.fftshift(torch.fft.fft(chunk_fft, dim=0), dim=0)
-                    result.append(chunk_fft)
-                
-                return torch.cat(result, dim=0)
-        
-            # Convert radar_data to a PyTorch tensor and move to device
-            # self.radar_data = torch.tensor(self.radar_data, dtype=torch.complex64, device=self.device)
             # FFT each range line
             if w_pad is not None:
-                self.radar_data = torch.fft.fft(self.radar_data, dim=1, n=self.radar_data.shape[1]+w_pad)
+                self.radar_data = torch.fft.fft(
+                    self.radar_data, 
+                    dim=1, 
+                    n=self.radar_data.shape[1] + w_pad
+                )
             else:
                 self.radar_data = torch.fft.fft(self.radar_data, dim=1)
                 
             # FFT each azimuth line
-            self.radar_data = torch.fft.fftshift(torch.fft.fft(self.radar_data, dim=0), dim=0)
-            
+            self.radar_data = torch.fft.fftshift(
+                torch.fft.fft(self.radar_data, dim=0), 
+                dim=0
+            )
         else:
-            raise ValueError('Backend not supported.')
+            raise ValueError(f'Backend {self._backend} not supported')
         
         if self._verbose:
             print('- FFT performed successfully!')
 
-
     @timing_decorator
     @auto_gc
-    def _prompt_tx_replica(self):
-        RGDEC = self.metadata["Range Decimation"].unique()[0]
-        self.range_sample_freq = range_dec_to_sample_rate(RGDEC)
+    def _prompt_tx_replica(self) -> None:
+        """Generate transmission replica based on metadata parameters."""
+        rgdec = self.metadata['Range Decimation'].unique()[0]
+        self.range_sample_freq = range_dec_to_sample_rate(rgdec)
 
-        # Nominal Replica Parameters
-        TXPSF = self.metadata["Tx Pulse Start Frequency"].unique()[0]
-        TXPRR = self.metadata["Tx Ramp Rate"].unique()[0]
-        TXPL = self.metadata["Tx Pulse Length"].unique()[0]
-        num_tx_vals = int(TXPL*self.range_sample_freq)
-        tx_replica_time_vals = np.linspace(-TXPL/2, TXPL/2, num=num_tx_vals)
-        phi1 = TXPSF + TXPRR*TXPL/2
-        phi2 = TXPRR/2
-        self.num_tx_vals = num_tx_vals
-        self.tx_replica = np.exp(2j * np.pi * (phi1*tx_replica_time_vals + phi2*tx_replica_time_vals**2))
+        # Extract nominal replica parameters
+        txpsf = self.metadata['Tx Pulse Start Frequency'].unique()[0]
+        txprr = self.metadata['Tx Ramp Rate'].unique()[0]
+        txpl = self.metadata['Tx Pulse Length'].unique()[0]
+        
+        # Generate replica
+        self.num_tx_vals = int(txpl * self.range_sample_freq)
+        tx_replica_time_vals = np.linspace(-txpl/2, txpl/2, num=self.num_tx_vals)
+        phi1 = txpsf + txprr * txpl / 2
+        phi2 = txprr / 2
+        
+        self.tx_replica = np.exp(
+            2j * np.pi * (phi1 * tx_replica_time_vals + phi2 * tx_replica_time_vals**2)
+        )
         self.replica_len = len(self.tx_replica)
 
-
     @timing_decorator
     @auto_gc
-    def get_range_filter(self, pad_W = 0) -> np.ndarray:
-        """
-        Computes a range filter for radar data, specifically tailored to Sentinel-1 radar parameters.
-
-        Notes:
-            1. This function assumes that the Sentinel-1 specific constants are available through the 'sentinel1decoder.constants' module.
-            2. The function makes use of the scipy `interp1d` function to interpolate spacecraft velocities.
-            3. It assumes that the metadata DataFrame has specific columns like 'Range Decimation', 'PRI', 'Rank', and 'SWST'.
-
-        """        
-        tx_replica = self.tx_replica
-        
-        # Create range filter from replica pulse
-        range_filter = np.zeros(self.len_range_line + pad_W, dtype=complex)
-        index_start = np.ceil((self.len_range_line-self.num_tx_vals)/2)-1
-        index_end = self.num_tx_vals+np.ceil((self.len_range_line-self.num_tx_vals)/2)-2
-        range_filter[int(index_start):int(index_end+1)] = tx_replica
-        
-        # zero-pad the replica:
-        range_filter = np.conjugate(np.fft.fft(range_filter))
-        return range_filter
-
-
-    @timing_decorator
-    @auto_gc
-    def _compute_effective_velocities(self):
-        # Tx pulse parameters
-        self.c = cnst.SPEED_OF_LIGHT_MPS
-        self.PRI = self.metadata["PRI"].unique()[0]
-        rank = self.metadata["Rank"].unique()[0]
-        suppressed_data_time = 320/(8*cnst.F_REF)
-        range_start_time = self.metadata["SWST"].unique()[0] + suppressed_data_time
-        
-
-        # Sample rates along azimuth and range
-        range_sample_period = 1/self.range_sample_freq
-        self.az_sample_freq = 1 / self.PRI
-        az_sample_period = self.PRI
-
-        # Fast time vector - defines the time axis along the fast time direction
-        sample_num_along_range_line = np.arange(0, self.len_range_line, 1)
-        fast_time_vec = range_start_time + (range_sample_period * sample_num_along_range_line)
-
-        # Slant range vector - defines R0, the range of closest approach, for each range cell
-        self.slant_range_vec =((rank * self.PRI) + fast_time_vec) * self.c/2
-        
-        # Spacecraft velocity - numerical calculation of the effective spacecraft velocity
-        ecef_vels = self.ephemeris.apply(lambda x: math.sqrt(x["vx"]**2 + x["vy"]**2 +x["vz"]**2), axis=1)
-        velocity_interp = interp1d(self.ephemeris["time_stamp"].unique(), ecef_vels.unique(), fill_value="extrapolate")
-        x_interp = interp1d(self.ephemeris["time_stamp"].unique(), self.ephemeris["x"].unique(), fill_value="extrapolate")
-        y_interp = interp1d(self.ephemeris["time_stamp"].unique(), self.ephemeris["y"].unique(), fill_value="extrapolate")
-        z_interp = interp1d(self.ephemeris["time_stamp"].unique(), self.ephemeris["z"].unique(), fill_value="extrapolate")
-        space_velocities = self.metadata.apply(lambda x: velocity_interp(x["Coarse Time"] + x["Fine Time"]), axis=1).to_numpy().astype(float)
-
-        x_positions = self.metadata.apply(lambda x: x_interp(x["Coarse Time"] + x["Fine Time"]), axis=1).to_numpy().astype(float)
-        y_positions = self.metadata.apply(lambda x: y_interp(x["Coarse Time"] + x["Fine Time"]), axis=1).to_numpy().astype(float)
-        z_positions = self.metadata.apply(lambda x: z_interp(x["Coarse Time"] + x["Fine Time"]), axis=1).to_numpy().astype(float)
-
-        position_array = np.transpose(np.vstack((x_positions, y_positions, z_positions)))
-
-        a = cnst.WGS84_SEMI_MAJOR_AXIS_M
-        b = cnst.WGS84_SEMI_MINOR_AXIS_M
-        H = np.linalg.norm(position_array, axis=1)
-        W = np.divide(space_velocities, H)
-        lat = np.arctan(np.divide(position_array[:, 2], position_array[:, 0]))
-        local_earth_rad = np.sqrt(
-            np.divide(
-                (np.square(a**2 * np.cos(lat)) + np.square(b**2 * np.sin(lat))),
-                (np.square(a * np.cos(lat)) + np.square(b * np.sin(lat)))
-            )
-        )
-        cos_beta = (np.divide(np.square(local_earth_rad) + np.square(H) - np.square(self.slant_range_vec[:, np.newaxis]) , 2 * local_earth_rad * H))
-        ground_velocities = local_earth_rad * W * cos_beta
-
-        self.effective_velocities = np.sqrt(space_velocities * ground_velocities)
-
-
-    @timing_decorator
-    @auto_gc
-    def get_RCMC(self):
-        """
-        Calculate and return the RCMC filter for a given radar dataset.
+    def get_range_filter(self, pad_w: int = 0) -> np.ndarray:
+        """Compute range filter for radar data compression.
 
         Args:
-            metadata (pd.DataFrame): Pandas DataFrame containing metadata for the radar dataset.
+            pad_w: Width padding for the filter.
+            
+        Returns:
+            Range filter array.
+        """
+        # Create range filter from replica pulse
+        range_filter = np.zeros(self.len_range_line + pad_w, dtype=complex)
+        index_start = int(np.ceil((self.len_range_line - self.num_tx_vals) / 2) - 1)
+        index_end = self.num_tx_vals + index_start
+        
+        range_filter[index_start:index_start + self.num_tx_vals] = self.tx_replica
+        
+        # Apply FFT and conjugate
+        return np.conjugate(np.fft.fft(range_filter))
+
+    @timing_decorator
+    @auto_gc
+    def _compute_effective_velocities(self) -> None:
+        """Calculate effective spacecraft velocities for processing."""
+        # Initialize constants
+        self.c = cnst.SPEED_OF_LIGHT_MPS
+        self.pri = self.metadata['PRI'].unique()[0]
+        rank = self.metadata['Rank'].unique()[0]
+        suppressed_data_time = 320 / (8 * cnst.F_REF)
+        range_start_time = self.metadata['SWST'].unique()[0] + suppressed_data_time
+        
+        # Sample rates
+        range_sample_period = 1 / self.range_sample_freq
+        self.az_sample_freq = 1 / self.pri
+        
+        # Fast time and slant range vectors
+        sample_num_along_range_line = np.arange(0, self.len_range_line, 1)
+        fast_time_vec = range_start_time + (range_sample_period * sample_num_along_range_line)
+        self.slant_range_vec = ((rank * self.pri) + fast_time_vec) * self.c / 2
+        
+        # Spacecraft velocity calculations
+        ecef_vels = self.ephemeris.apply(
+            lambda x: math.sqrt(x['vx']**2 + x['vy']**2 + x['vz']**2), 
+            axis=1
+        )
+        
+        # Create interpolation functions
+        time_stamps = self.ephemeris['time_stamp'].unique()
+        velocity_interp = interp1d(time_stamps, ecef_vels.unique(), fill_value='extrapolate')
+        x_interp = interp1d(time_stamps, self.ephemeris['x'].unique(), fill_value='extrapolate')
+        y_interp = interp1d(time_stamps, self.ephemeris['y'].unique(), fill_value='extrapolate')
+        z_interp = interp1d(time_stamps, self.ephemeris['z'].unique(), fill_value='extrapolate')
+        
+        # Calculate positions and velocities
+        time_data = self.metadata['Coarse Time'] + self.metadata['Fine Time']
+        space_velocities = self.metadata.apply(
+            lambda x: velocity_interp(x['Coarse Time'] + x['Fine Time']), 
+            axis=1
+        ).to_numpy().astype(float)
+        
+        positions = np.column_stack([
+            self.metadata.apply(lambda x: x_interp(x['Coarse Time'] + x['Fine Time']), axis=1),
+            self.metadata.apply(lambda x: y_interp(x['Coarse Time'] + x['Fine Time']), axis=1),
+            self.metadata.apply(lambda x: z_interp(x['Coarse Time'] + x['Fine Time']), axis=1)
+        ])
+        
+        # Earth model calculations
+        a = cnst.WGS84_SEMI_MAJOR_AXIS_M
+        b = cnst.WGS84_SEMI_MINOR_AXIS_M
+        H = np.linalg.norm(positions, axis=1)
+        W = space_velocities / H
+        lat = np.arctan(positions[:, 2] / positions[:, 0])
+        
+        local_earth_rad = np.sqrt(
+            (a**4 * np.cos(lat)**2 + b**4 * np.sin(lat)**2) /
+            (a**2 * np.cos(lat)**2 + b**2 * np.sin(lat)**2)
+        )
+        
+        cos_beta = (
+            local_earth_rad**2 + H**2 - self.slant_range_vec[:, np.newaxis]**2
+        ) / (2 * local_earth_rad * H)
+        
+        ground_velocities = local_earth_rad * W * cos_beta
+        self.effective_velocities = np.sqrt(space_velocities * ground_velocities)
+
+    @timing_decorator
+    @auto_gc
+    def get_rcmc(self) -> np.ndarray:
+        """Calculate Range Cell Migration Correction filter.
 
         Returns:
-            np.array: 1D numpy array representing the RCMC filter.
+            RCMC filter array.
         """
         self._compute_effective_velocities()
         
         self.wavelength = cnst.TX_WAVELENGTH_M
-        self.az_freq_vals = np.arange(-self.az_sample_freq/2, self.az_sample_freq/2, 1/(self.PRI*self.len_az_line))
+        self.az_freq_vals = np.arange(
+            -self.az_sample_freq/2, 
+            self.az_sample_freq/2, 
+            1/(self.pri * self.len_az_line)
+        )
         
-        # Cosine of the instantanoeus squint angle
+        # Cosine of instantaneous squint angle
         self.D = np.sqrt(
-            1 - np.divide(
-                self.wavelength**2 * np.square(self.az_freq_vals),
-                4 * np.square(self.effective_velocities)
-            )
+            1 - (self.wavelength**2 * self.az_freq_vals**2) / 
+                (4 * self.effective_velocities**2)
         ).T
         
         # Create RCMC filter
-        range_freq_vals = np.linspace(-self.range_sample_freq/2, self.range_sample_freq/2, num=self.len_range_line)
-        rcmc_shift = self.slant_range_vec[0] * (np.divide(1, self.D) - 1)
-        rcmc_filter = np.exp(4j * np.pi * range_freq_vals * rcmc_shift / self.c)
-        return rcmc_filter
-    
+        range_freq_vals = np.linspace(
+            -self.range_sample_freq/2, 
+            self.range_sample_freq/2, 
+            num=self.len_range_line
+        )
+        rcmc_shift = self.slant_range_vec[0] * (1/self.D - 1)
+        
+        return np.exp(4j * np.pi * range_freq_vals * rcmc_shift / self.c)
     
     @timing_decorator
     @auto_gc
-    def ifft_rg(self):
+    def ifft_range(self) -> None:
+        """Perform inverse FFT along range dimension."""
         if self._backend == 'numpy':
             self.radar_data = np.fft.ifftshift(np.fft.ifft(self.radar_data, axis=1), axes=1)
         elif self._backend == 'torch':
-                self.radar_data = torch.fft.ifft(self.radar_data, dim=1)
-                self.radar_data = torch.fft.ifftshift(self.radar_data, dim=1)
+            self.radar_data = torch.fft.ifft(self.radar_data, dim=1)
+            self.radar_data = torch.fft.ifftshift(self.radar_data, dim=1)
         else:
-            raise ValueError("Unsupported backend. Choose 'numpy' or 'torch'.")
-    
+            raise ValueError(f'Unsupported backend: {self._backend}')
     
     @timing_decorator
     @auto_gc
-    def ifft_az(self):
+    def ifft_azimuth(self) -> None:
+        """Perform inverse FFT along azimuth dimension."""
         if self._backend == 'numpy':
             self.radar_data = np.fft.ifft(self.radar_data, axis=0)
         elif self._backend == 'torch':
-                self.radar_data = torch.fft.ifft(self.radar_data, dim=0)
+            self.radar_data = torch.fft.ifft(self.radar_data, dim=0)
         else:
-            raise ValueError("Unsupported backend. Choose 'numpy' or 'torch'.")
-    
+            raise ValueError(f'Unsupported backend: {self._backend}')
     
     @timing_decorator
     @auto_gc 
-    def get_azimuth_filter(self):
-        az_filter = np.exp(4j * np.pi * self.slant_range_vec * self.D / self.wavelength)
-        return az_filter
-    
+    def get_azimuth_filter(self) -> np.ndarray:
+        """Calculate azimuth compression filter.
+        
+        Returns:
+            Azimuth filter array.
+        """
+        return np.exp(4j * np.pi * self.slant_range_vec * self.D / self.wavelength)
     
     @timing_decorator
     @auto_gc
-    def data_focus(self):
-        """
-        Performs the focusing of the raw data.
-        """
-        # Init
-        W_PAD = self.replica_len
-        H, original_W = self.radar_data.shape
+    def data_focus(self) -> None:
+        """Perform complete SAR data focusing using Range Doppler Algorithm."""
+        # Initialize padding
+        w_pad = self.replica_len
+        _, original_w = self.radar_data.shape
         
-        # Start Processing:
-        self.fft2D(w_pad=W_PAD)
-        # RG compression
-        self.radar_data = multiply(self.radar_data, 
-                                        self.get_range_filter(pad_W=W_PAD))
-        ########################
-        ## Remove padding
-        start_index = W_PAD // 2
-        end_index = start_index + original_W
+        if self._verbose:
+            print('Starting SAR data focusing...')
+        
+        # 2D FFT
+        self.fft2d(w_pad=w_pad)
+        
+        # Range compression
+        range_filter = self.get_range_filter(pad_w=w_pad)
+        self.radar_data = multiply(self.radar_data, range_filter)
+        
+        # Remove padding
+        start_index = w_pad // 2
+        end_index = start_index + original_w
         self.radar_data = self.radar_data[:, start_index:end_index]
-        ########################
-        # RCMC
-        self.radar_data = multiply(self.radar_data, 
-                                        self.get_RCMC())
         
-        # IFFT Range
-        self.ifft_rg()
+        # Range Cell Migration Correction
+        rcmc_filter = self.get_rcmc()
+        self.radar_data = multiply(self.radar_data, rcmc_filter)
         
-        # Az Compression
-        self.radar_data = multiply(self.radar_data, 
-                                        self.get_azimuth_filter())
+        # Inverse FFT in range
+        self.ifft_range()
         
-        # IFFT
-        self.ifft_az()
-        printmemory()
+        # Azimuth compression
+        azimuth_filter = self.get_azimuth_filter()
+        self.radar_data = multiply(self.radar_data, azimuth_filter)
+        
+        # Inverse FFT in azimuth
+        self.ifft_azimuth()
+        
+        if self._verbose:
+            print('SAR data focusing completed!')
+            print_memory()
 
     @timing_decorator
-    def savefile(self, savepath):
-        dump(self.radar_data, savepath)
-
-def multiply(a, b):
-    """
-    Multiplies two arrays a and b using the specified backend.
-    """
-    return a * b
-
-        # if not isinstance(a, np.ndarray):
-        #     raise ValueError("Array 'a' must be a numpy ndarray")
-        # if not isinstance(b, np.ndarray):
-        #     raise ValueError("Array 'b' must be a numpy ndarray")
-        # Ensure shapes are compatible for element-wise multiplication
-
+    def save_file(self, save_path: Union[str, Path]) -> None:
+        """Save processed radar data to file.
         
-        # elif backend == 'torch':
-        #     if not isinstance(a, torch.Tensor):
-        #         raise ValueError("Array 'a' must be a torch Tensor")
-        #     if not isinstance(b, torch.Tensor):
-        #         raise ValueError("Array 'b' must be a torch Tensor")
-        #     # Ensure shapes are compatible for element-wise multiplication
-        #     if a.shape != b.shape:
-        #         raise ValueError("Shapes of arrays 'a' and 'b' must be the same")
-        #     return torch.mul(a, b)
-        # else:
-        #     raise ValueError("Unsupported backend. Use 'numpy' or 'torch'.")
-
-
+        Args:
+            save_path: Path where to save the data.
+        """
+        dump(self.radar_data, save_path)
+        if self._verbose:
+            print(f'Data saved to {save_path}')
 
 
 if __name__ == '__main__':
-    pass
-"""
-    parser = argparse.ArgumentParser(description='SAR Processor')
-    parser.add_argument('--data', type=str, default='radar_data.npy', help='path to the radar data')
-    parser.add_argument('--meta', type=str, default='/path/to/ephemeris.pkl', help='Path to the ephemeris file')
-    parser.add_argument('--ephemeris', type=str, default='radar_data.npy', help='path to the radar data')
-    parser.add_argument('--output', type=str, default='outputdir', help='path to the focused radar data')
-    parser.add_argument('--backend', type=str, default='numpy', help='backend used to process data')
-    parser.add_argument('--num_chunks', type=int, default=15, help='Number of chunks to parse the SAR data')
-    parser.add_argument('--idx_chunk', type=int, default=0, help='Index of the chunk to parse the SAR data')
-    
-    print('\n\n***   Starting SAR Processor   ***')
-    args = parser.parse_args()
-    # Load data:
-    name = Path(args.data).stem
-    idx = args.idx_chunk
-    print(f'Processing chunk {idx+1}/{args.num_chunks}')
-    printmemory()
-    radar_data, meta, ephemeris = get_partition(data_path=args.data, ephem_path=args.ephemeris, meta_path=args.meta, num_chunks = args.num_chunks, idx_chunk=idx)
+    """
+    Main entry point for running the CoarseRDA processor.
 
-"""
+    Parses command-line arguments, loads input data, runs the focusing algorithm,
+    and saves the processed output.
+
+    Raises:
+        AssertionError: If required input files are missing or invalid.
+    """
+    parser = argparse.ArgumentParser(description='Run CoarseRDA SAR processor.')
+    parser.add_argument('--input', type=str, required=True, help='Path to input pickle file containing raw_data dictionary.')
+    parser.add_argument('--output', type=str, required=True, help='Path to save the processed radar data.')
+    parser.add_argument('--backend', type=str, default='numpy', choices=['numpy', 'torch', 'custom'], help='Backend to use for processing.')
+    parser.add_argument('--verbose', action='store_true', help='Enable verbose output.')
+    args = parser.parse_args()
+
+    assert Path(args.input).exists(), f'Input file {args.input} does not exist.'
+
+    with open(args.input, 'rb') as f:
+        raw_data: Dict[str, Any] = pickle.load(f)
+    assert isinstance(raw_data, dict), 'Input file must contain a dictionary.'
+
+    processor = CoarseRDA(raw_data=raw_data, verbose=args.verbose, backend=args.backend)
+    processor.data_focus()
+    processor.save_file(args.output)

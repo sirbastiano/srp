@@ -14,6 +14,5 @@ __all__ = [
     # Focus-related exports will be defined in focus.py
     # Decode-related exports will be defined in decode.py  
     # Transform-related exports will be defined in transforms.py
-    # RDA simple exports
     'constants',
 ]
