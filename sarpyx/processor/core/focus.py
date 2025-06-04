@@ -221,8 +221,12 @@ class CoarseRDA:
         self.ephemeris['time_stamp'] /= 2**24
         self.metadata = raw_data['metadata']
         
-        # Initialize dimensions
+        # Initialize dimensions - these should remain constant throughout processing
         self.len_az_line, self.len_range_line = self.radar_data.shape
+        
+        if self._verbose:
+            print(f'Loaded radar data with shape: {self.radar_data.shape}')
+            print(f'Azimuth lines: {self.len_az_line}, Range lines: {self.len_range_line}')
 
     def _setup_backend(self) -> None:
         """Set up processing backend and device configuration."""
@@ -325,53 +329,84 @@ class CoarseRDA:
         """Perform 2D FFT on radar data in range and azimuth dimensions.
 
         Args:
-            w_pad: Width padding for range FFT.
+            w_pad: Width padding for range FFT (ignored for dimension preservation).
             executors: Number of executors for custom backend.
             
         Raises:
             ValueError: If backend is not supported.
         """
+        if self._verbose:
+            print(f'FFT input data shape: {self.radar_data.shape}')
+        
         if self._backend == 'numpy':
-            self._fft2d_numpy(w_pad)
+            self._fft2d_numpy()
         elif self._backend == 'custom':
             self._fft2d_custom(executors)
         elif self._backend == 'torch':
-            self._fft2d_torch(w_pad)
+            self._fft2d_torch()
         else:
             raise ValueError(f'Backend {self._backend} not supported')
         
+        # Verify dimensions are preserved
+        expected_shape = (self.len_az_line, self.len_range_line)
+        if self.radar_data.shape != expected_shape:
+            raise RuntimeError(f'FFT changed radar data shape from {expected_shape} to {self.radar_data.shape}')
+        
         if self._verbose:
+            print(f'FFT output data shape: {self.radar_data.shape}')
             print('- FFT performed successfully!')
 
-    def _fft2d_numpy(self, w_pad: Optional[int]) -> None:
-        """Perform 2D FFT using NumPy backend."""
-        self.radar_data = np.ascontiguousarray(self.radar_data)
-        # FFT each range line
-        self.radar_data = np.fft.fft(self.radar_data, axis=1, n=w_pad)
-        # FFT each azimuth line
+    def _fft2d_numpy(self) -> None:
+        """Perform 2D FFT using NumPy backend preserving original dimensions.
+        
+        Returns:
+            None
+        """
+        # Store original shape for verification
+        original_shape = self.radar_data.shape
+        
+        # Ensure data is contiguous for better performance
+        # self.radar_data = np.ascontiguousarray(self.radar_data)
+        
+        # FFT each range line (axis=1) - no padding to preserve dimensions
+        self.radar_data = np.fft.fft(self.radar_data, axis=1)
+        
+        # FFT each azimuth line (axis=0) with fftshift
         self.radar_data = np.fft.fftshift(np.fft.fft(self.radar_data, axis=0), axes=0)
+        
+        # Verify shape preservation
+        assert self.radar_data.shape == original_shape, \
+            f'FFT changed shape from {original_shape} to {self.radar_data.shape}'
 
     def _fft2d_custom(self, executors: int) -> None:
         """Perform 2D FFT using custom backend."""
+        original_shape = self.radar_data.shape
         self.radar_data = perform_fft_custom(self.radar_data, num_slices=executors)
+        
+        # Verify shape preservation
+        assert self.radar_data.shape == original_shape, \
+            f'Custom FFT changed shape from {original_shape} to {self.radar_data.shape}'
 
-    def _fft2d_torch(self, w_pad: Optional[int]) -> None:
-        """Perform 2D FFT using PyTorch backend."""
-        # FFT each range line
-        if w_pad is not None:
-            self.radar_data = torch.fft.fft(
-                self.radar_data, 
-                dim=1, 
-                n=self.radar_data.shape[1] + w_pad
-            )
-        else:
-            self.radar_data = torch.fft.fft(self.radar_data, dim=1)
-            
-        # FFT each azimuth line
+    def _fft2d_torch(self) -> None:
+        """Perform 2D FFT using PyTorch backend preserving dimensions.
+        
+        Returns:
+            None
+        """
+        original_shape = self.radar_data.shape
+        
+        # FFT each range line (axis=1) - no padding
+        self.radar_data = torch.fft.fft(self.radar_data, dim=1)
+        
+        # FFT each azimuth line (axis=0) with fftshift
         self.radar_data = torch.fft.fftshift(
             torch.fft.fft(self.radar_data, dim=0), 
             dim=0
         )
+        
+        # Verify shape preservation
+        assert self.radar_data.shape == original_shape, \
+            f'Torch FFT changed shape from {original_shape} to {self.radar_data.shape}'
 
     @timing_decorator
     @auto_gc
@@ -404,50 +439,52 @@ class CoarseRDA:
         """Compute range filter for radar data compression.
     
         Args:
-            pad_w: Width padding for the filter.
+            pad_w: Width padding (ignored - filter always matches radar data dimensions).
             
         Returns:
-            Range filter array.
+            Range filter array exactly matching radar data range dimension.
             
         Raises:
             AssertionError: If filter dimensions are invalid.
         """
-        # Get current radar data dimensions after any transformations
+        # Use exact radar data dimensions - no padding considerations
         current_range_dim = self.radar_data.shape[1]
         
         if self._verbose:
-            print(f'Current radar data shape: {self.radar_data.shape}')
+            print(f'Creating range filter for radar data shape: {self.radar_data.shape}')
             print(f'Range dimension: {current_range_dim}')
-            print(f'Original range line length: {self.len_range_line}')
-            print(f'Requested padding: {pad_w}')
+            print(f'TX replica length: {self.num_tx_vals}')
         
-        # Create range filter with correct dimensions
-        # Use current range dimension instead of original + padding
-        filter_length = current_range_dim
-        range_filter = np.zeros(filter_length, dtype=complex)
+        # Create range filter with exact radar data range dimension
+        range_filter = np.zeros(current_range_dim, dtype=complex)
         
-        # Calculate correct index for replica placement
-        if filter_length >= self.num_tx_vals:
-            index_start = int(np.ceil((filter_length - self.num_tx_vals) / 2))
-            # Ensure we don't exceed array bounds
-            index_start = max(0, min(index_start, filter_length - self.num_tx_vals))
+        # Place replica in center of filter
+        if current_range_dim >= self.num_tx_vals:
+            index_start = (current_range_dim - self.num_tx_vals) // 2
+            index_end = index_start + self.num_tx_vals
             
             if self._verbose:
-                print(f'Filter length: {filter_length}')
-                print(f'TX replica length: {self.num_tx_vals}')
-                print(f'Range filter index start: {index_start}')
+                print(f'Placing replica at indices [{index_start}:{index_end}] in filter of length {current_range_dim}')
             
-            range_filter[index_start:index_start + self.num_tx_vals] = self.tx_replica
+            range_filter[index_start:index_end] = self.tx_replica
         else:
-            raise ValueError(f'Filter length ({filter_length}) is smaller than replica length ({self.num_tx_vals})')
+            # If range dimension is smaller than replica, truncate replica
+            if self._verbose:
+                print(f'⚠️  Range dimension ({current_range_dim}) < replica length ({self.num_tx_vals}), truncating replica')
+            
+            replica_start = (self.num_tx_vals - current_range_dim) // 2
+            replica_end = replica_start + current_range_dim
+            range_filter[:] = self.tx_replica[replica_start:replica_end]
         
         # Apply FFT and conjugate
         filter_result = np.conjugate(np.fft.fft(range_filter))
         
         if self._verbose:
-            print(f'Range filter output shape: {filter_result.shape}')
+            print(f'Range filter shape: {filter_result.shape}')
         
-        assert filter_result.shape[0] == current_range_dim, f'Filter shape mismatch: expected {current_range_dim}, got {filter_result.shape[0]}'
+        # Ensure filter exactly matches radar data range dimension
+        assert filter_result.shape[0] == current_range_dim, \
+            f'Filter shape mismatch: expected {current_range_dim}, got {filter_result.shape[0]}'
         
         return filter_result
 
@@ -457,7 +494,7 @@ class CoarseRDA:
         """Calculate Range Cell Migration Correction filter.
 
         Returns:
-            RCMC filter array.
+            RCMC filter array matching radar data dimensions.
         """
         self._compute_effective_velocities()
         
@@ -500,15 +537,18 @@ class CoarseRDA:
         if self._verbose:
             print(f'D (cosine squint angle) shape: {self.D.shape}')
         
-        # Create RCMC filter
+        # Create RCMC filter with CURRENT radar data dimensions (should be original dimensions)
+        current_range_dim = self.radar_data.shape[1]
+        
         range_freq_vals = np.linspace(
             -self.range_sample_freq/2, 
             self.range_sample_freq/2, 
-            num=self.len_range_line
+            num=current_range_dim
         )
         
         if self._verbose:
             print(f'Range frequency values shape: {range_freq_vals.shape}')
+            print(f'Current radar data range dimension: {current_range_dim}')
             print(f'Slant range vec shape: {self.slant_range_vec.shape}')
         
         # Calculate RCMC shift - use first slant range value for reference
@@ -518,9 +558,9 @@ class CoarseRDA:
             print(f'RCMC shift shape: {rcmc_shift.shape}')
         
         # Broadcasting for final filter calculation
-        # range_freq_vals: (25724,), rcmc_shift: (56130,)
+        # range_freq_vals: (current_range_dim,), rcmc_shift: (56130,)
         # Need to reshape for proper broadcasting
-        range_freq_2d = range_freq_vals[np.newaxis, :]  # (1, 25724)
+        range_freq_2d = range_freq_vals[np.newaxis, :]  # (1, current_range_dim)
         rcmc_shift_2d = rcmc_shift[:, np.newaxis]       # (56130, 1)
         
         rcmc_filter = np.exp(4j * np.pi * range_freq_2d * rcmc_shift_2d / self.c)
@@ -536,7 +576,7 @@ class CoarseRDA:
         """Calculate azimuth compression filter.
         
         Returns:
-            Azimuth filter array.
+            Azimuth filter array matching radar data dimensions.
         """
         if self._verbose:
             print(f'Computing azimuth filter...')
@@ -544,11 +584,24 @@ class CoarseRDA:
             print(f'D shape: {self.D.shape}')
             print(f'Wavelength: {self.wavelength}')
         
+        # Use current radar data dimensions (should match original slant range vector)
+        current_range_dim = self.radar_data.shape[1]
+        
+        # Ensure slant range vector matches radar data dimensions
+        if current_range_dim != len(self.slant_range_vec):
+            if self._verbose:
+                print(f'⚠️  Warning: Current range dim ({current_range_dim}) != slant range vec length ({len(self.slant_range_vec)})')
+                print(f'This should not happen - using original slant range vector')
+            # This should not happen if dimensions are preserved correctly
+            current_slant_range_vec = self.slant_range_vec
+        else:
+            current_slant_range_vec = self.slant_range_vec
+        
         # Broadcasting for azimuth filter calculation
-        # self.slant_range_vec: (25724,), self.D: (56130,)
+        # current_slant_range_vec: (range_dim,), self.D: (56130,)
         # Need to create 2D arrays for proper broadcasting
-        slant_range_2d = self.slant_range_vec[np.newaxis, :]  # (1, 25724)
-        D_2d = self.D[:, np.newaxis]                          # (56130, 1)
+        slant_range_2d = current_slant_range_vec[np.newaxis, :]  # (1, range_dim)
+        D_2d = self.D[:, np.newaxis]                             # (56130, 1)
         
         azimuth_filter = np.exp(4j * np.pi * slant_range_2d * D_2d / self.wavelength)
         
@@ -688,7 +741,7 @@ class CoarseRDA:
         if self._verbose:
             print(f'Time stamps shape: {time_stamps.shape}')
             print(f'Time stamps range: {time_stamps.min():.6f} - {time_stamps.max():.6f}')
-            print(f'Velocity values shape: {velocity_values.shape}')
+            print(f' veocity values shape: {velocity_values.shape}')
             print(f'Position arrays shapes: x={x_values.shape}, y={y_values.shape}, z={z_values.shape}')
         
         # Ensure arrays are sorted by time for interpolation
@@ -985,84 +1038,93 @@ class CoarseRDA:
     def data_focus(self) -> None:
         """Perform complete SAR data focusing using Range Doppler Algorithm.
         
-        This is the main processing method that orchestrates the entire
-        Range Doppler Algorithm focusing pipeline.
+        This method ensures radar data dimensions remain constant throughout processing.
+        
+        Raises:
+            RuntimeError: If data dimensions change unexpectedly during processing.
         """
         if self._verbose:
             print('Starting SAR data focusing...')
+            print(f'Initial radar data shape: {self.radar_data.shape}')
         
-        # Step 1: Initialize processing parameters
-        w_pad = self.replica_len
-        _, original_w = self.radar_data.shape
+        # Store initial shape for verification
+        initial_shape = self.radar_data.shape
+        expected_shape = (self.len_az_line, self.len_range_line)
         
-        # Step 2: 2D FFT transformation
-        self.fft2d(w_pad=w_pad)
+        assert initial_shape == expected_shape, \
+            f'Initial data shape {initial_shape} does not match expected {expected_shape}'
         
-        # Step 3: Range compression
-        self._perform_range_compression(w_pad, original_w)
-        
-        # Step 4: Range Cell Migration Correction
-        self._perform_rcmc()
-        
-        # Step 5: Azimuth compression
-        self._perform_azimuth_compression()
+        # Step 1: Get padding value (for legacy compatibility only)
+        w_pad = getattr(self, 'replica_len', 0)
+        original_w = initial_shape[1]
         
         if self._verbose:
-            print('SAR data focusing completed!')
+            print(f'Processing with w_pad={w_pad}, original_w={original_w}')
+        
+        # Step 2: 2D FFT transformation (preserves dimensions)
+        self.fft2d()
+        assert self.radar_data.shape == initial_shape, \
+            f'FFT changed data shape from {initial_shape} to {self.radar_data.shape}'
+        
+        # Step 3: Range compression (preserves dimensions)
+        self._perform_range_compression(w_pad, original_w)
+        assert self.radar_data.shape == initial_shape, \
+            f'Range compression changed data shape from {initial_shape} to {self.radar_data.shape}'
+        
+        # Step 4: Range Cell Migration Correction (preserves dimensions)
+        self._perform_rcmc()
+        assert self.radar_data.shape == initial_shape, \
+            f'RCMC changed data shape from {initial_shape} to {self.radar_data.shape}'
+        
+        # Step 5: Azimuth compression (preserves dimensions)
+        self._perform_azimuth_compression()
+        assert self.radar_data.shape == initial_shape, \
+            f'Azimuth compression changed data shape from {initial_shape} to {self.radar_data.shape}'
+        
+        if self._verbose:
+            print(f'SAR data focusing completed successfully!')
+            print(f'Final radar data shape: {self.radar_data.shape}')
             print_memory()
 
     def _perform_range_compression(self, w_pad: int, original_w: int) -> None:
-        """Perform range compression step.
+        """Perform range compression step while preserving data dimensions.
         
         Args:
-            w_pad: Width padding applied.
-            original_w: Original width before padding.
+            w_pad: Width padding (ignored - dimensions preserved).
+            original_w: Original width (for verification).
             
         Raises:
             ValueError: If array shapes are incompatible.
+            AssertionError: If dimensions change unexpectedly.
         """
         if self._verbose:
             print(f'Starting range compression...')
-            print(f'Radar data shape before range filter: {self.radar_data.shape}')
-            print(f'Padding applied: {w_pad}')
-            print(f'Original width: {original_w}')
+            print(f'Radar data shape: {self.radar_data.shape}')
         
-        # Get range filter with correct dimensions
-        range_filter = self.get_range_filter(pad_w=w_pad)
+        # Store original shape for verification
+        original_shape = self.radar_data.shape
+        expected_shape = (self.len_az_line, self.len_range_line)
+        
+        # Verify we still have expected dimensions
+        assert original_shape == expected_shape, \
+            f'Unexpected radar data shape: {original_shape}, expected: {expected_shape}'
+        
+        # Get range filter with matching dimensions
+        range_filter = self.get_range_filter()
         
         if self._verbose:
             print(f'Range filter shape: {range_filter.shape}')
+            print(f'Applying range compression filter...')
         
-        # Ensure shapes are compatible for broadcasting
-        if len(range_filter.shape) == 1 and len(self.radar_data.shape) == 2:
-            # Range filter should be applied along range dimension (axis=1)
-            assert range_filter.shape[0] == self.radar_data.shape[1], \
-                f'Range filter length ({range_filter.shape[0]}) must match radar data range dimension ({self.radar_data.shape[1]})'
-        
-        # Apply range compression
+        # Apply range compression filter
         self.radar_data = multiply(self.radar_data, range_filter)
         
-        if self._verbose:
-            print(f'Radar data shape after range compression: {self.radar_data.shape}')
+        # Verify dimensions are preserved
+        assert self.radar_data.shape == original_shape, \
+            f'Range compression changed data shape from {original_shape} to {self.radar_data.shape}'
         
-        # Remove padding - adjust indices based on actual dimensions
-        if w_pad > 0 and self.radar_data.shape[1] > original_w:
-            # Calculate padding removal indices
-            total_width = self.radar_data.shape[1]
-            start_index = (total_width - original_w) // 2
-            end_index = start_index + original_w
-            
-            # Ensure indices are within bounds
-            start_index = max(0, start_index)
-            end_index = min(total_width, end_index)
-            
-            if self._verbose:
-                print(f'Removing padding: [{start_index}:{end_index}] from total width {total_width}')
-            
-            self.radar_data = self.radar_data[:, start_index:end_index]
-            
-            if self._verbose:
-                print(f'Radar data shape after padding removal: {self.radar_data.shape}')
+        if self._verbose:
+            print(f'Range compression completed. Data shape: {self.radar_data.shape}')
 
     def _perform_rcmc(self) -> None:
         """Perform Range Cell Migration Correction."""
