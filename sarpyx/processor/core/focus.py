@@ -300,24 +300,47 @@ class CoarseRDA:
     @auto_gc
     def _prompt_tx_replica(self) -> None:
         """Generate transmission replica based on metadata parameters."""
-        rgdec = self.metadata['Range Decimation'].unique()[0]
+        if self._verbose:
+            print('Generating transmission replica...')
+        
+        rgdec = int(self.metadata['range_decimation'].unique()[0])
+        if self._verbose:
+            print(f'Range decimation code: {rgdec}')
+        
         self.range_sample_freq = range_dec_to_sample_rate(rgdec)
+        if self._verbose:
+            print(f'Range sample frequency: {self.range_sample_freq:.2f} Hz')
 
         # Extract nominal replica parameters
-        txpsf = self.metadata['Tx Pulse Start Frequency'].unique()[0]
-        txprr = self.metadata['Tx Ramp Rate'].unique()[0]
-        txpl = self.metadata['Tx Pulse Length'].unique()[0]
+        txpsf = self.metadata['tx_pulse_start_freq'].unique()[0]
+        txprr = self.metadata['tx_ramp_rate'].unique()[0]
+        txpl = self.metadata['tx_pulse_length'].unique()[0]
+        
+        if self._verbose:
+            print(f'TX pulse start frequency: {txpsf:.2f} Hz')
+            print(f'TX ramp rate: {txprr:.2f} Hz/s')
+            print(f'TX pulse length: {txpl:.6f} s')
         
         # Generate replica
         self.num_tx_vals = int(txpl * self.range_sample_freq)
+        if self._verbose:
+            print(f'Number of TX values: {self.num_tx_vals}')
+        
         tx_replica_time_vals = np.linspace(-txpl/2, txpl/2, num=self.num_tx_vals)
         phi1 = txpsf + txprr * txpl / 2
         phi2 = txprr / 2
+        
+        if self._verbose:
+            print(f'Phase parameters - phi1: {phi1:.2f}, phi2: {phi2:.2e}')
         
         self.tx_replica = np.exp(
             2j * np.pi * (phi1 * tx_replica_time_vals + phi2 * tx_replica_time_vals**2)
         )
         self.replica_len = len(self.tx_replica)
+        
+        if self._verbose:
+            print(f'Replica length: {self.replica_len}')
+            print('Transmission replica generated successfully!')
 
     @timing_decorator
     @auto_gc

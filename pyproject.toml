@@ -10,7 +10,7 @@ authors = [
     { name = "Roberto Del Prete", email = "roberto.delprete@esa.int" }
 ]
 license = { text = "MIT" }
-requires-python = ">=3.13"
+requires-python = ">=3.11, <3.13"
 dependencies = [
     "matplotlib",
     "lxml", 
@@ -24,7 +24,6 @@ dependencies = [
     "numba",
     "jupyter",
     "torch>=1.9.0",
-    "pandas",
     "phidown>=0.1.12",
     "rasterio>=1.4.3",
     "zarr>=3.0.8",
