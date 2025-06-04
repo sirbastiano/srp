@@ -14,7 +14,7 @@ from s1isp.decoder import (
     decoded_stream_to_dict, 
     decoded_subcomm_to_dict
 )
-from .encoding import parameter_transformations as pt
+from . import code2physical as pt
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -353,7 +353,7 @@ class S1L0Decoder:
             if output_dir is not None:
                 save_path = self._save_data(result, input_path, Path(output_dir))
                 result['saved_to'] = str(save_path)
-            
+            self.logger.info('\n' + '='*50 + ' ✅ Processed. ' + '='*50)
             return result
             
         except Exception as e:
@@ -579,14 +579,18 @@ def _apply_parameter_transformations(metadata_df: pd.DataFrame) -> pd.DataFrame:
     except Exception as e:
         logger.warning(f'Error applying sampling window transformations: {e}')
     
-    # Apply range decimation to sample rate conversion using API lookup table
-    try:
-        if 'range_decimation' in transformed_df.columns:
-            transformed_df['range_decimation'] = transformed_df['range_decimation'].apply(
-                lambda x: pt.range_dec_to_sample_rate(int(x)) if pd.notna(x) else None
-            )
-    except Exception as e:
-        logger.warning(f'Error applying range decimation transformation: {e}')
+                                # -------- Removing Range Decimation Transformation --------
+                                # The range decimation transformation is commented out as it requires a specific API lookup table.
+                                # This is because the range decimation values are not directly convertible to sample rates
+                                # try:
+                                #     if 'range_decimation' in transformed_df.columns:
+                                #         transformed_df['range_decimation'] = transformed_df['range_decimation'].apply(
+                                #             lambda x: pt.range_dec_to_sample_rate(int(x)) if pd.notna(x) else None
+                                #         )
+                                # except Exception as e:
+                                #     logger.warning(f'Error applying range decimation transformation: {e}')
+                                # -------- Removing Range Decimation Transformation --------
+    
     
     # Apply additional descriptive transformations and validations from API
     try:

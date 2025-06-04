@@ -9,7 +9,7 @@ extract and interpret parameters from raw bytecode data.
 
 import struct
 from typing import Dict, Any
-from parameter_transformations import (
+from sarpyx.processor.core.code2physical import (
     F_REF,
     # All extraction functions
     extract_packet_version_number,

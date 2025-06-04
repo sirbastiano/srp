@@ -15,21 +15,15 @@ logger = logging.getLogger("Unzipper")
 # Set the logging level to INFO
 logger.setLevel(logging.INFO)
 
-# Create a file handler and set its logging level to INFO
-file_handler = logging.FileHandler("unzip.log")
-file_handler.setLevel(logging.INFO)
-
 # Create a console handler and set its logging level to DEBUG
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.DEBUG)
 
 # Define a formatter for the handlers
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-file_handler.setFormatter(formatter)
 console_handler.setFormatter(formatter)
 
-# Add the handlers to the logger
-logger.addHandler(file_handler)
+# Add the console handler to the logger
 logger.addHandler(console_handler)
 
 def main(folder_path: str):
@@ -57,6 +51,12 @@ if __name__ == "__main__":
     """ This is executed when run from the command line:
         python -m utils.downloader.unzipper
     """
+    # Create a file handler only when running as main
+    file_handler = logging.FileHandler("unzip.log")
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    
     # Set search parameters with argparse
     parser = argparse.ArgumentParser()
     # create a wkt with: https://wktmap.com/

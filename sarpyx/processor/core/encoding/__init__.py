@@ -5,6 +5,6 @@ This module contains utilities for transforming raw bytecode values from
 Sentinel-1 data packets into meaningful physical parameters.
 """
 
-from . import parameter_transformations
+from .. import code2physical
 
-__all__ = ['parameter_transformations']
+__all__ = ['code2physical']

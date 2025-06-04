@@ -8,7 +8,7 @@ of the investigation.
 """
 
 import struct
-from parameter_transformations import (
+from sarpyx.processor.core.code2physical import (
     F_REF,
     extract_tx_pulse_ramp_rate,
     extract_tx_pulse_start_frequency,
