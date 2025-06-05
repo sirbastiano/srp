@@ -4,6 +4,7 @@ import os
 import pickle
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union, Optional
+import json
 
 import numpy as np
 import pandas as pd
@@ -15,6 +16,9 @@ from s1isp.decoder import (
     decoded_subcomm_to_dict
 )
 from . import code2physical as pt
+from ...utils import zarr_utils
+
+save_array_to_zarr = zarr_utils.save_array_to_zarr  # Ensure zarr_utils is imported for saving arrays
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -278,7 +282,8 @@ class S1L0Decoder:
         input_file: Path | str, 
         output_dir: Optional[Path | str] = None,
         headers_only: bool = False,
-        apply_transformations: bool = True
+        save_to_zarr: bool = False,
+        apply_transformations: bool = True,
     ) -> Dict[str, Any]:
         """Decode a Sentinel-1 Level 0 .dat file.
         
@@ -286,6 +291,7 @@ class S1L0Decoder:
             input_file: Path to the input .dat file
             output_dir: Directory to save processed data (optional)
             headers_only: If True, extract only headers for quick preview
+            save_to_zarr: If True, save output in Zarr format with compression
             apply_transformations: If True, apply parameter transformations to convert raw values to physical units
             
         Returns:
@@ -349,9 +355,14 @@ class S1L0Decoder:
                 
                 self.logger.info(f'Successfully decoded {len(burst_data)} bursts')
             
-            # Save data if output directory is specified
+            # ------------ Save data ----------   if output directory is specified
             if output_dir is not None:
-                save_path = self._save_data(result, input_path, Path(output_dir))
+                if save_to_zarr:
+                    self.logger.info('Saving data in Zarr format...')
+                    save_path = self._save_data_zarr(result, input_path, Path(output_dir))
+                else:
+                    self.logger.info('Saving data in pickle format...')
+                    save_path = self._save_data(result, input_path, Path(output_dir))
                 result['saved_to'] = str(save_path)
             self.logger.info('\n' + '='*50 + ' ✅ Processed. ' + '='*50)
             return result
@@ -420,33 +431,129 @@ class S1L0Decoder:
         
         return output_dir
 
+    def _save_data_zarr(
+        self, 
+        decoded_data: Dict[str, Any], 
+        input_path: Path, 
+        output_dir: Path,
+        compressor_level: int = 9
+    ) -> Path:
+        """Save decoded data to Zarr files with compression.
+        
+        Args:
+            decoded_data: Dictionary containing decoded data
+            input_path: Original input file path
+            output_dir: Directory to save files
+            compressor_level: Compression level for Zarr (0-9, default: 9)
+            
+        Returns:
+            Path to the output directory
+        """
+        output_dir.mkdir(exist_ok=True, parents=True)
+        file_stem = input_path.stem
+        
+        self.logger.info(f'Start -> data to Zarr format: {output_dir}')
+        
+        if 'headers' in decoded_data:
+            # Save headers as CSV since it's metadata only
+            headers_path = output_dir / f'{file_stem}_headers.csv'
+            decoded_data['headers'].to_csv(headers_path, index=False)
+            self.logger.info(f'Saved headers as CSV: {headers_path}')
+            
+        elif 'burst_data' in decoded_data:
+            # Save full burst data in Zarr format
+            burst_data = decoded_data['burst_data']
+            
+            # Save each burst as separate Zarr array
+            for i, burst in enumerate(burst_data):
+                # Save radar echo data as Zarr with metadata and ephemeris
+                echo_zarr_path = output_dir / f'{file_stem}_burst_{i}.zarr'
+                
+                try:
+                    save_array_to_zarr(
+                        array=burst['echo'],
+                        file_path=str(echo_zarr_path),
+                        compressor_level=compressor_level,
+                        parent_product=input_path.parent.name,
+                        metadata_df=burst['metadata'],
+                        ephemeris_df=burst['ephemeris'] if not burst['ephemeris'].empty else None
+                    )
+                    
+                    self.logger.info(f'Saved burst {i} echo data to Zarr: {echo_zarr_path}')
+                    self.logger.info(f'  - Echo shape: {burst["echo"].shape}')
+                    self.logger.info(f'  - Metadata records: {len(burst["metadata"])}')
+                    if not burst['ephemeris'].empty:
+                        self.logger.info(f'  - Ephemeris records: {len(burst["ephemeris"])}')
+                        
+                except Exception as e:
+                    self.logger.error(f'Failed to save burst {i} to Zarr: {e}')
+                    # Fallback to pickle for this burst
+                    echo_pkl_path = output_dir / f'{file_stem}_burst_{i}_echo.pkl'
+                    save_pickle_file(echo_pkl_path, burst['echo'])
+                    
+                    metadata_pkl_path = output_dir / f'{file_stem}_burst_{i}_metadata.pkl'
+                    burst['metadata'].to_pickle(metadata_pkl_path)
+                    
+                    self.logger.warning(f'Saved burst {i} as pickle files instead')
+        
+        # Save summary info as JSON for better readability
+        info_path = output_dir / f'{file_stem}_info.json'
+        summary_info = {k: v for k, v in decoded_data.items() 
+                    if k not in ['burst_data', 'headers']}
+        
+        # Convert numpy types to native Python types for JSON serialization
+        def convert_numpy_types(obj):
+            if isinstance(obj, np.integer):
+                return int(obj)
+            elif isinstance(obj, np.floating):
+                return float(obj)
+            elif isinstance(obj, np.ndarray):
+                return obj.tolist()
+            elif isinstance(obj, dict):
+                return {k: convert_numpy_types(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_numpy_types(item) for item in obj]
+            return obj
+        
+        try:
+            summary_info_converted = convert_numpy_types(summary_info)
+            with open(info_path, 'w') as f:
+                json.dump(summary_info_converted, f, indent=2)
+            self.logger.info(f'Saved summary info as JSON: {info_path}')
+        except Exception as e:
+            # Fallback to pickle
+            info_pkl_path = output_dir / f'{file_stem}_info.pkl'
+            save_pickle_file(info_pkl_path, summary_info)
+            self.logger.warning(f'Saved summary info as pickle: {info_pkl_path}')
+        
+        # Count total files created
+        zarr_files = len(list(output_dir.glob('*.zarr')))
+        other_files = len(list(output_dir.glob('*'))) - zarr_files
+        
+        self.logger.info(f'Created {zarr_files} Zarr arrays and {other_files} other files')
+        
+        return output_dir
 
 # Parameter Transformations Integration
-# =====================================
-# This module integrates parameter transformations from parameter_transformations.py
-# to convert raw bytecode values from Sentinel-1 data packets into meaningful physical
-# parameters. When apply_transformations=True is used:
-#
-# Key Physical Transformations Applied:
-# • fine_time: Raw 16-bit → Seconds using (raw + 0.5) * 2^-16
-# • rx_gain: Raw codes → dB using raw * -0.5
-# • pri: Raw counts → Seconds using raw / F_REF
-# • tx_pulse_length: Raw counts → Seconds using raw / F_REF
-# • tx_ramp_rate: Raw 16-bit → Hz/s using sign/magnitude extraction + F_REF² scaling
-# • tx_pulse_start_freq: Raw 16-bit → Hz using sign/magnitude + F_REF scaling
-# • range_decimation: Raw codes → Sample rate (Hz) using lookup table
-# • swst/swl: Raw counts → Seconds using raw / F_REF
-#
-# Additional Features:
-# • Validation columns (sync_marker_valid, baq_mode_valid, etc.)
-# • Descriptive columns (signal_type_name, polarization_name, etc.)
-# • Derived columns (samples_per_line, data_take_hex, etc.)
-#
-# Usage:
-# decoder = S1L0Decoder()
-# result = decoder.decode_file(input_file, output_dir, apply_transformations=True)
-# headers = extract_headers(file_path, apply_transformations=True)
-# bursts = decode_radar_file(file_path, apply_transformations=True)
+        # =====================================
+        # This module integrates parameter transformations from parameter_transformations.py
+        # to convert raw bytecode values from Sentinel-1 data packets into meaningful physical
+        # parameters. When apply_transformations=True is used:
+        #
+        # Key Physical Transformations Applied:
+        # • fine_time: Raw 16-bit → Seconds using (raw + 0.5) * 2^-16
+        # • rx_gain: Raw codes → dB using raw * -0.5
+        # • pri: Raw counts → Seconds using raw / F_REF
+        # • tx_pulse_length: Raw counts → Seconds using raw / F_REF
+        # • tx_ramp_rate: Raw 16-bit → Hz/s using sign/magnitude extraction + F_REF² scaling
+        # • tx_pulse_start_freq: Raw 16-bit → Hz using sign/magnitude + F_REF scaling
+        # • range_decimation: Raw codes → Sample rate (Hz) using lookup table
+        # • swst/swl: Raw counts → Seconds using raw / F_REF
+        #
+        # Additional Features:
+        # • Validation columns (sync_marker_valid, baq_mode_valid, etc.)
+        # • Descriptive columns (signal_type_name, polarization_name, etc.)
+        # • Derived columns (samples_per_line, data_take_hex, etc.)
 # =====================================
 
 
@@ -639,6 +746,8 @@ def _apply_parameter_transformations(metadata_df: pd.DataFrame) -> pd.DataFrame:
         logger.warning(f'Error applying additional transformations: {e}')
     
     return transformed_df
+
+
 
 
 # ------------- Main Function -------------

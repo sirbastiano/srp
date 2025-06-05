@@ -18,7 +18,6 @@ Legacy:
 
 # Import main submodules
 from . import core
-from . import autofocus  
 from . import algorithms
 from . import data
 from . import utils
@@ -26,7 +25,6 @@ from . import utils
 
 __all__ = [
     'core',
-    'autofocus',
     'algorithms', 
     'data',
     'utils',

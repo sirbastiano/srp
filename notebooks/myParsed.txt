@@ -1,9 +1,0 @@
-Generating transmission replica...
-Range decimation code: 1
-Range sample frequency: 100092592.64 Hz
-TX pulse start frequency: -43801345.00 Hz
-TX ramp rate: 1927378686407.00 Hz/s
-TX pulse length: 0.000045 s
-Number of TX values: 4549
-Phase parameters - phi1: -460.87, phi2: 9.64e+11
-Replica length: 4549

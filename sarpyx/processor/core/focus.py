@@ -1,5 +1,5 @@
 import argparse
-from typing import Dict, Any, Optional, Union, Tuple, Callable
+from typing import Dict, Any, Optional, Union, Tuple, Callable, List
 try:
     import torch
 except ImportError:
@@ -17,6 +17,14 @@ from functools import wraps
 import psutil
 import time
 from os import environ
+
+try:
+    import zarr
+    import numcodecs
+    ZARR_AVAILABLE = True
+except ImportError:
+    print('Warning: zarr not available, falling back to pickle for saving')
+    ZARR_AVAILABLE = False
 
 # ---------- Import custom modules ----------
 from .code2physical import range_dec_to_sample_rate
@@ -1191,30 +1199,600 @@ class CoarseRDA:
     _prompt_tx_replica = _generate_tx_replica
 
 
-if __name__ == '__main__':
-    """Main execution block for running CoarseRDA as a standalone script.
+class SteppedRDA(CoarseRDA):
+    """Stepped Range Doppler Algorithm processor with intermediate step saving capability.
     
-    Raises:
-        AssertionError: If required input files are missing or invalid.
+    This class extends CoarseRDA to allow saving of intermediate processing results
+    at key stages as compressed Zarr files for optimal storage and performance.
+    
+    Attributes:
+        save_intermediate: Whether to save intermediate steps.
+        save_dir: Directory path for saving intermediate results.
+        base_filename: Base filename for saved files.
+        compression_level: Compression level for Zarr files (0-9).
+        use_zarr: Whether to use Zarr format for saving.
     """
-    import argparse
-    import pickle
     
-    parser = argparse.ArgumentParser(description='Run CoarseRDA SAR processor.')
-    parser.add_argument('--input', type=str, required=True, help='Path to input pickle file containing raw_data dictionary.')
-    parser.add_argument('--output', type=str, required=True, help='Path to save the processed radar data.')
-    parser.add_argument('--backend', type=str, default='numpy', choices=['numpy', 'torch', 'custom'], help='Backend to use for processing.')
-    parser.add_argument('--verbose', action='store_true', help='Enable verbose output.')
+    def __init__(
+        self, 
+        raw_data: Dict[str, Any], 
+        verbose: bool = False, 
+        backend: str = 'numpy',
+        save_intermediate: bool = True,
+        save_dir: Optional[Union[str, Path]] = None,
+        base_filename: str = 'sar_processing',
+        compression_level: int = 9,
+        use_zarr: bool = True
+    ) -> None:
+        """Initialize the SteppedRDA processor.
+        
+        Args:
+            raw_data: Dictionary containing 'echo', 'ephemeris', and 'metadata'.
+            verbose: Whether to print verbose output.
+            backend: Backend to use ('numpy', 'torch', or 'custom').
+            save_intermediate: Whether to save intermediate processing steps.
+            save_dir: Directory path for saving intermediate results.
+            base_filename: Base filename for saved files.
+            compression_level: Compression level for Zarr files (0-9, 9=max compression).
+            use_zarr: Whether to use Zarr format (falls back to pickle if zarr unavailable).
+            
+        Raises:
+            ValueError: If compression_level is not in valid range.
+            ImportError: If zarr is requested but not available.
+        """
+        super().__init__(raw_data, verbose, backend)
+        
+        # Validate compression level
+        if not 0 <= compression_level <= 9:
+            raise ValueError(f'compression_level must be 0-9, got {compression_level}')
+        
+        self.save_intermediate = save_intermediate
+        self.base_filename = base_filename
+        self.compression_level = compression_level
+        
+        # Determine save format
+        if use_zarr and not ZARR_AVAILABLE:
+            if self._verbose:
+                print('Warning: Zarr requested but not available, falling back to pickle')
+            self.use_zarr = False
+        else:
+            self.use_zarr = use_zarr and ZARR_AVAILABLE
+        
+        if save_intermediate:
+            if save_dir is None:
+                save_dir = Path.cwd() / 'sar_intermediate_results'
+            
+            self.save_dir = Path(save_dir)
+            self.save_dir.mkdir(parents=True, exist_ok=True)
+            
+            if self._verbose:
+                format_type = 'Zarr (compressed)' if self.use_zarr else 'Pickle'
+                print(f'Intermediate results will be saved as {format_type} to: {self.save_dir}')
+                if self.use_zarr:
+                    print(f'Zarr compression level: {self.compression_level}')
+        else:
+            self.save_dir = None
+
     
-    args = parser.parse_args()
     
-    assert Path(args.input).exists(), f'Input file {args.input} does not exist.'
     
-    with open(args.input, 'rb') as f:
-        raw_data: Dict[str, Any] = pickle.load(f)
+    def main(self, save_all_steps: bool = False) -> None:
+
+        """Run the SAR focusing pipeline, saving intermediate results after each step.
+
+        This method performs SAR focusing and saves the radar data after each major processing step.
+        
+        Args:
+            save_all_steps: Whether to save all intermediate steps including raw input and FFT.
+        """
+        if self._verbose:
+            print('Starting SAR STEPPED data focusing...')
+            print(f'Initial radar data shape: {self.radar_data.shape}')
+
+        # Store initial shape for verification
+        initial_shape = self.radar_data.shape
+        expected_shape = (self.len_az_line, self.len_range_line)
+
+        assert initial_shape == expected_shape, \
+            f'Initial data shape {initial_shape} does not match expected {expected_shape}'
+
+        # Step 1: Save raw input (optional)
+        if save_all_steps:
+            self._save_intermediate_step(
+                radar_data=self.radar_data,
+                save_intermediate=self.save_intermediate,
+                save_dir=self.save_dir,
+                use_zarr=self.use_zarr,
+                step_name='raw_input',
+                description='Raw input radar data',
+                base_filename=self.base_filename,
+                compression_level=self.compression_level,
+                backend=self._backend,
+                verbose=self._verbose
+            )
+
+        # Step 2: 2D FFT transformation (preserves dimensions)
+        self.fft2d()
+        if save_all_steps:
+            # Save FFT result in frequency domain (as-is)
+            self._save_intermediate_step(
+                radar_data=self.radar_data,
+                save_intermediate=self.save_intermediate,
+                save_dir=self.save_dir,
+                use_zarr=self.use_zarr,
+                step_name='fft2d',
+                description='After 2D FFT (frequency domain)',
+                base_filename=self.base_filename,
+                compression_level=self.compression_level,
+                backend=self._backend,
+                verbose=self._verbose
+            )
+        assert self.radar_data.shape == initial_shape, \
+            f'FFT changed data shape from {initial_shape} to {self.radar_data.shape}'
+
+        # Step 3: Range compression (preserves dimensions)
+        w_pad = 0
+        original_w = initial_shape[1]
+        self._perform_range_compression(w_pad, original_w)
+        
+        # Save range compression result (converted back to time domain for visualization)
+        self._save_intermediate_step(
+            radar_data=self._ifft2d(self.radar_data),
+            save_intermediate=self.save_intermediate,
+            save_dir=self.save_dir,
+            use_zarr=self.use_zarr,
+            step_name='range_compression',
+            description='After range compression (time domain)',
+            base_filename=self.base_filename,
+            compression_level=self.compression_level,
+            backend=self._backend,
+            verbose=self._verbose
+        )
+        
+        # Verify dimensions are preserved
+        assert self.radar_data.shape == initial_shape, \
+            f'Range compression changed data shape from {initial_shape} to {self.radar_data.shape}'
+
+        # Step 4: Range Cell Migration Correction (preserves dimensions)
+        self._perform_rcmc()
+        self._save_intermediate_step(
+            radar_data=self._ifft2d(self.radar_data),
+            save_intermediate=self.save_intermediate,
+            save_dir=self.save_dir,
+            use_zarr=self.use_zarr,
+            step_name='rcmc',
+            description='After Range Cell Migration Correction (time domain)',
+            base_filename=self.base_filename,
+            compression_level=self.compression_level,
+            backend=self._backend,
+            verbose=self._verbose
+        )
+        assert self.radar_data.shape == initial_shape, \
+            f'RCMC changed data shape from {initial_shape} to {self.radar_data.shape}'
+
+        # Step 5: Azimuth compression (preserves dimensions)
+        self._perform_azimuth_compression()
+        self._save_intermediate_step(
+            radar_data=self._ifft2d(self.radar_data),
+            save_intermediate=self.save_intermediate,
+            save_dir=self.save_dir,
+            use_zarr=self.use_zarr,
+            step_name='azimuth_compression',
+            description='After Azimuth Compression (final focused image)',
+            base_filename=self.base_filename,
+            compression_level=self.compression_level,
+            backend=self._backend,
+            verbose=self._verbose
+        )
+        assert self.radar_data.shape == initial_shape, \
+            f'Azimuth compression changed data shape from {initial_shape} to {self.radar_data.shape}'
+
+        if self._verbose:
+            print('SAR data focusing completed successfully!')
+            print(f'Final radar data shape: {self.radar_data.shape}')
+            print_memory()
     
-    assert isinstance(raw_data, dict), 'Input file must contain a dictionary.'
     
-    processor = CoarseRDA(raw_data=raw_data, verbose=args.verbose, backend=args.backend)
-    processor.data_focus()
-    processor.save_file(args.output)
+    
+    
+    
+    @staticmethod
+    def _ifft2d(radar_data: np.ndarray, verbose: bool = False) -> np.ndarray:
+        """
+        Perform 2D inverse FFT using NumPy backend, preserving original dimensions.
+
+        Args:
+            radar_data (np.ndarray): Input radar data array.
+            verbose (bool): Whether to print verbose output.
+
+        Returns:
+            np.ndarray: Output array after 2D inverse FFT.
+
+        Raises:
+            AssertionError: If the shape of radar_data changes during the operation.
+        """
+        assert isinstance(radar_data, np.ndarray), 'radar_data must be a numpy array'
+        original_shape = radar_data.shape
+        if verbose:
+            print(f'Original radar data shape: {original_shape}')
+            print('Performing inverse FFT along azimuth dimension (axis=0) with ifftshift...')
+        # Work on a copy to avoid modifying the input array
+        data = np.copy(radar_data)
+        # Inverse FFT along azimuth (axis=0) with ifftshift
+        data = np.fft.ifft(np.fft.ifftshift(data, axes=0), axis=0)
+        if verbose:
+            print(f'First inverse FFT along azimuth completed, shape: {data.shape}')
+            print('Performing inverse FFT along range dimension (axis=1)...')
+        # Inverse FFT along range (axis=1)
+        data = np.fft.ifft(data, axis=1)
+        if verbose:
+            print(f'Second inverse FFT along range completed, shape: {data.shape}')
+        # Verify shape preservation
+        assert data.shape == original_shape, \
+            f'IFFT changed shape from {original_shape} to {data.shape}'
+        return data
+    
+    
+    def _get_instance_zarr_compressor(self) -> Any:
+        """Get the optimal Zarr compressor configuration for instance method.
+        
+        Returns:
+            Configured compressor for maximum compression of complex SAR data.
+        """
+        # Use Blosc with LZ4HC algorithm for best compression on complex data
+        return numcodecs.Blosc(
+            cname='lz4hc',  # LZ4HC provides good compression for SAR data
+            clevel=self.compression_level,
+            shuffle=numcodecs.Blosc.BITSHUFFLE,  # Bit shuffle for better compression
+            blocksize=0  # Auto-select optimal block size
+        )
+    
+    @staticmethod
+    def _save_intermediate_step(
+        radar_data: np.ndarray,
+        save_intermediate: bool,
+        save_dir: Optional[Path],
+        use_zarr: bool,
+        step_name: str,
+        description: str = '',
+        base_filename: str = 'sar_processing',
+        compression_level: int = 9,
+        backend: str = 'numpy',
+        verbose: bool = False
+    ) -> None:
+        """Save current radar data as an intermediate step.
+        
+        Args:
+            radar_data: The radar data array to save.
+            save_intermediate: Whether intermediate saving is enabled.
+            save_dir: Directory path for saving intermediate results.
+            use_zarr: Whether to use Zarr format.
+            step_name: Name identifier for the processing step.
+            description: Optional description of the step.
+            base_filename: Base filename for saved files.
+            compression_level: Compression level for Zarr files (0-9).
+            backend: Processing backend used.
+            verbose: Whether to print verbose output.
+        """
+        if not save_intermediate or save_dir is None:
+            return
+        
+        if use_zarr:
+            SteppedRDA._save_zarr_step(
+                radar_data, save_dir, step_name, description, base_filename,
+                compression_level, backend, verbose
+            )
+        else:
+            SteppedRDA._save_pickle_step(
+                radar_data, save_dir, step_name, description, base_filename, verbose
+            )
+    
+    @staticmethod
+    def _save_zarr_step(
+        radar_data: np.ndarray,
+        save_dir: Path,
+        step_name: str,
+        description: str = '',
+        base_filename: str = 'sar_processing',
+        compression_level: int = 9,
+        backend: str = 'numpy',
+        verbose: bool = False
+    ) -> None:
+        """Save step as compressed Zarr file.
+        
+        Args:
+            radar_data: The radar data array to save.
+            save_dir: Directory path for saving.
+            step_name: Name identifier for the processing step.
+            description: Optional description of the step.
+            base_filename: Base filename for saved files.
+            compression_level: Compression level for Zarr files (0-9).
+            backend: Processing backend used.
+            verbose: Whether to print verbose output.
+        """
+        zarr_filename = f'{base_filename}_{step_name}.zarr'
+        zarr_path = save_dir / zarr_filename
+        
+        try:
+            # Remove existing zarr store if it exists
+            if zarr_path.exists():
+                import shutil
+                shutil.rmtree(zarr_path)
+            
+            # Get data as numpy array for consistent handling
+            if hasattr(radar_data, 'cpu'):  # PyTorch tensor
+                data_to_save = radar_data.cpu().numpy()
+            else:
+                data_to_save = np.asarray(radar_data)
+            
+            # Create Zarr array with maximum compression
+            compressor = SteppedRDA._get_zarr_compressor(compression_level)
+            
+            # Determine optimal chunk size (typically 1/8 to 1/4 of each dimension)
+            chunk_size = (
+                max(1, data_to_save.shape[0] // 8),
+                max(1, data_to_save.shape[1] // 8)
+            )
+            
+            # Create the zarr array with zarr_format=2 for compressor compatibility
+            z = zarr.open(
+                str(zarr_path),
+                mode='w',
+                shape=data_to_save.shape,
+                dtype=data_to_save.dtype,
+                chunks=chunk_size,
+                compressor=compressor,
+                zarr_format=2
+            )
+            
+            # Save the data
+            z[:] = data_to_save
+            
+            # Save metadata as attributes
+            z.attrs['step_name'] = step_name
+            z.attrs['description'] = description
+            z.attrs['data_shape'] = data_to_save.shape
+            z.attrs['data_dtype'] = str(data_to_save.dtype)
+            z.attrs['compression_level'] = compression_level
+            z.attrs['processing_backend'] = backend
+            
+            # Calculate compression ratio
+            uncompressed_size = data_to_save.nbytes
+            compressed_size = SteppedRDA._get_zarr_size(zarr_path)
+            compression_ratio = uncompressed_size / compressed_size if compressed_size > 0 else 1.0
+            
+            if verbose:
+                print(f'Saved {step_name}: {zarr_path}')
+                if description:
+                    print(f'  Description: {description}')
+                print(f'  Data shape: {data_to_save.shape}')
+                print(f'  Data type: {data_to_save.dtype}')
+                print(f'  Chunk size: {chunk_size}')
+                print(f'  Uncompressed size: {uncompressed_size / 1024**3:.2f} GB')
+                print(f'  Compressed size: {compressed_size / 1024**3:.2f} GB')
+                print(f'  Compression ratio: {compression_ratio:.2f}x')
+                
+        except Exception as e:
+            print(f'⚠️  Failed to save {step_name} as Zarr: {str(e)}')
+            # Fallback to pickle
+            if verbose:
+                print('  Falling back to pickle format...')
+            SteppedRDA._save_pickle_step(
+                radar_data, save_dir, step_name, description, base_filename, verbose
+            )
+    
+    @staticmethod
+    def _save_pickle_step(
+        radar_data: np.ndarray,
+        save_dir: Path,
+        step_name: str,
+        description: str = '',
+        base_filename: str = 'sar_processing',
+        verbose: bool = False
+    ) -> None:
+        """Save step as pickle file (fallback method).
+        
+        Args:
+            radar_data: The radar data array to save.
+            save_dir: Directory path for saving.
+            step_name: Name identifier for the processing step.
+            description: Optional description of the step.
+            base_filename: Base filename for saved files.
+            verbose: Whether to print verbose output.
+        """
+        filename = f'{base_filename}_{step_name}.pkl'
+        save_path = save_dir / filename
+        
+        try:
+            dump(radar_data, save_path)
+            if verbose:
+                print(f'Saved {step_name}: {save_path}')
+                if description:
+                    print(f'  Description: {description}')
+                print(f'  Data shape: {radar_data.shape}')
+        except Exception as e:
+            print(f'⚠️  Failed to save {step_name}: {str(e)}')
+    @staticmethod
+    def _get_zarr_compressor(compression_level: int) -> Any:
+        """Get the optimal Zarr compressor configuration.
+        
+        Args:
+            compression_level: Compression level (0-9).
+            
+        Returns:
+            Configured compressor for maximum compression of complex SAR data.
+        """
+        # Use Blosc with LZ4HC algorithm for best compression on complex data
+        # Ensure compatibility with different zarr formats
+        return numcodecs.Blosc(
+            cname='lz4hc',  # LZ4HC provides good compression for SAR data
+            clevel=compression_level,
+            shuffle=numcodecs.Blosc.BITSHUFFLE,  # Bit shuffle for better compression
+            blocksize=0  # Auto-select optimal block size
+        )
+
+    
+    @staticmethod
+    def _get_zarr_size(zarr_path: Path) -> int:
+        """Calculate total size of Zarr store on disk.
+        
+        Args:
+            zarr_path: Path to Zarr store.
+            
+        Returns:
+            Total size in bytes.
+        """
+        total_size = 0
+        try:
+            for file_path in zarr_path.rglob('*'):
+                if file_path.is_file():
+                    total_size += file_path.stat().st_size
+        except Exception:
+            # If we can't calculate size, return 0
+            pass
+        return total_size
+    
+    def load_step(self, step_name: str) -> np.ndarray:
+        """Load a previously saved processing step.
+        
+        Args:
+            step_name: Name of the step to load.
+            
+        Returns:
+            Loaded radar data array.
+            
+        Raises:
+            FileNotFoundError: If the step file doesn't exist.
+            ValueError: If unable to load the file.
+        """
+        if self.save_dir is None:
+            raise ValueError('No save directory configured')
+        
+        # Try Zarr first, then pickle
+        zarr_path = self.save_dir / f'{self.base_filename}_{step_name}.zarr'
+        pickle_path = self.save_dir / f'{self.base_filename}_{step_name}.pkl'
+        
+        if zarr_path.exists() and self.use_zarr:
+            try:
+                z = zarr.open(str(zarr_path), mode='r')
+                data = np.array(z[:])  # Load into memory
+                
+                if self._verbose:
+                    print(f'Loaded {step_name} from Zarr: {zarr_path}')
+                    print(f'  Shape: {data.shape}')
+                    print(f'  Type: {data.dtype}')
+                    if 'description' in z.attrs:
+                        print(f'  Description: {z.attrs["description"]}')
+                
+                return data
+                
+            except Exception as e:
+                if self._verbose:
+                    print(f'Failed to load Zarr file {zarr_path}: {str(e)}')
+                    print('Trying pickle fallback...')
+        
+        if pickle_path.exists():
+            try:
+                with open(pickle_path, 'rb') as f:
+                    data = pickle.load(f)
+                
+                if self._verbose:
+                    print(f'Loaded {step_name} from pickle: {pickle_path}')
+                
+                return np.asarray(data)
+                
+            except Exception as e:
+                raise ValueError(f'Failed to load pickle file {pickle_path}: {str(e)}') from e
+        
+        raise FileNotFoundError(f'No saved file found for step "{step_name}"')
+    
+    def list_saved_files(self) -> List[Path]:
+        """List all saved intermediate files.
+        
+        Returns:
+            List of Path objects for saved intermediate files.
+        """
+        if not self.save_intermediate or self.save_dir is None:
+            return []
+        
+        saved_files = []
+        
+        # Add Zarr files
+        zarr_files = list(self.save_dir.glob(f'{self.base_filename}_*.zarr'))
+        saved_files.extend(zarr_files)
+        
+        # Add pickle files
+        pickle_files = list(self.save_dir.glob(f'{self.base_filename}_*.pkl'))
+        saved_files.extend(pickle_files)
+        
+        return sorted(saved_files)
+    
+    def get_compression_stats(self) -> Dict[str, Dict[str, Any]]:
+        """Get compression statistics for all saved Zarr files.
+        
+        Returns:
+            Dictionary with compression stats for each saved step.
+        """
+        if not self.use_zarr or self.save_dir is None:
+            return {}
+        
+        stats = {}
+        zarr_files = self.save_dir.glob(f'{self.base_filename}_*.zarr')
+        
+        for zarr_path in zarr_files:
+            try:
+                z = zarr.open(str(zarr_path), mode='r')
+                compressed_size = self._get_zarr_size(zarr_path)
+                uncompressed_size = z.size * z.dtype.itemsize
+                
+                step_name = zarr_path.stem.replace(f'{self.base_filename}_', '')
+                
+                stats[step_name] = {
+                    'shape': z.shape,
+                    'dtype': str(z.dtype),
+                    'chunks': z.chunks,
+                    'uncompressed_size_gb': uncompressed_size / 1024**3,
+                    'compressed_size_gb': compressed_size / 1024**3,
+                    'compression_ratio': uncompressed_size / compressed_size if compressed_size > 0 else 1.0,
+                    'compressor': str(z.compressor) if hasattr(z, 'compressor') else 'unknown'
+                }
+                
+            except Exception as e:
+                if self._verbose:
+                    print(f'Warning: Could not get stats for {zarr_path}: {str(e)}')
+        
+        return stats
+    
+    def print_compression_summary(self) -> None:
+        """Print a summary of compression statistics for all saved files."""
+        stats = self.get_compression_stats()
+        
+        if not stats:
+            print('No compression statistics available')
+            return
+        
+        print('\n=== Compression Summary ===')
+        total_uncompressed = 0
+        total_compressed = 0
+        
+        for step_name, step_stats in stats.items():
+            uncompressed_gb = step_stats['uncompressed_size_gb']
+            compressed_gb = step_stats['compressed_size_gb']
+            ratio = step_stats['compression_ratio']
+            
+            total_uncompressed += uncompressed_gb
+            total_compressed += compressed_gb
+            
+            print(f'{step_name}:')
+            print(f'  Shape: {step_stats["shape"]}')
+            print(f'  Uncompressed: {uncompressed_gb:.2f} GB')
+            print(f'  Compressed: {compressed_gb:.2f} GB')
+            print(f'  Ratio: {ratio:.2f}x')
+            print()
+        
+        overall_ratio = total_uncompressed / total_compressed if total_compressed > 0 else 1.0
+        print(f'Overall totals:')
+        print(f'  Uncompressed: {total_uncompressed:.2f} GB')
+        print(f'  Compressed: {total_compressed:.2f} GB')
+        print(f'  Overall ratio: {overall_ratio:.2f}x')
+        print(f'  Space saved: {total_uncompressed - total_compressed:.2f} GB')

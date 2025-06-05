@@ -11,7 +11,6 @@ for SAR focusing, including optimized and simplified versions.
 def simple_rda():
     """Simple Range-Doppler Algorithm implementation."""
     # Import from core for now
-    from ..core.rda_simple import *
     pass
 
 __all__ = [
