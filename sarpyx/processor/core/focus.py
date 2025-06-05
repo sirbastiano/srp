@@ -364,15 +364,23 @@ class CoarseRDA:
         """
         # Store original shape for verification
         original_shape = self.radar_data.shape
-        
+        if self._verbose:
+            print(f'Original radar data shape: {original_shape}')
         # Ensure data is contiguous for better performance
         # self.radar_data = np.ascontiguousarray(self.radar_data)
         
         # FFT each range line (axis=1) - no padding to preserve dimensions
+        if self._verbose:
+            print(f'Performing FFT along range dimension (axis=1)...')
         self.radar_data = np.fft.fft(self.radar_data, axis=1)
-        
+        if self._verbose:
+            print(f'First FFT along range dimension completed, shape: {self.radar_data.shape}')
         # FFT each azimuth line (axis=0) with fftshift
+        if self._verbose:
+            print(f'Performing FFT along azimuth dimension (axis=0) with fftshift...')
         self.radar_data = np.fft.fftshift(np.fft.fft(self.radar_data, axis=0), axes=0)
+        if self._verbose:
+            print(f'Second FFT along azimuth dimension completed, shape: {self.radar_data.shape}')
         
         # Verify shape preservation
         assert self.radar_data.shape == original_shape, \
@@ -381,6 +389,8 @@ class CoarseRDA:
     def _fft2d_custom(self, executors: int) -> None:
         """Perform 2D FFT using custom backend."""
         original_shape = self.radar_data.shape
+        if self._verbose:
+            print(f'Performing custom FFT with {executors} executors...')
         self.radar_data = perform_fft_custom(self.radar_data, num_slices=executors)
         
         # Verify shape preservation
@@ -1055,11 +1065,12 @@ class CoarseRDA:
             f'Initial data shape {initial_shape} does not match expected {expected_shape}'
         
         # Step 1: Get padding value (for legacy compatibility only)
-        w_pad = getattr(self, 'replica_len', 0)
+        # w_pad = getattr(self, 'replica_len', 0)
         original_w = initial_shape[1]
         
         if self._verbose:
-            print(f'Processing with w_pad={w_pad}, original_w={original_w}')
+            # print(f'Processing with w_pad={w_pad}, original_w={original_w}')
+            print(f'Processing with original_w={original_w}')
         
         # Step 2: 2D FFT transformation (preserves dimensions)
         self.fft2d()
