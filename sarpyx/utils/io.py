@@ -122,29 +122,3 @@ def iterNodes(root, val_dict: dict) -> dict:
     return val_dict
 
 
-def mode_identifier(product_name: Union[str, Path]) -> str:
-    """Identifies the product type based on the product name.
-
-    Args:
-        product_name: The product name string or Path object.
-
-    Returns:
-        Product type identifier ('SAO', 'CSK', or 'SEN').
-
-    Examples:
-        >>> mode_identifier("OPER_SAR_123")
-        'SAO'
-        >>> mode_identifier("CSK_DATA_001")
-        'CSK'
-        >>> mode_identifier(Path("S1A_IW_SLC_1SDV_20230101.zip"))
-        'SEN'
-    """
-    if isinstance(product_name, Path):
-        product_name = product_name.stem
-
-    if 'OPER' in product_name:
-        return 'SAO'
-    elif product_name.startswith('C'):
-        return 'CSK'
-    else:
-        return 'SEN'  # Assuming Sentinel-1 otherwise

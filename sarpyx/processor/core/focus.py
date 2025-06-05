@@ -22,7 +22,7 @@ from os import environ
 from .code2physical import range_dec_to_sample_rate
 from .transforms import perform_fft_custom 
 from . import constants as cnst
-from ..utils.io import dump
+from ..utils.viz import dump
 
 environ['OMP_NUM_THREADS'] = '12' # Set OpenMP threads for parallel processing
 
@@ -1065,11 +1065,12 @@ class CoarseRDA:
             f'Initial data shape {initial_shape} does not match expected {expected_shape}'
         
         # Step 1: Get padding value (for legacy compatibility only)
-        # w_pad = getattr(self, 'replica_len', 0)
+        w_pad = getattr(self, 'replica_len', 0)
+        w_pad = 0
         original_w = initial_shape[1]
         
         if self._verbose:
-            # print(f'Processing with w_pad={w_pad}, original_w={original_w}')
+            print(f'Processing with w_pad={w_pad}, original_w={original_w}')
             print(f'Processing with original_w={original_w}')
         
         # Step 2: 2D FFT transformation (preserves dimensions)

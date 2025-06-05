@@ -5,8 +5,8 @@ This submodule contains autofocus algorithms, quality metrics, and
 compression techniques for SAR image focusing and optimization.
 """
 
-from .metrics import *
-from .compressor import *
+from ..utils.metrics import *
+from .mbautofocus import *
 from .constants import *
 
 __all__ = [
