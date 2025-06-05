@@ -1,6 +1,7 @@
-"""
-Utilities module for sarpyx package.
-This module provides helper functions and classes for the sarpyx package.
+"""Utilities module for sarpyx package.
+
+This module provides helper functions and classes for the sarpyx package,
+including visualization tools and image processing utilities.
 """
 
 # Import key functions and classes to make them available at the package level

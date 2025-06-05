@@ -18,8 +18,8 @@ Legacy:
 
 # Import main submodules
 from . import core
-# from . import autofocus  
-# from . import algorithms
+from . import autofocus  
+from . import algorithms
 from . import data
 from . import utils
 
