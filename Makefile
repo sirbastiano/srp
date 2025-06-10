@@ -15,3 +15,6 @@ pdm_install_deps:
 
 setup: clean_venv install_pdm pdm_install_deps
 	@echo 'Setup complete.'
+
+up:
+	docker compose up --build

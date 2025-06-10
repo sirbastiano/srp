@@ -1,0 +1,36 @@
+services:
+  sarpyx:
+    build: .
+    container_name: sarpyx-processor
+    volumes:
+      - ./data:/data
+      - ./output:/output
+      - ./src:/workspace/src
+    working_dir: /workspace
+    environment:
+      - JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk
+      - LD_LIBRARY_PATH=.:/usr/lib/jvm/java-8-openjdk/jre/lib/amd64/server/
+      - LC_ALL=en_US.UTF-8
+      - PATH=${PATH}:/usr/local/snap/bin
+    stdin_open: true
+    tty: true
+    command: /bin/sh
+
+  # sarpyx-dev:
+  #   build: .
+  #   container_name: sarpyx-dev
+  #   volumes:
+  #     - .:/workspace
+  #     - ./data:/data
+  #     - ./output:/output
+  #   working_dir: /workspace
+  #   environment:
+  #     - JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk
+  #     - LD_LIBRARY_PATH=.:/usr/lib/jvm/java-8-openjdk/jre/lib/amd64/server/
+  #     - LC_ALL=en_US.UTF-8
+  #     - PATH=${PATH}:/usr/local/snap/bin
+  #   ports:
+  #     - "8888:8888"
+  #   stdin_open: true
+  #   tty: true
+  #   command: /bin/sh

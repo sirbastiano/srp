@@ -11,7 +11,6 @@ import numpy as np
 from scipy.interpolate import interp1d
 import math
 from pathlib import Path 
-import matplotlib.pyplot as plt
 import copy 
 import gc
 from functools import wraps
@@ -74,47 +73,6 @@ def print_memory() -> None:
     """Print current RAM memory usage percentage."""
     print(f'RAM memory usage: {psutil.virtual_memory().percent}%')
 
-def memory_efficient_decorator(func: Callable) -> Callable:
-    """Decorator for memory-efficient operations with monitoring.
-    
-    Args:
-        func: The function to wrap.
-        
-    Returns:
-        The wrapped function with memory monitoring and cleanup.
-    """
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        # Monitor memory before
-        initial_memory = psutil.virtual_memory().percent
-        
-        # Execute function
-        result = func(*args, **kwargs)
-        
-        # Force garbage collection
-        gc.collect()
-        
-        # Monitor memory after
-        final_memory = psutil.virtual_memory().percent
-        
-        # Print memory change if verbose
-        if hasattr(args[0], '_verbose') and args[0]._verbose:
-            print(f'Memory usage: {initial_memory:.1f}% -> {final_memory:.1f}% '
-                  f'(Δ{final_memory - initial_memory:+.1f}%)')
-        
-        return result
-    return wrapper
-
-def cleanup_variables(*variables: Any) -> None:
-    """Explicitly delete variables and run garbage collection.
-    
-    Args:
-        *variables: Variables to delete.
-    """
-    for var in variables:
-        del var
-    gc.collect()
-
 def initialize_params(
     device: Optional[torch.device] = None,
     slant_range_vec: Optional[np.ndarray] = None,
@@ -139,47 +97,6 @@ def initialize_params(
         Dictionary containing all parameters.
     """
     return {key: value for key, value in locals().items()}
-
-def multiply_inplace(
-    a: Union[np.ndarray, torch.Tensor], 
-    b: Union[np.ndarray, torch.Tensor]
-) -> Union[np.ndarray, torch.Tensor]:
-    """Multiply two arrays element-wise in-place with broadcasting support.
-    
-    Args:
-        a: First array (modified in-place).
-        b: Second array.
-        
-    Returns:
-        Reference to modified first array.
-        
-    Raises:
-        ValueError: If arrays have incompatible shapes for broadcasting.
-    """
-    if hasattr(a, 'shape') and hasattr(b, 'shape'):
-        # Check if shapes are compatible for broadcasting
-        if a.shape != b.shape and b.size != 1 and a.size != 1:
-            # For 2D array * 1D array, the 1D array should match one of the 2D dimensions
-            if len(a.shape) == 2 and len(b.shape) == 1:
-                if b.shape[0] == a.shape[1]:
-                    # Broadcasting along range dimension - use numpy broadcasting
-                    pass  # NumPy will handle this automatically
-                elif b.shape[0] == a.shape[0]:
-                    # Need to reshape for azimuth dimension broadcasting
-                    b = b.reshape(-1, 1)
-                else:
-                    raise ValueError(f'1D array length ({b.shape[0]}) does not match either dimension of 2D array {a.shape}')
-    
-    # Perform in-place multiplication
-    try:
-        if isinstance(a, np.ndarray):
-            np.multiply(a, b, out=a)
-        else:  # torch tensor
-            a.mul_(b)
-        return a
-    except (ValueError, RuntimeError) as e:
-        raise ValueError(f'Arrays have incompatible shapes for in-place broadcasting: {a.shape} and {b.shape}. '
-                       f'Original error: {str(e)}') from e
 
 def multiply(
     a: Union[np.ndarray, torch.Tensor], 
@@ -229,9 +146,9 @@ def multiply(
 
 # -------- Processing Class ----------
 class CoarseRDA:
-    """Memory-efficient Coarse Range Doppler Algorithm processor for SAR data.
+    """Coarse Range Doppler Algorithm processor for SAR data.
     
-    This class implements a memory-optimized coarse Range Doppler Algorithm for processing
+    This class implements a coarse Range Doppler Algorithm for processing
     synthetic aperture radar (SAR) data, specifically designed for Sentinel-1 data.
     
     The processing pipeline follows these main steps:
@@ -242,12 +159,6 @@ class CoarseRDA:
     5. Range Cell Migration Correction (RCMC)
     6. Azimuth compression
     7. Final inverse transformations
-    
-    Memory optimizations include:
-    - In-place operations where possible
-    - Explicit memory cleanup
-    - Memory usage monitoring
-    - Efficient data type usage
     """
 
     # ==================== INITIALIZATION METHODS ====================
@@ -256,8 +167,7 @@ class CoarseRDA:
         self, 
         raw_data: Dict[str, Any], 
         verbose: bool = False, 
-        backend: str = 'numpy',
-        memory_efficient: bool = True
+        backend: str = 'numpy'
     ) -> None:
         """Initialize the CoarseRDA processor.
         
@@ -265,14 +175,13 @@ class CoarseRDA:
             raw_data: Dictionary containing 'echo', 'ephemeris', and 'metadata'.
             verbose: Whether to print verbose output.
             backend: Backend to use ('numpy', 'torch', or 'custom').
-            memory_efficient: Whether to enable memory-efficient mode.
             
         Raises:
             ValueError: If invalid backend is specified.
             AssertionError: If required data is missing.
         """
         self._validate_inputs(raw_data, backend)
-        self._initialize_settings(verbose, backend, memory_efficient)
+        self._initialize_settings(verbose, backend)
         self._load_data(raw_data)
         self._setup_backend()
         self._initialize_transmission_replica()
@@ -297,35 +206,25 @@ class CoarseRDA:
         if backend not in valid_backends:
             raise ValueError(f'Backend must be one of {valid_backends}, got {backend}')
 
-    def _initialize_settings(self, verbose: bool, backend: str, memory_efficient: bool) -> None:
+    def _initialize_settings(self, verbose: bool, backend: str) -> None:
         """Initialize processor settings.
         
         Args:
             verbose: Whether to print verbose output.
             backend: Processing backend.
-            memory_efficient: Whether to enable memory-efficient mode.
         """
         self._backend = backend
         self._verbose = verbose
-        self._memory_efficient = memory_efficient
-        
-        if self._verbose:
-            print(f'Memory efficient mode: {"enabled" if memory_efficient else "disabled"}')
 
     def _load_data(self, raw_data: Dict[str, Any]) -> None:
-        """Load and preprocess input data with memory optimization.
+        """Load and preprocess input data.
         
         Args:
             raw_data: Dictionary containing radar data.
         """
-        # Use views instead of copies where possible
         self.radar_data = raw_data['echo']
-        
-        # Create a copy for ephemeris as we need to modify it
         self.ephemeris = raw_data['ephemeris'].copy()
         self.ephemeris['time_stamp'] /= 2**24
-        
-        # Use reference for metadata as we don't modify it
         self.metadata = raw_data['metadata']
         
         # Initialize dimensions - these should remain constant throughout processing
@@ -334,8 +233,6 @@ class CoarseRDA:
         if self._verbose:
             print(f'Loaded radar data with shape: {self.radar_data.shape}')
             print(f'Azimuth lines: {self.len_az_line}, Range lines: {self.len_range_line}')
-            print(f'Data type: {self.radar_data.dtype}')
-            print(f'Memory usage: {self.radar_data.nbytes / 1024**3:.2f} GB')
 
     def _setup_backend(self) -> None:
         """Set up processing backend and device configuration."""
@@ -432,11 +329,10 @@ class CoarseRDA:
 
     # ==================== TRANSFORM METHODS ====================
 
-    @memory_efficient_decorator
     @timing_decorator
     @auto_gc
     def fft2d(self, w_pad: Optional[int] = None, executors: int = 12) -> None:
-        """Perform memory-efficient 2D FFT on radar data in range and azimuth dimensions.
+        """Perform 2D FFT on radar data in range and azimuth dimensions.
 
         Args:
             w_pad: Width padding for range FFT (ignored for dimension preservation).
@@ -447,14 +343,13 @@ class CoarseRDA:
         """
         if self._verbose:
             print(f'FFT input data shape: {self.radar_data.shape}')
-            print_memory()
         
         if self._backend == 'numpy':
-            self._fft2d_numpy_efficient()
+            self._fft2d_numpy()
         elif self._backend == 'custom':
             self._fft2d_custom(executors)
         elif self._backend == 'torch':
-            self._fft2d_torch_efficient()
+            self._fft2d_torch()
         else:
             raise ValueError(f'Backend {self._backend} not supported')
         
@@ -466,97 +361,74 @@ class CoarseRDA:
         if self._verbose:
             print(f'FFT output data shape: {self.radar_data.shape}')
             print('- FFT performed successfully!')
-            print_memory()
 
-    def _fft2d_numpy_efficient(self) -> None:
-        """Perform memory-efficient 2D FFT using NumPy backend preserving original dimensions.
+    def _fft2d_numpy(self) -> None:
+        """Perform 2D FFT using NumPy backend preserving original dimensions.
         
-        Uses in-place operations and memory cleanup for better efficiency.
+        Returns:
+            None
         """
         # Store original shape for verification
         original_shape = self.radar_data.shape
         if self._verbose:
             print(f'Original radar data shape: {original_shape}')
+        # Ensure data is contiguous for better performance
+        # self.radar_data = np.ascontiguousarray(self.radar_data)
         
-        # Ensure data is contiguous and maintain original precision
-        if not self.radar_data.flags.c_contiguous:
-            if self._verbose:
-                print('Making data contiguous...')
-            self.radar_data = np.ascontiguousarray(self.radar_data)
-        
-        # FFT each range line (axis=1) - EXACT SAME as original
+        # FFT each range line (axis=1) - no padding to preserve dimensions
         if self._verbose:
             print(f'Performing FFT along range dimension (axis=1)...')
-        
-        # Use same approach as original - no dtype changes
         self.radar_data = np.fft.fft(self.radar_data, axis=1)
-        
         if self._verbose:
             print(f'First FFT along range dimension completed, shape: {self.radar_data.shape}')
-            print_memory()
-        
-        # FFT each azimuth line (axis=0) with fftshift - EXACT SAME as original
+        # FFT each azimuth line (axis=0) with fftshift
         if self._verbose:
             print(f'Performing FFT along azimuth dimension (axis=0) with fftshift...')
-        
-        # Use same approach as original
         self.radar_data = np.fft.fftshift(np.fft.fft(self.radar_data, axis=0), axes=0)
-        
         if self._verbose:
             print(f'Second FFT along azimuth dimension completed, shape: {self.radar_data.shape}')
-            print_memory()
         
         # Verify shape preservation
         assert self.radar_data.shape == original_shape, \
             f'FFT changed shape from {original_shape} to {self.radar_data.shape}'
 
-    def _fft2d_torch_efficient(self) -> None:
-        """Perform memory-efficient 2D FFT using PyTorch backend preserving dimensions.
+    def _fft2d_custom(self, executors: int) -> None:
+        """Perform 2D FFT using custom backend."""
+        original_shape = self.radar_data.shape
+        if self._verbose:
+            print(f'Performing custom FFT with {executors} executors...')
+        self.radar_data = perform_fft_custom(self.radar_data, num_slices=executors)
         
-        Uses in-place operations where possible.
+        # Verify shape preservation
+        assert self.radar_data.shape == original_shape, \
+            f'Custom FFT changed shape from {original_shape} to {self.radar_data.shape}'
+
+    def _fft2d_torch(self) -> None:
+        """Perform 2D FFT using PyTorch backend preserving dimensions.
+        
+        Returns:
+            None
         """
         original_shape = self.radar_data.shape
         
-        if self._verbose:
-            print('Performing memory-efficient PyTorch FFT...')
-            print_memory()
-        
-        # FFT each range line (axis=1) - in-place when possible
-        if self._memory_efficient:
-            temp = torch.fft.fft(self.radar_data, dim=1)
-            self.radar_data.copy_(temp)
-            del temp
-            torch.cuda.empty_cache() if torch.cuda.is_available() else None
-        else:
-            self.radar_data = torch.fft.fft(self.radar_data, dim=1)
+        # FFT each range line (axis=1) - no padding
+        self.radar_data = torch.fft.fft(self.radar_data, dim=1)
         
         # FFT each azimuth line (axis=0) with fftshift
-        if self._memory_efficient:
-            temp = torch.fft.fft(self.radar_data, dim=0)
-            self.radar_data.copy_(temp)
-            del temp
-            
-            temp = torch.fft.fftshift(self.radar_data, dim=0)
-            self.radar_data.copy_(temp)
-            del temp
-            torch.cuda.empty_cache() if torch.cuda.is_available() else None
-        else:
-            self.radar_data = torch.fft.fftshift(
-                torch.fft.fft(self.radar_data, dim=0), 
-                dim=0
-            )
+        self.radar_data = torch.fft.fftshift(
+            torch.fft.fft(self.radar_data, dim=0), 
+            dim=0
+        )
         
         # Verify shape preservation
         assert self.radar_data.shape == original_shape, \
             f'Torch FFT changed shape from {original_shape} to {self.radar_data.shape}'
 
-    @memory_efficient_decorator
     @timing_decorator
     @auto_gc
     def ifft_range(self) -> None:
-        """Perform memory-efficient inverse FFT along range dimension."""
+        """Perform inverse FFT along range dimension."""
         if self._backend == 'numpy':
-            # Use EXACT SAME approach as original
             self.radar_data = np.fft.ifftshift(np.fft.ifft(self.radar_data, axis=1), axes=1)
         elif self._backend == 'torch':
             self.radar_data = torch.fft.ifft(self.radar_data, dim=1)
@@ -564,13 +436,11 @@ class CoarseRDA:
         else:
             raise ValueError(f'Unsupported backend: {self._backend}')
 
-    @memory_efficient_decorator
     @timing_decorator
     @auto_gc
     def ifft_azimuth(self) -> None:
-        """Perform memory-efficient inverse FFT along azimuth dimension."""
+        """Perform inverse FFT along azimuth dimension."""
         if self._backend == 'numpy':
-            # Use EXACT SAME approach as original
             self.radar_data = np.fft.ifft(self.radar_data, axis=0)
         elif self._backend == 'torch':
             self.radar_data = torch.fft.ifft(self.radar_data, dim=0)
@@ -579,11 +449,10 @@ class CoarseRDA:
 
     # ==================== FILTER GENERATION METHODS ====================
 
-    @memory_efficient_decorator
     @timing_decorator
     @auto_gc
     def get_range_filter(self, pad_w: int = 0) -> np.ndarray:
-        """Compute memory-efficient range filter for radar data compression.
+        """Compute range filter for radar data compression.
     
         Args:
             pad_w: Width padding (ignored - filter always matches radar data dimensions).
@@ -602,7 +471,7 @@ class CoarseRDA:
             print(f'Range dimension: {current_range_dim}')
             print(f'TX replica length: {self.num_tx_vals}')
         
-        # Create range filter with exact radar data range dimension - KEEP ORIGINAL PRECISION
+        # Create range filter with exact radar data range dimension
         range_filter = np.zeros(current_range_dim, dtype=complex)
         
         # Place replica in center of filter
@@ -623,23 +492,22 @@ class CoarseRDA:
             replica_end = replica_start + current_range_dim
             range_filter[:] = self.tx_replica[replica_start:replica_end]
         
-        # Apply FFT and conjugate - EXACT SAME as original
-        range_filter = np.conjugate(np.fft.fft(range_filter))
+        # Apply FFT and conjugate
+        filter_result = np.conjugate(np.fft.fft(range_filter))
         
         if self._verbose:
-            print(f'Range filter shape: {range_filter.shape}')
+            print(f'Range filter shape: {filter_result.shape}')
         
         # Ensure filter exactly matches radar data range dimension
-        assert range_filter.shape[0] == current_range_dim, \
-            f'Filter shape mismatch: expected {current_range_dim}, got {range_filter.shape[0]}'
+        assert filter_result.shape[0] == current_range_dim, \
+            f'Filter shape mismatch: expected {current_range_dim}, got {filter_result.shape[0]}'
         
-        return range_filter
+        return filter_result
 
-    @memory_efficient_decorator
     @timing_decorator
     @auto_gc
     def get_rcmc(self) -> np.ndarray:
-        """Calculate memory-efficient Range Cell Migration Correction filter.
+        """Calculate Range Cell Migration Correction filter.
 
         Returns:
             RCMC filter array matching radar data dimensions.
@@ -705,8 +573,9 @@ class CoarseRDA:
         if self._verbose:
             print(f'RCMC shift shape: {rcmc_shift.shape}')
         
-        # IMPORTANT: Use same calculation method as original - no chunked processing
         # Broadcasting for final filter calculation
+        # range_freq_vals: (current_range_dim,), rcmc_shift: (56130,)
+        # Need to reshape for proper broadcasting
         range_freq_2d = range_freq_vals[np.newaxis, :]  # (1, current_range_dim)
         rcmc_shift_2d = rcmc_shift[:, np.newaxis]       # (56130, 1)
         
@@ -717,11 +586,10 @@ class CoarseRDA:
         
         return rcmc_filter
 
-    @memory_efficient_decorator
     @timing_decorator
-    @auto_gc
+    @auto_gc 
     def get_azimuth_filter(self) -> np.ndarray:
-        """Calculate memory-efficient azimuth compression filter.
+        """Calculate azimuth compression filter.
         
         Returns:
             Azimuth filter array matching radar data dimensions.
@@ -740,12 +608,14 @@ class CoarseRDA:
             if self._verbose:
                 print(f'⚠️  Warning: Current range dim ({current_range_dim}) != slant range vec length ({len(self.slant_range_vec)})')
                 print(f'This should not happen - using original slant range vector')
+            # This should not happen if dimensions are preserved correctly
             current_slant_range_vec = self.slant_range_vec
         else:
             current_slant_range_vec = self.slant_range_vec
         
-        # IMPORTANT: Use same calculation method as original - no chunked processing
         # Broadcasting for azimuth filter calculation
+        # current_slant_range_vec: (range_dim,), self.D: (56130,)
+        # Need to create 2D arrays for proper broadcasting
         slant_range_2d = current_slant_range_vec[np.newaxis, :]  # (1, range_dim)
         D_2d = self.D[:, np.newaxis]                             # (56130, 1)
         
@@ -1179,22 +1049,19 @@ class CoarseRDA:
 
     # ==================== MAIN PROCESSING METHODS ====================
 
-    @memory_efficient_decorator
     @timing_decorator
     @auto_gc
     def data_focus(self) -> None:
-        """Perform memory-efficient complete SAR data focusing using Range Doppler Algorithm.
+        """Perform complete SAR data focusing using Range Doppler Algorithm.
         
-        This method ensures radar data dimensions remain constant throughout processing
-        while minimizing memory usage.
+        This method ensures radar data dimensions remain constant throughout processing.
         
         Raises:
             RuntimeError: If data dimensions change unexpectedly during processing.
         """
         if self._verbose:
-            print('Starting memory-efficient SAR data focusing...')
+            print('Starting SAR data focusing...')
             print(f'Initial radar data shape: {self.radar_data.shape}')
-            print_memory()
         
         # Store initial shape for verification
         initial_shape = self.radar_data.shape
@@ -1204,10 +1071,12 @@ class CoarseRDA:
             f'Initial data shape {initial_shape} does not match expected {expected_shape}'
         
         # Step 1: Get padding value (for legacy compatibility only)
+        w_pad = getattr(self, 'replica_len', 0)
         w_pad = 0
         original_w = initial_shape[1]
         
         if self._verbose:
+            print(f'Processing with w_pad={w_pad}, original_w={original_w}')
             print(f'Processing with original_w={original_w}')
         
         # Step 2: 2D FFT transformation (preserves dimensions)
@@ -1216,17 +1085,17 @@ class CoarseRDA:
             f'FFT changed data shape from {initial_shape} to {self.radar_data.shape}'
         
         # Step 3: Range compression (preserves dimensions)
-        self._perform_range_compression_efficient(w_pad, original_w)
+        self._perform_range_compression(w_pad, original_w)
         assert self.radar_data.shape == initial_shape, \
             f'Range compression changed data shape from {initial_shape} to {self.radar_data.shape}'
         
         # Step 4: Range Cell Migration Correction (preserves dimensions)
-        self._perform_rcmc_efficient()
+        self._perform_rcmc()
         assert self.radar_data.shape == initial_shape, \
             f'RCMC changed data shape from {initial_shape} to {self.radar_data.shape}'
         
         # Step 5: Azimuth compression (preserves dimensions)
-        self._perform_azimuth_compression_efficient()
+        self._perform_azimuth_compression()
         assert self.radar_data.shape == initial_shape, \
             f'Azimuth compression changed data shape from {initial_shape} to {self.radar_data.shape}'
         
@@ -1235,8 +1104,8 @@ class CoarseRDA:
             print(f'Final radar data shape: {self.radar_data.shape}')
             print_memory()
 
-    def _perform_range_compression_efficient(self, w_pad: int, original_w: int) -> None:
-        """Perform memory-efficient range compression step while preserving data dimensions.
+    def _perform_range_compression(self, w_pad: int, original_w: int) -> None:
+        """Perform range compression step while preserving data dimensions.
         
         Args:
             w_pad: Width padding (ignored - dimensions preserved).
@@ -1247,9 +1116,8 @@ class CoarseRDA:
             AssertionError: If dimensions change unexpectedly.
         """
         if self._verbose:
-            print(f'Starting memory-efficient range compression...')
+            print(f'Starting range compression...')
             print(f'Radar data shape: {self.radar_data.shape}')
-            print_memory()
         
         # Store original shape for verification
         original_shape = self.radar_data.shape
@@ -1266,11 +1134,8 @@ class CoarseRDA:
             print(f'Range filter shape: {range_filter.shape}')
             print(f'Applying range compression filter...')
         
-        # Apply range compression filter - USE SAME METHOD AS ORIGINAL
+        # Apply range compression filter
         self.radar_data = multiply(self.radar_data, range_filter)
-        
-        # Cleanup filter
-        cleanup_variables(range_filter)
         
         # Verify dimensions are preserved
         assert self.radar_data.shape == original_shape, \
@@ -1278,39 +1143,24 @@ class CoarseRDA:
         
         if self._verbose:
             print(f'Range compression completed. Data shape: {self.radar_data.shape}')
-            print_memory()
 
-    def _perform_rcmc_efficient(self) -> None:
-        """Perform memory-efficient Range Cell Migration Correction."""
-        if self._verbose:
-            print('Starting memory-efficient RCMC...')
-            print_memory()
-        
+    def _perform_rcmc(self) -> None:
+        """Perform Range Cell Migration Correction."""
         rcmc_filter = self.get_rcmc()
-        
-        # Use SAME METHOD AS ORIGINAL
         self.radar_data = multiply(self.radar_data, rcmc_filter)
-        
-        # Cleanup filter
-        cleanup_variables(rcmc_filter)
         
         # Inverse FFT in range
         self.ifft_range()
-        
-        if self._verbose:
-            print('RCMC completed.')
-            print_memory()
 
-    def _perform_azimuth_compression_efficient(self) -> None:
-        """Perform memory-efficient azimuth compression step.
+    def _perform_azimuth_compression(self) -> None:
+        """Perform azimuth compression step.
         
         Raises:
             ValueError: If array shapes are incompatible.
         """
         if self._verbose:
-            print('Starting memory-efficient azimuth compression...')
+            print('Starting azimuth compression...')
             print(f'Radar data shape before azimuth filter: {self.radar_data.shape}')
-            print_memory()
         
         # Get azimuth filter
         azimuth_filter = self.get_azimuth_filter()
@@ -1318,11 +1168,8 @@ class CoarseRDA:
         if self._verbose:
             print(f'Azimuth filter shape: {azimuth_filter.shape}')
         
-        # Apply azimuth compression - USE SAME METHOD AS ORIGINAL
+        # Apply azimuth compression
         self.radar_data = multiply(self.radar_data, azimuth_filter)
-        
-        # Cleanup filter
-        cleanup_variables(azimuth_filter)
         
         if self._verbose:
             print(f'Radar data shape after azimuth compression: {self.radar_data.shape}')
@@ -1332,9 +1179,9 @@ class CoarseRDA:
         
         if self._verbose:
             print(f'Final radar data shape: {self.radar_data.shape}')
-            print_memory()
 
     # ==================== UTILITY METHODS ====================
+
     @timing_decorator
     def save_file(self, save_path: Union[str, Path]) -> None:
         """Save processed radar data to file.
@@ -1350,12 +1197,612 @@ class CoarseRDA:
     _prompt_tx_replica = _generate_tx_replica
 
 
-
-    # ==================== GRAPHIC METHODS ====================
-    def _display_slice(self, slice=(0, 4000, 0, 4000), vmin=0, vmax=1000, figsize=(12,12)) -> None:
-        """Display a slice of the radar data for visualization."""
+class SteppedRDA(CoarseRDA):
+    """Stepped Range Doppler Algorithm processor with intermediate step saving capability.
+    
+    This class extends CoarseRDA to allow saving of intermediate processing results
+    at key stages as compressed Zarr files for optimal storage and performance.
+    
+    Attributes:
+        save_intermediate: Whether to save intermediate steps.
+        save_dir: Directory path for saving intermediate results.
+        base_filename: Base filename for saved files.
+        compression_level: Compression level for Zarr files (0-9).
+        use_zarr: Whether to use Zarr format for saving.
+    """
+    
+    def __init__(
+        self, 
+        raw_data: Dict[str, Any], 
+        verbose: bool = False, 
+        backend: str = 'numpy',
+        save_intermediate: bool = True,
+        save_dir: Optional[Union[str, Path]] = None,
+        base_filename: str = 'sar_processing',
+        compression_level: int = 9,
+        use_zarr: bool = True
+    ) -> None:
+        """Initialize the SteppedRDA processor.
         
-        plt.figure(figsize=figsize)
-        plt.imshow(np.abs(self.radar_data[slice[0]:slice[1], slice[2]:slice[3]]), vmin=vmin, vmax=vmax, cmap='viridis')
-        plt.axis('off')
-        plt.show()
+        Args:
+            raw_data: Dictionary containing 'echo', 'ephemeris', and 'metadata'.
+            verbose: Whether to print verbose output.
+            backend: Backend to use ('numpy', 'torch', or 'custom').
+            save_intermediate: Whether to save intermediate processing steps.
+            save_dir: Directory path for saving intermediate results.
+            base_filename: Base filename for saved files.
+            compression_level: Compression level for Zarr files (0-9, 9=max compression).
+            use_zarr: Whether to use Zarr format (falls back to pickle if zarr unavailable).
+            
+        Raises:
+            ValueError: If compression_level is not in valid range.
+            ImportError: If zarr is requested but not available.
+        """
+        super().__init__(raw_data, verbose, backend)
+        
+        # Validate compression level
+        if not 0 <= compression_level <= 9:
+            raise ValueError(f'compression_level must be 0-9, got {compression_level}')
+        
+        self.save_intermediate = save_intermediate
+        self.base_filename = base_filename
+        self.compression_level = compression_level
+        
+        # Determine save format
+        if use_zarr and not ZARR_AVAILABLE:
+            if self._verbose:
+                print('Warning: Zarr requested but not available, falling back to pickle')
+            self.use_zarr = False
+        else:
+            self.use_zarr = use_zarr and ZARR_AVAILABLE
+        
+        if save_intermediate:
+            if save_dir is None:
+                save_dir = Path.cwd() / 'sar_intermediate_results'
+            
+            self.save_dir = Path(save_dir)
+            self.save_dir.mkdir(parents=True, exist_ok=True)
+            
+            if self._verbose:
+                format_type = 'Zarr (compressed)' if self.use_zarr else 'Pickle'
+                print(f'Intermediate results will be saved as {format_type} to: {self.save_dir}')
+                if self.use_zarr:
+                    print(f'Zarr compression level: {self.compression_level}')
+        else:
+            self.save_dir = None
+
+    
+    
+    
+    def main(self, save_all_steps: bool = False) -> None:
+
+        """Run the SAR focusing pipeline, saving intermediate results after each step.
+
+        This method performs SAR focusing and saves the radar data after each major processing step.
+        
+        Args:
+            save_all_steps: Whether to save all intermediate steps including raw input and FFT.
+        """
+        if self._verbose:
+            print('Starting SAR STEPPED data focusing...')
+            print(f'Initial radar data shape: {self.radar_data.shape}')
+
+        # Store initial shape for verification
+        initial_shape = self.radar_data.shape
+        expected_shape = (self.len_az_line, self.len_range_line)
+
+        assert initial_shape == expected_shape, \
+            f'Initial data shape {initial_shape} does not match expected {expected_shape}'
+
+        # Step 1: Save raw input (optional)
+        if save_all_steps:
+            self._save_intermediate_step(
+                radar_data=self.radar_data,
+                save_intermediate=self.save_intermediate,
+                save_dir=self.save_dir,
+                use_zarr=self.use_zarr,
+                step_name='raw_input',
+                description='Raw input radar data',
+                base_filename=self.base_filename,
+                compression_level=self.compression_level,
+                backend=self._backend,
+                verbose=self._verbose
+            )
+
+        # Step 2: 2D FFT transformation (preserves dimensions)
+        self.fft2d()
+        if save_all_steps:
+            # Save FFT result in frequency domain (as-is)
+            self._save_intermediate_step(
+                radar_data=self.radar_data,
+                save_intermediate=self.save_intermediate,
+                save_dir=self.save_dir,
+                use_zarr=self.use_zarr,
+                step_name='fft2d',
+                description='After 2D FFT (frequency domain)',
+                base_filename=self.base_filename,
+                compression_level=self.compression_level,
+                backend=self._backend,
+                verbose=self._verbose
+            )
+        assert self.radar_data.shape == initial_shape, \
+            f'FFT changed data shape from {initial_shape} to {self.radar_data.shape}'
+
+        # Step 3: Range compression (preserves dimensions)
+        w_pad = 0
+        original_w = initial_shape[1]
+        self._perform_range_compression(w_pad, original_w)
+        
+        # Save range compression result (converted back to time domain for visualization)
+        self._save_intermediate_step(
+            radar_data=self._ifft2d(self.radar_data),
+            save_intermediate=self.save_intermediate,
+            save_dir=self.save_dir,
+            use_zarr=self.use_zarr,
+            step_name='range_compression',
+            description='After range compression (time domain)',
+            base_filename=self.base_filename,
+            compression_level=self.compression_level,
+            backend=self._backend,
+            verbose=self._verbose
+        )
+        
+        # Verify dimensions are preserved
+        assert self.radar_data.shape == initial_shape, \
+            f'Range compression changed data shape from {initial_shape} to {self.radar_data.shape}'
+
+        # Step 4: Range Cell Migration Correction (preserves dimensions)
+        self._perform_rcmc()
+        self._save_intermediate_step(
+            radar_data=self._ifft2d(self.radar_data),
+            save_intermediate=self.save_intermediate,
+            save_dir=self.save_dir,
+            use_zarr=self.use_zarr,
+            step_name='rcmc',
+            description='After Range Cell Migration Correction (time domain)',
+            base_filename=self.base_filename,
+            compression_level=self.compression_level,
+            backend=self._backend,
+            verbose=self._verbose
+        )
+        assert self.radar_data.shape == initial_shape, \
+            f'RCMC changed data shape from {initial_shape} to {self.radar_data.shape}'
+
+        # Step 5: Azimuth compression (preserves dimensions)
+        self._perform_azimuth_compression()
+        self._save_intermediate_step(
+            radar_data=self._ifft2d(self.radar_data),
+            save_intermediate=self.save_intermediate,
+            save_dir=self.save_dir,
+            use_zarr=self.use_zarr,
+            step_name='azimuth_compression',
+            description='After Azimuth Compression (final focused image)',
+            base_filename=self.base_filename,
+            compression_level=self.compression_level,
+            backend=self._backend,
+            verbose=self._verbose
+        )
+        assert self.radar_data.shape == initial_shape, \
+            f'Azimuth compression changed data shape from {initial_shape} to {self.radar_data.shape}'
+
+        if self._verbose:
+            print('SAR data focusing completed successfully!')
+            print(f'Final radar data shape: {self.radar_data.shape}')
+            print_memory()
+    
+    
+    
+    
+    @auto_gc
+    @staticmethod
+    def _ifft2d(radar_data: np.ndarray, verbose: bool = False) -> np.ndarray:
+        """Perform 2D inverse FFT using NumPy backend, preserving original dimensions.
+
+        Args:
+            radar_data: Input radar data array.
+            verbose: Whether to print verbose output.
+
+        Returns:
+            Output array after 2D inverse FFT.
+
+        Raises:
+            AssertionError: If the shape of radar_data changes during the operation.
+        """
+        assert isinstance(radar_data, np.ndarray), 'radar_data must be a numpy array, got {type(radar_data)}'
+        assert radar_data.ndim == 2, f'radar_data must be 2D array, got shape {radar_data.shape}'
+        assert radar_data.dtype == np.complex64 or radar_data.dtype == np.complex128, \
+            f'radar_data must be complex type, got {radar_data.dtype}'
+        # Store original shape for verification
+        original_shape = radar_data.shape
+        
+        if verbose:
+            print(f'Original radar data shape: {original_shape}')
+            print('Performing in-place inverse FFT along azimuth dimension (axis=0) with ifftshift...')
+        
+        # In-place operations to reduce memory usage - use out parameter where possible
+        # First, ifftshift along azimuth (axis=0) - this creates a view when possible
+        radar_data = np.fft.ifftshift(radar_data, axes=0)
+        
+        # Force garbage collection of any temporary arrays
+        gc.collect()
+        
+        # Then inverse FFT along azimuth (axis=0) - overwrite input array
+        radar_data[:] = np.fft.ifft(radar_data, axis=0)
+        
+        if verbose:
+            print(f'First inverse FFT along azimuth completed, shape: {radar_data.shape}')
+            print('Performing inverse FFT along range dimension (axis=1)...')
+        
+        # Force garbage collection before next operation
+        gc.collect()
+        
+        # Inverse FFT along range (axis=1) - overwrite input array
+        radar_data[:] = np.fft.ifft(radar_data, axis=1)
+        
+        if verbose:
+            print(f'Second inverse FFT along range completed, shape: {radar_data.shape}')
+        
+        # Verify shape preservation
+        assert radar_data.shape == original_shape, \
+            f'IFFT changed shape from {original_shape} to {radar_data.shape}'
+        
+        return radar_data
+    
+    
+    def _get_instance_zarr_compressor(self) -> Any:
+        """Get the optimal Zarr compressor configuration for instance method.
+        
+        Returns:
+            Configured compressor for maximum compression of complex SAR data.
+        """
+        # Use Blosc with LZ4HC algorithm for best compression on complex data
+        return numcodecs.Blosc(
+            cname='lz4hc',  # LZ4HC provides good compression for SAR data
+            clevel=self.compression_level,
+            shuffle=numcodecs.Blosc.BITSHUFFLE,  # Bit shuffle for better compression
+            blocksize=0  # Auto-select optimal block size
+        )
+    
+    @staticmethod
+    def _save_intermediate_step(
+        radar_data: np.ndarray,
+        save_intermediate: bool,
+        save_dir: Optional[Path],
+        use_zarr: bool,
+        step_name: str,
+        description: str = '',
+        base_filename: str = 'sar_processing',
+        compression_level: int = 9,
+        backend: str = 'numpy',
+        verbose: bool = False
+    ) -> None:
+        """Save current radar data as an intermediate step.
+        
+        Args:
+            radar_data: The radar data array to save.
+            save_intermediate: Whether intermediate saving is enabled.
+            save_dir: Directory path for saving intermediate results.
+            use_zarr: Whether to use Zarr format.
+            step_name: Name identifier for the processing step.
+            description: Optional description of the step.
+            base_filename: Base filename for saved files.
+            compression_level: Compression level for Zarr files (0-9).
+            backend: Processing backend used.
+            verbose: Whether to print verbose output.
+        """
+        if not save_intermediate or save_dir is None:
+            return
+        
+        if use_zarr:
+            SteppedRDA._save_zarr_step(
+                radar_data, save_dir, step_name, description, base_filename,
+                compression_level, backend, verbose
+            )
+        else:
+            SteppedRDA._save_pickle_step(
+                radar_data, save_dir, step_name, description, base_filename, verbose
+            )
+    
+    @staticmethod
+    def _save_zarr_step(
+        radar_data: np.ndarray,
+        save_dir: Path,
+        step_name: str,
+        description: str = '',
+        base_filename: str = 'sar_processing',
+        compression_level: int = 9,
+        backend: str = 'numpy',
+        verbose: bool = False
+    ) -> None:
+        """Save step as compressed Zarr file with custom 5000x5000 chunking."""
+        zarr_filename = f'{base_filename}_{step_name}.zarr'
+        zarr_path = save_dir / zarr_filename
+        
+        try:
+            # Remove existing zarr store if it exists
+            if zarr_path.exists():
+                import shutil
+                shutil.rmtree(zarr_path)
+            
+            # Get data as numpy array for consistent handling
+            if hasattr(radar_data, 'cpu'):  # PyTorch tensor
+                data_to_save = radar_data.cpu().numpy()
+            else:
+                data_to_save = np.asarray(radar_data)
+            
+            # Create Zarr array with maximum compression
+            compressor = numcodecs.Blosc(
+                cname='lz4hc',
+                clevel=compression_level,
+                shuffle=numcodecs.Blosc.BITSHUFFLE,
+                blocksize=0
+            )
+            
+            # Use 5000x5000 chunking as requested
+            chunk_size = (
+                min(5000, data_to_save.shape[0]),
+                min(5000, data_to_save.shape[1])
+            )
+            
+            # Create the zarr array
+            z = zarr.open(
+                str(zarr_path),
+                mode='w',
+                shape=data_to_save.shape,
+                dtype=data_to_save.dtype,
+                chunks=chunk_size,
+                compressor=compressor
+            )
+            
+            # Save the data
+            z[:] = data_to_save
+            
+            # Save metadata as attributes
+            z.attrs['step_name'] = step_name
+            z.attrs['description'] = description
+            z.attrs['data_shape'] = data_to_save.shape
+            z.attrs['data_dtype'] = str(data_to_save.dtype)
+            z.attrs['compression_level'] = compression_level
+            z.attrs['processing_backend'] = backend
+            z.attrs['chunk_size'] = chunk_size
+            
+            # Calculate compression ratio
+            uncompressed_size = data_to_save.nbytes
+            compressed_size = sum(f.stat().st_size for f in zarr_path.rglob('*') if f.is_file())
+            compression_ratio = uncompressed_size / compressed_size if compressed_size > 0 else 1.0
+            
+            if verbose:
+                print(f'Saved {step_name}: {zarr_path}')
+                if description:
+                    print(f'  Description: {description}')
+                print(f'  Data shape: {data_to_save.shape}')
+                print(f'  Data type: {data_to_save.dtype}')
+                print(f'  Chunk size: {chunk_size}')
+                print(f'  Uncompressed size: {uncompressed_size / 1024**3:.2f} GB')
+                print(f'  Compressed size: {compressed_size / 1024**3:.2f} GB')
+                print(f'  Compression ratio: {compression_ratio:.2f}x')
+                
+        except Exception as e:
+            print(f'⚠️  Failed to save {step_name} as Zarr: {str(e)}')
+            # Fallback to pickle
+            if verbose:
+                print('  Falling back to pickle format...')
+            pickle_filename = f'{base_filename}_{step_name}.pkl'
+            pickle_path = save_dir / pickle_filename
+            joblib.dump(radar_data, pickle_path)
+    
+    @staticmethod
+    def _save_pickle_step(
+        radar_data: np.ndarray,
+        save_dir: Path,
+        step_name: str,
+        description: str = '',
+        base_filename: str = 'sar_processing',
+        verbose: bool = False
+    ) -> None:
+        """Save step as pickle file (fallback method).
+        
+        Args:
+            radar_data: The radar data array to save.
+            save_dir: Directory path for saving.
+            step_name: Name identifier for the processing step.
+            description: Optional description of the step.
+            base_filename: Base filename for saved files.
+            verbose: Whether to print verbose output.
+        """
+        filename = f'{base_filename}_{step_name}.pkl'
+        save_path = save_dir / filename
+        
+        try:
+            dump(radar_data, save_path)
+            if verbose:
+                print(f'Saved {step_name}: {save_path}')
+                if description:
+                    print(f'  Description: {description}')
+                print(f'  Data shape: {radar_data.shape}')
+        except Exception as e:
+            print(f'⚠️  Failed to save {step_name}: {str(e)}')
+    @staticmethod
+    def _get_zarr_compressor(compression_level: int) -> Any:
+        """Get the optimal Zarr compressor configuration.
+        
+        Args:
+            compression_level: Compression level (0-9).
+            
+        Returns:
+            Configured compressor for maximum compression of complex SAR data.
+        """
+        # Use Blosc with LZ4HC algorithm for best compression on complex data
+        # Ensure compatibility with different zarr formats
+        return numcodecs.Blosc(
+            cname='lz4hc',  # LZ4HC provides good compression for SAR data
+            clevel=compression_level,
+            shuffle=numcodecs.Blosc.BITSHUFFLE,  # Bit shuffle for better compression
+            blocksize=0  # Auto-select optimal block size
+        )
+
+    
+    @staticmethod
+    def _get_zarr_size(zarr_path: Path) -> int:
+        """Calculate total size of Zarr store on disk.
+        
+        Args:
+            zarr_path: Path to Zarr store.
+            
+        Returns:
+            Total size in bytes.
+        """
+        total_size = 0
+        try:
+            for file_path in zarr_path.rglob('*'):
+                if file_path.is_file():
+                    total_size += file_path.stat().st_size
+        except Exception:
+            # If we can't calculate size, return 0
+            pass
+        return total_size
+    
+    def load_step(self, step_name: str) -> np.ndarray:
+        """Load a previously saved processing step.
+        
+        Args:
+            step_name: Name of the step to load.
+            
+        Returns:
+            Loaded radar data array.
+            
+        Raises:
+            FileNotFoundError: If the step file doesn't exist.
+            ValueError: If unable to load the file.
+        """
+        if self.save_dir is None:
+            raise ValueError('No save directory configured')
+        
+        # Try Zarr first, then pickle
+        zarr_path = self.save_dir / f'{self.base_filename}_{step_name}.zarr'
+        pickle_path = self.save_dir / f'{self.base_filename}_{step_name}.pkl'
+        
+        if zarr_path.exists() and self.use_zarr:
+            try:
+                z = zarr.open(str(zarr_path), mode='r')
+                data = np.array(z[:])  # Load into memory
+                
+                if self._verbose:
+                    print(f'Loaded {step_name} from Zarr: {zarr_path}')
+                    print(f'  Shape: {data.shape}')
+                    print(f'  Type: {data.dtype}')
+                    if 'description' in z.attrs:
+                        print(f'  Description: {z.attrs["description"]}')
+                
+                return data
+                
+            except Exception as e:
+                if self._verbose:
+                    print(f'Failed to load Zarr file {zarr_path}: {str(e)}')
+                    print('Trying pickle fallback...')
+        
+        if pickle_path.exists():
+            try:
+                with open(pickle_path, 'rb') as f:
+                    data = pickle.load(f)
+                
+                if self._verbose:
+                    print(f'Loaded {step_name} from pickle: {pickle_path}')
+                
+                return np.asarray(data)
+                
+            except Exception as e:
+                raise ValueError(f'Failed to load pickle file {pickle_path}: {str(e)}') from e
+        
+        raise FileNotFoundError(f'No saved file found for step "{step_name}"')
+    
+    def list_saved_files(self) -> List[Path]:
+        """List all saved intermediate files.
+        
+        Returns:
+            List of Path objects for saved intermediate files.
+        """
+        if not self.save_intermediate or self.save_dir is None:
+            return []
+        
+        saved_files = []
+        
+        # Add Zarr files
+        zarr_files = list(self.save_dir.glob(f'{self.base_filename}_*.zarr'))
+        saved_files.extend(zarr_files)
+        
+        # Add pickle files
+        pickle_files = list(self.save_dir.glob(f'{self.base_filename}_*.pkl'))
+        saved_files.extend(pickle_files)
+        
+        return sorted(saved_files)
+    
+    def get_compression_stats(self) -> Dict[str, Dict[str, Any]]:
+        """Get compression statistics for all saved Zarr files.
+        
+        Returns:
+            Dictionary with compression stats for each saved step.
+        """
+        if not self.use_zarr or self.save_dir is None:
+            return {}
+        
+        stats = {}
+        zarr_files = self.save_dir.glob(f'{self.base_filename}_*.zarr')
+        
+        for zarr_path in zarr_files:
+            try:
+                z = zarr.open(str(zarr_path), mode='r')
+                compressed_size = self._get_zarr_size(zarr_path)
+                uncompressed_size = z.size * z.dtype.itemsize
+                
+                step_name = zarr_path.stem.replace(f'{self.base_filename}_', '')
+                
+                stats[step_name] = {
+                    'shape': z.shape,
+                    'dtype': str(z.dtype),
+                    'chunks': z.chunks,
+                    'uncompressed_size_gb': uncompressed_size / 1024**3,
+                    'compressed_size_gb': compressed_size / 1024**3,
+                    'compression_ratio': uncompressed_size / compressed_size if compressed_size > 0 else 1.0,
+                    'compressor': str(z.compressor) if hasattr(z, 'compressor') else 'unknown'
+                }
+                
+            except Exception as e:
+                if self._verbose:
+                    print(f'Warning: Could not get stats for {zarr_path}: {str(e)}')
+        
+        return stats
+    
+    def print_compression_summary(self) -> None:
+        """Print a summary of compression statistics for all saved files."""
+        stats = self.get_compression_stats()
+        
+        if not stats:
+            print('No compression statistics available')
+            return
+        
+        print('\n=== Compression Summary ===')
+        total_uncompressed = 0
+        total_compressed = 0
+        
+        for step_name, step_stats in stats.items():
+            uncompressed_gb = step_stats['uncompressed_size_gb']
+            compressed_gb = step_stats['compressed_size_gb']
+            ratio = step_stats['compression_ratio']
+            
+            total_uncompressed += uncompressed_gb
+            total_compressed += compressed_gb
+            
+            print(f'{step_name}:')
+            print(f'  Shape: {step_stats["shape"]}')
+            print(f'  Uncompressed: {uncompressed_gb:.2f} GB')
+            print(f'  Compressed: {compressed_gb:.2f} GB')
+            print(f'  Ratio: {ratio:.2f}x')
+            print()
+        
+        overall_ratio = total_uncompressed / total_compressed if total_compressed > 0 else 1.0
+        print(f'Overall totals:')
+        print(f'  Uncompressed: {total_uncompressed:.2f} GB')
+        print(f'  Compressed: {total_compressed:.2f} GB')
+        print(f'  Overall ratio: {overall_ratio:.2f}x')
+        print(f'  Space saved: {total_uncompressed - total_compressed:.2f} GB')

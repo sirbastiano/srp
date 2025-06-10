@@ -4,7 +4,10 @@ import os
 from typing import Optional, Tuple, Union, Dict, Any, List, Callable
 import numcodecs # Ensure numcodecs is installed for compression
 import pandas as pd
+import gc
 
+
+# -----------  Functions -----------------
 def save_array_to_zarr(array: 'np.ndarray', 
                        file_path: str, 
                        compressor_level: int = 9, 
@@ -76,11 +79,74 @@ def save_array_to_zarr(array: 'np.ndarray',
     
     print(f'Saved array to {file_path} with maximum compression (zstd-9, chunks={chunks})')
 
+def gc_collect(func: Callable) -> Callable:
+    """
+    Decorator to perform garbage collection after function execution.
 
+    Args:
+        func (Callable): The function to decorate.
+
+    Returns:
+        Callable: The wrapped function with garbage collection.
+    """
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        gc.collect()
+        return result
+    return wrapper
+
+
+
+
+
+
+
+
+
+# -----------  Classes -----------------
 # TODO: Add method for handling metadata relative to single chunks.
 class ZarrManager:
     """
-    A comprehensive class for managing Zarr files with slicing, metadata, and analysis tools.
+    A comprehensive class for managing Zarr files, providing convenient methods for data access, slicing, metadata extraction, analysis, visualization, and export.
+    Attributes:
+        file_path (str): Path to the Zarr file or directory.
+        _zarr_array (zarr.Array or None): Cached Zarr array object.
+        _metadata (pandas.DataFrame or None): Cached metadata extracted from Zarr attributes.
+        _ephemeris (pandas.DataFrame or None): Cached ephemeris data extracted from Zarr attributes.
+    Methods:
+        __init__(file_path: str) -> None
+            Initialize the ZarrManager with the specified file path.
+        load() -> zarr.Array
+            Load and cache the Zarr array from the file path.
+        info -> Dict[str, Any]
+            Property returning basic information about the Zarr array (shape, dtype, chunks, nbytes, size in MB).
+        get_slice(rows: Optional[Union[Tuple[int, int], slice]] = None, 
+                  step: Optional[int] = None) -> np.ndarray
+            Retrieve a slice of the Zarr array based on row and column specifications.
+        get_metadata() -> Optional[pandas.DataFrame]
+            Extract metadata from Zarr attributes as a pandas DataFrame, if available.
+        get_ephemeris() -> Optional[pandas.DataFrame]
+            Extract ephemeris data from Zarr attributes as a pandas DataFrame, if available.
+        stats(sample_size: int = 1000) -> Dict[str, Optional[float]]
+            Compute statistical summaries (mean, std, min, max, etc.) of the data, optionally using a sample for large arrays.
+        visualize_slice(rows: Tuple[int, int] = (0, 100), 
+                        plot_type: str = 'magnitude') -> None
+            Visualize a slice of the data using matplotlib, supporting magnitude, phase, real, or imaginary plots.
+        get_compression_info() -> Dict[str, float]
+            Retrieve compression statistics, including uncompressed and compressed sizes, compression ratio, and space saved.
+        export_slice(output_path: str, 
+                     format: str = 'npy') -> None
+            Export a slice of the data to various formats ('npy', 'csv', 'hdf5').
+        find_peaks(rows: Optional[Union[Tuple[int, int], slice]] = None, 
+                   threshold_percentile: float = 95) -> Dict[str, Any]
+            Find peaks in the data above a specified percentile threshold.
+        memory_efficient_operation(operation: Callable[[np.ndarray], Any], 
+                                  chunk_size: int = 1000) -> List[Any]
+            Apply a user-defined operation to the data in memory-efficient chunks.
+        _export_raw()
+            Export raw metadata, ephemeris, and echo data as a dictionary.
+        __repr__() -> str
+            Return a string representation of the ZarrManager instance, including file path and array info.
     """
     
     def __init__(self, file_path: str) -> None:
@@ -358,3 +424,40 @@ class ZarrManager:
             results.append(result)
         
         return results
+    
+    @gc_collect
+    def _export_raw(self):
+        """
+        Export raw SAR data, metadata, and ephemeris as a dictionary.
+
+        Returns:
+            dict: Dictionary with the following keys:
+            - 'metadata' (Optional[pandas.DataFrame]): Metadata DataFrame, or None if unavailable.
+            - 'ephemeris' (Optional[pandas.DataFrame]): Ephemeris DataFrame, or None if unavailable.
+            - 'echo' (np.ndarray): Echo data as a NumPy array.
+        """
+        
+        metadata = self.get_metadata()
+        ephemeris = self.get_ephemeris()
+        echo_zarr = self.load()
+        echo_np = echo_zarr[:]
+        del echo_zarr
+        
+        return {
+            'metadata': metadata,
+            'ephemeris': ephemeris,
+            'echo': echo_np
+        }
+        
+    
+    def __repr__(self) -> str:
+        """
+        String representation of the ZarrManager.
+        
+        Returns:
+            String with basic info about the zarr array
+        """
+        info = self.info
+        return (f"ZarrManager(file_path='{self.file_path}', "
+                f"shape={info['shape']}, dtype={info['dtype']}, "
+                f"chunks={info['chunks']}, size_mb={info['size_mb']:.2f})")

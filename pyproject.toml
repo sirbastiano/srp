@@ -28,6 +28,7 @@ dependencies = [
     "rasterio>=1.4.3",
     "zarr>=3.0.8",
     "joblib>=1.5.1",
+    "dask>=2025.5.1",
 ]
 
 [tool.setuptools]
@@ -35,3 +36,7 @@ packages = ["sarpyx"]
 
 [tool.setuptools.package-data]
 "*" = ["*.csv", "*.json", "*.xml"]
+[dependency-groups]
+dev = [
+    "pytest>=8.4.0",
+]
