@@ -1,7 +1,9 @@
 services:
-  sarpyx-jupyter:
-    build: .
-    container_name: sarpyx-jupyter-lab
+  sarpyx-jupyter1:
+    build:
+      context: .
+      dockerfile: Dockerfile_SNAP11
+    container_name: sarpyx-s11
     ports:
       - "8888:8888"
     volumes:
@@ -30,22 +32,36 @@ services:
       retries: 3
       start_period: 40s
 
-  sarpyx-dev:
-    build: .
-    container_name: sarpyx-development
+
+  sarpyx-jupyter2:
+    build:
+      context: .
+      dockerfile: Dockerfile_SNAP12
+    container_name: sarpyx-s12
+    ports:
+      - "8889:8888"
     volumes:
       - ./data:/workspace/data
       - ./output:/workspace/output
+      - ./notebooks:/workspace/notebooks
       - ./src:/workspace/src
-      - ./sarpyx:/workspace/sarpyx
+      - ./examples:/workspace/examples
     working_dir: /workspace
     environment:
       - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
       - LD_LIBRARY_PATH=.:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server/:${LD_LIBRARY_PATH}
       - LC_ALL=en_US.UTF-8
       - PATH=${PATH}:/usr/local/snap/bin
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=
+      - JUPYTER_ALLOW_INSECURE_WRITES=1
     stdin_open: true
     tty: true
-    command: /bin/bash
-    profiles:
-      - dev
+    command: /usr/local/bin/start-jupyter.sh
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/lab"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

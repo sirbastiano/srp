@@ -72,7 +72,7 @@ RUN pip install pdm jupyter jupyterlab ipykernel
 RUN cd sarpyx && pdm install && pdm add lxml
 
 # Install sarpyx as a Jupyter kernel
-RUN python -m ipykernel install --user --name=sarpyx --display-name="SAR Python (sarpyx)"
+RUN python -m ipykernel install --user --name=sarpyx --display-name="SAR Python (sarpyx-12.0)"
 
 # Create a startup script
 RUN echo '#!/bin/bash\n\
