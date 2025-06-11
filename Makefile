@@ -20,5 +20,8 @@ prune_docker:
 	@echo 'Pruning Docker system...'
 	docker system prune -a
 
+up_recreate:
+	docker compose up --build --force-recreate
+
 up:
 	docker compose up --build --force-recreate
