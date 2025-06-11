@@ -16,5 +16,9 @@ pdm_install_deps:
 setup: clean_venv install_pdm pdm_install_deps
 	@echo 'Setup complete.'
 
+prune_docker:
+	@echo 'Pruning Docker system...'
+	docker system prune -a
+
 up:
-	docker compose up --build
+	docker compose up --build --force-recreate

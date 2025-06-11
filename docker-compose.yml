@@ -1,36 +1,51 @@
 services:
-  sarpyx:
+  sarpyx-jupyter:
     build: .
-    container_name: sarpyx-processor
+    container_name: sarpyx-jupyter-lab
+    ports:
+      - "8888:8888"
     volumes:
-      - ./data:/data
-      - ./output:/output
+      - ./data:/workspace/data
+      - ./output:/workspace/output
+      - ./notebooks:/workspace/notebooks
       - ./src:/workspace/src
+      - ./examples:/workspace/examples
     working_dir: /workspace
     environment:
-      - JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk
-      - LD_LIBRARY_PATH=.:/usr/lib/jvm/java-8-openjdk/jre/lib/amd64/server/
+      - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+      - LD_LIBRARY_PATH=.:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server/:${LD_LIBRARY_PATH}
+      - LC_ALL=en_US.UTF-8
+      - PATH=${PATH}:/usr/local/snap/bin
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=
+      - JUPYTER_ALLOW_INSECURE_WRITES=1
+    stdin_open: true
+    tty: true
+    command: /usr/local/bin/start-jupyter.sh
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/lab"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  sarpyx-dev:
+    build: .
+    container_name: sarpyx-development
+    volumes:
+      - ./data:/workspace/data
+      - ./output:/workspace/output
+      - ./src:/workspace/src
+      - ./sarpyx:/workspace/sarpyx
+    working_dir: /workspace
+    environment:
+      - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+      - LD_LIBRARY_PATH=.:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server/:${LD_LIBRARY_PATH}
       - LC_ALL=en_US.UTF-8
       - PATH=${PATH}:/usr/local/snap/bin
     stdin_open: true
     tty: true
-    command: /bin/sh
-
-  # sarpyx-dev:
-  #   build: .
-  #   container_name: sarpyx-dev
-  #   volumes:
-  #     - .:/workspace
-  #     - ./data:/data
-  #     - ./output:/output
-  #   working_dir: /workspace
-  #   environment:
-  #     - JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk
-  #     - LD_LIBRARY_PATH=.:/usr/lib/jvm/java-8-openjdk/jre/lib/amd64/server/
-  #     - LC_ALL=en_US.UTF-8
-  #     - PATH=${PATH}:/usr/local/snap/bin
-  #   ports:
-  #     - "8888:8888"
-  #   stdin_open: true
-  #   tty: true
-  #   command: /bin/sh
+    command: /bin/bash
+    profiles:
+      - dev

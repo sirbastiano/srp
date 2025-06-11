@@ -12,14 +12,16 @@ __author__ = 'ESA Phi-Lab'
 from . import sla
 from . import utils
 from . import processor
-# from . import snap      # Uncomment when snap has content
+from . import snap
+from . import cli
 # from . import science   # Uncomment when science has content
 
 __all__ = [
     'sla',
     'utils', 
     'processor',
-    'snap', # type: ignore
+    'snap',
+    'cli',
     # 'science',
     '__version__',
     '__author__'

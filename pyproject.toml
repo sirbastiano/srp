@@ -13,7 +13,7 @@ license = { text = "MIT" }
 requires-python = ">=3.11, <3.13"
 dependencies = [
     "matplotlib",
-    "lxml", 
+    "lxml>=5.4.0", 
     "scipy",
     "s1isp @ git+https://github.com/avalentino/s1isp.git",
     "geopandas",
@@ -30,6 +30,10 @@ dependencies = [
     "joblib>=1.5.1",
     "dask>=2025.5.1",
 ]
+
+[project.scripts]
+sarpyx = "sarpyx.cli.main:main"
+sarpyx-shipdet = "sarpyx.cli.shipdet:main"
 
 [tool.setuptools]
 packages = ["sarpyx"]
