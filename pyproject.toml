@@ -13,7 +13,6 @@ license = { text = "MIT" }
 requires-python = ">=3.11, <3.13"
 dependencies = [
     "matplotlib",
-    "lxml>=5.4.0", 
     "scipy",
     "s1isp @ git+https://github.com/avalentino/s1isp.git",
     "geopandas",
@@ -29,6 +28,7 @@ dependencies = [
     "zarr>=3.0.8",
     "joblib>=1.5.1",
     "dask>=2025.5.1",
+    "lxml>=5.4.0", 
 ]
 
 [project.scripts]
