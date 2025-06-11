@@ -1,0 +1,49 @@
+OPERATOR: Back-Geocoding
+----------------------------------------
+Usage:
+  gpt Back-Geocoding [options] 
+
+Description:
+  Bursts co-registration using orbit and DEM
+
+
+Parameter Options:
+  -PdemName=<string>                         The digital elevation model.
+                                             Default value is 'SRTM 3Sec'.
+  -PdemResamplingMethod=<string>             Sets parameter 'demResamplingMethod' to <string>.
+                                             Default value is 'BICUBIC_INTERPOLATION'.
+  -PdisableReramp=<boolean>                  Sets parameter 'disableReramp' to <boolean>.
+                                             Default value is 'false'.
+  -PexternalDEMFile=<file>                   Sets parameter 'externalDEMFile' to <file>.
+  -PexternalDEMNoDataValue=<double>          Sets parameter 'externalDEMNoDataValue' to <double>.
+                                             Default value is '0'.
+  -PmaskOutAreaWithoutElevation=<boolean>    Sets parameter 'maskOutAreaWithoutElevation' to <boolean>.
+                                             Default value is 'true'.
+  -PoutputDerampDemodPhase=<boolean>         Sets parameter 'outputDerampDemodPhase' to <boolean>.
+                                             Default value is 'false'.
+  -PoutputRangeAzimuthOffset=<boolean>       Sets parameter 'outputRangeAzimuthOffset' to <boolean>.
+                                             Default value is 'false'.
+  -PresamplingType=<string>                  The method to be used when resampling the slave grid onto the master grid.
+                                             Default value is 'BISINC_5_POINT_INTERPOLATION'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Back-Geocoding</operator>
+      <sources>
+        <sourceProduct>${sourceProduct}</sourceProduct>
+      </sources>
+      <parameters>
+        <demName>string</demName>
+        <demResamplingMethod>string</demResamplingMethod>
+        <externalDEMFile>file</externalDEMFile>
+        <externalDEMNoDataValue>double</externalDEMNoDataValue>
+        <resamplingType>string</resamplingType>
+        <maskOutAreaWithoutElevation>boolean</maskOutAreaWithoutElevation>
+        <outputRangeAzimuthOffset>boolean</outputRangeAzimuthOffset>
+        <outputDerampDemodPhase>boolean</outputDerampDemodPhase>
+        <disableReramp>boolean</disableReramp>
+      </parameters>
+    </node>
+  </graph>

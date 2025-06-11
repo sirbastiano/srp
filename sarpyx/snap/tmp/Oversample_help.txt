@@ -1,0 +1,54 @@
+OPERATOR: Oversample
+----------------------------------------
+Usage:
+  gpt Oversample [options] 
+
+Description:
+  Oversample the datset
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PazimuthSpacing=<float>                    The azimuth pixel spacing
+                                              Default value is '12.5'.
+  -PheightRatio=<float>                       The height ratio of the output/input images
+                                              Default value is '2.0'.
+  -PoutputImageBy=<string>                    Sets parameter 'outputImageBy' to <string>.
+                                              Value must be one of 'Image Size', 'Ratio', 'Pixel Spacing'.
+                                              Default value is 'Ratio'.
+  -PrangeSpacing=<float>                      The range pixel spacing
+                                              Default value is '12.5'.
+  -PsourceBands=<string,string,string,...>    The list of source bands.
+  -PtargetImageHeight=<int>                   The row dimension of the output image
+                                              Default value is '1000'.
+  -PtargetImageWidth=<int>                    The col dimension of the output image
+                                              Default value is '1000'.
+  -PusePRFTileSize=<boolean>                  use PRF as azimuth tile size and range line as range tile size
+                                              Default value is 'false'.
+  -PwidthRatio=<float>                        The width ratio of the output/input images
+                                              Default value is '2.0'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Oversample</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <sourceBands>string,string,string,...</sourceBands>
+        <outputImageBy>string</outputImageBy>
+        <targetImageHeight>int</targetImageHeight>
+        <targetImageWidth>int</targetImageWidth>
+        <widthRatio>float</widthRatio>
+        <heightRatio>float</heightRatio>
+        <rangeSpacing>float</rangeSpacing>
+        <azimuthSpacing>float</azimuthSpacing>
+        <usePRFTileSize>boolean</usePRFTileSize>
+      </parameters>
+    </node>
+  </graph>

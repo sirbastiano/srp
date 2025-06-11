@@ -1,0 +1,32 @@
+OPERATOR: Fill-DEM-Hole
+----------------------------------------
+Usage:
+  gpt Fill-DEM-Hole [options] 
+
+Description:
+  Fill holes in given DEM product file.
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PNoDataValue=<double>                      Sets parameter 'NoDataValue' to <double>.
+                                              Default value is '0.0'.
+  -PsourceBands=<string,string,string,...>    The list of source bands.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Fill-DEM-Hole</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <sourceBands>string,string,string,...</sourceBands>
+        <NoDataValue>double</NoDataValue>
+      </parameters>
+    </node>
+  </graph>

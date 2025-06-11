@@ -1,0 +1,30 @@
+OPERATOR: TOPSAR-DerampDemod
+----------------------------------------
+Usage:
+  gpt TOPSAR-DerampDemod [options] 
+
+Description:
+  Bursts co-registration using orbit and DEM
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PoutputDerampDemodPhase=<boolean>    Sets parameter 'outputDerampDemodPhase' to <boolean>.
+                                        Default value is 'false'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>TOPSAR-DerampDemod</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <outputDerampDemodPhase>boolean</outputDerampDemodPhase>
+      </parameters>
+    </node>
+  </graph>

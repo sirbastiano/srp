@@ -1,0 +1,42 @@
+OPERATOR: CP-Simulation
+----------------------------------------
+Usage:
+  gpt CP-Simulation [options] 
+
+Description:
+  Simulation of Compact Pol data from Quad Pol data
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PcompactMode=<string>            The compact mode
+                                    Value must be one of 'Right Circular Hybrid Mode', 'Left Circular Hybrid Mode'.
+                                    Default value is 'Right Circular Hybrid Mode'.
+  -PnoisePower=<double>             The noise power
+                                    Valid interval is (-35, -15).
+                                    Default value is '-25'.
+  -PoutputFormat=<string>           The output simulated compact pol data format
+                                    Value must be one of 'Covariance Matrix C2', 'Scatter Vector S2'.
+                                    Default value is 'Covariance Matrix C2'.
+  -PsimulateNoiseFloor=<boolean>    Simulate noise floor
+                                    Default value is 'false'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>CP-Simulation</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <compactMode>string</compactMode>
+        <outputFormat>string</outputFormat>
+        <noisePower>double</noisePower>
+        <simulateNoiseFloor>boolean</simulateNoiseFloor>
+      </parameters>
+    </node>
+  </graph>

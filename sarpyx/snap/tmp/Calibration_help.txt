@@ -1,0 +1,58 @@
+OPERATOR: Calibration
+----------------------------------------
+Usage:
+  gpt Calibration [options] 
+
+Description:
+  Calibration of products
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PauxFile=<string>                                    The auxiliary file
+                                                        Value must be one of 'Latest Auxiliary File', 'Product Auxiliary File', 'External Auxiliary File'.
+                                                        Default value is 'Latest Auxiliary File'.
+  -PcreateBetaBand=<boolean>                            Create beta0 virtual band
+                                                        Default value is 'false'.
+  -PcreateGammaBand=<boolean>                           Create gamma0 virtual band
+                                                        Default value is 'false'.
+  -PexternalAuxFile=<file>                              The antenna elevation pattern gain auxiliary data file.
+  -PoutputBetaBand=<boolean>                            Output beta0 band
+                                                        Default value is 'false'.
+  -PoutputGammaBand=<boolean>                           Output gamma0 band
+                                                        Default value is 'false'.
+  -PoutputImageInComplex=<boolean>                      Output image in complex
+                                                        Default value is 'false'.
+  -PoutputImageScaleInDb=<boolean>                      Output image scale
+                                                        Default value is 'false'.
+  -PoutputSigmaBand=<boolean>                           Output sigma0 band
+                                                        Default value is 'true'.
+  -PselectedPolarisations=<string,string,string,...>    The list of polarisations
+  -PsourceBands=<string,string,string,...>              The list of source bands.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Calibration</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <sourceBands>string,string,string,...</sourceBands>
+        <auxFile>string</auxFile>
+        <externalAuxFile>file</externalAuxFile>
+        <outputImageInComplex>boolean</outputImageInComplex>
+        <outputImageScaleInDb>boolean</outputImageScaleInDb>
+        <createGammaBand>boolean</createGammaBand>
+        <createBetaBand>boolean</createBetaBand>
+        <selectedPolarisations>string,string,string,...</selectedPolarisations>
+        <outputSigmaBand>boolean</outputSigmaBand>
+        <outputGammaBand>boolean</outputGammaBand>
+        <outputBetaBand>boolean</outputBetaBand>
+      </parameters>
+    </node>
+  </graph>

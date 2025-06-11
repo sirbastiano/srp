@@ -1,0 +1,44 @@
+OPERATOR: Update-Geo-Reference
+----------------------------------------
+Usage:
+  gpt Update-Geo-Reference [options] 
+
+Description:
+  Update Geo Reference
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PdemName=<string>                          The digital elevation model.
+                                              Value must be one of 'ACE', 'ASTER 1sec GDEM', 'GETASSE30', 'SRTM 1Sec HGT', 'SRTM 3Sec'.
+                                              Default value is 'SRTM 3Sec'.
+  -PdemResamplingMethod=<string>              Sets parameter 'demResamplingMethod' to <string>.
+                                              Default value is 'BICUBIC_INTERPOLATION'.
+  -PexternalDEMFile=<file>                    Sets parameter 'externalDEMFile' to <file>.
+  -PexternalDEMNoDataValue=<double>           Sets parameter 'externalDEMNoDataValue' to <double>.
+                                              Default value is '0'.
+  -PreGridMethod=<boolean>                    Sets parameter 'reGridMethod' to <boolean>.
+                                              Default value is 'false'.
+  -PsourceBands=<string,string,string,...>    The list of source bands.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Update-Geo-Reference</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <sourceBands>string,string,string,...</sourceBands>
+        <demName>string</demName>
+        <demResamplingMethod>string</demResamplingMethod>
+        <externalDEMFile>file</externalDEMFile>
+        <externalDEMNoDataValue>double</externalDEMNoDataValue>
+        <reGridMethod>boolean</reGridMethod>
+      </parameters>
+    </node>
+  </graph>

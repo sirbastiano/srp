@@ -1,0 +1,119 @@
+OPERATOR: Ellipsoid-Correction-RD
+----------------------------------------
+Usage:
+  gpt Ellipsoid-Correction-RD [options] 
+
+Description:
+  Ellipsoid correction with RD method and average scene height
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PalignToStandardGrid=<boolean>                 Force the image grid to be aligned with a specific point
+                                                  Default value is 'false'.
+  -PapplyRadiometricNormalization=<boolean>       Sets parameter 'applyRadiometricNormalization' to <boolean>.
+                                                  Default value is 'false'.
+  -PauxFile=<string>                              The auxiliary file
+                                                  Value must be one of 'Latest Auxiliary File', 'Product Auxiliary File', 'External Auxiliary File'.
+                                                  Default value is 'Latest Auxiliary File'.
+  -PdemName=<string>                              The digital elevation model.
+                                                  Default value is 'SRTM 3Sec'.
+  -PdemResamplingMethod=<string>                  Sets parameter 'demResamplingMethod' to <string>.
+                                                  Value must be one of 'NEAREST_NEIGHBOUR', 'BILINEAR_INTERPOLATION', 'CUBIC_CONVOLUTION', 'BISINC_5_POINT_INTERPOLATION', 'BISINC_11_POINT_INTERPOLATION', 'BISINC_21_POINT_INTERPOLATION', 'BICUBIC_INTERPOLATION', 'DELAUNAY_INTERPOLATION'.
+                                                  Default value is 'BILINEAR_INTERPOLATION'.
+  -PexternalAuxFile=<file>                        The antenne elevation pattern gain auxiliary data file.
+  -PexternalDEMApplyEGM=<boolean>                 Sets parameter 'externalDEMApplyEGM' to <boolean>.
+                                                  Default value is 'true'.
+  -PexternalDEMFile=<file>                        Sets parameter 'externalDEMFile' to <file>.
+  -PexternalDEMNoDataValue=<double>               Sets parameter 'externalDEMNoDataValue' to <double>.
+                                                  Default value is '0'.
+  -PimgResamplingMethod=<string>                  Sets parameter 'imgResamplingMethod' to <string>.
+                                                  Value must be one of 'NEAREST_NEIGHBOUR', 'BILINEAR_INTERPOLATION', 'CUBIC_CONVOLUTION', 'BISINC_5_POINT_INTERPOLATION', 'BISINC_11_POINT_INTERPOLATION', 'BISINC_21_POINT_INTERPOLATION', 'BICUBIC_INTERPOLATION'.
+                                                  Default value is 'BILINEAR_INTERPOLATION'.
+  -PincidenceAngleForGamma0=<string>              Sets parameter 'incidenceAngleForGamma0' to <string>.
+                                                  Value must be one of 'Use incidence angle from Ellipsoid', 'Use local incidence angle from DEM', 'Use projected local incidence angle from DEM'.
+                                                  Default value is 'Use projected local incidence angle from DEM'.
+  -PincidenceAngleForSigma0=<string>              Sets parameter 'incidenceAngleForSigma0' to <string>.
+                                                  Value must be one of 'Use incidence angle from Ellipsoid', 'Use local incidence angle from DEM', 'Use projected local incidence angle from DEM'.
+                                                  Default value is 'Use projected local incidence angle from DEM'.
+  -PmapProjection=<string>                        The coordinate reference system in well known text format
+                                                  Default value is 'WGS84(DD)'.
+  -PnodataValueAtSea=<boolean>                    Mask the sea with no data value (faster)
+                                                  Default value is 'true'.
+  -PoutputComplex=<boolean>                       Sets parameter 'outputComplex' to <boolean>.
+                                                  Default value is 'false'.
+  -PpixelSpacingInDegree=<double>                 The pixel spacing in degrees
+                                                  Default value is '0'.
+  -PpixelSpacingInMeter=<double>                  The pixel spacing in meters
+                                                  Default value is '0'.
+  -PsaveBetaNought=<boolean>                      Sets parameter 'saveBetaNought' to <boolean>.
+                                                  Default value is 'false'.
+  -PsaveDEM=<boolean>                             Sets parameter 'saveDEM' to <boolean>.
+                                                  Default value is 'false'.
+  -PsaveGammaNought=<boolean>                     Sets parameter 'saveGammaNought' to <boolean>.
+                                                  Default value is 'false'.
+  -PsaveIncidenceAngleFromEllipsoid=<boolean>     Sets parameter 'saveIncidenceAngleFromEllipsoid' to <boolean>.
+                                                  Default value is 'false'.
+  -PsaveLatLon=<boolean>                          Sets parameter 'saveLatLon' to <boolean>.
+                                                  Default value is 'false'.
+  -PsaveLayoverShadowMask=<boolean>               Sets parameter 'saveLayoverShadowMask' to <boolean>.
+                                                  Default value is 'false'.
+  -PsaveLocalIncidenceAngle=<boolean>             Sets parameter 'saveLocalIncidenceAngle' to <boolean>.
+                                                  Default value is 'false'.
+  -PsaveProjectedLocalIncidenceAngle=<boolean>    Sets parameter 'saveProjectedLocalIncidenceAngle' to <boolean>.
+                                                  Default value is 'false'.
+  -PsaveSelectedSourceBand=<boolean>              Sets parameter 'saveSelectedSourceBand' to <boolean>.
+                                                  Default value is 'true'.
+  -PsaveSigmaNought=<boolean>                     Sets parameter 'saveSigmaNought' to <boolean>.
+                                                  Default value is 'false'.
+  -PsourceBands=<string,string,string,...>        The list of source bands.
+  -PstandardGridOriginX=<double>                  x-coordinate of the standard grid's origin point
+                                                  Default value is '0'.
+  -PstandardGridOriginY=<double>                  y-coordinate of the standard grid's origin point
+                                                  Default value is '0'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Ellipsoid-Correction-RD</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <sourceBands>string,string,string,...</sourceBands>
+        <demName>string</demName>
+        <externalDEMFile>file</externalDEMFile>
+        <externalDEMNoDataValue>double</externalDEMNoDataValue>
+        <externalDEMApplyEGM>boolean</externalDEMApplyEGM>
+        <demResamplingMethod>string</demResamplingMethod>
+        <imgResamplingMethod>string</imgResamplingMethod>
+        <pixelSpacingInMeter>double</pixelSpacingInMeter>
+        <pixelSpacingInDegree>double</pixelSpacingInDegree>
+        <mapProjection>string</mapProjection>
+        <alignToStandardGrid>boolean</alignToStandardGrid>
+        <standardGridOriginX>double</standardGridOriginX>
+        <standardGridOriginY>double</standardGridOriginY>
+        <nodataValueAtSea>boolean</nodataValueAtSea>
+        <saveDEM>boolean</saveDEM>
+        <saveLatLon>boolean</saveLatLon>
+        <saveIncidenceAngleFromEllipsoid>boolean</saveIncidenceAngleFromEllipsoid>
+        <saveLocalIncidenceAngle>boolean</saveLocalIncidenceAngle>
+        <saveProjectedLocalIncidenceAngle>boolean</saveProjectedLocalIncidenceAngle>
+        <saveSelectedSourceBand>boolean</saveSelectedSourceBand>
+        <saveLayoverShadowMask>boolean</saveLayoverShadowMask>
+        <outputComplex>boolean</outputComplex>
+        <applyRadiometricNormalization>boolean</applyRadiometricNormalization>
+        <saveSigmaNought>boolean</saveSigmaNought>
+        <saveGammaNought>boolean</saveGammaNought>
+        <saveBetaNought>boolean</saveBetaNought>
+        <incidenceAngleForSigma0>string</incidenceAngleForSigma0>
+        <incidenceAngleForGamma0>string</incidenceAngleForGamma0>
+        <auxFile>string</auxFile>
+        <externalAuxFile>file</externalAuxFile>
+      </parameters>
+    </node>
+  </graph>

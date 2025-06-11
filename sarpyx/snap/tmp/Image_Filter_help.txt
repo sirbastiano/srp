@@ -1,0 +1,33 @@
+OPERATOR: Image-Filter
+----------------------------------------
+Usage:
+  gpt Image-Filter [options] 
+
+Description:
+  Common Image Processing Filters
+
+
+Source Options:
+  -SsourceProduct=<file>    Sets source 'sourceProduct' to <filepath>.
+                            This is a mandatory source.
+
+Parameter Options:
+  -PselectedFilterName=<string>               Sets parameter 'selectedFilterName' to <string>.
+  -PsourceBands=<string,string,string,...>    The list of source bands.
+  -PuserDefinedKernelFile=<file>              The kernel file
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Image-Filter</operator>
+      <sources>
+        <sourceProduct>${sourceProduct}</sourceProduct>
+      </sources>
+      <parameters>
+        <sourceBands>string,string,string,...</sourceBands>
+        <selectedFilterName>string</selectedFilterName>
+        <userDefinedKernelFile>file</userDefinedKernelFile>
+      </parameters>
+    </node>
+  </graph>

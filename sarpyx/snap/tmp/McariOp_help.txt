@@ -1,0 +1,54 @@
+OPERATOR: McariOp
+----------------------------------------
+Usage:
+  gpt McariOp [options] 
+
+Description:
+  Modified Chlorophyll Absorption Ratio Index, developed to be responsive to chlorophyll variation
+
+
+Source Options:
+  -Ssource=<file>    The source product.
+                     This is a mandatory source.
+
+Parameter Options:
+  -Pdownsampling=<string>       The method used for aggregation (downsampling to a coarser resolution).
+                                Value must be one of 'First', 'Min', 'Max', 'Mean', 'Median'.
+                                Default value is 'First'.
+  -PgreenFactor=<float>         The value of the green source band is multiplied by this value.
+                                Default value is '1.0F'.
+  -PgreenSourceBand=<string>    The green band for the MCARI computation. If not provided, the operator will try to find the best fitting band.
+  -Pred1Factor=<float>          The value of the red source band (B4) is multiplied by this value.
+                                Default value is '1.0F'.
+  -Pred1SourceBand=<string>     The first red band for the MCARI computation. Choose B4 for Sentinel-2. If not provided, the operator will try to find the best fitting band.
+  -Pred2Factor=<float>          The value of the red source band (B5) is multiplied by this value.
+                                Default value is '1.0F'.
+  -Pred2SourceBand=<string>     The second red band for the MCARI computation. Choose B5 for Sentinel-2. If not provided, the operator will try to find the best fitting band.
+  -PresampleType=<string>       If selected band s differ in size, the resample method used before computing the index
+                                Value must be one of 'None', 'Lowest resolution', 'Highest resolution'.
+                                Default value is 'None'.
+  -Pupsampling=<string>         The method used for interpolation (upsampling to a finer resolution).
+                                Value must be one of 'Nearest', 'Bilinear', 'Bicubic'.
+                                Default value is 'Nearest'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>McariOp</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <resampleType>string</resampleType>
+        <upsampling>string</upsampling>
+        <downsampling>string</downsampling>
+        <red1Factor>float</red1Factor>
+        <red2Factor>float</red2Factor>
+        <greenFactor>float</greenFactor>
+        <red1SourceBand>string</red1SourceBand>
+        <red2SourceBand>string</red2SourceBand>
+        <greenSourceBand>string</greenSourceBand>
+      </parameters>
+    </node>
+  </graph>

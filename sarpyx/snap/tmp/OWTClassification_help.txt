@@ -1,0 +1,39 @@
+OPERATOR: OWTClassification
+----------------------------------------
+Usage:
+  gpt OWTClassification [options] 
+
+Description:
+  Performs an optical water type classification based on atmospherically corrected reflectances.
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PinputReflectanceIs=<reflectanceEnum>    Sets parameter 'inputReflectanceIs' to <reflectanceEnum>.
+                                            Default value is 'RADIANCE_REFLECTANCES'.
+  -PowtType=<oWT_TYPE>                      Sets parameter 'owtType' to <oWT_TYPE>.
+                                            Default value is 'COASTAL'.
+  -PreflectancesPrefix=<string>             Sets parameter 'reflectancesPrefix' to <string>.
+                                            Default value is 'reflec'.
+  -PwriteInputReflectances=<boolean>        Sets parameter 'writeInputReflectances' to <boolean>.
+                                            Default value is 'false'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>OWTClassification</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <owtType>oWT_TYPE</owtType>
+        <reflectancesPrefix>string</reflectancesPrefix>
+        <inputReflectanceIs>reflectanceEnum</inputReflectanceIs>
+        <writeInputReflectances>boolean</writeInputReflectances>
+      </parameters>
+    </node>
+  </graph>

@@ -1,0 +1,29 @@
+OPERATOR: TOPSAR-Deburst
+----------------------------------------
+Usage:
+  gpt TOPSAR-Deburst [options] 
+
+Description:
+  Debursts a Sentinel-1 TOPSAR product
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PselectedPolarisations=<string,string,string,...>    The list of polarisations
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>TOPSAR-Deburst</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <selectedPolarisations>string,string,string,...</selectedPolarisations>
+      </parameters>
+    </node>
+  </graph>

@@ -1,0 +1,35 @@
+OPERATOR: OlciO2aHarmonisation
+----------------------------------------
+Usage:
+  gpt OlciO2aHarmonisation [options] 
+
+Description:
+  Performs O2A band harmonisation on OLCI L1b product. Implements update v4 of R.Preusker, June 2020.
+
+
+Source Options:
+  -Sl1bProduct=<file>    OLCI L1b or fully compatible product. May contain an optional altitude band, i.e. introduced from an external DEM.
+                         This is a mandatory source.
+
+Parameter Options:
+  -PalternativeAltitudeBandName=<string>    Name of alternative altitude band in source product (i.e. introduced from an external DEM). Altitude is expected in meters.
+  -PprocessOnlyBand13=<boolean>             If set to true, only band 13 needed for cloud detection will be processed, otherwise bands 13-15.
+                                            Default value is 'true'.
+  -PwriteHarmonisedRadiances=<boolean>      If set to true, harmonised radiances of processed band(s) will be written to target product.
+                                            Default value is 'true'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>OlciO2aHarmonisation</operator>
+      <sources>
+        <l1bProduct>${l1bProduct}</l1bProduct>
+      </sources>
+      <parameters>
+        <alternativeAltitudeBandName>string</alternativeAltitudeBandName>
+        <processOnlyBand13>boolean</processOnlyBand13>
+        <writeHarmonisedRadiances>boolean</writeHarmonisedRadiances>
+      </parameters>
+    </node>
+  </graph>

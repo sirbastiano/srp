@@ -1,0 +1,73 @@
+OPERATOR: Coherence
+----------------------------------------
+Usage:
+  gpt Coherence [options] 
+
+Description:
+  Estimate coherence from stack of coregistered images
+
+
+Source Options:
+  -SsourceProduct=<file>    Sets source 'sourceProduct' to <filepath>.
+                            This is a mandatory source.
+
+Parameter Options:
+  -PcohWinAz=<int>                        Size of coherence estimation window in Azimuth direction
+                                          Valid interval is (1, 90].
+                                          Default value is '10'.
+  -PcohWinRg=<int>                        Size of coherence estimation window in Range direction
+                                          Valid interval is (1, 90].
+                                          Default value is '10'.
+  -PdemName=<string>                      The digital elevation model.
+                                          Default value is 'SRTM 3Sec'.
+  -PexternalDEMApplyEGM=<boolean>         Sets parameter 'externalDEMApplyEGM' to <boolean>.
+                                          Default value is 'true'.
+  -PexternalDEMFile=<file>                Sets parameter 'externalDEMFile' to <file>.
+  -PexternalDEMNoDataValue=<double>       Sets parameter 'externalDEMNoDataValue' to <double>.
+                                          Default value is '0'.
+  -PorbitDegree=<int>                     Degree of orbit (polynomial) interpolator
+                                          Value must be one of '1', '2', '3', '4', '5'.
+                                          Default value is '3'.
+  -PsingleMaster=<boolean>                Sets parameter 'singleMaster' to <boolean>.
+                                          Default value is 'true'.
+  -PsquarePixel=<boolean>                 Use ground square pixel
+                                          Default value is 'true'.
+  -PsrpNumberPoints=<int>                 Number of points for the 'flat earth phase' polynomial estimation
+                                          Value must be one of '301', '401', '501', '601', '701', '801', '901', '1001'.
+                                          Default value is '501'.
+  -PsrpPolynomialDegree=<int>             Order of 'Flat earth phase' polynomial
+                                          Value must be one of '1', '2', '3', '4', '5', '6', '7', '8'.
+                                          Default value is '5'.
+  -PsubtractFlatEarthPhase=<boolean>      Sets parameter 'subtractFlatEarthPhase' to <boolean>.
+                                          Default value is 'false'.
+  -PsubtractTopographicPhase=<boolean>    Sets parameter 'subtractTopographicPhase' to <boolean>.
+                                          Default value is 'false'.
+  -PtileExtensionPercent=<string>         Define extension of tile for DEM simulation (optimization parameter).
+                                          Default value is '100'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Coherence</operator>
+      <sources>
+        <sourceProduct>${sourceProduct}</sourceProduct>
+      </sources>
+      <parameters>
+        <cohWinAz>int</cohWinAz>
+        <cohWinRg>int</cohWinRg>
+        <subtractFlatEarthPhase>boolean</subtractFlatEarthPhase>
+        <srpPolynomialDegree>int</srpPolynomialDegree>
+        <srpNumberPoints>int</srpNumberPoints>
+        <orbitDegree>int</orbitDegree>
+        <squarePixel>boolean</squarePixel>
+        <subtractTopographicPhase>boolean</subtractTopographicPhase>
+        <demName>string</demName>
+        <externalDEMFile>file</externalDEMFile>
+        <externalDEMNoDataValue>double</externalDEMNoDataValue>
+        <externalDEMApplyEGM>boolean</externalDEMApplyEGM>
+        <tileExtensionPercent>string</tileExtensionPercent>
+        <singleMaster>boolean</singleMaster>
+      </parameters>
+    </node>
+  </graph>

@@ -1,0 +1,29 @@
+OPERATOR: Raster-To-Vector
+----------------------------------------
+Usage:
+  gpt Raster-To-Vector [options] 
+
+Description:
+  Converts a raster band to a vector
+
+
+Source Options:
+  -Ssource=<file>    The product which contains the raster.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PbandName=<string>    The band to convert.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Raster-To-Vector</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <bandName>string</bandName>
+      </parameters>
+    </node>
+  </graph>

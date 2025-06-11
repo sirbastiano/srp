@@ -1,0 +1,35 @@
+OPERATOR: BandPassFilter
+----------------------------------------
+Usage:
+  gpt BandPassFilter [options] 
+
+Description:
+  Creates a basebanded SLC based on a subband of 1/3 the original bandwidth
+
+
+Source Options:
+  -SsourceProduct=<file>    Sets source 'sourceProduct' to <filepath>.
+                            This is a mandatory source.
+
+Parameter Options:
+  -Palpha=<double>      Hamming alpha
+                        Value must be one of '0.5', '0.75', '0.8', '0.9', '1'.
+                        Default value is '1'.
+  -Psubband=<string>    Sets parameter 'subband' to <string>.
+                        Value must be one of 'low', 'high'.
+                        Default value is 'low'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>BandPassFilter</operator>
+      <sources>
+        <sourceProduct>${sourceProduct}</sourceProduct>
+      </sources>
+      <parameters>
+        <subband>string</subband>
+        <alpha>double</alpha>
+      </parameters>
+    </node>
+  </graph>

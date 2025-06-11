@@ -1,0 +1,31 @@
+OPERATOR: Compactpol-Radar-Vegetation-Index
+----------------------------------------
+Usage:
+  gpt Compactpol-Radar-Vegetation-Index [options] 
+
+Description:
+  Compact-pol Radar Vegetation Indices generation
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PwindowSizeStr=<string>    The sliding window size
+                              Value must be one of '3', '5', '7', '9', '11', '13', '15', '17', '19'.
+                              Default value is '3'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Compactpol-Radar-Vegetation-Index</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <windowSizeStr>string</windowSizeStr>
+      </parameters>
+    </node>
+  </graph>

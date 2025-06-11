@@ -1,0 +1,48 @@
+OPERATOR: Mci.s2
+----------------------------------------
+Usage:
+  gpt Mci.s2 [options] 
+
+Description:
+  Computes maximum chlorophyll index (MCI) for Sentinel-2 MSI.
+
+
+Source Options:
+  -Ssource=<file>    The source product.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PcloudCorrectionFactor=<float>     The cloud correction factor used during calculation
+                                      Default value is '1.005'.
+  -PinvalidMciValue=<float>           Value used to fill invalid MCI pixels
+                                      Default value is 'NaN'.
+  -PlineHeightBandName=<string>       The name of the MCI band in the target product
+  -PlowerBaselineBandName=<string>    The name for the lower wavelength band defining the baseline
+  -PmaskExpression=<string>           A ROI-mask expression used to identify pixels of interest
+  -PsignalBandName=<string>            The name of the signal band, i.e. the band for which the baseline height is calculated
+  -Pslope=<boolean>                   Activates or deactivates calculating the slope parameter
+                                      Default value is 'true'.
+  -PslopeBandName=<string>            The name of the slope band in the target product
+  -PupperBaselineBandName=<string>    The name of the upper wavelength band defining the baseline
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Mci.s2</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <lowerBaselineBandName>string</lowerBaselineBandName>
+        <upperBaselineBandName>string</upperBaselineBandName>
+        <signalBandName>string</signalBandName>
+        <lineHeightBandName>string</lineHeightBandName>
+        <slope>boolean</slope>
+        <slopeBandName>string</slopeBandName>
+        <maskExpression>string</maskExpression>
+        <cloudCorrectionFactor>float</cloudCorrectionFactor>
+        <invalidMciValue>float</invalidMciValue>
+      </parameters>
+    </node>
+  </graph>

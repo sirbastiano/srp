@@ -1,0 +1,30 @@
+OPERATOR: Oil-Spill-Clustering
+----------------------------------------
+Usage:
+  gpt Oil-Spill-Clustering [options] 
+
+Description:
+  Remove small clusters from detected area.
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PminClusterSizeInKm2=<double>    Minimum cluster size
+                                    Default value is '0.1'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Oil-Spill-Clustering</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <minClusterSizeInKm2>double</minClusterSizeInKm2>
+      </parameters>
+    </node>
+  </graph>

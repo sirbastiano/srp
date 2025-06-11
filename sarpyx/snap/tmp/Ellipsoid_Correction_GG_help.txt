@@ -1,0 +1,36 @@
+OPERATOR: Ellipsoid-Correction-GG
+----------------------------------------
+Usage:
+  gpt Ellipsoid-Correction-GG [options] 
+
+Description:
+  GG method for orthorectification
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PimgResamplingMethod=<string>              Sets parameter 'imgResamplingMethod' to <string>.
+                                              Value must be one of 'NEAREST_NEIGHBOUR', 'BILINEAR_INTERPOLATION', 'CUBIC_CONVOLUTION'.
+                                              Default value is 'BILINEAR_INTERPOLATION'.
+  -PmapProjection=<string>                    The coordinate reference system in well known text format
+                                              Default value is 'WGS84(DD)'.
+  -PsourceBands=<string,string,string,...>    The list of source bands.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Ellipsoid-Correction-GG</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <sourceBands>string,string,string,...</sourceBands>
+        <imgResamplingMethod>string</imgResamplingMethod>
+        <mapProjection>string</mapProjection>
+      </parameters>
+    </node>
+  </graph>

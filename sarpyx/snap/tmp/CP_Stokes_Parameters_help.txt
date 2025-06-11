@@ -1,0 +1,68 @@
+OPERATOR: CP-Stokes-Parameters
+----------------------------------------
+Usage:
+  gpt CP-Stokes-Parameters [options] 
+
+Description:
+  Generates compact polarimetric Stokes child parameters
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PoutputAlphas=<boolean>                    Output alphas
+                                              Default value is 'true'.
+  -PoutputConformity=<boolean>                Output conformity coefficient
+                                              Default value is 'true'.
+  -PoutputCPR=<boolean>                       Output circular polarization ratio
+                                              Default value is 'true'.
+  -PoutputDegreeOfCircularity=<boolean>       Output degree of circularity
+                                              Default value is 'true'.
+  -PoutputDegreeOfDepolarization=<boolean>    Output degree of depolarization
+                                              Default value is 'true'.
+  -PoutputDegreeOfEllipticity=<boolean>       Output degree of ellipticity
+                                              Default value is 'true'.
+  -PoutputDegreeOfPolarization=<boolean>      Output degree of polarization
+                                              Default value is 'true'.
+  -PoutputLPR=<boolean>                       Output linear polarization ratio
+                                              Default value is 'true'.
+  -PoutputPhasePhi=<boolean>                  Output phase phi
+                                              Default value is 'true'.
+  -PoutputRelativePhase=<boolean>             Output relative phase
+                                              Default value is 'true'.
+  -PoutputStokesVector=<boolean>              Output Stokes vector
+                                              Default value is 'false'.
+  -PwindowSizeXStr=<string>                   Sets parameter 'windowSizeXStr' to <string>.
+                                              Value must be one of '3', '5', '7', '9', '11', '13', '15', '17', '19'.
+                                              Default value is '5'.
+  -PwindowSizeYStr=<string>                   Sets parameter 'windowSizeYStr' to <string>.
+                                              Value must be one of '3', '5', '7', '9', '11', '13', '15', '17', '19'.
+                                              Default value is '5'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>CP-Stokes-Parameters</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <windowSizeXStr>string</windowSizeXStr>
+        <windowSizeYStr>string</windowSizeYStr>
+        <outputStokesVector>boolean</outputStokesVector>
+        <outputDegreeOfPolarization>boolean</outputDegreeOfPolarization>
+        <outputDegreeOfDepolarization>boolean</outputDegreeOfDepolarization>
+        <outputDegreeOfCircularity>boolean</outputDegreeOfCircularity>
+        <outputDegreeOfEllipticity>boolean</outputDegreeOfEllipticity>
+        <outputCPR>boolean</outputCPR>
+        <outputLPR>boolean</outputLPR>
+        <outputRelativePhase>boolean</outputRelativePhase>
+        <outputAlphas>boolean</outputAlphas>
+        <outputConformity>boolean</outputConformity>
+        <outputPhasePhi>boolean</outputPhasePhi>
+      </parameters>
+    </node>
+  </graph>

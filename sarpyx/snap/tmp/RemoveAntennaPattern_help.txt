@@ -1,0 +1,29 @@
+OPERATOR: RemoveAntennaPattern
+----------------------------------------
+Usage:
+  gpt RemoveAntennaPattern [options] 
+
+Description:
+  Remove Antenna Pattern
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PsourceBands=<string,string,string,...>    The list of source bands.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>RemoveAntennaPattern</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <sourceBands>string,string,string,...</sourceBands>
+      </parameters>
+    </node>
+  </graph>

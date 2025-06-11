@@ -1,0 +1,47 @@
+OPERATOR: Principal-Components
+----------------------------------------
+Usage:
+  gpt Principal-Components [options] 
+
+Description:
+  Principal Component Analysis
+
+
+Source Options:
+  -SsourceProduct=<file>    Sets source 'sourceProduct' to <filepath>.
+                            This is a mandatory source.
+
+Parameter Options:
+  -PeigenvalueThreshold=<double>              The threshold for selecting eigenvalues
+                                              Valid interval is (0, 100].
+                                              Default value is '100'.
+  -PnumPCA=<int>                              The number of PCA images output
+                                              Valid interval is (0, 100].
+                                              Default value is '1'.
+  -PselectEigenvaluesBy=<string>              Sets parameter 'selectEigenvaluesBy' to <string>.
+                                              Value must be one of 'Eigenvalue Threshold', 'Number of Eigenvalues'.
+                                              Default value is 'Eigenvalue Threshold'.
+  -PshowEigenvalues=<boolean>                 Show the eigenvalues
+                                              Default value is '1'.
+  -PsourceBands=<string,string,string,...>    The list of source bands.
+  -PsubtractMeanImage=<boolean>               Subtract mean image
+                                              Default value is '1'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Principal-Components</operator>
+      <sources>
+        <sourceProduct>${sourceProduct}</sourceProduct>
+      </sources>
+      <parameters>
+        <sourceBands>string,string,string,...</sourceBands>
+        <selectEigenvaluesBy>string</selectEigenvaluesBy>
+        <eigenvalueThreshold>double</eigenvalueThreshold>
+        <numPCA>int</numPCA>
+        <showEigenvalues>boolean</showEigenvalues>
+        <subtractMeanImage>boolean</subtractMeanImage>
+      </parameters>
+    </node>
+  </graph>

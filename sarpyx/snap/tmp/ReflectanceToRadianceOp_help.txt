@@ -1,0 +1,38 @@
+OPERATOR: ReflectanceToRadianceOp
+----------------------------------------
+Usage:
+  gpt ReflectanceToRadianceOp [options] 
+
+Description:
+  The 'Reflectance To Radiance Processor' operator retrieves the radiance from reflectance using Sentinel-2 products
+
+
+Source Options:
+  -Ssource=<file>    The source product.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PcopyMasks=<boolean>                       Copy masks from the source product
+                                              Default value is 'false'.
+  -PincidenceAngle=<float>                    The incidence angle in degrees.
+  -PsolarIrradiance=<float>                   The solar irradiance.
+  -PsourceBands=<string,string,string,...>    The source bands for the computation.
+  -Pu=<float>                                 U
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>ReflectanceToRadianceOp</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <solarIrradiance>float</solarIrradiance>
+        <u>float</u>
+        <incidenceAngle>float</incidenceAngle>
+        <sourceBands>string,string,string,...</sourceBands>
+        <copyMasks>boolean</copyMasks>
+      </parameters>
+    </node>
+  </graph>

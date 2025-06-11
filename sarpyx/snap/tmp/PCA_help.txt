@@ -1,0 +1,37 @@
+OPERATOR: PCA
+----------------------------------------
+Usage:
+  gpt PCA [options] 
+
+Description:
+  Performs a Principal Component Analysis.
+
+
+Source Options:
+  -Ssource=<file>    The source product.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PcomponentCount=<int>                          The maximum number of principal components to compute.
+                                                  Default value is '-1'.
+  -PremoveNonRoiPixels=<boolean>                  Removes all non-ROI pixels in the target product.
+                                                  Default value is 'false'.
+  -ProiMaskName=<string>                          The name of the ROI mask that should be used.
+  -PsourceBandNames=<string,string,string,...>    The names of the bands being used for the cluster analysis.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>PCA</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <sourceBandNames>string,string,string,...</sourceBandNames>
+        <componentCount>int</componentCount>
+        <roiMaskName>string</roiMaskName>
+        <removeNonRoiPixels>boolean</removeNonRoiPixels>
+      </parameters>
+    </node>
+  </graph>

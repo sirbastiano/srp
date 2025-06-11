@@ -1,0 +1,33 @@
+OPERATOR: Supervised-Wishart-Classification
+----------------------------------------
+Usage:
+  gpt Supervised-Wishart-Classification [options] 
+
+Description:
+  Perform supervised Wishart classification
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PtrainingDataSet=<file>    The training data set file
+  -PwindowSize=<int>          The sliding window size
+                              Valid interval is (1, 100].
+                              Default value is '5'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Supervised-Wishart-Classification</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <trainingDataSet>file</trainingDataSet>
+        <windowSize>int</windowSize>
+      </parameters>
+    </node>
+  </graph>

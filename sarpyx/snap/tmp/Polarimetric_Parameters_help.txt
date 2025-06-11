@@ -1,0 +1,71 @@
+OPERATOR: Polarimetric-Parameters
+----------------------------------------
+Usage:
+  gpt Polarimetric-Parameters [options] 
+
+Description:
+  Compute general polarimetric parameters
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PoutputBMI=<boolean>               Output BMI
+                                      Default value is 'false'.
+  -PoutputCSI=<boolean>               Output CSI
+                                      Default value is 'false'.
+  -PoutputHHHVRatio=<boolean>         Output Cross-Pol HH/HV
+                                      Default value is 'false'.
+  -PoutputHHVVRatio=<boolean>         Output Co-Pol HH/VV
+                                      Default value is 'false'.
+  -PoutputITI=<boolean>               Output ITI
+                                      Default value is 'false'.
+  -PoutputPedestalHeight=<boolean>    Output pedestal height
+                                      Default value is 'false'.
+  -PoutputRFDI=<boolean>              Output RFDI
+                                      Default value is 'false'.
+  -PoutputRVI=<boolean>               Output RVI
+                                      Default value is 'false'.
+  -PoutputSpan=<boolean>              Output Span
+                                      Default value is 'true'.
+  -PoutputVSI=<boolean>               Output VSI
+                                      Default value is 'false'.
+  -PoutputVVVHRatio=<boolean>         Output Cross-Pol VV/VH
+                                      Default value is 'false'.
+  -PuseMeanMatrix=<boolean>           Use mean coherency or covariance matrix
+                                      Default value is 'true'.
+  -PwindowSizeXStr=<string>           Sets parameter 'windowSizeXStr' to <string>.
+                                      Value must be one of '3', '5', '7', '9', '11', '13', '15', '17', '19'.
+                                      Default value is '5'.
+  -PwindowSizeYStr=<string>           Sets parameter 'windowSizeYStr' to <string>.
+                                      Value must be one of '3', '5', '7', '9', '11', '13', '15', '17', '19'.
+                                      Default value is '5'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Polarimetric-Parameters</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <useMeanMatrix>boolean</useMeanMatrix>
+        <windowSizeXStr>string</windowSizeXStr>
+        <windowSizeYStr>string</windowSizeYStr>
+        <outputSpan>boolean</outputSpan>
+        <outputPedestalHeight>boolean</outputPedestalHeight>
+        <outputRVI>boolean</outputRVI>
+        <outputRFDI>boolean</outputRFDI>
+        <outputCSI>boolean</outputCSI>
+        <outputVSI>boolean</outputVSI>
+        <outputBMI>boolean</outputBMI>
+        <outputITI>boolean</outputITI>
+        <outputHHVVRatio>boolean</outputHHVVRatio>
+        <outputHHHVRatio>boolean</outputHHHVRatio>
+        <outputVVVHRatio>boolean</outputVVVHRatio>
+      </parameters>
+    </node>
+  </graph>

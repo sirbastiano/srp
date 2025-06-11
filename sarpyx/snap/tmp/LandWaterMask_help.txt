@@ -1,0 +1,40 @@
+OPERATOR: LandWaterMask
+----------------------------------------
+Usage:
+  gpt LandWaterMask [options] 
+
+Description:
+  Operator creating a target product with a single band containing a land/water-mask.
+
+
+Source Options:
+  -Ssource=<file>    The Product the land/water-mask shall be computed for.
+                     This is a mandatory source.
+
+Parameter Options:
+  -Presolution=<int>            Specifies on which resolution the water mask shall be based.
+                                Value must be one of '50', '150', '1000'.
+                                Default value is '50'.
+                                Parameter unit is 'm/pixel'.
+  -PsubSamplingFactorX=<int>    Specifies the factor between the resolution of the source product and the watermask in x direction. A value of '1' means no subsampling at all.
+                                Default value is '1'.
+                                This is a mandatory parameter.
+  -PsubSamplingFactorY=<int>    Specifies the factor between the resolution of the source product and the watermask iny direction. A value of '1' means no subsampling at all.
+                                Default value is '1'.
+                                This is a mandatory parameter.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>LandWaterMask</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <resolution>int</resolution>
+        <subSamplingFactorX>int</subSamplingFactorX>
+        <subSamplingFactorY>int</subSamplingFactorY>
+      </parameters>
+    </node>
+  </graph>

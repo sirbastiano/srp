@@ -1,0 +1,36 @@
+OPERATOR: BiophysicalLandsat8Op
+----------------------------------------
+Usage:
+  gpt BiophysicalLandsat8Op [options] 
+
+Description:
+  The 'Biophysical Processor' operator retrieves LAI from atmospherically corrected Landsat8 products
+
+
+Source Options:
+  -Ssource=<file>    The source product.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PcomputeFapar=<boolean>     Compute FAPAR (Fraction of Absorbed Photosynthetically Active Radiation)
+                               Default value is 'true'.
+  -PcomputeFcover=<boolean>    Compute FVC (Fraction of Vegetation Cover)
+                               Default value is 'true'.
+  -PcomputeLAI=<boolean>       Compute LAI (Leaf Area Index)
+                               Default value is 'true'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>BiophysicalLandsat8Op</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <computeLAI>boolean</computeLAI>
+        <computeFapar>boolean</computeFapar>
+        <computeFcover>boolean</computeFcover>
+      </parameters>
+    </node>
+  </graph>

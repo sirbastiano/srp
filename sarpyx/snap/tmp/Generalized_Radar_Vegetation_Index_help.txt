@@ -1,0 +1,31 @@
+OPERATOR: Generalized-Radar-Vegetation-Index
+----------------------------------------
+Usage:
+  gpt Generalized-Radar-Vegetation-Index [options] 
+
+Description:
+  Generalized Radar Vegetation Indices generation
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PwindowSize=<int>    The sliding window size
+                        Valid interval is [1, 100].
+                        Default value is '5'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Generalized-Radar-Vegetation-Index</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <windowSize>int</windowSize>
+      </parameters>
+    </node>
+  </graph>

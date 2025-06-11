@@ -1,0 +1,33 @@
+OPERATOR: OlciSensorHarmonisation
+----------------------------------------
+Usage:
+  gpt OlciSensorHarmonisation [options] 
+
+Description:
+  Performs sensor harmonisation on OLCI L1b product. Implements algorithm described in 'OLCI A/B Tandem Phase Analysis'
+
+
+Source Options:
+  -Sl1bProduct=<file>    OLCI L1b or fully compatible product.
+                         This is a mandatory source.
+
+Parameter Options:
+  -PcopyInputBands=<boolean>                   If set to true, all bands of the input product (except for the radiances) are copied to the target product. If set to false, only the tie-point rasters are copied
+                                               Default value is 'false'.
+  -PperformSensorCrossCalibration=<boolean>    If set to true, in addition to the camera homogenisation, sensor cross-calibration (i.e. S3A->S3B or S3B->S3A) is performed using linear regression
+                                               Default value is 'false'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>OlciSensorHarmonisation</operator>
+      <sources>
+        <l1bProduct>${l1bProduct}</l1bProduct>
+      </sources>
+      <parameters>
+        <performSensorCrossCalibration>boolean</performSensorCrossCalibration>
+        <copyInputBands>boolean</copyInputBands>
+      </parameters>
+    </node>
+  </graph>

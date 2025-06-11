@@ -1,0 +1,49 @@
+OPERATOR: NdpiOp
+----------------------------------------
+Usage:
+  gpt NdpiOp [options] 
+
+Description:
+  The normalized differential pond index, combines the short-wave infrared band-I and the green band
+
+
+Source Options:
+  -Ssource=<file>    The source product.
+                     This is a mandatory source.
+
+Parameter Options:
+  -Pdownsampling=<string>       The method used for aggregation (downsampling to a coarser resolution).
+                                Value must be one of 'First', 'Min', 'Max', 'Mean', 'Median'.
+                                Default value is 'First'.
+  -PgreenFactor=<float>         The value of the green source band is multiplied by this value.
+                                Default value is '1.0F'.
+  -PgreenSourceBand=<string>    The green band for the NDPI computation. If not provided, the operator will try to find the best fitting band.
+  -PmirFactor=<float>           The value of the MIR source band is multiplied by this value.
+                                Default value is '1.0F'.
+  -PmirSourceBand=<string>      The mid-infrared band for the NDPI computation. If not provided, the operator will try to find the best fitting band.
+  -PresampleType=<string>       If selected band s differ in size, the resample method used before computing the index
+                                Value must be one of 'None', 'Lowest resolution', 'Highest resolution'.
+                                Default value is 'None'.
+  -Pupsampling=<string>         The method used for interpolation (upsampling to a finer resolution).
+                                Value must be one of 'Nearest', 'Bilinear', 'Bicubic'.
+                                Default value is 'Nearest'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>NdpiOp</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <resampleType>string</resampleType>
+        <upsampling>string</upsampling>
+        <downsampling>string</downsampling>
+        <greenFactor>float</greenFactor>
+        <mirFactor>float</mirFactor>
+        <greenSourceBand>string</greenSourceBand>
+        <mirSourceBand>string</mirSourceBand>
+      </parameters>
+    </node>
+  </graph>

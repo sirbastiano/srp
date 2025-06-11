@@ -1,0 +1,50 @@
+OPERATOR: BiophysicalOp
+----------------------------------------
+Usage:
+  gpt BiophysicalOp [options] 
+
+Description:
+  The 'Biophysical Processor' operator retrieves LAI from atmospherically corrected Sentinel-2 products
+
+
+Source Options:
+  -Ssource=<file>    The source product.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PcomputeCab=<boolean>       Compute Cab (Chlorophyll content in the leaf)
+                               Default value is 'true'.
+  -PcomputeCw=<boolean>        Compute Cw (Canopy Water Content)
+                               Default value is 'true'.
+  -PcomputeFapar=<boolean>     Compute FAPAR (Fraction of Absorbed Photosynthetically Active Radiation)
+                               Default value is 'true'.
+  -PcomputeFcover=<boolean>    Compute FVC (Fraction of Vegetation Cover)
+                               Default value is 'true'.
+  -PcomputeLAI=<boolean>       Compute LAI (Leaf Area Index)
+                               Default value is 'true'.
+  -Presolution=<string>        The output resolution.
+                               Value must be one of '10', '20', '60'.
+                               Default value is '60'.
+  -Psensor=<string>            Sensor
+                               Value must be one of 'S2A', 'S2B', 'S2C'.
+                               Default value is 'S2A'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>BiophysicalOp</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <sensor>string</sensor>
+        <resolution>string</resolution>
+        <computeLAI>boolean</computeLAI>
+        <computeFapar>boolean</computeFapar>
+        <computeFcover>boolean</computeFcover>
+        <computeCab>boolean</computeCab>
+        <computeCw>boolean</computeCw>
+      </parameters>
+    </node>
+  </graph>

@@ -1,0 +1,81 @@
+OPERATOR: Mosaic
+----------------------------------------
+Usage:
+  gpt Mosaic [options] <source-file-1> <source-file-2> ...
+
+Description:
+  Creates a mosaic out of a set of source products.
+
+
+Source Options:
+  -SupdateProduct=<file>    A product to be updated.
+                            This is an optional source.
+
+Parameter Options:
+  -Pcombine=<string>               Specifies the way how conditions are combined.
+                                   Value must be one of 'OR', 'AND'.
+                                   Default value is 'OR'.
+  -Pcrs=<string>                   The CRS of the target product, represented as WKT or authority code.
+                                   Default value is 'EPSG:4326'.
+  -PeastBound=<double>             The eastern longitude.
+                                   Valid interval is [-180,180].
+                                   Default value is '30.0'.
+  -PelevationModelName=<string>    The name of the elevation model for the orthorectification.
+  -PnorthBound=<double>            The northern latitude.
+                                   Valid interval is [-90,90].
+                                   Default value is '75.0'.
+  -Porthorectify=<boolean>         Whether the source product should be orthorectified.
+                                   Default value is 'false'.
+  -PpixelSizeX=<double>            Size of a pixel in X-direction in map units.
+                                   Default value is '0.05'.
+  -PpixelSizeY=<double>            Size of a pixel in Y-direction in map units.
+                                   Default value is '0.05'.
+  -Presampling=<string>            The method used for resampling.
+                                   Value must be one of 'Nearest', 'Bilinear', 'Bicubic'.
+                                   Default value is 'Nearest'.
+  -PsouthBound=<double>            The southern latitude.
+                                   Valid interval is [-90,90].
+                                   Default value is '35.0'.
+  -PwestBound=<double>             The western longitude.
+                                   Valid interval is [-180,180].
+                                   Default value is '-15.0'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Mosaic</operator>
+      <sources>
+        <updateProduct>${updateProduct}</updateProduct>
+        <sourceProducts>${sourceProducts}</sourceProducts>
+      </sources>
+      <parameters>
+        <variables>
+          <variable>
+            <name>string</name>
+            <expression>string</expression>
+          </variable>
+          <_.002e../>
+        </variables>
+        <conditions>
+          <condition>
+            <name>string</name>
+            <expression>string</expression>
+            <output>boolean</output>
+          </condition>
+          <_.002e../>
+        </conditions>
+        <combine>string</combine>
+        <crs>string</crs>
+        <orthorectify>boolean</orthorectify>
+        <elevationModelName>string</elevationModelName>
+        <resampling>string</resampling>
+        <westBound>double</westBound>
+        <northBound>double</northBound>
+        <eastBound>double</eastBound>
+        <southBound>double</southBound>
+        <pixelSizeX>double</pixelSizeX>
+        <pixelSizeY>double</pixelSizeY>
+      </parameters>
+    </node>
+  </graph>

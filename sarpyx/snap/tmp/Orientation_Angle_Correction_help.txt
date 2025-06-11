@@ -1,0 +1,30 @@
+OPERATOR: Orientation-Angle-Correction
+----------------------------------------
+Usage:
+  gpt Orientation-Angle-Correction [options] 
+
+Description:
+  Perform polarization orientation angle correction for given coherency matrix
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PoutputOrientationAngle=<boolean>    Output Orientation Angle
+                                        Default value is 'false'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Orientation-Angle-Correction</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <outputOrientationAngle>boolean</outputOrientationAngle>
+      </parameters>
+    </node>
+  </graph>

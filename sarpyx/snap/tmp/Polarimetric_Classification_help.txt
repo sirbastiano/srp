@@ -1,0 +1,55 @@
+OPERATOR: Polarimetric-Classification
+----------------------------------------
+Usage:
+  gpt Polarimetric-Classification [options] 
+
+Description:
+  Perform Polarimetric classification of a given product
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -Pclassification=<string>            Sets parameter 'classification' to <string>.
+                                       Value must be one of 'Cloude-Pottier', 'Cloude-Pottier Dual Pol', 'H Alpha Wishart', 'H Alpha Wishart Dual Pol', 'Freeman-Durden Wishart', 'General Wishart'.
+                                       Default value is 'H Alpha Wishart'.
+  -Pdecomposition=<string>             Sets parameter 'decomposition' to <string>.
+                                       Value must be one of 'Sinclair Decomposition', 'Pauli Decomposition', 'Freeman-Durden Decomposition', 'Generalized Freeman-Durden Decomposition', 'Yamaguchi Decomposition', 'van Zyl Decomposition', 'H-A-Alpha Quad Pol Decomposition', 'Cloude Decomposition', 'Touzi Decomposition'.
+                                       Default value is 'Sinclair Decomposition'.
+  -PmaxIterations=<int>                The maximum number of iterations
+                                       Valid interval is [1, 100].
+                                       Default value is '3'.
+  -PmixedCategoryThreshold=<double>    The threshold for classifying pixels to mixed category
+                                       Valid interval is (0, *).
+                                       Default value is '0.5'.
+  -PnumFinalClasses=<int>              The desired number of classes
+                                       Valid interval is [9, 100].
+                                       Default value is '15'.
+  -PnumInitialClasses=<int>            The initial number of classes
+                                       Valid interval is [9, 1000].
+                                       Default value is '90'.
+  -PwindowSize=<int>                   The sliding window size
+                                       Valid interval is (1, 100].
+                                       Default value is '5'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Polarimetric-Classification</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <classification>string</classification>
+        <windowSize>int</windowSize>
+        <maxIterations>int</maxIterations>
+        <numInitialClasses>int</numInitialClasses>
+        <numFinalClasses>int</numFinalClasses>
+        <mixedCategoryThreshold>double</mixedCategoryThreshold>
+        <decomposition>string</decomposition>
+      </parameters>
+    </node>
+  </graph>

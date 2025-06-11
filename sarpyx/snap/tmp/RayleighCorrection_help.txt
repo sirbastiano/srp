@@ -1,0 +1,54 @@
+OPERATOR: RayleighCorrection
+----------------------------------------
+Usage:
+  gpt RayleighCorrection [options] 
+
+Description:
+  Performs radiometric corrections on OLCI, MERIS L1B and S2 MSI L1C data products.
+
+
+Source Options:
+  -SsourceProduct=<file>    Sets source 'sourceProduct' to <filepath>.
+                            This is a mandatory source.
+
+Parameter Options:
+  -PaddAirMass=<boolean>                          Sets parameter 'addAirMass' to <boolean>.
+                                                  Default value is 'false'.
+  -PcomputeRBrr=<boolean>                         Sets parameter 'computeRBrr' to <boolean>.
+                                                  Default value is 'true'.
+  -PcomputeRtoa=<boolean>                         Sets parameter 'computeRtoa' to <boolean>.
+                                                  Default value is 'false'.
+  -PcomputeRtoaNg=<boolean>                       Sets parameter 'computeRtoaNg' to <boolean>.
+                                                  Default value is 'false'.
+  -PcomputeTaur=<boolean>                         Sets parameter 'computeTaur' to <boolean>.
+                                                  Default value is 'false'.
+  -Ps2MsiOzone=<double>                           Sets parameter 's2MsiOzone' to <double>.
+                                                  Default value is '300.0'.
+  -Ps2MsiSeaLevelPressure=<double>                Sets parameter 's2MsiSeaLevelPressure' to <double>.
+                                                  Default value is '1013.25'.
+  -Ps2MsiTargetResolution=<int>                   Sets parameter 's2MsiTargetResolution' to <int>.
+                                                  Value must be one of '10', '20', '60'.
+                                                  Default value is '20'.
+  -PsourceBandNames=<string,string,string,...>    The source bands for the computation.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>RayleighCorrection</operator>
+      <sources>
+        <sourceProduct>${sourceProduct}</sourceProduct>
+      </sources>
+      <parameters>
+        <sourceBandNames>string,string,string,...</sourceBandNames>
+        <computeTaur>boolean</computeTaur>
+        <computeRBrr>boolean</computeRBrr>
+        <computeRtoaNg>boolean</computeRtoaNg>
+        <computeRtoa>boolean</computeRtoa>
+        <addAirMass>boolean</addAirMass>
+        <s2MsiTargetResolution>int</s2MsiTargetResolution>
+        <s2MsiSeaLevelPressure>double</s2MsiSeaLevelPressure>
+        <s2MsiOzone>double</s2MsiOzone>
+      </parameters>
+    </node>
+  </graph>

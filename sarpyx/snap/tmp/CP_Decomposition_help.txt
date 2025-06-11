@@ -1,0 +1,45 @@
+OPERATOR: CP-Decomposition
+----------------------------------------
+Usage:
+  gpt CP-Decomposition [options] 
+
+Description:
+  Perform Compact Polarimetric decomposition of a given product
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PcomputeAlphaByT3=<boolean>    Compute alpha by coherency matrix T3
+                                  Default value is 'true'.
+  -Pdecomposition=<string>        Sets parameter 'decomposition' to <string>.
+                                  Value must be one of 'M-Chi Decomposition', 'M-Delta Decomposition', 'H-Alpha Decomposition', '2 Layer RVOG Model Based Decomposition', 'Model-free 3-component decomposition'.
+                                  Default value is 'M-Chi Decomposition'.
+  -PoutputRVOG=<boolean>          Output RVOG parameters mv, ms, alphaS and phi
+                                  Default value is 'true'.
+  -PwindowSizeXStr=<string>       Sets parameter 'windowSizeXStr' to <string>.
+                                  Value must be one of '3', '5', '7', '9', '11', '13', '15', '17', '19'.
+                                  Default value is '5'.
+  -PwindowSizeYStr=<string>       Sets parameter 'windowSizeYStr' to <string>.
+                                  Value must be one of '3', '5', '7', '9', '11', '13', '15', '17', '19'.
+                                  Default value is '5'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>CP-Decomposition</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <decomposition>string</decomposition>
+        <windowSizeXStr>string</windowSizeXStr>
+        <windowSizeYStr>string</windowSizeYStr>
+        <computeAlphaByT3>boolean</computeAlphaByT3>
+        <outputRVOG>boolean</outputRVOG>
+      </parameters>
+    </node>
+  </graph>

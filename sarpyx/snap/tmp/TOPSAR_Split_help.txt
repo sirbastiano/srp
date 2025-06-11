@@ -1,0 +1,41 @@
+OPERATOR: TOPSAR-Split
+----------------------------------------
+Usage:
+  gpt TOPSAR-Split [options] 
+
+Description:
+  Creates a new product with only the selected subswath
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PfirstBurstIndex=<integer>                           The first burst index
+                                                        Valid interval is [1, *).
+                                                        Default value is '1'.
+  -PlastBurstIndex=<integer>                            The last burst index
+                                                        Valid interval is [1, *).
+                                                        Default value is '9999'.
+  -PselectedPolarisations=<string,string,string,...>    The list of polarisations
+  -Psubswath=<string>                                   The list of source bands.
+  -PwktAoi=<string>                                     WKT polygon to be used for selecting bursts
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>TOPSAR-Split</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <subswath>string</subswath>
+        <selectedPolarisations>string,string,string,...</selectedPolarisations>
+        <firstBurstIndex>integer</firstBurstIndex>
+        <lastBurstIndex>integer</lastBurstIndex>
+        <wktAoi>string</wktAoi>
+      </parameters>
+    </node>
+  </graph>

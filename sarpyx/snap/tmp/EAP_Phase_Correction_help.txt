@@ -1,0 +1,24 @@
+OPERATOR: EAP-Phase-Correction
+----------------------------------------
+Usage:
+  gpt EAP-Phase-Correction [options] 
+
+Description:
+  EAP Phase Correction
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>EAP-Phase-Correction</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters/>
+    </node>
+  </graph>

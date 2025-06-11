@@ -1,0 +1,35 @@
+OPERATOR: Oil-Spill-Detection
+----------------------------------------
+Usage:
+  gpt Oil-Spill-Detection [options] 
+
+Description:
+  Detect oil spill.
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PbackgroundWindowDim=<double>              Background window dimension (km)
+                                              Default value is '0.5'.
+  -Pk=<double>                                Threshold shift from background mean
+                                              Default value is '2.0'.
+  -PsourceBands=<string,string,string,...>    The list of source bands.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Oil-Spill-Detection</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <sourceBands>string,string,string,...</sourceBands>
+        <backgroundWindowDim>double</backgroundWindowDim>
+        <k>double</k>
+      </parameters>
+    </node>
+  </graph>

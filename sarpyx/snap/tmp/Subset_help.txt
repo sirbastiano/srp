@@ -1,0 +1,60 @@
+OPERATOR: Subset
+----------------------------------------
+Usage:
+  gpt Subset [options] 
+
+Description:
+  Create a spatial and/or spectral subset of a data product.
+
+
+Source Options:
+  -Ssource=<file>    The source product to create the subset from.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PcopyMetadata=<boolean>                      Whether to copy the metadata of the source product.
+                                                Default value is 'false'.
+  -PfullSwath=<boolean>                         Forces the operator to extend the subset region to the full swath.
+                                                Default value is 'false'.
+  -PgeoRegion=<geometry>                        The subset region in geographical coordinates using WKT-format,
+                                                e.g. POLYGON(({lon1} {lat1}, {lon2} {lat2}, ..., {lon1} {lat1}))
+                                                (make sure to quote the option due to spaces in {geometry}).
+                                                If not given, the entire scene is used.
+  -PpolygonRegion=<polygon>                     The subset region in geographical coordinates using WKT-format,
+                                                e.g. POLYGON(({lon1} {lat1}, {lon2} {lat2}, ..., {lon1} {lat1}))
+                                                If not given, the geometryRegion or pixelRegion is used.
+  -PreferenceBand=<string>                      The band used to indicate the pixel coordinates.
+  -Pregion=<rectangle>                          The subset region in pixel coordinates.
+                                                Use the following format: {x},{y},{width},{height}
+                                                If not given, the entire scene is used. The 'geoRegion' parameter has precedence over this parameter.
+  -PsourceBands=<string,string,string,...>      The list of source bands.
+  -PsubSamplingX=<int>                          The pixel sub-sampling step in X (horizontal image direction)
+                                                Default value is '1'.
+  -PsubSamplingY=<int>                          The pixel sub-sampling step in Y (vertical image direction)
+                                                Default value is '1'.
+  -PtiePointGrids=<string,string,string,...>    The list of tie-point grid names.
+  -PvectorFile=<file>                           The file from which the polygon is read.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Subset</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <sourceBands>string,string,string,...</sourceBands>
+        <tiePointGrids>string,string,string,...</tiePointGrids>
+        <region>rectangle</region>
+        <referenceBand>string</referenceBand>
+        <geoRegion>geometry</geoRegion>
+        <subSamplingX>int</subSamplingX>
+        <subSamplingY>int</subSamplingY>
+        <fullSwath>boolean</fullSwath>
+        <vectorFile>file</vectorFile>
+        <polygonRegion>polygon</polygonRegion>
+        <copyMetadata>boolean</copyMetadata>
+      </parameters>
+    </node>
+  </graph>

@@ -1,0 +1,50 @@
+OPERATOR: Aatsr.SST
+----------------------------------------
+Usage:
+  gpt Aatsr.SST [options] 
+
+Description:
+  Computes sea surface temperature (SST) from (A)ATSR products.
+
+
+Source Options:
+  -Ssource=<file>    The path of the (A)ATSR source product
+                     This is a mandatory source.
+
+Parameter Options:
+  -Pdual=<boolean>                   Enables/disables generation of the dual-view SST
+                                     Default value is 'true'.
+  -PdualCoefficientsFile=<files>     Coefficient file for the dual-view SST
+                                     Value must be one of 'AVERAGE_POLAR_DUAL_VIEW', 'AVERAGE_TEMPERATE_DUAL_VIEW', 'AVERAGE_TROPICAL_DUAL_VIEW', 'GRIDDED_POLAR_DUAL_VIEW', 'GRIDDED_TEMPERATE_DUAL_VIEW', 'GRIDDED_TROPICAL_DUAL_VIEW', 'GRIDDED_DUAL_VIEW_IPF'.
+                                     Default value is 'AVERAGE_POLAR_DUAL_VIEW'.
+  -PdualMaskExpression=<string>      ROI-mask used for the dual-view SST
+                                     Default value is '!cloud_flags_nadir.LAND and !cloud_flags_nadir.CLOUDY and !cloud_flags_nadir.SUN_GLINT and !cloud_flags_fward.LAND and !cloud_flags_fward.CLOUDY and !cloud_flags_fward.SUN_GLINT'.
+  -PinvalidSstValue=<float>          Value used to fill invalid SST pixels
+                                     Default value is '-999.0f'.
+  -Pnadir=<boolean>                  Enables/disables generation of the nadir-view SST
+                                     Default value is 'true'.
+  -PnadirCoefficientsFile=<files>    Coefficient file for the nadir-view SST
+                                     Value must be one of 'AVERAGE_POLAR_SINGLE_VIEW', 'AVERAGE_TEMPERATE_SINGLE_VIEW', 'AVERAGE_TROPICAL_SINGLE_VIEW', 'GRIDDED_POLAR_SINGLE_VIEW', 'GRIDDED_TEMPERATE_SINGLE_VIEW', 'GRIDDED_TROPICAL_SINGLE_VIEW'.
+                                     Default value is 'AVERAGE_POLAR_SINGLE_VIEW'.
+  -PnadirMaskExpression=<string>     ROI-mask used for the nadir-view SST
+                                     Default value is '!cloud_flags_nadir.LAND and !cloud_flags_nadir.CLOUDY and !cloud_flags_nadir.SUN_GLINT'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Aatsr.SST</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <dual>boolean</dual>
+        <dualCoefficientsFile>files</dualCoefficientsFile>
+        <dualMaskExpression>string</dualMaskExpression>
+        <nadir>boolean</nadir>
+        <nadirCoefficientsFile>files</nadirCoefficientsFile>
+        <nadirMaskExpression>string</nadirMaskExpression>
+        <invalidSstValue>float</invalidSstValue>
+      </parameters>
+    </node>
+  </graph>

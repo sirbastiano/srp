@@ -1,0 +1,31 @@
+OPERATOR: Quantization
+----------------------------------------
+Usage:
+  gpt Quantization [options] 
+
+Description:
+  Converts each pixel from a band based on a lookup table
+
+
+Source Options:
+  -Ssource=<file>    The product which contains the raster.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PbandName=<string>     The band to convert.
+  -PintervalsMap=<map>    The intervals used for conversion, separated by semicolons.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Quantization</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <bandName>string</bandName>
+        <intervalsMap>map</intervalsMap>
+      </parameters>
+    </node>
+  </graph>

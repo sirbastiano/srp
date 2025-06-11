@@ -1,0 +1,44 @@
+OPERATOR: Compute-Slope-Aspect
+----------------------------------------
+Usage:
+  gpt Compute-Slope-Aspect [options] 
+
+Description:
+  Compute Slope and Aspect from DEM
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PdemBandName=<string>               Sets parameter 'demBandName' to <string>.
+                                       Default value is 'elevation'.
+  -PdemName=<string>                   The digital elevation model.
+                                       Default value is 'SRTM 1Sec HGT'.
+  -PdemResamplingMethod=<string>       Sets parameter 'demResamplingMethod' to <string>.
+                                       Default value is 'BILINEAR_INTERPOLATION'.
+  -PexternalDEMApplyEGM=<boolean>      Sets parameter 'externalDEMApplyEGM' to <boolean>.
+                                       Default value is 'false'.
+  -PexternalDEMFile=<file>             Sets parameter 'externalDEMFile' to <file>.
+  -PexternalDEMNoDataValue=<double>    Sets parameter 'externalDEMNoDataValue' to <double>.
+                                       Default value is '0'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Compute-Slope-Aspect</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <demName>string</demName>
+        <demResamplingMethod>string</demResamplingMethod>
+        <externalDEMFile>file</externalDEMFile>
+        <externalDEMNoDataValue>double</externalDEMNoDataValue>
+        <externalDEMApplyEGM>boolean</externalDEMApplyEGM>
+        <demBandName>string</demBandName>
+      </parameters>
+    </node>
+  </graph>

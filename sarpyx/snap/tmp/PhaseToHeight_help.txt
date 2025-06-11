@@ -1,0 +1,47 @@
+OPERATOR: PhaseToHeight
+----------------------------------------
+Usage:
+  gpt PhaseToHeight [options] 
+
+Description:
+  Phase to Height conversion
+
+
+Source Options:
+  -SsourceProduct=<file>    Source product that contains unwrapped phase.
+                            This is a mandatory source.
+
+Parameter Options:
+  -Pdegree1D=<int>       Degree of the 1D polynomial to fit reference phase through.
+                         Value must be one of '1', '2', '3', '4', '5'.
+                         Default value is '2'.
+  -Pdegree2D=<int>       Degree of the 2D polynomial to fit reference phase through.
+                         Value must be one of '1', '2', '3', '4', '5', '6', '7', '8'.
+                         Default value is '5'.
+  -PnHeights=<int>       Number of height samples in range [0,5000)
+                         Value must be one of '2', '3', '4', '5'.
+                         Default value is '3'.
+  -PnPoints=<int>        Number of points for evaluation of flat earth phase at different altitudes
+                         Value must be one of '100', '200', '300', '400', '500'.
+                         Default value is '200'.
+  -PorbitDegree=<int>    Degree of orbit (polynomial) interpolator
+                         Value must be one of '2', '3', '4', '5'.
+                         Default value is '3'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>PhaseToHeight</operator>
+      <sources>
+        <sourceProduct>${sourceProduct}</sourceProduct>
+      </sources>
+      <parameters>
+        <nPoints>int</nPoints>
+        <nHeights>int</nHeights>
+        <degree1D>int</degree1D>
+        <degree2D>int</degree2D>
+        <orbitDegree>int</orbitDegree>
+      </parameters>
+    </node>
+  </graph>

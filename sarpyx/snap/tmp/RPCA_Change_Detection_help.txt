@@ -1,0 +1,40 @@
+OPERATOR: RPCA-Change-Detection
+----------------------------------------
+Usage:
+  gpt RPCA-Change-Detection [options] 
+
+Description:
+  RPCA Change Detection.
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PincludeSourceBands=<boolean>              Include source bands
+                                              Default value is 'false'.
+  -Plambda=<float>                            Regularization parameter
+                                              Valid interval is (0, 1).
+                                              Default value is '0.01'.
+  -PmaskThreshold=<float>                     Mask threshold
+                                              Valid interval is (0, 1).
+                                              Default value is '0.05'.
+  -PsourceBands=<string,string,string,...>    The list of source bands.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>RPCA-Change-Detection</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <sourceBands>string,string,string,...</sourceBands>
+        <maskThreshold>float</maskThreshold>
+        <lambda>float</lambda>
+        <includeSourceBands>boolean</includeSourceBands>
+      </parameters>
+    </node>
+  </graph>

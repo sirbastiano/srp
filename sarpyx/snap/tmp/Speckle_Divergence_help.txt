@@ -1,0 +1,33 @@
+OPERATOR: Speckle-Divergence
+----------------------------------------
+Usage:
+  gpt Speckle-Divergence [options] 
+
+Description:
+  Detect urban area.
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PsourceBands=<string,string,string,...>    The list of source bands.
+  -PwindowSizeStr=<string>                    Sets parameter 'windowSizeStr' to <string>.
+                                              Value must be one of '3x3', '5x5', '7x7', '9x9', '11x11', '13x13', '15x15', '17x17'.
+                                              Default value is '15x15'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Speckle-Divergence</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <sourceBands>string,string,string,...</sourceBands>
+        <windowSizeStr>string</windowSizeStr>
+      </parameters>
+    </node>
+  </graph>

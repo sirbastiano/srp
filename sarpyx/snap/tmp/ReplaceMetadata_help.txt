@@ -1,0 +1,26 @@
+OPERATOR: ReplaceMetadata
+----------------------------------------
+Usage:
+  gpt ReplaceMetadata [options] 
+
+Description:
+  Replace the metadata of the first product with that of the second
+
+
+Parameter Options:
+  -Pnote=<string>    Sets parameter 'note' to <string>.
+                     Default value is 'Replace the metadata of the first product with that of the second'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>ReplaceMetadata</operator>
+      <sources>
+        <sourceProduct>${sourceProduct}</sourceProduct>
+      </sources>
+      <parameters>
+        <note>string</note>
+      </parameters>
+    </node>
+  </graph>

@@ -1,0 +1,39 @@
+OPERATOR: CrossResampling
+----------------------------------------
+Usage:
+  gpt CrossResampling [options] 
+
+Description:
+  Estimate Resampling Polynomial using SAR Image Geometry, and Resample Input Images
+
+
+Source Options:
+  -SsourceProduct=<file>    Sets source 'sourceProduct' to <filepath>.
+                            This is a mandatory source.
+
+Parameter Options:
+  -PinterpolationMethod=<string>    Sets parameter 'interpolationMethod' to <string>.
+                                    Value must be one of 'Cubic convolution (4 points)', 'Cubic convolution (6 points)', 'Truncated sinc (6 points)', 'Truncated sinc (8 points)', 'Truncated sinc (16 points)'.
+                                    Default value is 'Cubic convolution (6 points)'.
+  -PtargetGeometry=<string>         Sets parameter 'targetGeometry' to <string>.
+                                    Value must be one of 'ERS', 'Envisat ASAR'.
+                                    Default value is 'ERS'.
+  -PwarpPolynomialOrder=<int>       The order of polynomial function
+                                    Value must be one of '1', '2', '3'.
+                                    Default value is '2'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>CrossResampling</operator>
+      <sources>
+        <sourceProduct>${sourceProduct}</sourceProduct>
+      </sources>
+      <parameters>
+        <warpPolynomialOrder>int</warpPolynomialOrder>
+        <interpolationMethod>string</interpolationMethod>
+        <targetGeometry>string</targetGeometry>
+      </parameters>
+    </node>
+  </graph>

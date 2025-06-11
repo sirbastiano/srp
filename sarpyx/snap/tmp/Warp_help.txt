@@ -1,0 +1,51 @@
+OPERATOR: Warp
+----------------------------------------
+Usage:
+  gpt Warp [options] 
+
+Description:
+  Create Warp Function And Get Co-registrated Images
+
+
+Source Options:
+  -SsourceProduct=<file>    Sets source 'sourceProduct' to <filepath>.
+                            This is a mandatory source.
+
+Parameter Options:
+  -PdemName=<string>                The digital elevation model.
+                                    Default value is 'SRTM 3Sec'.
+  -PdemRefinement=<boolean>         Refine estimated offsets using a-priori DEM
+                                    Default value is 'false'.
+  -PexcludeMaster=<boolean>         Sets parameter 'excludeMaster' to <boolean>.
+                                    Default value is 'false'.
+  -PinterpolationMethod=<string>    Sets parameter 'interpolationMethod' to <string>.
+                                    Value must be one of 'Nearest-neighbor interpolation', 'Bilinear interpolation', 'Bicubic interpolation', 'Bicubic2 interpolation', 'Linear interpolation', 'Cubic convolution (4 points)', 'Cubic convolution (6 points)', 'Truncated sinc (6 points)', 'Truncated sinc (8 points)', 'Truncated sinc (16 points)'.
+                                    Default value is 'Cubic convolution (6 points)'.
+  -PopenResidualsFile=<boolean>     Show the Residuals file in a text viewer
+                                    Default value is 'false'.
+  -PrmsThreshold=<float>            Confidence level for outlier detection procedure, lower value accepts more outliers
+                                    Value must be one of '0.001', '0.05', '0.1', '0.5', '1.0'.
+                                    Default value is '0.05'.
+  -PwarpPolynomialOrder=<int>       The order of WARP polynomial function
+                                    Value must be one of '1', '2', '3'.
+                                    Default value is '2'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Warp</operator>
+      <sources>
+        <sourceProduct>${sourceProduct}</sourceProduct>
+      </sources>
+      <parameters>
+        <rmsThreshold>float</rmsThreshold>
+        <warpPolynomialOrder>int</warpPolynomialOrder>
+        <interpolationMethod>string</interpolationMethod>
+        <demRefinement>boolean</demRefinement>
+        <demName>string</demName>
+        <excludeMaster>boolean</excludeMaster>
+        <openResidualsFile>boolean</openResidualsFile>
+      </parameters>
+    </node>
+  </graph>

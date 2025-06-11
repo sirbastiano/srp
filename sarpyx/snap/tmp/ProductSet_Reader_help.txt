@@ -1,0 +1,23 @@
+OPERATOR: ProductSet-Reader
+----------------------------------------
+Usage:
+  gpt ProductSet-Reader [options] 
+
+Description:
+  Adds a list of sources
+
+
+Parameter Options:
+  -PfileList=<string,string,string,...>    Sets parameter 'fileList' to <string,string,string,...>.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>ProductSet-Reader</operator>
+      <sources/>
+      <parameters>
+        <fileList>string,string,string,...</fileList>
+      </parameters>
+    </node>
+  </graph>

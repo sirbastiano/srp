@@ -1,0 +1,65 @@
+OPERATOR: Polarimetric-Decomposition
+----------------------------------------
+Usage:
+  gpt Polarimetric-Decomposition [options] 
+
+Description:
+  Perform Polarimetric decomposition of a given product
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -Pdecomposition=<string>                  Sets parameter 'decomposition' to <string>.
+                                            Value must be one of 'Sinclair Decomposition', 'Pauli Decomposition', 'Freeman-Durden Decomposition', 'Generalized Freeman-Durden Decomposition', 'Yamaguchi Decomposition', 'van Zyl Decomposition', 'H-A-Alpha Quad Pol Decomposition', 'H-Alpha Dual Pol Decomposition', 'Cloude Decomposition', 'Touzi Decomposition', 'Huynen Decomposition', 'Yang Decomposition', 'Krogager Decomposition', 'Cameron Decomposition', 'Model-free 3-component Decomposition', 'Model-free 4-component Decomposition', 'Model-Based Dual Pol Decomposition'.
+                                            Default value is 'Sinclair Decomposition'.
+  -PoutputAlpha123=<boolean>                Output alpha 1, 2, 3
+                                            Default value is 'false'.
+  -PoutputBetaDeltaGammaLambda=<boolean>    Output beta, delta, gamma, lambda
+                                            Default value is 'false'.
+  -PoutputHAAlpha=<boolean>                 Output entropy, anisotropy, alpha
+                                            Default value is 'false'.
+  -PoutputHuynenParamSet0=<boolean>         Output 2A0_b, B0_plus_B, B0_minus_B
+                                            Default value is 'true'.
+  -PoutputHuynenParamSet1=<boolean>         Output A0, B0, B, C, D, E, F, G, H
+                                            Default value is 'false'.
+  -PoutputLambda123=<boolean>               Output lambda 1, 2, 3
+                                            Default value is 'false'.
+  -PoutputTouziParamSet0=<boolean>          Output psi, tau, alpha, phi
+                                            Default value is 'false'.
+  -PoutputTouziParamSet1=<boolean>          Output psi1, tau1, alpha1, phi1
+                                            Default value is 'false'.
+  -PoutputTouziParamSet2=<boolean>          Output psi2, tau2, alpha2, phi2
+                                            Default value is 'false'.
+  -PoutputTouziParamSet3=<boolean>          Output psi3, tau3, alpha3, phi3
+                                            Default value is 'false'.
+  -PwindowSize=<int>                        The sliding window size
+                                            Valid interval is [1, 100].
+                                            Default value is '5'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Polarimetric-Decomposition</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <decomposition>string</decomposition>
+        <windowSize>int</windowSize>
+        <outputHAAlpha>boolean</outputHAAlpha>
+        <outputBetaDeltaGammaLambda>boolean</outputBetaDeltaGammaLambda>
+        <outputAlpha123>boolean</outputAlpha123>
+        <outputLambda123>boolean</outputLambda123>
+        <outputTouziParamSet0>boolean</outputTouziParamSet0>
+        <outputTouziParamSet1>boolean</outputTouziParamSet1>
+        <outputTouziParamSet2>boolean</outputTouziParamSet2>
+        <outputTouziParamSet3>boolean</outputTouziParamSet3>
+        <outputHuynenParamSet0>boolean</outputHuynenParamSet0>
+        <outputHuynenParamSet1>boolean</outputHuynenParamSet1>
+      </parameters>
+    </node>
+  </graph>

@@ -1,0 +1,51 @@
+OPERATOR: RangeFilter
+----------------------------------------
+Usage:
+  gpt RangeFilter [options] 
+
+Description:
+  Range Filter
+
+
+Source Options:
+  -SsourceProduct=<file>    Sets source 'sourceProduct' to <filepath>.
+                            This is a mandatory source.
+
+Parameter Options:
+  -PalphaHamming=<float>        Weight for Hamming filter (1 is rectangular window)
+                                Value must be one of '0.5', '0.75', '0.8', '0.9', '1'.
+                                Default value is '0.75'.
+  -PdoWeightCorrel=<boolean>    Use weight values to bias higher frequencies
+                                Value must be one of 'true', 'false'.
+                                Default value is 'off'.
+  -PfftLength=<int>             Length of filtering window
+                                Value must be one of '8', '16', '32', '64', '128', '256', '512', '1024'.
+                                Default value is '8'.
+  -PnlMean=<int>                Input value for (walking) mean averaging to reduce noise.
+                                Value must be one of '5', '10', '15', '20', '25'.
+                                Default value is '15'.
+  -PovsmpFactor=<int>           Oversampling factor (in range only).
+                                Value must be one of '1', '2', '4'.
+                                Default value is '1'.
+  -PsnrThresh=<float>           Threshold on SNR for peak estimation
+                                Value must be one of '3', '4', '5', '6', '7'.
+                                Default value is '5'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>RangeFilter</operator>
+      <sources>
+        <sourceProduct>${sourceProduct}</sourceProduct>
+      </sources>
+      <parameters>
+        <fftLength>int</fftLength>
+        <alphaHamming>float</alphaHamming>
+        <nlMean>int</nlMean>
+        <snrThresh>float</snrThresh>
+        <ovsmpFactor>int</ovsmpFactor>
+        <doWeightCorrel>boolean</doWeightCorrel>
+      </parameters>
+    </node>
+  </graph>

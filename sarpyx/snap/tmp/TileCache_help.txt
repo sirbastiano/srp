@@ -1,0 +1,32 @@
+OPERATOR: TileCache
+----------------------------------------
+Usage:
+  gpt TileCache [options] 
+
+Description:
+  Experimental Operator which provides a dedicated cache for its source product.
+  A guide on how this operator is used is provided at https://senbox.atlassian.net/wiki/x/VQCTLw.
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PcacheSize=<int>    The cache size in MB. Set it to 0 to use default tile cache.
+                       Default value is '1000'.
+                       Parameter unit is 'MB'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>TileCache</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <cacheSize>int</cacheSize>
+      </parameters>
+    </node>
+  </graph>

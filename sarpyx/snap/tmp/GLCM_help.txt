@@ -1,0 +1,82 @@
+OPERATOR: GLCM
+----------------------------------------
+Usage:
+  gpt GLCM [options] 
+
+Description:
+  Extract Texture Features
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PangleStr=<string>                         Sets parameter 'angleStr' to <string>.
+                                              Value must be one of '0', '45', '90', '135', 'ALL'.
+                                              Default value is 'ALL'.
+  -Pdisplacement=<int>                        Pixel displacement
+                                              Valid interval is [1, 8].
+                                              Default value is '4'.
+  -PnoDataValue=<double>                      Target product no data value
+                                              Default value is '-9999.0'.
+  -PoutputASM=<boolean>                       Output Angular Second Moment
+                                              Default value is 'true'.
+  -PoutputContrast=<boolean>                  Output Contrast
+                                              Default value is 'true'.
+  -PoutputCorrelation=<boolean>               Output GLCM Correlation
+                                              Default value is 'true'.
+  -PoutputDissimilarity=<boolean>             Output Dissimilarity
+                                              Default value is 'true'.
+  -PoutputEnergy=<boolean>                    Output Energy
+                                              Default value is 'true'.
+  -PoutputEntropy=<boolean>                   Output Entropy
+                                              Default value is 'true'.
+  -PoutputHomogeneity=<boolean>               Output Homogeneity
+                                              Default value is 'true'.
+  -PoutputMAX=<boolean>                       Output Maximum Probability
+                                              Default value is 'true'.
+  -PoutputMean=<boolean>                      Output GLCM Mean
+                                              Default value is 'true'.
+  -PoutputVariance=<boolean>                  Output GLCM Variance
+                                              Default value is 'true'.
+  -PquantizationLevelsStr=<string>            Sets parameter 'quantizationLevelsStr' to <string>.
+                                              Value must be one of '8', '16', '32', '64', '128'.
+                                              Default value is '32'.
+  -PquantizerStr=<string>                     Sets parameter 'quantizerStr' to <string>.
+                                              Value must be one of 'Equal Distance Quantizer', 'Probabilistic Quantizer'.
+                                              Default value is 'Probabilistic Quantizer'.
+  -PsourceBands=<string,string,string,...>    The list of source bands.
+  -PwindowSizeStr=<string>                    Sets parameter 'windowSizeStr' to <string>.
+                                              Value must be one of '5x5', '7x7', '9x9', '11x11', '13x13', '15x15', '17x17', '21x21'.
+                                              Default value is '9x9'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>GLCM</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <sourceBands>string,string,string,...</sourceBands>
+        <windowSizeStr>string</windowSizeStr>
+        <angleStr>string</angleStr>
+        <quantizerStr>string</quantizerStr>
+        <quantizationLevelsStr>string</quantizationLevelsStr>
+        <displacement>int</displacement>
+        <noDataValue>double</noDataValue>
+        <outputContrast>boolean</outputContrast>
+        <outputDissimilarity>boolean</outputDissimilarity>
+        <outputHomogeneity>boolean</outputHomogeneity>
+        <outputASM>boolean</outputASM>
+        <outputEnergy>boolean</outputEnergy>
+        <outputMAX>boolean</outputMAX>
+        <outputEntropy>boolean</outputEntropy>
+        <outputMean>boolean</outputMean>
+        <outputVariance>boolean</outputVariance>
+        <outputCorrelation>boolean</outputCorrelation>
+      </parameters>
+    </node>
+  </graph>

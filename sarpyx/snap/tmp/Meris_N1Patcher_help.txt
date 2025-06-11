@@ -1,0 +1,37 @@
+OPERATOR: Meris.N1Patcher
+----------------------------------------
+Usage:
+  gpt Meris.N1Patcher [options] 
+
+Description:
+  Copies an existing N1 file and replaces the data for the radiance bands
+
+
+Source Options:
+  -Sinput=<file>    The source product provides the data to be written into the patched file.
+                    This is a mandatory source.
+  -Sn1=<file>       The N1 file which is used as a template.
+                    This is a mandatory source.
+
+Parameter Options:
+  -PcopyAllTiePoints=<boolean>    If set to 'false' only the lat and lon tie-points will be copied to the target product
+                                  Default value is 'false'.
+  -PpatchedFile=<file>            The file to which the patched L1b product is written.
+                                  This is a mandatory parameter.
+                                  Value must not be empty.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Meris.N1Patcher</operator>
+      <sources>
+        <n1>${n1}</n1>
+        <input>${input}</input>
+      </sources>
+      <parameters>
+        <copyAllTiePoints>boolean</copyAllTiePoints>
+        <patchedFile>file</patchedFile>
+      </parameters>
+    </node>
+  </graph>

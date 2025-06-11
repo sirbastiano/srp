@@ -1,0 +1,24 @@
+OPERATOR: Remodulate
+----------------------------------------
+Usage:
+  gpt Remodulate [options] 
+
+Description:
+  Remodulation and reramping of SLC data
+
+
+Source Options:
+  -SsourceProduct=<file>    Sets source 'sourceProduct' to <filepath>.
+                            This is a mandatory source.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Remodulate</operator>
+      <sources>
+        <sourceProduct>${sourceProduct}</sourceProduct>
+      </sources>
+      <parameters/>
+    </node>
+  </graph>

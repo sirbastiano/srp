@@ -1,0 +1,43 @@
+OPERATOR: Land-Sea-Mask
+----------------------------------------
+Usage:
+  gpt Land-Sea-Mask [options] 
+
+Description:
+  Creates a bitmask defining land vs ocean.
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -Pgeometry=<string>                         Sets parameter 'geometry' to <string>.
+  -PinvertGeometry=<boolean>                  Sets parameter 'invertGeometry' to <boolean>.
+                                              Default value is 'false'.
+  -PlandMask=<boolean>                        Sets parameter 'landMask' to <boolean>.
+                                              Default value is 'true'.
+  -PshorelineExtension=<integer>              Sets parameter 'shorelineExtension' to <integer>.
+                                              Default value is '0'.
+  -PsourceBands=<string,string,string,...>    The list of source bands.
+  -PuseSRTM=<boolean>                         Sets parameter 'useSRTM' to <boolean>.
+                                              Default value is 'true'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Land-Sea-Mask</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <sourceBands>string,string,string,...</sourceBands>
+        <landMask>boolean</landMask>
+        <useSRTM>boolean</useSRTM>
+        <geometry>string</geometry>
+        <invertGeometry>boolean</invertGeometry>
+        <shorelineExtension>integer</shorelineExtension>
+      </parameters>
+    </node>
+  </graph>

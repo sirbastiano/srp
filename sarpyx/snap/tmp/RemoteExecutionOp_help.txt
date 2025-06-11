@@ -1,0 +1,78 @@
+OPERATOR: RemoteExecutionOp
+----------------------------------------
+Usage:
+  gpt RemoteExecutionOp [options] 
+
+Description:
+  Executes a slave graph on a remote machine and uses the resulted products as an input for the master graph executed on the host machine.
+
+
+Parameter Options:
+  -PcontinueOnFailure=<boolean>                                                                     Specifies the flag to continue or not when a remote machine fails.
+                                                                                                    This is a mandatory parameter.
+  -PlocalPassword=<string>                                                                          Specifies the password of the local machine.
+  -PlocalSharedFolderPath=<string>                                                                  Specifies the local shared folder path used to connect to the remote shared folder.
+                                                                                                    This is a mandatory parameter.
+  -PmasterGraphFilePath=<string>                                                                    Specifies the master graph file path.
+                                                                                                    This is a mandatory parameter.
+  -PmasterProductFilePath=<string>                                                                  Specifies the master product file path.
+                                                                                                    This is a mandatory parameter.
+  -PmasterProductFormatName=<string>                                                                Specifies the master product format name.
+                                                                                                    This is a mandatory parameter.
+  -PremoteMachines=<remoteMachineProperties,remoteMachineProperties,remoteMachineProperties,...>    Specifies the remote machines credentials.
+                                                                                                    This is a mandatory parameter.
+  -PremoteSharedFolderPassword=<string>                                                             Specifies the password account of the machine where the shared folder is created.
+                                                                                                    This is a mandatory parameter.
+  -PremoteSharedFolderPath=<string>                                                                 Specifies the shared folder path.
+                                                                                                    This is a mandatory parameter.
+  -PremoteSharedFolderUsername=<string>                                                             Specifies the username account of the machine where the shared folder is created.
+                                                                                                    This is a mandatory parameter.
+  -PslaveGraphFilePath=<string>                                                                     Specifies the slave graph file path to be executed on the remote machines.
+                                                                                                    This is a mandatory parameter.
+  -PslaveProductsFolderNamePrefix=<string>                                                          Specifies the folder name prefix of the slave output products.
+  -PslaveProductsFormatName=<string>                                                                Specifies the format name of the output products obtained using the slave graph.
+  -PslaveProductsName=<string>                                                                      Specifies the name of the output products obtained using the slave graph.
+  -PsourceProductFiles=<string,string,string,...>                                                   Specifies the product files.
+                                                                                                    This is a mandatory parameter.
+  -PwaitingSecondsTimeout=<int>                                                                     Specifies the waiting seconds to complete the output products on the remote machines.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>RemoteExecutionOp</operator>
+      <sources/>
+      <parameters>
+        <remoteSharedFolderPath>string</remoteSharedFolderPath>
+        <remoteSharedFolderUsername>string</remoteSharedFolderUsername>
+        <remoteSharedFolderPassword>string</remoteSharedFolderPassword>
+        <localSharedFolderPath>string</localSharedFolderPath>
+        <localPassword>string</localPassword>
+        <slaveGraphFilePath>string</slaveGraphFilePath>
+        <sourceProductFiles>
+          <sourceFiles/>
+          <_.002e../>
+        </sourceProductFiles>
+        <remoteMachines>
+          <machines>
+            <hostName>string</hostName>
+            <portNumber>int</portNumber>
+            <username>string</username>
+            <password>string</password>
+            <operatingSystemName>string</operatingSystemName>
+            <sharedFolderPath>string</sharedFolderPath>
+            <gptFilePath>string</gptFilePath>
+          </machines>
+          <_.002e../>
+        </remoteMachines>
+        <masterGraphFilePath>string</masterGraphFilePath>
+        <continueOnFailure>boolean</continueOnFailure>
+        <masterProductFormatName>string</masterProductFormatName>
+        <masterProductFilePath>string</masterProductFilePath>
+        <waitingSecondsTimeout>int</waitingSecondsTimeout>
+        <slaveProductsFolderNamePrefix>string</slaveProductsFolderNamePrefix>
+        <slaveProductsName>string</slaveProductsName>
+        <slaveProductsFormatName>string</slaveProductsFormatName>
+      </parameters>
+    </node>
+  </graph>

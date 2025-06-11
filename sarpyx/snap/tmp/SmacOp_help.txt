@@ -1,0 +1,59 @@
+OPERATOR: SmacOp
+----------------------------------------
+Usage:
+  gpt SmacOp [options] 
+
+Description:
+  Applies the Simplified Method for Atmospheric Corrections of Envisat MERIS/(A)ATSR measurements.
+
+
+Source Options:
+  -Ssource=<file>    The source product.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PaerosolType=<aEROSOL_TYPE>              Aerosol type
+                                            Default value is 'CONTINENTAL'.
+                                            This is a mandatory parameter.
+  -PbandNames=<string,string,string,...>    Bands to process
+                                            This is a mandatory parameter.
+  -PinvalidPixel=<float>                    Default reflectance for invalid pixel
+                                            Default value is '0.0'.
+  -PmaskExpression=<string>                 Mask expression for the whole view (MERIS) or the nadir view (AATSR)
+  -PmaskExpressionForward=<string>          Mask expression for the forward view (AATSR only)
+  -PsurfPress=<float>                       Surface pressure
+                                            Default value is '1013.0'.
+                                            Parameter unit is 'hPa'.
+  -PtauAero550=<float>                      Aerosol optical depth
+                                            Default value is '0.2'.
+  -PuH2o=<float>                            Relative humidity
+                                            Default value is '3.0'.
+                                            Parameter unit is 'g/cm²'.
+  -PuO3=<float>                             Ozone content
+                                            Default value is '0.15'.
+                                            Parameter unit is 'cm * atm'.
+  -PuseMerisADS=<boolean>                   Use ECMWF data in the MERIS ADS
+                                            Default value is 'false'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>SmacOp</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <tauAero550>float</tauAero550>
+        <uH2o>float</uH2o>
+        <uO3>float</uO3>
+        <surfPress>float</surfPress>
+        <useMerisADS>boolean</useMerisADS>
+        <aerosolType>aEROSOL_TYPE</aerosolType>
+        <invalidPixel>float</invalidPixel>
+        <maskExpression>string</maskExpression>
+        <maskExpressionForward>string</maskExpressionForward>
+        <bandNames>string,string,string,...</bandNames>
+      </parameters>
+    </node>
+  </graph>

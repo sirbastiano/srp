@@ -1,0 +1,40 @@
+OPERATOR: Convert-Datatype
+----------------------------------------
+Usage:
+  gpt Convert-Datatype [options] 
+
+Description:
+  Convert product data type
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PsourceBands=<string,string,string,...>    The list of source bands.
+  -PtargetDataType=<string>                   Sets parameter 'targetDataType' to <string>.
+                                              Value must be one of 'int8', 'int16', 'int32', 'uint8', 'uint16', 'uint32', 'float32', 'float64'.
+                                              Default value is 'uint8'.
+  -PtargetNoDataValue=<double>                Sets parameter 'targetNoDataValue' to <double>.
+                                              Default value is '0'.
+  -PtargetScalingStr=<string>                 Sets parameter 'targetScalingStr' to <string>.
+                                              Value must be one of 'Truncate', 'Linear (slope and intercept)', 'Linear (between 95% clipped histogram)', 'Linear (peak clipped histogram)', 'Logarithmic'.
+                                              Default value is 'Linear (between 95% clipped histogram)'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Convert-Datatype</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <sourceBands>string,string,string,...</sourceBands>
+        <targetDataType>string</targetDataType>
+        <targetScalingStr>string</targetScalingStr>
+        <targetNoDataValue>double</targetNoDataValue>
+      </parameters>
+    </node>
+  </graph>

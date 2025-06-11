@@ -19,7 +19,7 @@ __all__ = [
     'sla',
     'utils', 
     'processor',
-    # 'snap',
+    'snap', # type: ignore
     # 'science',
     '__version__',
     '__author__'

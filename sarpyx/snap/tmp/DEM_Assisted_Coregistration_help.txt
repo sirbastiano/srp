@@ -1,0 +1,47 @@
+OPERATOR: DEM-Assisted-Coregistration
+----------------------------------------
+Usage:
+  gpt DEM-Assisted-Coregistration [options] 
+
+Description:
+  Orbit and DEM based co-registration
+
+
+Parameter Options:
+  -PdemName=<string>                         The digital elevation model.
+                                             Default value is 'SRTM 3Sec'.
+  -PdemResamplingMethod=<string>             Sets parameter 'demResamplingMethod' to <string>.
+                                             Default value is 'BICUBIC_INTERPOLATION'.
+  -PexternalDEMFile=<file>                   Sets parameter 'externalDEMFile' to <file>.
+  -PexternalDEMNoDataValue=<double>          Sets parameter 'externalDEMNoDataValue' to <double>.
+                                             Default value is '0'.
+  -PmaskOutAreaWithoutElevation=<boolean>    Sets parameter 'maskOutAreaWithoutElevation' to <boolean>.
+                                             Default value is 'true'.
+  -PoutputRangeAzimuthOffset=<boolean>       Sets parameter 'outputRangeAzimuthOffset' to <boolean>.
+                                             Default value is 'false'.
+  -PresamplingType=<string>                  The method to be used when resampling the slave grid onto the master grid.
+                                             Default value is 'BISINC_5_POINT_INTERPOLATION'.
+  -PtileExtensionPercent=<int>               Define tile extension percentage.
+                                             Valid interval is [0, *).
+                                             Default value is '50'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>DEM-Assisted-Coregistration</operator>
+      <sources>
+        <sourceProduct>${sourceProduct}</sourceProduct>
+      </sources>
+      <parameters>
+        <demName>string</demName>
+        <demResamplingMethod>string</demResamplingMethod>
+        <externalDEMFile>file</externalDEMFile>
+        <externalDEMNoDataValue>double</externalDEMNoDataValue>
+        <resamplingType>string</resamplingType>
+        <tileExtensionPercent>int</tileExtensionPercent>
+        <maskOutAreaWithoutElevation>boolean</maskOutAreaWithoutElevation>
+        <outputRangeAzimuthOffset>boolean</outputRangeAzimuthOffset>
+      </parameters>
+    </node>
+  </graph>

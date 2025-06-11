@@ -1,0 +1,31 @@
+OPERATOR: BandsExtractorOp
+----------------------------------------
+Usage:
+  gpt BandsExtractorOp [options] 
+
+Description:
+  Creates a new product out of the source product containing only the indexes bands given
+
+
+Source Options:
+  -SSource=<file>    The source product to be modified.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PsourceBandNames=<string,string,string,...>    The source bands for the computation.
+  -PsourceMaskNames=<string,string,string,...>    The source masks for the computation.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>BandsExtractorOp</operator>
+      <sources>
+        <Source>${Source}</Source>
+      </sources>
+      <parameters>
+        <sourceBandNames>string,string,string,...</sourceBandNames>
+        <sourceMaskNames>string,string,string,...</sourceMaskNames>
+      </parameters>
+    </node>
+  </graph>

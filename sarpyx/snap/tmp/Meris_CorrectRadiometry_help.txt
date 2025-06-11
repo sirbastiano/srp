@@ -1,0 +1,47 @@
+OPERATOR: Meris.CorrectRadiometry
+----------------------------------------
+Usage:
+  gpt Meris.CorrectRadiometry [options] 
+
+Description:
+  Performs radiometric corrections on MERIS L1b data products.
+
+
+Source Options:
+  -Ssource=<file>    The source product.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PdoCalibration=<boolean>               Whether to perform the calibration.
+                                          Default value is 'true'.
+  -PdoEqualization=<boolean>              Perform removal of detector-to-detector systematic radiometric differences in MERIS L1b data products.
+                                          Default value is 'true'.
+  -PdoRadToRefl=<boolean>                 Whether to perform radiance-to-reflectance conversion. When selecting ENVISAT as target format, the radiance to reflectance conversion can not be performed.
+                                          Default value is 'false'.
+  -PdoSmile=<boolean>                     Whether to perform Smile-effect correction.
+                                          Default value is 'true'.
+  -PreproVersion=<reprocessingVersion>    The version of the reprocessing the product comes from. Is only used if equalisation is enabled.
+                                          Value must be one of 'AUTO_DETECT', 'REPROCESSING_2', 'REPROCESSING_3'.
+                                          Default value is 'AUTO_DETECT'.
+  -PsourceRacFile=<file>                  The radiometric correction auxiliary file for the source product. The default 'MER_RAC_AXVIEC20050708_135553_20021224_121445_20041213_220000'
+  -PtargetRacFile=<file>                  The radiometric correction auxiliary file for the target product. The default 'MER_RAC_AXVACR20091016_154511_20021224_121445_20041213_220000'
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Meris.CorrectRadiometry</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <doCalibration>boolean</doCalibration>
+        <sourceRacFile>file</sourceRacFile>
+        <targetRacFile>file</targetRacFile>
+        <doSmile>boolean</doSmile>
+        <doEqualization>boolean</doEqualization>
+        <reproVersion>reprocessingVersion</reproVersion>
+        <doRadToRefl>boolean</doRadToRefl>
+      </parameters>
+    </node>
+  </graph>

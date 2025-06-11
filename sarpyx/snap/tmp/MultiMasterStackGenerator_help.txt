@@ -1,0 +1,29 @@
+OPERATOR: MultiMasterStackGenerator
+----------------------------------------
+Usage:
+  gpt MultiMasterStackGenerator [options] 
+
+Description:
+  Generates a set of master-slave pairs from a coregistered stack for use in SBAS processing
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PoutputFolder=<string>    Output folder
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>MultiMasterStackGenerator</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <outputFolder>string</outputFolder>
+      </parameters>
+    </node>
+  </graph>

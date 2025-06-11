@@ -1,0 +1,35 @@
+OPERATOR: BandSelect
+----------------------------------------
+Usage:
+  gpt BandSelect [options] 
+
+Description:
+  Creates a new product with only selected bands
+
+
+Source Options:
+  -Ssource=<file>    Sets source 'source' to <filepath>.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PbandNamePattern=<string>                            Band name regular expression pattern
+  -PselectedPolarisations=<string,string,string,...>    The list of polarisations
+  -PselectedSubImages=<string,string,string,...>        The list of imagettes or sub-images
+  -PsourceBands=<string,string,string,...>              The list of source bands.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>BandSelect</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <selectedPolarisations>string,string,string,...</selectedPolarisations>
+        <selectedSubImages>string,string,string,...</selectedSubImages>
+        <sourceBands>string,string,string,...</sourceBands>
+        <bandNamePattern>string</bandNamePattern>
+      </parameters>
+    </node>
+  </graph>

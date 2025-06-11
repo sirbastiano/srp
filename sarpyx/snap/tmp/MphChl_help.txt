@@ -1,0 +1,41 @@
+OPERATOR: MphChl
+----------------------------------------
+Usage:
+  gpt MphChl [options] 
+
+Description:
+  This operator computes maximum peak height of chlorophyll (MPH/CHL).
+
+
+Source Options:
+  -SsourceProduct=<file>    L1b or Rayleigh corrected product
+                            This is a mandatory source.
+
+Parameter Options:
+  -PapplyLowPassFilter=<boolean>      Switch to true to apply a 3x3 low-pass filter on the result.
+                                      Default value is 'false'.
+  -PchlThreshForFloatFlag=<double>    Chlorophyll threshold, above which all cyanobacteria dominated waters are 'float'.
+                                      Default value is '500.0'.
+  -PcyanoMaxValue=<double>            Maximum chlorophyll, arithmetically higher values are capped.
+                                      Default value is '1000.0'.
+  -PexportMph=<boolean>               Switch to true to write 'mph' band.
+                                      Default value is 'false'.
+  -PvalidPixelExpression=<string>     Expression defining pixels considered for processing. If not set, all valid pixels over water are processed.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>MphChl</operator>
+      <sources>
+        <sourceProduct>${sourceProduct}</sourceProduct>
+      </sources>
+      <parameters>
+        <validPixelExpression>string</validPixelExpression>
+        <cyanoMaxValue>double</cyanoMaxValue>
+        <chlThreshForFloatFlag>double</chlThreshForFloatFlag>
+        <exportMph>boolean</exportMph>
+        <applyLowPassFilter>boolean</applyLowPassFilter>
+      </parameters>
+    </node>
+  </graph>

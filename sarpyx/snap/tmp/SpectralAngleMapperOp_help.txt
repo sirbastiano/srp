@@ -1,0 +1,64 @@
+OPERATOR: SpectralAngleMapperOp
+----------------------------------------
+Usage:
+  gpt SpectralAngleMapperOp [options] 
+
+Description:
+  Classifies a product using the spectral angle mapper algorithm
+
+
+Source Options:
+  -SSource=<file>    The source product.
+                     This is a mandatory source.
+
+Parameter Options:
+  -Pdownsampling=<string>                                            The method used for aggregation (downsampling to a coarser resolution).
+                                                                     Value must be one of 'First', 'Min', 'Max', 'Mean', 'Median'.
+                                                                     Default value is 'First'.
+  -PhiddenSpectra=<spectrumInput,spectrumInput,spectrumInput,...>    The list of spectra.
+  -PreferenceBands=<string,string,string,...>                        The reference bands to be used for the Spectral Angle Mapper Processor 
+  -PresampleType=<string>                                            If selected bands differ in size, the resample method used before computing the index
+                                                                     Value must be one of 'None', 'Lowest resolution', 'Highest resolution'.
+                                                                     Default value is 'None'.
+  -Pspectra=<spectrumInput,spectrumInput,spectrumInput,...>          The list of spectra.
+  -Pthresholds=<string>                                              thresholds
+                                                                     Default value is '0.0'.
+  -Pupsampling=<string>                                              The method used for interpolation (upsampling to a finer resolution).
+                                                                     Value must be one of 'Nearest', 'Bilinear', 'Bicubic'.
+                                                                     Default value is 'Nearest'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>SpectralAngleMapperOp</operator>
+      <sources>
+        <Source>${Source}</Source>
+      </sources>
+      <parameters>
+        <referenceBands>string,string,string,...</referenceBands>
+        <thresholds>string</thresholds>
+        <spectra>
+          <spectrum>
+            <name>string</name>
+            <xPixelPolygonPositions>int,int,int,...</xPixelPolygonPositions>
+            <yPixelPolygonPositions>int,int,int,...</yPixelPolygonPositions>
+            <isShapeDefined>boolean</isShapeDefined>
+          </spectrum>
+          <_.002e../>
+        </spectra>
+        <hiddenSpectra>
+          <spectrum>
+            <name>string</name>
+            <xPixelPolygonPositions>int,int,int,...</xPixelPolygonPositions>
+            <yPixelPolygonPositions>int,int,int,...</yPixelPolygonPositions>
+            <isShapeDefined>boolean</isShapeDefined>
+          </spectrum>
+          <_.002e../>
+        </hiddenSpectra>
+        <resampleType>string</resampleType>
+        <upsampling>string</upsampling>
+        <downsampling>string</downsampling>
+      </parameters>
+    </node>
+  </graph>

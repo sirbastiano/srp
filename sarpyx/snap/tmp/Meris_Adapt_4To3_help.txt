@@ -1,0 +1,24 @@
+OPERATOR: Meris.Adapt.4To3
+----------------------------------------
+Usage:
+  gpt Meris.Adapt.4To3 [options] 
+
+Description:
+  Provides the adaptation of MERIS L1b products from 4th to 3rd reprocessing.
+
+
+Source Options:
+  -SsourceProduct=<file>    The MERIS L1b 4th reprocessing source product.
+                            This is a mandatory source.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Meris.Adapt.4To3</operator>
+      <sources>
+        <sourceProduct>${sourceProduct}</sourceProduct>
+      </sources>
+      <parameters/>
+    </node>
+  </graph>

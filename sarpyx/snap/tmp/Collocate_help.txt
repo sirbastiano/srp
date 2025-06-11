@@ -1,0 +1,56 @@
+OPERATOR: Collocate
+----------------------------------------
+Usage:
+  gpt Collocate [options] 
+
+Description:
+  Collocates two products based on their geo-codings.
+
+
+Source Options:
+  -Sreference=<file>    The source product which serves as reference.
+                        This is an optional source.
+  -Ssecondary=<file>    The source product which serves as secondary.
+                        This is an optional source.
+
+Parameter Options:
+  -PcopySecondaryMetadata=<boolean>                  Copies also the metadata of the secondary products to the target.
+                                                     Default value is 'false'.
+  -PreferenceComponentPattern=<string>               The text pattern to be used when renaming reference components.
+                                                     Default value is '${ORIGINAL_NAME}_M'.
+  -PreferenceProductName=<string>                    The name of the reference product.
+  -PrenameReferenceComponents=<boolean>              Whether or not components of the reference product shall be renamed in the target product.
+                                                     Default value is 'true'.
+  -PrenameSecondaryComponents=<boolean>              Whether or not components of the secondary product(s) shall be renamed in the target product.
+                                                     Default value is 'true'.
+  -PresamplingType=<resamplingType>                  The method to be used when resampling the secondary grid onto the reference grid.
+                                                     Default value is 'NEAREST_NEIGHBOUR'.
+  -PsecondaryComponentPattern=<string>               The text pattern to be used when renaming secondary components.
+                                                     Default value is '${ORIGINAL_NAME}_S${SLAVE_NUMBER_ID}'.
+  -PsourceProductPaths=<string,string,string,...>    A comma-separated list of file paths specifying the source products
+  -PtargetProductType=<string>                       The product type string for the target product (informal)
+                                                     Default value is 'COLLOCATED'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Collocate</operator>
+      <sources>
+        <reference>${reference}</reference>
+        <secondary>${secondary}</secondary>
+        <sourceProducts>${sourceProducts}</sourceProducts>
+      </sources>
+      <parameters>
+        <sourceProductPaths>string,string,string,...</sourceProductPaths>
+        <referenceProductName>string</referenceProductName>
+        <targetProductType>string</targetProductType>
+        <copySecondaryMetadata>boolean</copySecondaryMetadata>
+        <renameReferenceComponents>boolean</renameReferenceComponents>
+        <renameSecondaryComponents>boolean</renameSecondaryComponents>
+        <referenceComponentPattern>string</referenceComponentPattern>
+        <secondaryComponentPattern>string</secondaryComponentPattern>
+        <resamplingType>resamplingType</resamplingType>
+      </parameters>
+    </node>
+  </graph>

@@ -1,0 +1,17 @@
+OPERATOR: BandsDifferenceOp
+----------------------------------------
+Usage:
+  gpt BandsDifferenceOp [options] 
+
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>BandsDifferenceOp</operator>
+      <sources>
+        <Source>${Source}</Source>
+      </sources>
+      <parameters/>
+    </node>
+  </graph>

@@ -1,0 +1,18 @@
+OPERATOR: ToolAdapterOp
+----------------------------------------
+Usage:
+  gpt ToolAdapterOp [options] 
+
+Description:
+  Tool Adapter Operator
+
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>ToolAdapterOp</operator>
+      <sources/>
+      <parameters/>
+    </node>
+  </graph>

@@ -1,0 +1,41 @@
+OPERATOR: Write
+----------------------------------------
+Usage:
+  gpt Write [options] 
+
+Description:
+  Writes a data product to a file.
+
+
+Source Options:
+  -Ssource=<file>    The source product to be written.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PclearCacheAfterRowWrite=<boolean>    If true, the internal tile cache is cleared after a tile row has been written. Ignored if writeEntireTileRows=false.
+                                         Default value is 'false'.
+  -PdeleteOutputOnFailure=<boolean>      If true, all output files are deleted after a failed write operation.
+                                         Default value is 'true'.
+  -Pfile=<file>                          The output file to which the data product is written.
+  -PformatName=<string>                  The name of the output file format.
+                                         Default value is 'BEAM-DIMAP'.
+  -PwriteEntireTileRows=<boolean>        If true, the write operation waits until an entire tile row is computed.
+                                         Default value is 'false'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Write</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <file>file</file>
+        <formatName>string</formatName>
+        <deleteOutputOnFailure>boolean</deleteOutputOnFailure>
+        <writeEntireTileRows>boolean</writeEntireTileRows>
+        <clearCacheAfterRowWrite>boolean</clearCacheAfterRowWrite>
+      </parameters>
+    </node>
+  </graph>

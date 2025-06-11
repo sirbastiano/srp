@@ -1,0 +1,49 @@
+OPERATOR: GenericRegionMergingOp
+----------------------------------------
+Usage:
+  gpt GenericRegionMergingOp [options] 
+
+Description:
+  The 'Generic Region Merging' operator computes the distinct regions from a product
+
+
+Source Options:
+  -Ssource=<file>    The source product.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PmergingCostCriterion=<string>                 The method to compute the region merging.
+                                                  Value must be one of 'Spring', 'Baatz & Schape', 'Full Lamda Schedule'.
+                                                  Default value is 'Baatz & Schape'.
+  -PregionMergingCriterion=<string>               The method to check the region merging.
+                                                  Value must be one of 'Best Fitting', 'Local Mutual Best Fitting'.
+                                                  Default value is 'Local Mutual Best Fitting'.
+  -PshapeWeight=<float>                           The shape weight.
+                                                  Default value is '0.5'.
+  -PsourceBandNames=<string,string,string,...>    The source bands for the computation.
+  -PspectralWeight=<float>                        The spectral weight.
+                                                  Default value is '0.5'.
+  -Pthreshold=<float>                             The threshold.
+                                                  Default value is '100.0'.
+  -PtotalIterationsForSecondSegmentation=<int>    The total number of iterations.
+                                                  Default value is '50'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>GenericRegionMergingOp</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <mergingCostCriterion>string</mergingCostCriterion>
+        <regionMergingCriterion>string</regionMergingCriterion>
+        <totalIterationsForSecondSegmentation>int</totalIterationsForSecondSegmentation>
+        <threshold>float</threshold>
+        <spectralWeight>float</spectralWeight>
+        <shapeWeight>float</shapeWeight>
+        <sourceBandNames>string,string,string,...</sourceBandNames>
+      </parameters>
+    </node>
+  </graph>

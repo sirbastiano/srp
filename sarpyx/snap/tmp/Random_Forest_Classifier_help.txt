@@ -1,0 +1,71 @@
+OPERATOR: Random-Forest-Classifier
+----------------------------------------
+Usage:
+  gpt Random-Forest-Classifier [options] 
+
+Description:
+  Random Forest based classifier
+
+
+Parameter Options:
+  -PclassLevels=<int>                             Quantization class levels for raster training
+                                                  Default value is '101'.
+  -PclassValStepSize=<double>                     Quantization step size for raster training
+                                                  Default value is '5.0'.
+  -PdoClassValQuantization=<boolean>              Quantization for raster training
+                                                  Default value is 'true'.
+  -PdoLoadClassifier=<boolean>                    Choose to save or load classifier
+                                                  Default value is 'false'.
+  -PevaluateClassifier=<boolean>                  Evaluate classifier and features
+                                                  Default value is 'false'.
+  -PevaluateFeaturePowerSet=<boolean>             Evaluate the power set of features
+                                                  Default value is 'false'.
+  -PfeatureBands=<string,string,string,...>       Names of bands to be used as features
+  -PlabelSource=<string>                          'VectorNodeName' or specific Attribute name
+  -PmaxPowerSetSize=<integer>                     Maximum size of the power set of features
+                                                  Default value is '7'.
+  -PminClassValue=<double>                        Quantization min class value for raster training
+                                                  Default value is '0.0'.
+  -PminPowerSetSize=<integer>                     Minimum size of the power set of features
+                                                  Default value is '2'.
+  -PnumTrainSamples=<int>                         The number of training samples
+                                                  Valid interval is (1,*].
+                                                  Default value is '50000'.
+  -PsavedClassifierName=<string>                  The saved classifier name
+  -PtrainingBands=<string,string,string,...>      Raster bands to train on
+  -PtrainingVectors=<string,string,string,...>    Vectors to train on
+  -PtrainOnRaster=<boolean>                       Train on raster or vector data
+                                                  Default value is 'false'.
+  -PtreeCount=<int>                               The number of trees
+                                                  Valid interval is (1,*].
+                                                  Default value is '10'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>Random-Forest-Classifier</operator>
+      <sources>
+        <sourceProducts>${sourceProducts}</sourceProducts>
+      </sources>
+      <parameters>
+        <treeCount>int</treeCount>
+        <numTrainSamples>int</numTrainSamples>
+        <savedClassifierName>string</savedClassifierName>
+        <doLoadClassifier>boolean</doLoadClassifier>
+        <doClassValQuantization>boolean</doClassValQuantization>
+        <minClassValue>double</minClassValue>
+        <classValStepSize>double</classValStepSize>
+        <classLevels>int</classLevels>
+        <trainOnRaster>boolean</trainOnRaster>
+        <trainingBands>string,string,string,...</trainingBands>
+        <trainingVectors>string,string,string,...</trainingVectors>
+        <featureBands>string,string,string,...</featureBands>
+        <labelSource>string</labelSource>
+        <evaluateClassifier>boolean</evaluateClassifier>
+        <evaluateFeaturePowerSet>boolean</evaluateFeaturePowerSet>
+        <minPowerSetSize>integer</minPowerSetSize>
+        <maxPowerSetSize>integer</maxPowerSetSize>
+      </parameters>
+    </node>
+  </graph>

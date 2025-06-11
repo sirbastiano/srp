@@ -1,0 +1,38 @@
+OPERATOR: CreateStack
+----------------------------------------
+Usage:
+  gpt CreateStack [options] 
+
+Description:
+  Collocates two or more products based on their geo-codings.
+
+
+Parameter Options:
+  -Pextent=<string>                           The output image extents.
+                                              Value must be one of 'Master', 'Minimum', 'Maximum'.
+                                              Default value is 'Master'.
+  -PinitialOffsetMethod=<string>              Method for computing initial offset between master and slave
+                                              Value must be one of 'Orbit', 'Product Geolocation'.
+                                              Default value is 'Orbit'.
+  -PmasterBands=<string,string,string,...>    The list of source bands.
+  -PresamplingType=<string>                   The method to be used when resampling the slave grid onto the master grid.
+                                              Default value is 'NONE'.
+  -PsourceBands=<string,string,string,...>    The list of source bands.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>CreateStack</operator>
+      <sources>
+        <sourceProduct>${sourceProduct}</sourceProduct>
+      </sources>
+      <parameters>
+        <masterBands>string,string,string,...</masterBands>
+        <sourceBands>string,string,string,...</sourceBands>
+        <resamplingType>string</resamplingType>
+        <extent>string</extent>
+        <initialOffsetMethod>string</initialOffsetMethod>
+      </parameters>
+    </node>
+  </graph>

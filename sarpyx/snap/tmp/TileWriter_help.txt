@@ -1,0 +1,49 @@
+OPERATOR: TileWriter
+----------------------------------------
+Usage:
+  gpt TileWriter [options] 
+
+Description:
+  Writes a data product to a tiles.
+
+
+Source Options:
+  -Ssource=<file>    The source product to be written.
+                     This is a mandatory source.
+
+Parameter Options:
+  -PdivisionBy=<string>       How to divide the tiles
+                              Value must be one of 'Tiles', 'Pixels'.
+                              Default value is 'Tiles'.
+  -Pfile=<file>               The output file to which the data product is written.
+  -PformatName=<string>       The name of the output file format.
+                              Default value is 'BEAM-DIMAP'.
+  -PnumberOfTiles=<string>    The number of output tiles
+                              Value must be one of '2', '4', '9', '16', '36', '64', '100', '256'.
+                              Default value is '4'.
+  -Poverlap=<int>             Tile overlap
+                              Default value is '0'.
+  -PpixelSizeX=<int>          Tile pixel width
+                              Default value is '200'.
+  -PpixelSizeY=<int>          Tile pixel height
+                              Default value is '200'.
+
+Graph XML Format:
+  <graph id="someGraphId">
+    <version>1.0</version>
+    <node id="someNodeId">
+      <operator>TileWriter</operator>
+      <sources>
+        <source>${source}</source>
+      </sources>
+      <parameters>
+        <file>file</file>
+        <formatName>string</formatName>
+        <divisionBy>string</divisionBy>
+        <numberOfTiles>string</numberOfTiles>
+        <pixelSizeX>int</pixelSizeX>
+        <pixelSizeY>int</pixelSizeY>
+        <overlap>int</overlap>
+      </parameters>
+    </node>
+  </graph>
