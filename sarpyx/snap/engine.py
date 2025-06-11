@@ -27,6 +27,45 @@ class GPT:
         'MacOS': 8,
         'Windows': 8
     }
+    
+    # Supported output formats for SNAP GPT processing
+    OUTPUT_FORMATS = [
+        'PyRate export',                  # PyRate configuration format
+        'GeoTIFF+XML',                   # GeoTIFF with XML metadata
+        'JPEG2000',                      # JPEG2000 compressed format
+        'GDAL-BMP-WRITER',               # Windows Bitmap format
+        'NetCDF4-CF',                    # NetCDF4 Climate and Forecast conventions
+        'PolSARPro',                     # Polarimetric SAR data analysis format
+        'Snaphu',                        # Statistical-cost network-flow algorithm format
+        'Generic Binary BSQ',            # Band Sequential binary format
+        'CSV',                           # Comma-separated values format
+        'GDAL-GS7BG-WRITER',            # Golden Software 7 Binary Grid format
+        'GDAL-GTiff-WRITER',            # GDAL GeoTIFF writer
+        'GDAL-BT-WRITER',               # VTP .bt terrain format
+        'GeoTIFF-BigTIFF',              # BigTIFF format for large files
+        'GDAL-RMF-WRITER',              # Raster Matrix Format
+        'GDAL-KRO-WRITER',              # KOLOR Raw format
+        'GDAL-PNM-WRITER',              # Portable Anymap format
+        'Gamma',                         # Gamma Remote Sensing format
+        'GDAL-MFF-WRITER',              # Vexcel MFF format
+        'GeoTIFF',                       # Standard GeoTIFF format
+        'NetCDF4-BEAM',                  # NetCDF4 BEAM format
+        'GDAL-GTX-WRITER',              # NOAA .gtx vertical datum shift format
+        'GDAL-RST-WRITER',              # Idrisi Raster format
+        'GDAL-SGI-WRITER',              # SGI Image format
+        'ZNAP',                          # SNAP compressed format
+        'GDAL-GSBG-WRITER',             # Golden Software Binary Grid format
+        'ENVI',                          # ENVI header labeled raster format
+        'BEAM-DIMAP',                    # BEAM-DIMAP XML product format
+        'GDAL-HFA-WRITER',              # Erdas Imagine format
+        'GDAL-COG-WRITER',              # Cloud Optimized GeoTIFF format
+        'HDF5',                          # Hierarchical Data Format version 5
+        'GDAL-NITF-WRITER',             # National Imagery Transmission Format
+        'GDAL-SAGA-WRITER',             # SAGA GIS Binary format
+        'GDAL-ILWIS-WRITER',            # ILWIS Raster Map format
+        'JP2,JPG,PNG,BMP,GIF',          # Common image formats
+        'GDAL-PCIDSK-WRITER'            # PCI PCIDSK Database File format
+        ]
 
     def __init__(self, product: str | Path, 
         outdir: str | Path, 
@@ -57,8 +96,11 @@ class GPT:
         """
         
         self.prod_path = Path(product)
+        assert self.prod_path.exists(), f"Product path does not exist: {self.prod_path}"
         self.name = self.prod_path.stem
+        assert format in self.OUTPUT_FORMATS, f"Unsupported format: {format}. Supported formats are: {self.OUTPUT_FORMATS}"
         self.format = format
+        assert outdir, "Output directory must be specified"
         self.outdir = Path(outdir)
         self.mode = mode
         self.gpt_executable = self._get_gpt_executable(gpt_path)
