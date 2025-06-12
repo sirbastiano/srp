@@ -95,32 +95,6 @@ def gc_collect(func: Callable) -> Callable:
         return result
     return wrapper
 
-def slice_section(data_length: int, k: int, N: int) -> Tuple[int, int]:
-    """
-    Create a slice for the k-th section out of N sections.
-    
-    Args:
-        data_length (int): Total length of the data dimension
-        k (int): Section index (0-based)
-        N (int): Total number of sections
-        
-    Returns:
-        Tuple[int, int]: Tuple (start_idx, end_idx) for the k-th section
-        
-    Raises:
-        AssertionError: If k >= N or k < 0 or N <= 0
-    """
-    assert N > 0, f'N must be positive, got {N}'
-    assert 0 <= k < N, f'k must be in range [0, {N-1}], got {k}'
-    assert data_length > 0, f'data_length must be positive, got {data_length}'
-    
-    section_size: int = data_length // N
-    start_idx: int = k * section_size
-    end_idx: int = (k + 1) * section_size if k < N - 1 else data_length
-    return (start_idx, end_idx)
-
-
-
 
 
 
@@ -182,6 +156,7 @@ class ZarrManager:
         self._zarr_array = None
         self._metadata = None
         self._ephemeris = None
+        self.echoes_shape = self.load().shape if self.load() is not None else None
         
     def load(self) -> zarr.Array:
         """
@@ -211,21 +186,54 @@ class ZarrManager:
             'size_mb': arr.nbytes / (1024**2)
         }
     
+    @gc_collect
     def get_slice(self, rows: Optional[Union[Tuple[int, int], slice]] = None, 
                   cols: Optional[Union[Tuple[int, int], slice]] = None, 
-                  step: Optional[int] = None) -> np.ndarray:
+                  step: Optional[int] = None) -> Tuple[np.ndarray, Optional[pd.DataFrame], Optional[pd.DataFrame]]:
         """
-        Get a slice of the zarr array.
+        Extract a slice from the zarr array with optional row and column indexing.
+        
+        This method provides flexible slicing capabilities for zarr arrays, supporting
+        both tuple-based indexing (start, end) and slice objects. The method automatically
+        handles the conversion between different indexing formats and returns the sliced
+        data along with associated metadata and ephemeris information.
         
         Args:
-            rows: Tuple (start, end) or slice object for rows
-            cols: Tuple (start, end) or slice object for columns  
-            step: Step size for slicing
-            
+            rows (Optional[Union[Tuple[int, int], slice]]): 
+                Row indexing specification. Can be:
+                - Tuple of (start_idx, end_idx) for row range
+                - slice object for custom slicing
+                - None to select all rows
+                Defaults to None.
+            cols (Optional[Union[Tuple[int, int], slice]]):
+                Column indexing specification. Can be:
+                - Tuple of (start_idx, end_idx) for column range  
+                - slice object for custom slicing
+                - None to select all columns
+                Defaults to None.
+            step (Optional[int]):
+                Step size for slicing when using tuple indexing. Only applied
+                when rows or cols are provided as tuples. Ignored for slice objects.
+                Defaults to None.
+                
         Returns:
-            numpy array with the requested slice
+            Tuple[np.ndarray, Optional[pd.DataFrame], Optional[pd.DataFrame]]: A 3-element tuple containing:
+                - np.ndarray: The sliced array data
+                - Optional[pd.DataFrame]: Metadata associated with the zarr array
+                - Optional[pd.DataFrame]: Ephemeris information for the dataset
+                
+        Examples:
+            >>> # Get full array
+            >>> data, meta, eph = zarr_obj.get_slice()
+            >>> # Get specific row and column ranges
+            >>> data, meta, eph = zarr_obj.get_slice(rows=(100, 200), cols=(50, 150))
+            >>> # Get every 2nd element in specified range
+            >>> data, meta, eph = zarr_obj.get_slice(rows=(0, 100), step=2)
+            >>> # Use slice objects for advanced indexing
+            >>> data, meta, eph = zarr_obj.get_slice(rows=slice(None, None, 2))
         """
         arr = self.load()
+        metadata = self.get_metadata()
         
         # Convert tuples to slices
         if isinstance(rows, tuple):
@@ -235,14 +243,41 @@ class ZarrManager:
             
         # Default to full array if no slicing specified
         if rows is None and cols is None:
-            return arr[:]
+            return (arr[:], metadata, self.get_ephemeris())
         elif rows is None:
-            return arr[:, cols]
+            return (arr[:, cols], metadata, self.get_ephemeris())
         elif cols is None:
-            return arr[rows, :]
+            return (arr[rows, :], metadata.iloc[rows], self.get_ephemeris())
         else:
-            return arr[rows, cols]
-    
+            return (arr[rows, cols], metadata, self.get_ephemeris())
+
+    def get_slice_block(self, N_blocks: int = 5, slice_idx: int = 0, outDict: bool = True, verbose: bool = False) -> None:
+        """
+        Internal method to handle block slicing for large arrays.
+        
+        This method is a placeholder for future implementation of block slicing
+        logic, which can be useful for very large datasets that cannot fit into memory.
+        """
+        
+        if slice_idx >= N_blocks:
+            raise ValueError(f'Block number {slice_idx} exceeds total blocks {N_blocks}')
+        # Calculate block size
+        block_size = self.echoes_shape[0] // N_blocks # type: ignore
+        start_row = slice_idx * block_size
+        end_row = (slice_idx + 1) * block_size if slice_idx < N_blocks - 1 else self.echoes_shape[0] # type: ignore
+        # Return the slice for the specified block
+        if verbose:
+            print(f'Extracting block {slice_idx + 1}/{N_blocks}: rows {start_row} to {end_row}')
+        if start_row >= self.echoes_shape[0] or end_row > self.echoes_shape[0]:
+            raise ValueError(f'Block {slice_idx} exceeds array bounds: {self.echoes_shape[0]} rows available')
+        
+        # Use get_slice to extract the block
+        out = self.get_slice(rows=slice(start_row, end_row), cols=None)
+        if outDict:
+            return {'echo': out[0], 'metadata': out[1], 'ephemeris': out[2]}
+        else:
+            return out
+        
     def get_metadata(self) -> Optional['pd.DataFrame']:
         """
         Extract metadata from zarr attributes.
@@ -271,6 +306,7 @@ class ZarrManager:
                 self._ephemeris = pd.DataFrame(arr.attrs['ephemeris'])
         return self._ephemeris
     
+    @gc_collect
     def stats(self, sample_size: int = 1000) -> Dict[str, Optional[float]]:
         """
         Get statistical summary of the data.
@@ -470,97 +506,6 @@ class ZarrManager:
             'ephemeris': ephemeris,
             'echo': echo_np
         }
-    
-    
-    @gc_collect
-    def export_raw_slice(self, 
-                        rows: Optional[Union[Tuple[int, int], slice, int]] = None,
-                        row_section: Optional[Tuple[int, int]] = None,
-                        include_metadata: bool = True,
-                        include_ephemeris: bool = True) -> Dict[str, Any]:
-        """Export raw SAR data slice with lazy loading, using smart row sectioning.
-        
-        Args:
-            rows (Optional[Union[Tuple[int, int], slice, int]]): Row slice specification.
-            row_section (Optional[Tuple[int, int]]): Tuple (k, N) for k-th row section out of N sections.
-            include_metadata (bool): Whether to include metadata in export.
-            include_ephemeris (bool): Whether to include ephemeris data in export.
-            
-        Returns:
-            Dict[str, Any]: Dictionary with keys:
-                - 'metadata' (Optional[pd.DataFrame]): Metadata DataFrame sliced to match rows.
-                - 'ephemeris' (Optional[pd.DataFrame]): Ephemeris DataFrame sliced to match rows.
-                - 'echo' (np.ndarray): Echo data slice as NumPy array.
-                - 'slice_info' (Dict[str, Any]): Information about the slice used.
-        """
-        # Load zarr array lazily
-        arr = self.load()
-        
-        # Determine row slice
-        if row_section is not None:
-            assert len(row_section) == 2, f'row_section must be tuple (k, N), got {row_section}'
-            k_row, N_row = row_section
-            row_slice = slice_section(arr.shape[0], k_row, N_row)
-        elif isinstance(rows, tuple):
-            assert len(rows) == 2, f'rows tuple must have 2 elements, got {len(rows)}'
-            row_slice = slice(rows[0], rows[1])
-        elif isinstance(rows, slice):
-            row_slice = rows
-        elif isinstance(rows, int):
-            row_slice = slice(rows, rows + 1)
-        else:
-            row_slice = slice(None)  # Full range
-            
-        # Get actual start and stop indices for the slice
-        start_idx = row_slice.start if row_slice.start is not None else 0
-        stop_idx = row_slice.stop if row_slice.stop is not None else arr.shape[0]
-        
-        # Create slice info for metadata
-        slice_info = {
-            'original_shape': arr.shape,
-            'row_slice': f'{start_idx}:{stop_idx}',
-            'row_indices': (start_idx, stop_idx),
-            'sliced_shape': None  # Will be filled after slicing
-        }
-        
-        # Extract data slice lazily (zarr handles memory efficiently)
-        echo_slice = arr[row_slice, :]
-        
-        # Convert to numpy array (this is where actual data loading happens)
-        echo_np = echo_slice[:]
-        slice_info['sliced_shape'] = echo_np.shape
-        
-        # Prepare result dictionary
-        result = {
-            'echo': echo_np,
-            'slice_info': slice_info
-        }
-        
-        # Add metadata if requested and available
-        if include_metadata:
-            metadata = self.get_metadata()
-            if metadata is not None:
-                # Apply same row indices to metadata to match echo slice
-                result['metadata'] = metadata.iloc[start_idx:stop_idx]
-            else:
-                result['metadata'] = None
-        else:
-            result['metadata'] = None
-            
-        # Add ephemeris if requested and available  
-        if include_ephemeris:
-            ephemeris = self.get_ephemeris()
-            if ephemeris is not None:
-                # Apply same row indices to ephemeris to match echo slice
-                result['ephemeris'] = ephemeris.iloc[start_idx:stop_idx]
-            else:
-                result['ephemeris'] = None
-        else:
-            result['ephemeris'] = None
-            
-        return result
-    
-    
     
     def __repr__(self) -> str:
         """

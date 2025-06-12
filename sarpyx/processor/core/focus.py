@@ -36,22 +36,6 @@ from ..utils.viz import dump
 environ['OMP_NUM_THREADS'] = '12' # Set OpenMP threads for parallel processing
 
 # ---------- Decorators and utility functions ----------
-def auto_gc(func: Callable) -> Callable:
-    """Decorator to automatically run garbage collection after function execution.
-    
-    Args:
-        func: The function to wrap.
-        
-    Returns:
-        The wrapped function with automatic garbage collection.
-    """
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        result = func(*args, **kwargs)
-        gc.collect()
-        return result
-    return wrapper
-
 def timing_decorator(func: Callable) -> Callable:
     """Decorator to measure and print function execution time.
     
@@ -74,7 +58,7 @@ def print_memory() -> None:
     """Print current RAM memory usage percentage."""
     print(f'RAM memory usage: {psutil.virtual_memory().percent}%')
 
-def memory_efficient_decorator(func: Callable) -> Callable:
+def flush_mem(func: Callable) -> Callable:
     """Decorator for memory-efficient operations with monitoring.
     
     Args:
@@ -225,7 +209,83 @@ def multiply(
     
     return a * b
 
+@flush_mem
+@timing_decorator
+def ifft2d(radar_data: Union[np.ndarray, torch.Tensor], backend: str = 'numpy', verbose: bool = False) -> Union[np.ndarray, torch.Tensor]:
+    """Perform memory-efficient 2D inverse FFT on radar data.
+    
+    Args:
+        radar_data: Input radar data array.
+        backend: Backend to use ('numpy' or 'torch').
+        verbose: Whether to print verbose output.
+        
+    Returns:
+        Processed radar data after 2D inverse FFT.
+        
+    Raises:
+        ValueError: If backend is not supported.
+    """
+    if verbose:
+        print('Performing 2D inverse FFT...')
+    
+    # Inverse FFT along azimuth dimension first
+    if backend == 'numpy':
+        radar_data = np.fft.ifft(radar_data, axis=0)
+    elif backend == 'torch':
+        radar_data = torch.fft.ifft(radar_data, dim=0)
+    else:
+        raise ValueError(f'Unsupported backend: {backend}')
+    
+    # Then inverse FFT along range dimension
+    if backend == 'numpy':
+        radar_data = np.fft.ifftshift(np.fft.ifft(radar_data, axis=1), axes=1)
+    elif backend == 'torch':
+        radar_data = torch.fft.ifft(radar_data, dim=1)
+        radar_data = torch.fft.ifftshift(radar_data, dim=1)
+    else:
+        raise ValueError(f'Unsupported backend: {backend}')
+    
+    if verbose:
+        print(f'2D inverse FFT completed, data shape: {radar_data.shape}')
+        print_memory()
+    
+    return radar_data
 
+@flush_mem
+@timing_decorator
+def iff_azimuth(
+    radar_data: Union[np.ndarray, torch.Tensor], 
+    backend: str = 'numpy', 
+    verbose: bool = False
+) -> Union[np.ndarray, torch.Tensor]:
+    """Perform memory-efficient inverse FFT along azimuth dimension.
+    
+    Args:
+        radar_data: Input radar data array.
+        backend: Backend to use ('numpy' or 'torch').
+        verbose: Whether to print verbose output.
+        
+    Returns:
+        Processed radar data after inverse FFT along azimuth dimension.
+        
+    Raises:
+        ValueError: If backend is not supported.
+    """
+    if verbose:
+        print('Performing inverse FFT along azimuth dimension...')
+    
+    if backend == 'numpy':
+        radar_data = np.fft.ifft(radar_data, axis=0)
+    elif backend == 'torch':
+        radar_data = torch.fft.ifft(radar_data, dim=0)
+    else:
+        raise ValueError(f'Unsupported backend: {backend}')
+    
+    if verbose:
+        print(f'Inverse FFT along azimuth completed, data shape: {radar_data.shape}')
+        print_memory()
+    
+    return radar_data
 
 # -------- Processing Class ----------
 class CoarseRDA:
@@ -357,7 +417,6 @@ class CoarseRDA:
     # ==================== TRANSMISSION REPLICA METHODS ====================
 
     @timing_decorator
-    @auto_gc
     def _generate_tx_replica(self) -> None:
         """Generate transmission replica based on metadata parameters.
         
@@ -430,11 +489,10 @@ class CoarseRDA:
         )
         self.replica_len = len(self.tx_replica)
 
-    # ==================== TRANSFORM METHODS ====================
+    # ==================== FFT METHODS ====================
 
-    @memory_efficient_decorator
+    @flush_mem
     @timing_decorator
-    @auto_gc
     def fft2d(self, w_pad: Optional[int] = None, executors: int = 12) -> None:
         """Perform memory-efficient 2D FFT on radar data in range and azimuth dimensions.
 
@@ -550,9 +608,8 @@ class CoarseRDA:
         assert self.radar_data.shape == original_shape, \
             f'Torch FFT changed shape from {original_shape} to {self.radar_data.shape}'
 
-    @memory_efficient_decorator
+    @flush_mem
     @timing_decorator
-    @auto_gc
     def ifft_range(self) -> None:
         """Perform memory-efficient inverse FFT along range dimension."""
         if self._backend == 'numpy':
@@ -564,9 +621,8 @@ class CoarseRDA:
         else:
             raise ValueError(f'Unsupported backend: {self._backend}')
 
-    @memory_efficient_decorator
+    @flush_mem
     @timing_decorator
-    @auto_gc
     def ifft_azimuth(self) -> None:
         """Perform memory-efficient inverse FFT along azimuth dimension."""
         if self._backend == 'numpy':
@@ -579,9 +635,8 @@ class CoarseRDA:
 
     # ==================== FILTER GENERATION METHODS ====================
 
-    @memory_efficient_decorator
+    @flush_mem
     @timing_decorator
-    @auto_gc
     def get_range_filter(self, pad_w: int = 0) -> np.ndarray:
         """Compute memory-efficient range filter for radar data compression.
     
@@ -635,9 +690,8 @@ class CoarseRDA:
         
         return range_filter
 
-    @memory_efficient_decorator
+    @flush_mem
     @timing_decorator
-    @auto_gc
     def get_rcmc(self) -> np.ndarray:
         """Calculate memory-efficient Range Cell Migration Correction filter.
 
@@ -717,9 +771,8 @@ class CoarseRDA:
         
         return rcmc_filter
 
-    @memory_efficient_decorator
+    @flush_mem
     @timing_decorator
-    @auto_gc
     def get_azimuth_filter(self) -> np.ndarray:
         """Calculate memory-efficient azimuth compression filter.
         
@@ -759,7 +812,6 @@ class CoarseRDA:
     # ==================== VELOCITY COMPUTATION METHODS ====================
 
     @timing_decorator
-    @auto_gc
     def _compute_effective_velocities(self) -> None:
         """Calculate effective spacecraft velocities for processing.
         
@@ -1179,14 +1231,13 @@ class CoarseRDA:
 
     # ==================== MAIN PROCESSING METHODS ====================
 
-    @memory_efficient_decorator
+    @flush_mem
     @timing_decorator
-    @auto_gc
     def data_focus(self) -> None:
         """Perform memory-efficient complete SAR data focusing using Range Doppler Algorithm.
         
-        This method ensures radar data dimensions remain constant throughout processing
-        while minimizing memory usage.
+        This method orchestrates the complete SAR focusing process by calling
+        three main processing steps in sequence.
         
         Raises:
             RuntimeError: If data dimensions change unexpectedly during processing.
@@ -1203,36 +1254,139 @@ class CoarseRDA:
         assert initial_shape == expected_shape, \
             f'Initial data shape {initial_shape} does not match expected {expected_shape}'
         
-        # Step 1: Get padding value (for legacy compatibility only)
+        
+        self.raw_data = copy.deepcopy(self.radar_data)
+        if self._verbose:
+            print(f'Raw radar data shape: {self.raw_data.shape}')
+            print_memory()
+        # ------------------------------------------------------------------------
+        # Step 1: 2D FFT transformation (preserves dimensions)
+        self.fft2d()
+        assert self.radar_data.shape == initial_shape, \
+            f'FFT changed data shape from {initial_shape} to {self.radar_data.shape}'
+        # ------------------------------------------------------------------------
+        
+        # Step 2: Range compression
+        self.range_compression()
+        self.range_compressed_data = ifft2d(copy.deepcopy(self.radar_data))
+        if self._verbose:
+            print(f'Range compressed data shape: {self.radar_data.shape}')
+            print_memory()
+        # ------------------------------------------------------------------------
+
+        # Step 3: Range Cell Migration Correction
+        self.rcmc()
+        self.rcmc_data = iff_azimuth(copy.deepcopy(self.radar_data))
+        if self._verbose:
+            print(f'RCMC data shape: {self.radar_data.shape}')
+            print_memory()
+        # ------------------------------------------------------------------------
+        # Step 4: Azimuth compression
+        self.azimuth_compression()
+        self.azimuth_compressed_data = self.radar_data
+        if self._verbose:
+            print(f'SAR data focusing completed successfully!')
+            print(f'Final radar data shape: {self.radar_data.shape}')
+            print_memory()
+    
+    @flush_mem
+    @timing_decorator
+    def range_compression(self) -> None:
+        """Perform memory-efficient range compression step.
+        
+        This method applies the range compression filter to compress the radar
+        signal in the range dimension while preserving data dimensions.
+        
+        Raises:
+            RuntimeError: If data dimensions change unexpectedly during processing.
+        """
+        if self._verbose:
+            print('Starting range compression...')
+            print(f'Input radar data shape: {self.radar_data.shape}')
+            print_memory()
+        
+        # Store initial shape for verification
+        initial_shape = self.radar_data.shape
+        
+        # Legacy compatibility parameters
         w_pad = 0
         original_w = initial_shape[1]
         
         if self._verbose:
             print(f'Processing with original_w={original_w}')
         
-        # Step 2: 2D FFT transformation (preserves dimensions)
-        self.fft2d()
-        assert self.radar_data.shape == initial_shape, \
-            f'FFT changed data shape from {initial_shape} to {self.radar_data.shape}'
-        
-        # Step 3: Range compression (preserves dimensions)
+        # Perform range compression
         self._perform_range_compression_efficient(w_pad, original_w)
+        
+        # Verify dimensions are preserved
         assert self.radar_data.shape == initial_shape, \
             f'Range compression changed data shape from {initial_shape} to {self.radar_data.shape}'
         
-        # Step 4: Range Cell Migration Correction (preserves dimensions)
+        if self._verbose:
+            print(f'Range compression completed successfully!')
+            print(f'Output radar data shape: {self.radar_data.shape}')
+            print_memory()
+    
+    @flush_mem
+    @timing_decorator
+    def rcmc(self) -> None:
+        """Perform memory-efficient Range Cell Migration Correction.
+        
+        This method applies the RCMC filter to correct for range cell migration
+        effects and performs inverse FFT in the range dimension.
+        
+        Raises:
+            RuntimeError: If data dimensions change unexpectedly during processing.
+        """
+        if self._verbose:
+            print('Starting Range Cell Migration Correction...')
+            print(f'Input radar data shape: {self.radar_data.shape}')
+            print_memory()
+        
+        # Store initial shape for verification
+        initial_shape = self.radar_data.shape
+        
+        # Perform RCMC
         self._perform_rcmc_efficient()
+        
+        # Verify dimensions are preserved
         assert self.radar_data.shape == initial_shape, \
             f'RCMC changed data shape from {initial_shape} to {self.radar_data.shape}'
         
-        # Step 5: Azimuth compression (preserves dimensions)
+        if self._verbose:
+            print(f'RCMC completed successfully!')
+            print(f'Output radar data shape: {self.radar_data.shape}')
+            print_memory()
+    
+    @flush_mem
+    @timing_decorator
+    def azimuth_compression(self) -> None:
+        """Perform memory-efficient azimuth compression step.
+        
+        This method applies the azimuth compression filter to focus the radar
+        signal in the azimuth dimension and performs inverse FFT in azimuth.
+        
+        Raises:
+            RuntimeError: If data dimensions change unexpectedly during processing.
+        """
+        if self._verbose:
+            print('Starting azimuth compression...')
+            print(f'Input radar data shape: {self.radar_data.shape}')
+            print_memory()
+        
+        # Store initial shape for verification
+        initial_shape = self.radar_data.shape
+        
+        # Perform azimuth compression
         self._perform_azimuth_compression_efficient()
+        
+        # Verify dimensions are preserved
         assert self.radar_data.shape == initial_shape, \
             f'Azimuth compression changed data shape from {initial_shape} to {self.radar_data.shape}'
         
         if self._verbose:
-            print(f'SAR data focusing completed successfully!')
-            print(f'Final radar data shape: {self.radar_data.shape}')
+            print(f'Azimuth compression completed successfully!')
+            print(f'Output radar data shape: {self.radar_data.shape}')
             print_memory()
 
     def _perform_range_compression_efficient(self, w_pad: int, original_w: int) -> None:
@@ -1335,6 +1489,8 @@ class CoarseRDA:
             print_memory()
 
     # ==================== UTILITY METHODS ====================
+    
+
     @timing_decorator
     def save_file(self, save_path: Union[str, Path]) -> None:
         """Save processed radar data to file.
@@ -1346,16 +1502,36 @@ class CoarseRDA:
         if self._verbose:
             print(f'Data saved to {save_path}')
 
+
+    # ==================== EEEZY ====================
     # For backward compatibility - keep original method name as alias
     _prompt_tx_replica = _generate_tx_replica
 
-
-
     # ==================== GRAPHIC METHODS ====================
-    def _display_slice(self, slice=(0, 4000, 0, 4000), vmin=0, vmax=1000, figsize=(12,12)) -> None:
+    def _display_slice(self, slice=(0, 4000, 0, 4000), 
+                       vmin=0, vmax=1000, 
+                       figsize=(12,12), 
+                       title = None,
+                       step: str = 'az') -> None:
         """Display a slice of the radar data for visualization."""
         
+        assert step in ['raw', 'range_compressed', 'rcmc', 'az_compressed'], \
+            'Invalid step. Choose from "raw", "range_compressed", "rcmc", or "az_compressed".'
+        
+        if step == 'raw':
+            data = self.raw_data
+        elif step == 'range_compressed':
+            data = self.range_compressed_data
+        elif step == 'rcmc':
+            data = self.rcmc_data
+        elif step == 'az_compressed':
+            data = self.radar_data
+        else:
+            raise ValueError(f'Invalid step: {step}. Choose from "raw", "range", "rcmc", or "az".')
+        
         plt.figure(figsize=figsize)
-        plt.imshow(np.abs(self.radar_data[slice[0]:slice[1], slice[2]:slice[3]]), vmin=vmin, vmax=vmax, cmap='viridis')
+        plt.imshow(np.abs(data[slice[0]:slice[1], slice[2]:slice[3]]), vmin=vmin, vmax=vmax, cmap='viridis')
         plt.axis('off')
+        if title:
+            plt.title(title)
         plt.show()

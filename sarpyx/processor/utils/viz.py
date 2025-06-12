@@ -5,7 +5,7 @@ import os
 from matplotlib import colors
 import torch
 import pickle
-import rasterio
+import joblib
 
 try:
     import zarr 
@@ -91,18 +91,13 @@ def plot_histogram(img,xlim=[0,500], savepath=None):
 
 def dump(obj, filename):
     """
-    Save an object to a pickle file.
+    Save an object to a pickle file using joblib.
 
     Parameters:
     obj (object): The object to be saved.
     filename (str): The name of the file where the object will be saved.
     """
-    # Example usage
-    # my_data = {'key': 'value'}
-    # save_to_pickle(my_data, 'my_data.pkl')
-    
-    with open(filename, 'wb') as file:
-        pickle.dump(obj, file)
+    joblib.dump(obj, filename)
 
 def load(filename):
     """
