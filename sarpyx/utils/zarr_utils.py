@@ -1,11 +1,13 @@
+import os
 import numpy as np 
 import zarr
-import os
+from pathlib import Path
 from typing import Optional, Tuple, Union, Dict, Any, List, Callable
 import numcodecs # Ensure numcodecs is installed for compression
 import pandas as pd
-import gc
+from .io import gc_collect
 
+import dask.array as da
 
 # -----------  Functions -----------------
 def save_array_to_zarr(array: 'np.ndarray', 
@@ -79,24 +81,403 @@ def save_array_to_zarr(array: 'np.ndarray',
     
     print(f'Saved array to {file_path} with maximum compression (zstd-9, chunks={chunks})')
 
-def gc_collect(func: Callable) -> Callable:
-    """
-    Decorator to perform garbage collection after function execution.
-
+def _serialize_dict(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Serialize dictionary for Zarr attributes storage.
+    
     Args:
-        func (Callable): The function to decorate.
-
+        data: Dictionary to serialize
+        
     Returns:
-        Callable: The wrapped function with garbage collection.
+        Serialized dictionary compatible with Zarr attributes
     """
-    def wrapper(*args, **kwargs):
-        result = func(*args, **kwargs)
-        gc.collect()
-        return result
-    return wrapper
+    serialized = {}
+    for key, value in data.items():
+        if isinstance(value, np.ndarray):
+            # Convert numpy arrays to lists for JSON compatibility
+            serialized[key] = value.tolist()
+        elif isinstance(value, (np.integer, np.floating)):
+            # Convert numpy scalars to Python types
+            serialized[key] = value.item()
+        elif isinstance(value, dict):
+            # Recursively serialize nested dictionaries
+            serialized[key] = _serialize_dict(value)
+        else:
+            serialized[key] = value
+    
+    return serialized
+
+def dask_slice_saver(
+    result: Dict[str, Union[np.ndarray, Dict[str, Any]]], 
+    zarr_path: Union[str, Path],
+    chunks: Optional[Union[str, Tuple[int, ...]]] = 'auto',
+    clevel: int = 5
+) -> None:
+    """Save processing result to Zarr format with compression.
+    
+    Args:
+        result: Dictionary containing arrays and metadata to save
+        zarr_path: Path where to save the Zarr store
+        chunks: Chunking strategy for arrays
+        clevel: Compression level (1-9)
+    """
+    # Validate input structure
+    required_arrays = ['raw', 'rc', 'rcmc', 'az']
+    required_dicts = ['metadata', 'ephemeris']
+    
+    assert all(key in result for key in required_arrays), f'Missing array keys: {set(required_arrays) - set(result.keys())}'
+    assert all(key in result for key in required_dicts), f'Missing dict keys: {set(required_dicts) - set(result.keys())}'
+    
+    # Create Zarr group
+    store = zarr.open_group(zarr_path, mode='w')
+    
+    # Save arrays with compression
+    for array_name in required_arrays:
+        array_data = result[array_name]
+        assert isinstance(array_data, np.ndarray), f'Expected {array_name} to be ndarray, got {type(array_data)}'
+        
+        # Determine appropriate chunk size
+        if chunks == 'auto':
+            # Use reasonable default chunk sizes
+            chunk_shape = tuple(min(s, 4096) for s in array_data.shape)
+        elif isinstance(chunks, tuple):
+            chunk_shape = chunks
+        else:
+            chunk_shape = (4096,) * array_data.ndim
+            
+        # Create array with Zarr v3 compatible compression
+        zarr_array = store.create_array(
+            name=array_name,
+            shape=array_data.shape,
+            dtype=array_data.dtype,
+            chunks=chunk_shape,
+            compressors=[
+                {
+                    'name': 'blosc',
+                    'configuration': {
+                        'cname': 'zstd',
+                        'clevel': clevel,
+                        'shuffle': 'bitshuffle'
+                    }
+                }
+            ],
+            overwrite=True
+        )
+        zarr_array[:] = array_data
+    
+    # Save dictionaries as attributes
+    for dict_name in required_dicts:
+        dict_data = result[dict_name]
+        assert isinstance(dict_data, dict), f'{dict_name} must be dictionary'
+        
+        # Convert dict to JSON-serializable format and save as attributes
+        store.attrs[dict_name] = _serialize_dict(dict_data)
 
 
+def concatenate_slices(
+    slice_zarr_paths: List[Union[str, Path]],
+    output_zarr_path: Union[str, Path],
+    chunks: Optional[Union[str, Tuple[int, ...]]] = 'auto',
+    clevel: int = 7,
+) -> None:
+    """Concatenate multiple slice Zarr files into a single Zarr store.
+    
+    Vertically concatenates arrays and merges dictionaries from multiple slice files.
+    
+    Args:
+        slice_zarr_paths: List of paths to slice Zarr files to concatenate
+        output_zarr_path: Path where to save the concatenated Zarr store
+        chunks: Chunking strategy for output arrays
+        clevel: Compression level (1-9)
+        
+    Raises:
+        FileNotFoundError: If any slice Zarr file doesn't exist
+        ValueError: If slice files have incompatible shapes or missing required data
+    """
+    # Validate input paths
+    output_path = Path(output_zarr_path)
+    assert len(slice_zarr_paths) > 0, 'At least one slice path must be provided'
+    
+    # Verify all slice files exist
+    for slice_path in slice_zarr_paths:
+        slice_path_obj = Path(slice_path)
+        if not slice_path_obj.exists():
+            raise FileNotFoundError(f'Slice Zarr file not found: {slice_path}')
+    
+    # Required arrays and dictionaries
+    required_arrays = ['raw', 'rc', 'rcmc', 'az']
+    required_dicts = ['metadata', 'ephemeris']
+    
+    # Read first slice to get structure and initialize concatenated data
+    first_store = zarr.open(str(slice_zarr_paths[0]), mode='r')
+    
+    # Initialize concatenated arrays and dictionaries
+    concatenated_arrays = {}
+    concatenated_dicts = {}
+    
+    # Load all slices and concatenate
+    all_arrays = {array_name: [] for array_name in required_arrays}
+    all_dicts = {dict_name: [] for dict_name in required_dicts}
+    
+    for i, slice_path in enumerate(slice_zarr_paths):
+        print(f'📖 Reading slice {i+1}/{len(slice_zarr_paths)}: {slice_path}')
+        store = zarr.open(str(slice_path), mode='r')
+        
+        # Collect arrays
+        for array_name in required_arrays:
+            if array_name not in store:
+                raise ValueError(f'Required array "{array_name}" not found in {slice_path}')
+            array_data = store[array_name][:]
+            all_arrays[array_name].append(array_data)
+        
+        # Collect dictionaries from attributes
+        for dict_name in required_dicts:
+            if dict_name not in store.attrs:
+                raise ValueError(f'Required dictionary "{dict_name}" not found in {slice_path} attributes')
+            dict_data = dict(store.attrs[dict_name])
+            all_dicts[dict_name].append(dict_data)
+    
+    # Concatenate arrays vertically (along first axis)
+    print('🔗 Concatenating arrays...')
+    for array_name in required_arrays:
+        concatenated_arrays[array_name] = np.concatenate(all_arrays[array_name], axis=0)
+        print(f'   {array_name}: {concatenated_arrays[array_name].shape}')
+    
+    # Merge dictionaries (combine all entries)
+    print('📋 Merging dictionaries...')
+    for dict_name in required_dicts:
+        concatenated_dicts[dict_name] = {}
+        for i, dict_data in enumerate(all_dicts[dict_name]):
+            for key, value in dict_data.items():
+                # Create unique keys for each slice if there are conflicts
+                if key in concatenated_dicts[dict_name]:
+                    concatenated_dicts[dict_name][f'{key}_slice_{i}'] = value
+                else:
+                    concatenated_dicts[dict_name][key] = value
+    
+    # Create output Zarr store
+    print(f'💾 Creating concatenated Zarr store at: {output_path}')
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Remove existing store if it exists
+    if output_path.exists():
+        import shutil
+        shutil.rmtree(output_path)
+    
+    store = zarr.open(str(output_path), mode='w')
+    
+    # Save concatenated arrays with compression
+    for array_name in required_arrays:
+        array_data = concatenated_arrays[array_name]
+        
+        # Determine appropriate chunk size
+        if chunks == 'auto':
+            chunk_shape = tuple(min(s, 4096) for s in array_data.shape)
+        elif isinstance(chunks, tuple):
+            chunk_shape = chunks
+        else:
+            chunk_shape = (4096,) * array_data.ndim
+        
+        print(f'   Saving {array_name} with shape {array_data.shape}, chunks {chunk_shape}')
+        zarr_array = store.create_array(
+            name=array_name,
+            shape=array_data.shape,
+            dtype=array_data.dtype,
+            chunks=chunk_shape,
+            compressors=[
+                {
+                    'name': 'blosc',
+                    'configuration': {
+                        'cname': 'zstd',
+                        'clevel': clevel,
+                        'shuffle': 'bitshuffle'
+                    }
+                }
+            ],
+            overwrite=True
+        )
+        zarr_array[:] = array_data
+    
+    # Save merged dictionaries as attributes
+    for dict_name in required_dicts:
+        store.attrs[dict_name] = concatenated_dicts[dict_name]
+        print(f'   Saved {dict_name} with {len(concatenated_dicts[dict_name])} entries')
+    
+    print(f'✅ Successfully created concatenated Zarr store with {len(slice_zarr_paths)} slices')
 
+
+def concatenate_slices_efficient(
+    slice_zarr_paths: List[Union[str, Path]],
+    output_zarr_path: Union[str, Path],
+    chunks: Optional[Union[str, Tuple[int, ...]]] = 'auto',
+    clevel: int = 5
+) -> None:
+    """Memory-efficiently concatenate multiple slice Zarr files into a single Zarr store.
+    
+    Processes slices one at a time to minimize memory usage by writing chunks directly
+    to the output Zarr store without loading all data into memory simultaneously.
+    
+    Args:
+        slice_zarr_paths: List of paths to slice Zarr files to concatenate
+        output_zarr_path: Path where to save the concatenated Zarr store
+        chunks: Chunking strategy for output arrays
+        clevel: Compression level (1-9)
+        
+    Raises:
+        FileNotFoundError: If any slice Zarr file doesn't exist
+        ValueError: If slice files have incompatible shapes or missing required data
+    """
+    import zarr
+    from pathlib import Path
+    import shutil
+    
+    output_path = Path(output_zarr_path)
+    assert len(slice_zarr_paths) > 0, 'At least one slice path must be provided'
+    
+    # Verify all slice files exist
+    for slice_path in slice_zarr_paths:
+        slice_path_obj = Path(slice_path)
+        if not slice_path_obj.exists():
+            raise FileNotFoundError(f'Slice Zarr file not found: {slice_path}')
+    
+    required_arrays = ['raw', 'rc', 'rcmc', 'az']
+    required_dicts = ['metadata', 'ephemeris']
+    
+    print(f'🔍 Analyzing slice structures...')
+    
+    # First pass: analyze all slices to determine total shapes and validate compatibility
+    slice_shapes = {}
+    total_shapes = {}
+    merged_dicts = {dict_name: {} for dict_name in required_dicts}
+    
+    for i, slice_path in enumerate(slice_zarr_paths):
+        store = zarr.open(str(slice_path), mode='r')
+        
+        # Validate and collect array shapes
+        current_shapes = {}
+        for array_name in required_arrays:
+            if array_name not in store:
+                raise ValueError(f'Required array "{array_name}" not found in {slice_path}')
+            
+            shape = store[array_name].shape
+            dtype = store[array_name].dtype
+            current_shapes[array_name] = (shape, dtype)
+            
+            if i == 0:
+                # Initialize total shapes with first slice
+                total_shapes[array_name] = (shape, dtype)
+            else:
+                # Validate compatibility and update total shape
+                prev_shape, prev_dtype = total_shapes[array_name]
+                if shape[1:] != prev_shape[1:]:
+                    raise ValueError(
+                        f'Incompatible shapes for {array_name}: '
+                        f'{prev_shape} vs {shape} in {slice_path}'
+                    )
+                if dtype != prev_dtype:
+                    raise ValueError(
+                        f'Incompatible dtypes for {array_name}: '
+                        f'{prev_dtype} vs {dtype} in {slice_path}'
+                    )
+                # Update total shape (concatenate along axis 0)
+                new_shape = (prev_shape[0] + shape[0],) + shape[1:]
+                total_shapes[array_name] = (new_shape, dtype)
+        
+        slice_shapes[i] = current_shapes
+        
+        # Collect dictionaries
+        for dict_name in required_dicts:
+            if dict_name not in store.attrs:
+                raise ValueError(f'Required dictionary "{dict_name}" not found in {slice_path} attributes')
+            dict_data = dict(store.attrs[dict_name])
+            for key, value in dict_data.items():
+                if key in merged_dicts[dict_name]:
+                    merged_dicts[dict_name][f'{key}_slice_{i}'] = value
+                else:
+                    merged_dicts[dict_name][key] = value
+    
+    print(f'📊 Total shapes determined:')
+    for array_name in required_arrays:
+        shape, dtype = total_shapes[array_name]
+        print(f'   {array_name}: {shape} ({dtype})')
+    
+    # Remove existing output store if it exists
+    if output_path.exists():
+        shutil.rmtree(output_path)
+    
+    # Create output Zarr store and initialize arrays
+    print(f'🏗️ Creating output Zarr store at: {output_path}')
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_store = zarr.open(str(output_path), mode='w')
+    
+    # Create output arrays with final shapes
+    output_arrays = {}
+    for array_name in required_arrays:
+        final_shape, dtype = total_shapes[array_name]
+        
+        # Determine chunk size
+        if chunks == 'auto':
+            chunk_shape = tuple(min(s, 4096) for s in final_shape)
+        elif isinstance(chunks, tuple):
+            chunk_shape = chunks
+        else:
+            chunk_shape = (4096,) * len(final_shape)
+        
+        print(f'🔧 Creating {array_name} array: shape={final_shape}, chunks={chunk_shape}')
+        output_arrays[array_name] = output_store.create_array(
+            name=array_name,
+            shape=final_shape,
+            dtype=dtype,
+            chunks=chunk_shape,
+            compressors=[
+                {
+                    'name': 'blosc',
+                    'configuration': {
+                        'cname': 'zstd',
+                        'clevel': clevel,
+                        'shuffle': 'bitshuffle'
+                    }
+                }
+            ],
+            overwrite=True
+        )
+    
+    # Second pass: copy data slice by slice
+    print(f'📋 Copying data from {len(slice_zarr_paths)} slices...')
+    current_offsets = {array_name: 0 for array_name in required_arrays}
+    
+    for i, slice_path in enumerate(slice_zarr_paths):
+        print(f'   Processing slice {i+1}/{len(slice_zarr_paths)}: {Path(slice_path).name}')
+        slice_store = zarr.open(str(slice_path), mode='r')
+        
+        for array_name in required_arrays:
+            # Get slice data
+            slice_array = slice_store[array_name]
+            slice_shape = slice_array.shape
+            
+            # Calculate target slice in output array
+            start_idx = current_offsets[array_name]
+            end_idx = start_idx + slice_shape[0]
+            
+            # Copy data directly to output array
+            output_arrays[array_name][start_idx:end_idx] = slice_array[:]
+            
+            # Update offset for next slice
+            current_offsets[array_name] = end_idx
+            
+        print(f'     ✓ Copied slice {i+1} data')
+    
+    # Save merged dictionaries as attributes
+    print(f'📝 Saving metadata and ephemeris...')
+    for dict_name in required_dicts:
+        output_store.attrs[dict_name] = merged_dicts[dict_name]
+        print(f'   Saved {dict_name} with {len(merged_dicts[dict_name])} entries')
+    
+    print(f'✅ Successfully created memory-efficient concatenated Zarr store')
+    print(f'   Output: {output_path}')
+    print(f'   Total arrays: {len(required_arrays)}')
+    for array_name in required_arrays:
+        shape, _ = total_shapes[array_name]
+        print(f'   {array_name}: {shape}')
 
 
 # -----------  Classes -----------------
@@ -104,45 +485,6 @@ def gc_collect(func: Callable) -> Callable:
 class ZarrManager:
     """
     A comprehensive class for managing Zarr files, providing convenient methods for data access, slicing, metadata extraction, analysis, visualization, and export.
-    Attributes:
-        file_path (str): Path to the Zarr file or directory.
-        _zarr_array (zarr.Array or None): Cached Zarr array object.
-        _metadata (pandas.DataFrame or None): Cached metadata extracted from Zarr attributes.
-        _ephemeris (pandas.DataFrame or None): Cached ephemeris data extracted from Zarr attributes.
-    Methods:
-        __init__(file_path: str) -> None
-            Initialize the ZarrManager with the specified file path.
-        load() -> zarr.Array
-            Load and cache the Zarr array from the file path.
-        info -> Dict[str, Any]
-            Property returning basic information about the Zarr array (shape, dtype, chunks, nbytes, size in MB).
-        get_slice(rows: Optional[Union[Tuple[int, int], slice]] = None, 
-                  step: Optional[int] = None) -> np.ndarray
-            Retrieve a slice of the Zarr array based on row and column specifications.
-        get_metadata() -> Optional[pandas.DataFrame]
-            Extract metadata from Zarr attributes as a pandas DataFrame, if available.
-        get_ephemeris() -> Optional[pandas.DataFrame]
-            Extract ephemeris data from Zarr attributes as a pandas DataFrame, if available.
-        stats(sample_size: int = 1000) -> Dict[str, Optional[float]]
-            Compute statistical summaries (mean, std, min, max, etc.) of the data, optionally using a sample for large arrays.
-        visualize_slice(rows: Tuple[int, int] = (0, 100), 
-                        plot_type: str = 'magnitude') -> None
-            Visualize a slice of the data using matplotlib, supporting magnitude, phase, real, or imaginary plots.
-        get_compression_info() -> Dict[str, float]
-            Retrieve compression statistics, including uncompressed and compressed sizes, compression ratio, and space saved.
-        export_slice(output_path: str, 
-                     format: str = 'npy') -> None
-            Export a slice of the data to various formats ('npy', 'csv', 'hdf5').
-        find_peaks(rows: Optional[Union[Tuple[int, int], slice]] = None, 
-                   threshold_percentile: float = 95) -> Dict[str, Any]
-            Find peaks in the data above a specified percentile threshold.
-        memory_efficient_operation(operation: Callable[[np.ndarray], Any], 
-                                  chunk_size: int = 1000) -> List[Any]
-            Apply a user-defined operation to the data in memory-efficient chunks.
-        _export_raw()
-            Export raw metadata, ephemeris, and echo data as a dictionary.
-        __repr__() -> str
-            Return a string representation of the ZarrManager instance, including file path and array info.
     """
     
     def __init__(self, file_path: str) -> None:
@@ -168,6 +510,30 @@ class ZarrManager:
         if self._zarr_array is None:
             self._zarr_array = zarr.open(self.file_path, mode='r')
         return self._zarr_array
+    
+    def _create_output_dir(self, output_path: str) -> None:
+        """
+        Create output directory if it does not exist.
+        
+        Args:
+            output_path: Path to the output directory
+        """
+        
+
+        # Create a temporary directory for processing
+        random_idx = np.random.randint(0, int(1e12))
+        print(f'🔢 Random index for processing: {random_idx}')
+        output_dir = Path(output_path)
+        tmp_dir = output_dir / 'tmp' / str(random_idx)
+        # create temporary directory for processing
+        tmp_dir.mkdir(parents=True, exist_ok=True)
+        print(f'📂 Temporary directory created at: {tmp_dir}')
+        
+        if not output_dir.exists():
+            output_dir.mkdir(parents=True, exist_ok=True)
+            print(f'Created output directory: {output_path}')
+        else:
+            print(f'Output directory already exists: {output_path}')
     
     @property
     def info(self) -> Dict[str, Any]:
@@ -336,7 +702,7 @@ class ZarrManager:
             'imag_mean': np.mean(np.imag(sample)) if np.iscomplexobj(sample) else None,
             'magnitude_mean': np.mean(np.abs(sample)) if np.iscomplexobj(sample) else None,
             'phase_std': np.std(np.angle(sample)) if np.iscomplexobj(sample) else None
-        }
+        } # type: ignore
     
     def visualize_slice(self, rows: Tuple[int, int] = (0, 100), 
                        cols: Tuple[int, int] = (0, 100), 
@@ -483,6 +849,14 @@ class ZarrManager:
         
         return results
     
+    # -------- Chunking Methods -----------
+    
+    
+    
+    
+    # -------- Chunking Methods End -----------
+    
+    
     @gc_collect
     def _export_raw(self):
         """
@@ -518,3 +892,469 @@ class ZarrManager:
         return (f"ZarrManager(file_path='{self.file_path}', "
                 f"shape={info['shape']}, dtype={info['dtype']}, "
                 f"chunks={info['chunks']}, size_mb={info['size_mb']:.2f})")
+
+class ProductHandler(ZarrManager):
+    """
+    A specialized ZarrManager subclass for handling concatenated Zarr data with multiple arrays.
+    
+    This class manages Zarr stores containing multiple arrays (az, raw, rc, rcmc) and their
+    associated metadata and ephemeris information stored as JSON attributes.
+    """
+    
+    def __init__(self, file_path: str) -> None:
+        """
+        Initialize with concatenated zarr file path.
+        
+        Args:
+            file_path (str): Path to the concatenated zarr store directory
+        """
+        self.file_path = file_path
+        self._zarr_store = None
+        self._metadata = None
+        self._ephemeris = None
+        self._array_names = ['az', 'raw', 'rc', 'rcmc']
+        self._arrays = {}
+        
+        # Get shapes of all arrays
+        store = self._load_store()
+        self.array_shapes = {name: store[name].shape for name in self._array_names if name in store}
+        
+    def _load_store(self) -> zarr.Group:
+        """
+        Load the zarr store (group) and cache it.
+        
+        Returns:
+            zarr.Group: The loaded zarr store containing multiple arrays
+        """
+        if self._zarr_store is None:
+            self._zarr_store = zarr.open(self.file_path, mode='r')
+        return self._zarr_store
+    
+    def load(self) -> zarr.Group:
+        """
+        Override parent load method to return the zarr group instead of single array.
+        
+        Returns:
+            zarr.Group: The loaded zarr store
+        """
+        return self._load_store()
+    
+    def get_array(self, array_name: str) -> zarr.Array:
+        """
+        Get a specific array from the concatenated zarr store.
+        
+        Args:
+            array_name (str): Name of the array ('az', 'raw', 'rc', 'rcmc')
+            
+        Returns:
+            zarr.Array: The requested zarr array
+            
+        Raises:
+            ValueError: If array_name is not valid or not found in store
+        """
+        if array_name not in self._array_names:
+            raise ValueError(f"Array name must be one of {self._array_names}, got '{array_name}'")
+        
+        store = self._load_store()
+        if array_name not in store:
+            raise ValueError(f"Array '{array_name}' not found in zarr store")
+        
+        if array_name not in self._arrays:
+            self._arrays[array_name] = store[array_name]
+        
+        return self._arrays[array_name]
+    
+    @property
+    def info(self) -> Dict[str, Any]:
+        """
+        Get comprehensive info about all arrays in the concatenated zarr store.
+        
+        Returns:
+            Dict[str, Any]: Dictionary containing info for each array and total size
+        """
+        store = self._load_store()
+        info_dict = {}
+        total_size_mb = 0
+        
+        for array_name in self._array_names:
+            if array_name in store:
+                arr = store[array_name]
+                array_info = {
+                    'shape': arr.shape,
+                    'dtype': arr.dtype,
+                    'chunks': arr.chunks,
+                    'nbytes': arr.nbytes,
+                    'size_mb': arr.nbytes / (1024**2)
+                }
+                info_dict[array_name] = array_info
+                total_size_mb += array_info['size_mb']
+        
+        info_dict['total_size_mb'] = total_size_mb
+        info_dict['available_arrays'] = list(store.keys())
+        
+        return info_dict
+    
+    def get_metadata(self) -> Optional['pd.DataFrame']:
+        """
+        Extract metadata from zarr store attributes.
+        
+        Returns:
+            Optional[pd.DataFrame]: Metadata DataFrame if available, None otherwise
+        """
+        if self._metadata is None:
+            store = self._load_store()
+            if 'metadata' in store.attrs:
+                import pandas as pd
+                self._metadata = pd.DataFrame(store.attrs['metadata'])
+        return self._metadata
+    
+    def get_ephemeris(self) -> Optional['pd.DataFrame']:
+        """
+        Extract ephemeris data from zarr store attributes.
+        
+        Returns:
+            Optional[pd.DataFrame]: Ephemeris DataFrame if available, None otherwise
+        """
+        if self._ephemeris is None:
+            store = self._load_store()
+            if 'ephemeris' in store.attrs:
+                import pandas as pd
+                self._ephemeris = pd.DataFrame(store.attrs['ephemeris'])
+        return self._ephemeris
+    
+    @gc_collect
+    def get_slice(self, 
+                  array_names: Union[str, List[str]], 
+                  rows: Optional[Union[Tuple[int, int], slice]] = None,
+                  cols: Optional[Union[Tuple[int, int], slice]] = None,
+                  step: Optional[int] = None,
+                  include_metadata: bool = True) -> Dict[str, Any]:
+        """
+        Extract slices from specified arrays with associated metadata and ephemeris.
+        
+        Args:
+            array_names (Union[str, List[str]]): Name(s) of arrays to slice ('az', 'raw', 'rc', 'rcmc')
+            rows (Optional[Union[Tuple[int, int], slice]]): Row indexing specification
+            cols (Optional[Union[Tuple[int, int], slice]]): Column indexing specification  
+            step (Optional[int]): Step size for tuple-based indexing
+            include_metadata (bool): Whether to include metadata and ephemeris in output
+            
+        Returns:
+            Dict[str, Any]: Dictionary containing sliced arrays and optionally metadata/ephemeris
+            
+        Examples:
+            >>> # Get slice from single array
+            >>> result = manager.get_slice('raw', rows=(100, 200), cols=(50, 150))
+            >>> # Get slices from multiple arrays
+            >>> result = manager.get_slice(['raw', 'rc'], rows=(0, 500))
+            >>> # Access results
+            >>> raw_data = result['arrays']['raw']
+            >>> metadata = result['metadata']
+        """
+        # Normalize array_names to list
+        if isinstance(array_names, str):
+            array_names = [array_names]
+        
+        # Validate array names
+        for name in array_names:
+            if name not in self._array_names:
+                raise ValueError(f"Array name must be one of {self._array_names}, got '{name}'")
+        
+        # Convert tuples to slices
+        if isinstance(rows, tuple):
+            rows = slice(rows[0], rows[1], step)
+        if isinstance(cols, tuple):
+            cols = slice(cols[0], cols[1], step)
+        
+        # Extract data from each requested array
+        result = {'arrays': {}}
+        
+        for array_name in array_names:
+            arr = self.get_array(array_name)
+            
+            # Apply slicing
+            if rows is None and cols is None:
+                sliced_data = arr[:]
+            elif rows is None:
+                sliced_data = arr[:, cols]
+            elif cols is None:
+                sliced_data = arr[rows, :]
+            else:
+                sliced_data = arr[rows, cols]
+            
+            result['arrays'][array_name] = sliced_data
+        
+        # Include metadata and ephemeris if requested
+        if include_metadata:
+            metadata = self.get_metadata()
+            ephemeris = self.get_ephemeris()
+            
+            # If rows are specified and metadata exists, slice metadata accordingly
+            if rows is not None and metadata is not None:
+                if isinstance(rows, slice):
+                    # Convert slice to indices for pandas iloc
+                    start, stop, step_val = rows.indices(len(metadata))
+                    row_indices = list(range(start, stop, step_val or 1))
+                    result['metadata'] = metadata.iloc[row_indices].reset_index(drop=True)
+                else:
+                    result['metadata'] = metadata
+            else:
+                result['metadata'] = metadata
+            
+            result['ephemeris'] = ephemeris
+        
+        # Add slice information for reference
+        result['slice_info'] = {
+            'rows': rows,
+            'cols': cols,
+            'array_names': array_names,
+            'shapes': {name: result['arrays'][name].shape for name in array_names}
+        }
+        
+        return result
+    
+    def get_array_slice(self, 
+                       array_name: str,
+                       rows: Optional[Union[Tuple[int, int], slice]] = None,
+                       cols: Optional[Union[Tuple[int, int], slice]] = None,
+                       step: Optional[int] = None) -> np.ndarray:
+        """
+        Get a slice from a single array (convenience method).
+        
+        Args:
+            array_name (str): Name of the array to slice
+            rows (Optional[Union[Tuple[int, int], slice]]): Row indexing specification
+            cols (Optional[Union[Tuple[int, int], slice]]): Column indexing specification
+            step (Optional[int]): Step size for tuple-based indexing
+            
+        Returns:
+            np.ndarray: Sliced array data
+        """
+        result = self.get_slice(array_name, rows=rows, cols=cols, step=step, include_metadata=False)
+        return result['arrays'][array_name]
+    
+    def get_metadata_slice(self, 
+                          rows: Optional[Union[Tuple[int, int], slice]] = None) -> Optional['pd.DataFrame']:
+        """
+        Get a slice of metadata corresponding to specified rows.
+        
+        Args:
+            rows (Optional[Union[Tuple[int, int], slice]]): Row indexing specification
+            
+        Returns:
+            Optional[pd.DataFrame]: Sliced metadata DataFrame if available
+        """
+        metadata = self.get_metadata()
+        if metadata is None:
+            return None
+        
+        if rows is None:
+            return metadata
+        
+        # Convert tuple to slice
+        if isinstance(rows, tuple):
+            rows = slice(rows[0], rows[1])
+        
+        # Apply slicing to metadata
+        if isinstance(rows, slice):
+            start, stop, step_val = rows.indices(len(metadata))
+            row_indices = list(range(start, stop, step_val or 1))
+            return metadata.iloc[row_indices].reset_index(drop=True)
+        
+        return metadata
+    
+    @gc_collect
+    def compare_arrays(self, 
+                      array_names: List[str],
+                      rows: Optional[Union[Tuple[int, int], slice]] = None,
+                      cols: Optional[Union[Tuple[int, int], slice]] = None,
+                      comparison_type: str = 'magnitude') -> Dict[str, Any]:
+        """
+        Compare multiple arrays side by side with statistics.
+        
+        Args:
+            array_names (List[str]): Names of arrays to compare
+            rows (Optional[Union[Tuple[int, int], slice]]): Row slice for comparison
+            cols (Optional[Union[Tuple[int, int], slice]]): Column slice for comparison
+            comparison_type (str): Type of comparison ('magnitude', 'phase', 'real', 'imag')
+            
+        Returns:
+            Dict[str, Any]: Comparison results with statistics and data
+        """
+        result = self.get_slice(array_names, rows=rows, cols=cols, include_metadata=False)
+        comparison_data = {}
+        stats = {}
+        
+        for array_name in array_names:
+            data = result['arrays'][array_name]
+            
+            if comparison_type == 'magnitude' and np.iscomplexobj(data):
+                processed_data = np.abs(data)
+            elif comparison_type == 'phase' and np.iscomplexobj(data):
+                processed_data = np.angle(data)
+            elif comparison_type == 'real':
+                processed_data = np.real(data)
+            elif comparison_type == 'imag':
+                processed_data = np.imag(data)
+            else:
+                processed_data = data
+            
+            comparison_data[array_name] = processed_data
+            stats[array_name] = {
+                'mean': np.mean(processed_data),
+                'std': np.std(processed_data),
+                'min': np.min(processed_data),
+                'max': np.max(processed_data)
+            }
+        
+        return {
+            'data': comparison_data,
+            'statistics': stats,
+            'comparison_type': comparison_type,
+            'slice_info': result['slice_info']
+        }
+    
+    def export_arrays(self, 
+                     output_dir: str,
+                     array_names: Optional[List[str]] = None,
+                     rows: Optional[Union[Tuple[int, int], slice]] = None,
+                     cols: Optional[Union[Tuple[int, int], slice]] = None,
+                     format: str = 'npy') -> None:
+        """
+        Export multiple arrays to files.
+        
+        Args:
+            output_dir (str): Directory to save exported files
+            array_names (Optional[List[str]]): Arrays to export (default: all)
+            rows (Optional[Union[Tuple[int, int], slice]]): Row slice to export
+            cols (Optional[Union[Tuple[int, int], slice]]): Column slice to export
+            format (str): Export format ('npy', 'hdf5')
+        """
+        if array_names is None:
+            array_names = self._array_names
+        
+        # Create output directory
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
+        
+        # Get sliced data
+        result = self.get_slice(array_names, rows=rows, cols=cols, include_metadata=True)
+        
+        # Export arrays
+        for array_name in array_names:
+            if array_name in result['arrays']:
+                data = result['arrays'][array_name]
+                
+                if format == 'npy':
+                    output_path = Path(output_dir) / f'{array_name}.npy'
+                    np.save(output_path, data)
+                elif format == 'hdf5':
+                    import h5py
+                    output_path = Path(output_dir) / f'{array_name}.h5'
+                    with h5py.File(output_path, 'w') as f:
+                        f.create_dataset('data', data=data)
+                
+                print(f'Exported {array_name} to {output_path}')
+        
+        # Export metadata if available
+        if result['metadata'] is not None:
+            metadata_path = Path(output_dir) / 'metadata.csv'
+            result['metadata'].to_csv(metadata_path, index=False)
+            print(f'Exported metadata to {metadata_path}')
+        
+        # Export ephemeris if available  
+        if result['ephemeris'] is not None:
+            ephemeris_path = Path(output_dir) / 'ephemeris.csv'
+            result['ephemeris'].to_csv(ephemeris_path, index=False)
+            print(f'Exported ephemeris to {ephemeris_path}')
+    
+    def visualize_arrays(self, 
+                        array_names: Union[str, List[str]],
+                        rows: Tuple[int, int] = (0, 100),
+                        cols: Tuple[int, int] = (0, 100),
+                        plot_type: str = 'magnitude',
+                        vminmax: Optional[Tuple[float, float]] = (0, 1000),
+                        figsize: Tuple[int, int] = (15, 15)) -> None:
+        """
+        Visualize multiple arrays side by side.
+        
+        Args:
+            array_names (Union[str, List[str]]): Array name(s) to visualize
+            rows (Tuple[int, int]): Row range for visualization
+            cols (Tuple[int, int]): Column range for visualization
+            plot_type (str): Type of plot ('magnitude', 'phase', 'real', 'imag')
+            figsize (Tuple[int, int]): Figure size for matplotlib
+        """
+        import matplotlib.pyplot as plt
+        
+        if isinstance(array_names, str):
+            array_names = [array_names]
+        
+        result = self.get_slice(array_names, rows=rows, cols=cols, include_metadata=False)
+        
+        fig, axes = plt.subplots(1, len(array_names), figsize=figsize)
+        if len(array_names) == 1:
+            axes = [axes]
+        
+        for i, array_name in enumerate(array_names):
+            data = result['arrays'][array_name]
+            
+            if plot_type == 'magnitude' and np.iscomplexobj(data):
+                plot_data = np.abs(data)
+                title_suffix = 'Magnitude'
+            elif plot_type == 'phase' and np.iscomplexobj(data):
+                plot_data = np.angle(data)
+                title_suffix = 'Phase'
+            elif plot_type == 'real':
+                plot_data = np.real(data)
+                title_suffix = 'Real'
+            elif plot_type == 'imag':
+                plot_data = np.imag(data)
+                title_suffix = 'Imaginary'
+            else:
+                plot_data = data
+                title_suffix = 'Data'
+
+            
+            
+            # Set vmin/vmax for 'raw' array, otherwise use phase or provided/default
+            if array_name == 'raw':
+                vmin, vmax = 0, 10
+            elif plot_type == 'phase':
+                vmin, vmax = -np.pi, np.pi
+            elif vminmax is not None:
+                vmin, vmax = vminmax
+            else:
+                vmin, vmax = 0, 1000
+
+            im = axes[i].imshow(
+                plot_data,
+                aspect='auto',
+                cmap='viridis',
+                vmin=vmin,
+                vmax=vmax
+            )
+
+            axes[i].set_title(f'{array_name.upper()} - {title_suffix}')
+            axes[i].set_xlabel('Range')
+            axes[i].set_ylabel('Azimuth')
+            cbar = plt.colorbar(im, ax=axes[i], fraction=0.046, pad=0.04)
+            cbar.ax.tick_params(labelsize=8)
+            # axis equal aspect ratio
+            axes[i].set_aspect('equal', adjustable='box')
+        
+        plt.tight_layout()
+        plt.show()
+    
+    def __repr__(self) -> str:
+        """
+        String representation of the ConcatenatedZarrManager.
+        
+        Returns:
+            str: String with basic info about the concatenated zarr store
+        """
+        info = self.info
+        available_arrays = info.get('available_arrays', [])
+        total_size = info.get('total_size_mb', 0)
+        
+        return (f"ConcatenatedZarrManager(file_path='{self.file_path}', "
+                f"arrays={available_arrays}, total_size_mb={total_size:.2f})")

@@ -11,6 +11,7 @@ venv.bak/
 # Dataset
 data/
 decoded_data/
+focused_data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -48,3 +49,4 @@ coverage.xml
 
 # Sentinel-1 data files
 S1*
+*.pkl
