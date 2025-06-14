@@ -1,5 +1,5 @@
 services:
-  sarpyx-jupyter1:
+  sarpyx-snap11:
     build:
       context: .
       dockerfile: Dockerfile_SNAP11
@@ -33,7 +33,7 @@ services:
       start_period: 40s
 
 
-  sarpyx-jupyter2:
+  sarpyx-snap12:
     build:
       context: .
       dockerfile: Dockerfile_SNAP12

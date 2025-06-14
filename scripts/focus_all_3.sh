@@ -2,7 +2,7 @@
 
 # Configuration
 TOTAL_SECTIONS=10
-CURRENT_SECTION=5
+CURRENT_SECTION=3
 FOCUS_SCRIPT="/Data_large/marine/PythonProjects/SAR/sarpyx/pyscripts/focusing.py"
 
 

@@ -166,13 +166,6 @@ def main() -> None:
     )
     
     parser.add_argument(
-        '--n-slices',
-        type=int,
-        default=5,
-        help='Number of slices to process (default: 5)'
-    )
-    
-    parser.add_argument(
         '--verbose',
         action='store_true',
         help='Enable verbose output'
@@ -211,19 +204,33 @@ def main() -> None:
     logger.info(f'📁 Input file: {input_path}')
     logger.info(f'📁 Output directory: {output_dir}')
     logger.info(f'📁 Temporary directory: {tmp_dir}')
-    logger.info(f'🔢 Number of slices: {args.n_slices}')
     
     try:
         # Initialize handler
         handler = ZarrManager(str(input_path))
+        length = handler.load().shape[0] # Get length of the 2d array (rows)
+
+        # ------ Dynamic N slices based on input length ------
+        if length < 10000:
+            logger.warning(f'Input data length ({length}) might be too small for processing.')
+            n_slices = 1
+        elif length <= 20000:
+            n_slices = 1
+            logger.info(f'Input data length ({length}) is manageable, using {n_slices} slice.')
+        else:
+            # Calculate number of slices ensuring minimum 10k samples per slice
+            n_slices = length // 10000
+            logger.warning(f'Input data length ({length}) is large, using {n_slices} slices.')
+            logger.info(f'Using {n_slices} slices for processing (approximately {length // n_slices} samples per slice).')
         
+
         # Process each slice
         tmp_files = []
-        for slice_idx in range(args.n_slices):
+        for slice_idx in range(n_slices):
             zarr_path = process_sar_slice(
                 handler=handler,
                 slice_idx=slice_idx,
-                n_slices=args.n_slices,
+                n_slices=n_slices,
                 tmp_dir=tmp_dir,
                 verbose=args.verbose
             )
