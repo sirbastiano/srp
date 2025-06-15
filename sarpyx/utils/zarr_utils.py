@@ -1272,7 +1272,8 @@ class ProductHandler(ZarrManager):
                         rows: Tuple[int, int] = (0, 100),
                         cols: Tuple[int, int] = (0, 100),
                         plot_type: str = 'magnitude',
-                        vminmax: Optional[Tuple[float, float]] = (0, 1000),
+                        show: bool = True,
+                        vminmax: Optional[Union[Tuple[float, float], str]] = (0, 1000),
                         figsize: Tuple[int, int] = (15, 15)) -> None:
         """
         Visualize multiple arrays side by side.
@@ -1282,6 +1283,8 @@ class ProductHandler(ZarrManager):
             rows (Tuple[int, int]): Row range for visualization
             cols (Tuple[int, int]): Column range for visualization
             plot_type (str): Type of plot ('magnitude', 'phase', 'real', 'imag')
+            show (bool): Whether to show the plot or not
+            vminmax (Optional[Union[Tuple[float, float], str]]): Min/max values for colorbar or 'auto'
             figsize (Tuple[int, int]): Figure size for matplotlib
         """
         import matplotlib.pyplot as plt
@@ -1321,6 +1324,10 @@ class ProductHandler(ZarrManager):
                 vmin, vmax = 0, 10
             elif plot_type == 'phase':
                 vmin, vmax = -np.pi, np.pi
+            elif vminmax == 'auto':
+                mean_val = np.mean(plot_data)
+                std_val = np.std(plot_data)
+                vmin, vmax = mean_val - std_val, mean_val + std_val
             elif vminmax is not None:
                 vmin, vmax = vminmax
             else:
@@ -1343,7 +1350,10 @@ class ProductHandler(ZarrManager):
             axes[i].set_aspect('equal', adjustable='box')
         
         plt.tight_layout()
-        plt.show()
+        if show:
+            plt.show()
+        else:
+            plt.close(fig)
     
     def __repr__(self) -> str:
         """
