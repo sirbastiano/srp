@@ -186,6 +186,11 @@ class ArraySlicer:
 
 # ------- Functions for file operations -------
 
+
+
+
+
+
 def calculate_slice_indices(array_height: int, slice_height: int) -> List[dict]:
     """Calculate slice indices and drop information for array slicing.
     
@@ -222,7 +227,7 @@ def calculate_slice_indices(array_height: int, slice_height: int) -> List[dict]:
         """Calculate the start position for the next slice (50% overlap)."""
         return current_start + int(overlap * slice_height)
 
-    def _calculate_drop_amounts(original_height: int, is_first: bool, is_last: bool, overlap_start: float = 0.15, overlap_end: float = 0.15) -> Tuple[int, int]:
+    def _calculate_drop_amounts(original_height: int, is_first: bool, is_last: bool, drop_ratio: float = 0.15) -> Tuple[int, int]:
         """Calculate drop amounts for start and end.
         
         Returns:
@@ -231,16 +236,15 @@ def calculate_slice_indices(array_height: int, slice_height: int) -> List[dict]:
         if is_first:
             # First slice: drop last
             drop_start = 0
-            drop_end = int(overlap_end * original_height)
+            drop_end = int(drop_ratio * original_height)
         elif is_last:
             # Last slice: drop from start, preserve end
-            drop_start = int(overlap_start * original_height)
+            drop_start = int(drop_ratio * original_height)
             drop_end = 0
         else:
             # Middle slices: drop from both ends
-            drop_amount = int(overlap_start * original_height)
-            drop_start = drop_amount
-            drop_end = drop_amount
+            drop_start = int(drop_ratio * original_height)
+            drop_end = int(drop_ratio * original_height)
             
         return drop_start, drop_end
     
@@ -248,13 +252,26 @@ def calculate_slice_indices(array_height: int, slice_height: int) -> List[dict]:
         # Determine if this is first or last slice
         is_first = slice_index == 0
         next_start = _get_next_start_position(current_start)
-        is_last = next_start >= array_height
+        
+        # Check if this should be the last slice
+        # Last slice if: next start would be beyond array OR remaining data is less than minimum slice
+        remaining_data = array_height - current_start
+        is_last = (next_start >= array_height) or (remaining_data <= slice_height * 1.2)
         
         # Calculate original slice boundaries
-        original_end = min(current_start + slice_height, array_height)
+        if is_last:
+            # For last slice, use all remaining data
+            original_end = array_height
+        else:
+            original_end = min(current_start + slice_height, array_height)
+        
         original_height = original_end - current_start
         
-        # Calculate drop amounts
+        # Skip if original slice would be too small
+        if original_height < 10:  # Minimum viable slice height
+            break
+        
+        # Calculate drop amounts ONCE
         drop_start, drop_end = _calculate_drop_amounts(original_height, is_first, is_last)
         
         # Calculate actual boundaries after drops
@@ -262,18 +279,40 @@ def calculate_slice_indices(array_height: int, slice_height: int) -> List[dict]:
         actual_end = original_end - drop_end
         
         # For non-first slices, ensure no gaps by starting where previous ended
-        if not is_first:
-            actual_start = last_actual_end
-            # Recalculate drop_start based on adjusted actual_start
-            drop_start = actual_start - current_start
+        if not is_first and last_actual_end > actual_start:
+            # Adjust start to connect with previous slice, but ensure we don't go backwards
+            gap_adjusted_start = max(last_actual_end, current_start)
+            
+            # Only adjust if it doesn't create unreasonable overlap (more than 75% of slice)
+            max_allowable_start = current_start + int(0.75 * original_height)
+            if gap_adjusted_start <= max_allowable_start:
+                actual_start = gap_adjusted_start
         
-        # Ensure we don't go beyond array bounds
-        actual_start = max(0, actual_start)
-        actual_end = min(array_height, actual_end)
+        # Ensure we don't go beyond array bounds and maintain proper ordering
+        actual_start = max(current_start, min(actual_start, array_height - 1))
+        actual_end = min(array_height, max(actual_start + 1, actual_end))
+        
+        # For last slice, ensure we reach the end of the array
+        if is_last:
+            actual_end = array_height
+        
+        # Final validation: ensure positive slice height
+        if actual_start >= actual_end:
+            # Try to salvage by using remaining data
+            if last_actual_end < array_height:
+                actual_start = last_actual_end
+                actual_end = array_height
+            else:
+                break
+        
         actual_height = actual_end - actual_start
         
-        # Skip if slice would be empty
-        if actual_start >= actual_end:
+        # Calculate final drop values - ensure they are non-negative
+        final_drop_start = max(0, actual_start - current_start)
+        final_drop_end = max(0, original_end - actual_end)
+        
+        # Skip if slice would be too small after all adjustments
+        if actual_height < 5:
             break
         
         # Create slice information dictionary
@@ -285,8 +324,8 @@ def calculate_slice_indices(array_height: int, slice_height: int) -> List[dict]:
             'actual_end': actual_end,
             'is_first': is_first,
             'is_last': is_last,
-            'drop_start': drop_start,
-            'drop_end': drop_end,
+            'drop_start': final_drop_start,
+            'drop_end': final_drop_end,
             'original_height': original_height,
             'actual_height': actual_height
         }
@@ -305,6 +344,13 @@ def calculate_slice_indices(array_height: int, slice_height: int) -> List[dict]:
         slice_index += 1
     
     return slice_info_list
+
+
+
+
+
+
+
 
 def save_matlab_mat(data_object: Any, filename: str, filepath: Union[str, Path]) -> bool:
     """Saves a Python object to a MATLAB .mat file.

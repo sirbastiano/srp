@@ -176,7 +176,8 @@ def multiply_inplace(
 
 def multiply(
     a: Union[np.ndarray, torch.Tensor], 
-    b: Union[np.ndarray, torch.Tensor]
+    b: Union[np.ndarray, torch.Tensor],
+    debug: bool = False,
 ) -> Union[np.ndarray, torch.Tensor]:
     """Multiply two arrays element-wise with broadcasting support.
     
@@ -194,22 +195,25 @@ def multiply(
         # Check if shapes are compatible for broadcasting
         if a.shape != b.shape and b.size != 1 and a.size != 1:
             # Try to understand the broadcasting scenario
-            print(f'Debug: Attempting to multiply arrays with shapes {a.shape} and {b.shape}')
+            if debug:
+                print(f'Debug: Attempting to multiply arrays with shapes {a.shape} and {b.shape}')
             
             # For 2D array * 1D array, the 1D array should match one of the 2D dimensions
             if len(a.shape) == 2 and len(b.shape) == 1:
-                if b.shape[0] == a.shape[1]:
-                    print(f'Debug: Broadcasting 1D array along range dimension (axis=1)')
-                elif b.shape[0] == a.shape[0]:
-                    print(f'Debug: Need to reshape 1D array for azimuth dimension (axis=0)')
-                    b = b.reshape(-1, 1)  # Reshape for broadcasting along azimuth
-                else:
-                    raise ValueError(f'1D array length ({b.shape[0]}) does not match either dimension of 2D array {a.shape}')
+                if debug:
+                    if b.shape[0] == a.shape[1]:
+                        print(f'Debug: Broadcasting 1D array along range dimension (axis=1)')
+                    elif b.shape[0] == a.shape[0]:
+                        print(f'Debug: Need to reshape 1D array for azimuth dimension (axis=0)')
+                        b = b.reshape(-1, 1)  # Reshape for broadcasting along azimuth
+                    else:
+                        raise ValueError(f'1D array length ({b.shape[0]}) does not match either dimension of 2D array {a.shape}')
             
             # Allow broadcasting for compatible shapes
             try:
                 result = a * b
-                print(f'Debug: Broadcasting successful, result shape: {result.shape}')
+                if debug:
+                    print(f'Debug: Broadcasting successful, result shape: {result.shape}')
                 return result
             except (ValueError, RuntimeError) as e:
                 print(f'Debug: Broadcasting failed with error: {str(e)}')

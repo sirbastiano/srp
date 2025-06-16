@@ -172,19 +172,19 @@ def process_sar_slice(
     
     # ------- 3. Drop for overlap handling -------
     # Apply drops to all arrays consistently
-    result['raw'] = result['raw'][drop_start:drop_end] if drop_end > 0 else result['raw'][drop_start:]
-    result['rc'] = result['rc'][drop_start:drop_end] if drop_end > 0 else result['rc'][drop_start:]
-    result['rcmc'] = result['rcmc'][drop_start:drop_end] if drop_end > 0 else result['rcmc'][drop_start:]
-    result['az'] = result['az'][drop_start:drop_end] if drop_end > 0 else result['az'][drop_start:]
+    result['raw'] = result['raw'][drop_start:-drop_end] if drop_end > 0 else result['raw'][drop_start:]
+    result['rc'] = result['rc'][drop_start:-drop_end] if drop_end > 0 else result['rc'][drop_start:]
+    result['rcmc'] = result['rcmc'][drop_start:-drop_end] if drop_end > 0 else result['rcmc'][drop_start:]
+    result['az'] = result['az'][drop_start:-drop_end] if drop_end > 0 else result['az'][drop_start:]
     
     # Handle metadata and ephemeris slicing - check if they're DataFrames first
     if hasattr(result['metadata'], 'iloc'):  # DataFrame
         if drop_end > 0:
-            result['metadata'] = result['metadata'].iloc[drop_start:drop_end].reset_index(drop=True)
-            result['ephemeris'] = result['ephemeris'].iloc[drop_start:drop_end].reset_index(drop=True)
+            result['metadata'] = result['metadata'].iloc[drop_start:-drop_end]
+            result['ephemeris'] = result['ephemeris'].iloc[drop_start:-drop_end]
         else:
-            result['metadata'] = result['metadata'].iloc[drop_start:].reset_index(drop=True)
-            result['ephemeris'] = result['ephemeris'].iloc[drop_start:].reset_index(drop=True)
+            result['metadata'] = result['metadata'].iloc[drop_start:]
+            result['ephemeris'] = result['ephemeris'].iloc[drop_start:]
     else:  # Dict or other format - keep as is for now
         logger.warning(f'Metadata/ephemeris are not DataFrames, keeping original format')
 
@@ -355,16 +355,19 @@ def main() -> None:
                 slice_idx=slice_idx,
                 slice_info=slice_indices[slice_idx],
                 tmp_dir=tmp_dir,
-                verbose=args.verbose
+                verbose=args.verbose,
+                unique_slice=(n_slices == 1)  # If only one slice, save directly to output
             )
             tmp_files.append(zarr_path)
             logger.info(f'✅ Slice {slice_idx + 1} processed successfully.')
         
-        # Concatenate slices
-        logger.info(f'🔗 Concatenating {len(tmp_files)} slices...')
-        output_file = output_dir / f'{product_name}.zarr'
-        concatenated_data = concatenate_slices_efficient(tmp_files, output_file)
-        logger.info(f'✅ Concatenated data saved to: {output_file}')
+        
+        # Optional: Concatenate slices if more than 1 slice.
+        if n_slices > 1:
+            logger.info(f'🔗 Concatenating {len(tmp_files)} slices...')
+            output_file = output_dir / f'{product_name}.zarr'
+            concatenated_data = concatenate_slices_efficient(tmp_files, output_file)
+            logger.info(f'✅ Concatenated data saved to: {output_file}')
         
         # Cleanup temporary files unless requested to keep them
         if not args.keep_tmp:
@@ -374,6 +377,7 @@ def main() -> None:
             logger.info(f'📁 Temporary files kept in: {tmp_dir}')
 
         logger.info(f'🎉 Processing completed successfully!')
+        sys.exit(0)
         
     except Exception as e:
         logger.error(f'❌ Error during processing: {str(e)}')
