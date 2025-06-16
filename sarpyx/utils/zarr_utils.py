@@ -5,9 +5,10 @@ from pathlib import Path
 from typing import Optional, Tuple, Union, Dict, Any, List, Callable
 import numcodecs # Ensure numcodecs is installed for compression
 import pandas as pd
-from .io import gc_collect
-
+import shutil
 import dask.array as da
+
+from .io import gc_collect
 
 # -----------  Functions -----------------
 def save_array_to_zarr(array: 'np.ndarray', 
@@ -107,70 +108,163 @@ def _serialize_dict(data: Dict[str, Any]) -> Dict[str, Any]:
     return serialized
 
 def dask_slice_saver(
-    result: Dict[str, Union[np.ndarray, Dict[str, Any]]], 
+    result: Dict[str, Union[np.ndarray, pd.DataFrame, Dict[str, Any]]], 
     zarr_path: Union[str, Path],
     chunks: Optional[Union[str, Tuple[int, ...]]] = 'auto',
     clevel: int = 5
 ) -> None:
-    """Save processing result to Zarr format with compression.
+    """Save SAR processing results to Zarr format with optimized compression.
+    
+    This function saves the complete SAR processing pipeline results including all
+    processing stages (raw, range compressed, RCMC, azimuth compressed) along with
+    associated metadata and ephemeris data to a compressed Zarr store.
+    
+    The function handles automatic conversion of pandas DataFrames to JSON-serializable
+    dictionaries and applies high-performance compression using Blosc with zstd codec
+    and bit-shuffle for optimal storage efficiency.
     
     Args:
-        result: Dictionary containing arrays and metadata to save
-        zarr_path: Path where to save the Zarr store
-        chunks: Chunking strategy for arrays
-        clevel: Compression level (1-9)
+        result (Dict[str, Union[np.ndarray, pd.DataFrame, Dict[str, Any]]]): 
+            Processing results dictionary containing:
+            - 'raw' (np.ndarray): Raw SAR data after initial processing
+            - 'rc' (np.ndarray): Range compressed SAR data  
+            - 'rcmc' (np.ndarray): Range Cell Migration Corrected data
+            - 'az' (np.ndarray): Azimuth compressed (focused) SAR data
+            - 'metadata' (Union[pd.DataFrame, Dict]): Acquisition metadata
+            - 'ephemeris' (Union[pd.DataFrame, Dict]): Satellite ephemeris data
+        zarr_path (Union[str, Path]): 
+            Output path for the Zarr store directory. Will be created if it doesn't exist.
+        chunks (Optional[Union[str, Tuple[int, ...]]], optional): 
+            Chunking strategy for array storage. Options:
+            - 'auto': Use automatic chunking with 4096 element maximum per dimension
+            - Tuple[int, ...]: Custom chunk shape matching array dimensions
+            - None: Use default chunking (4096,) * ndim
+            Defaults to 'auto'.
+        clevel (int, optional): 
+            Blosc compression level from 1 (fastest) to 9 (best compression).
+            Higher values provide better compression at the cost of processing time.
+            Defaults to 5 for balanced performance.
+    
+    Returns:
+        None: Function performs file I/O operations only.
+        
+    Raises:
+        AssertionError: If required array keys are missing from result dictionary.
+        AssertionError: If required metadata keys are missing from result dictionary.
+        AssertionError: If array values are not numpy.ndarray instances.
+        ValueError: If metadata/ephemeris are not DataFrame or dict types.
+        OSError: If zarr_path directory cannot be created or accessed.
+        
+    Examples:
+        >>> # Save complete SAR processing results
+        >>> processing_results = {
+        ...     'raw': raw_data_array,
+        ...     'rc': range_compressed_array, 
+        ...     'rcmc': rcmc_corrected_array,
+        ...     'az': azimuth_focused_array,
+        ...     'metadata': metadata_dataframe,
+        ...     'ephemeris': ephemeris_dataframe
+        ... }
+        >>> dask_slice_saver(processing_results, '/path/to/output.zarr')
+        
+        >>> # Use custom chunking and high compression
+        >>> dask_slice_saver(
+        ...     processing_results, 
+        ...     '/path/to/output.zarr',
+        ...     chunks=(1024, 1024),
+        ...     clevel=9
+        ... )
+        
+        >>> # Save with automatic chunking
+        >>> dask_slice_saver(
+        ...     processing_results,
+        ...     Path('/data/sar_focused.zarr'),
+        ...     chunks='auto',
+        ...     clevel=7
+        ... )
+    
+    Notes:
+        - Uses Zarr v2 format for maximum compatibility
+        - Applies zstd compression with bit-shuffle for optimal performance on SAR data
+        - Automatically converts pandas DataFrames to 'records' format dictionaries
+        - All arrays must have the same first dimension (azimuth/slow-time axis)
+        - Metadata and ephemeris are stored as JSON-serializable attributes
+        - Creates parent directories automatically if they don't exist
+        - Overwrites existing arrays if zarr_path already exists
+        
+    Performance:
+        - Chunking strategy significantly affects I/O performance
+        - 'auto' chunking works well for most SAR datasets
+        - Higher compression levels (7-9) recommended for archival storage
+        - Lower compression levels (3-5) recommended for active processing
     """
-    # Validate input structure
+    # Input validation
     required_arrays = ['raw', 'rc', 'rcmc', 'az']
     required_dicts = ['metadata', 'ephemeris']
     
-    assert all(key in result for key in required_arrays), f'Missing array keys: {set(required_arrays) - set(result.keys())}'
-    assert all(key in result for key in required_dicts), f'Missing dict keys: {set(required_dicts) - set(result.keys())}'
+    missing_arrays = set(required_arrays) - set(result.keys())
+    missing_dicts = set(required_dicts) - set(result.keys())
     
-    # Create Zarr group
-    store = zarr.open_group(zarr_path, mode='w')
+    assert not missing_arrays, f'Missing required array keys: {missing_arrays}'
+    assert not missing_dicts, f'Missing required metadata keys: {missing_dicts}'
     
-    # Save arrays with compression
+    # Create Zarr group with v2 compatibility
+    zarr_path = Path(zarr_path)
+    zarr_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    store = zarr.open_group(str(zarr_path), mode='w', zarr_format=2)
+    
+    # Configure compression codec
+    compressor = numcodecs.Blosc(
+        cname='zstd',
+        clevel=clevel,
+        shuffle=numcodecs.Blosc.BITSHUFFLE
+    )
+    
+    # Save arrays with optimized compression
     for array_name in required_arrays:
         array_data = result[array_name]
         assert isinstance(array_data, np.ndarray), f'Expected {array_name} to be ndarray, got {type(array_data)}'
         
-        # Determine appropriate chunk size
+        # Determine optimal chunk size
         if chunks == 'auto':
-            # Use reasonable default chunk sizes
-            chunk_shape = tuple(min(s, 4096) for s in array_data.shape)
+            chunk_shape = tuple(min(dim_size, 4096) for dim_size in array_data.shape)
         elif isinstance(chunks, tuple):
             chunk_shape = chunks
         else:
             chunk_shape = (4096,) * array_data.ndim
-            
-        # Create array with Zarr v3 compatible compression
+        
+        # Create array with Zarr v2 compatible compression
         zarr_array = store.create_array(
             name=array_name,
             shape=array_data.shape,
             dtype=array_data.dtype,
             chunks=chunk_shape,
-            compressors=[
-                {
-                    'name': 'blosc',
-                    'configuration': {
-                        'cname': 'zstd',
-                        'clevel': clevel,
-                        'shuffle': 'bitshuffle'
-                    }
-                }
-            ],
+            compressor=compressor,
             overwrite=True
         )
         zarr_array[:] = array_data
     
-    # Save dictionaries as attributes
+    # Handle metadata and ephemeris with flexible type conversion
     for dict_name in required_dicts:
         dict_data = result[dict_name]
-        assert isinstance(dict_data, dict), f'{dict_name} must be dictionary'
         
-        # Convert dict to JSON-serializable format and save as attributes
-        store.attrs[dict_name] = _serialize_dict(dict_data)
+        # Convert DataFrame to dictionary format
+        if hasattr(dict_data, 'to_dict'):
+            # Convert DataFrame to records format for better JSON compatibility
+            dict_data = dict_data.to_dict('records')
+        elif isinstance(dict_data, dict):
+            # Already a dictionary, keep as-is
+            pass
+        else:
+            raise ValueError(
+                f'{dict_name} must be pandas DataFrame or dictionary, '
+                f'got {type(dict_data)}'
+            )
+        
+        # Serialize and store as attributes
+        serialized_data = _serialize_dict({'data': dict_data})
+        store.attrs[dict_name] = serialized_data
 
 
 def concatenate_slices(
@@ -326,9 +420,7 @@ def concatenate_slices_efficient(
         FileNotFoundError: If any slice Zarr file doesn't exist
         ValueError: If slice files have incompatible shapes or missing required data
     """
-    import zarr
-    from pathlib import Path
-    import shutil
+
     
     output_path = Path(output_zarr_path)
     assert len(slice_zarr_paths) > 0, 'At least one slice path must be provided'
@@ -481,7 +573,6 @@ def concatenate_slices_efficient(
 
 
 # -----------  Classes -----------------
-# TODO: Add method for handling metadata relative to single chunks.
 class ZarrManager:
     """
     A comprehensive class for managing Zarr files, providing convenient methods for data access, slicing, metadata extraction, analysis, visualization, and export.
@@ -495,6 +586,7 @@ class ZarrManager:
             file_path: Path to the zarr file or directory
         """
         self.file_path = file_path
+        self.filename = Path(file_path).stem
         self._zarr_array = None
         self._metadata = None
         self._ephemeris = None
@@ -551,6 +643,114 @@ class ZarrManager:
             'nbytes': arr.nbytes,
             'size_mb': arr.nbytes / (1024**2)
         }
+    
+    # ------------- Internal methods for block slicing -------------
+    
+    @gc_collect
+    def drop(self, rows: Optional[Union[Tuple[int, int], slice, List[int]]] = None, 
+             cols: Optional[Union[Tuple[int, int], slice, List[int]]] = None) -> Tuple[np.ndarray, Optional[pd.DataFrame], Optional[pd.DataFrame]]:
+        """
+        Drop specified rows and/or columns from the zarr array.
+        
+        This method provides flexible dropping capabilities for zarr arrays, supporting
+        tuple-based indexing (start, end), slice objects, and lists of indices to drop.
+        The method returns the array with specified rows/columns removed along with
+        corresponding metadata and ephemeris information.
+        
+        Args:
+            rows (Optional[Union[Tuple[int, int], slice, List[int]]]): 
+                Row dropping specification. Can be:
+                - Tuple of (start_idx, end_idx) for row range to drop
+                - slice object for custom dropping
+                - List of specific row indices to drop
+                - None to keep all rows
+                Defaults to None.
+            cols (Optional[Union[Tuple[int, int], slice, List[int]]]): 
+                Column dropping specification. Can be:
+                - Tuple of (start_idx, end_idx) for column range to drop
+                - slice object for custom dropping  
+                - List of specific column indices to drop
+                - None to keep all columns
+                Defaults to None.
+                
+        Returns:
+            Tuple[np.ndarray, Optional[pd.DataFrame], Optional[pd.DataFrame]]: A 3-element tuple containing:
+                - np.ndarray: The array data with specified rows/columns dropped
+                - Optional[pd.DataFrame]: Metadata with corresponding rows dropped (if rows were dropped)
+                - Optional[pd.DataFrame]: Ephemeris information for the dataset
+                
+        Examples:
+            >>> # Drop specific row and column ranges
+            >>> data, meta, eph = zarr_obj.drop(rows=(100, 200), cols=(50, 150))
+            >>> # Drop specific indices
+            >>> data, meta, eph = zarr_obj.drop(rows=[10, 20, 30], cols=[5, 15, 25])
+            >>> # Drop using slice objects
+            >>> data, meta, eph = zarr_obj.drop(rows=slice(100, 200, 2))
+            >>> # Drop only rows, keep all columns
+            >>> data, meta, eph = zarr_obj.drop(rows=(0, 50))
+        """
+        arr = self.load()
+        metadata = self.get_metadata()
+        
+        # Get array dimensions
+        n_rows, n_cols = arr.shape
+        
+        # Convert drop specifications to boolean masks
+        row_mask = np.ones(n_rows, dtype=bool)  # Keep all rows by default
+        col_mask = np.ones(n_cols, dtype=bool)  # Keep all columns by default
+        
+        # Handle row dropping
+        if rows is not None:
+            if isinstance(rows, tuple):
+                # Convert tuple to range of indices
+                start_idx, end_idx = rows
+                assert 0 <= start_idx < n_rows, f'Start row index {start_idx} out of bounds [0, {n_rows})'
+                assert 0 <= end_idx <= n_rows, f'End row index {end_idx} out of bounds [0, {n_rows}]'
+                assert start_idx < end_idx, f'Start index {start_idx} must be less than end index {end_idx}'
+                row_mask[start_idx:end_idx] = False
+            elif isinstance(rows, slice):
+                # Convert slice to indices
+                indices = list(range(*rows.indices(n_rows)))
+                row_mask[indices] = False
+            elif isinstance(rows, list):
+                # Direct list of indices
+                for idx in rows:
+                    assert 0 <= idx < n_rows, f'Row index {idx} out of bounds [0, {n_rows})'
+                row_mask[rows] = False
+            else:
+                raise ValueError(f'rows must be tuple, slice, list, or None, got {type(rows)}')
+        
+        # Handle column dropping
+        if cols is not None:
+            if isinstance(cols, tuple):
+                # Convert tuple to range of indices
+                start_idx, end_idx = cols
+                assert 0 <= start_idx < n_cols, f'Start column index {start_idx} out of bounds [0, {n_cols})'
+                assert 0 <= end_idx <= n_cols, f'End column index {end_idx} out of bounds [0, {n_cols}]'
+                assert start_idx < end_idx, f'Start index {start_idx} must be less than end index {end_idx}'
+                col_mask[start_idx:end_idx] = False
+            elif isinstance(cols, slice):
+                # Convert slice to indices
+                indices = list(range(*cols.indices(n_cols)))
+                col_mask[indices] = False
+            elif isinstance(cols, list):
+                # Direct list of indices
+                for idx in cols:
+                    assert 0 <= idx < n_cols, f'Column index {idx} out of bounds [0, {n_cols})'
+                col_mask[cols] = False
+            else:
+                raise ValueError(f'cols must be tuple, slice, list, or None, got {type(cols)}')
+        
+        # Apply masks to get the data with dropped rows/columns
+        filtered_arr = arr[row_mask, :][:, col_mask]
+        
+        # Handle metadata - drop corresponding rows if rows were dropped
+        filtered_metadata = metadata
+        if rows is not None and metadata is not None:
+            filtered_metadata = metadata[row_mask].reset_index(drop=True)
+        
+        return (filtered_arr, filtered_metadata, self.get_ephemeris())
+    
     
     @gc_collect
     def get_slice(self, rows: Optional[Union[Tuple[int, int], slice]] = None, 
@@ -617,6 +817,8 @@ class ZarrManager:
         else:
             return (arr[rows, cols], metadata, self.get_ephemeris())
 
+
+
     def get_slice_block(self, N_blocks: int = 5, slice_idx: int = 0, outDict: bool = True, verbose: bool = False) -> None:
         """
         Internal method to handle block slicing for large arrays.
@@ -643,7 +845,11 @@ class ZarrManager:
             return {'echo': out[0], 'metadata': out[1], 'ephemeris': out[2]}
         else:
             return out
-        
+
+    # ------------- End Internal methods for block slicing -------------
+
+
+
     def get_metadata(self) -> Optional['pd.DataFrame']:
         """
         Extract metadata from zarr attributes.
@@ -892,6 +1098,7 @@ class ZarrManager:
         return (f"ZarrManager(file_path='{self.file_path}', "
                 f"shape={info['shape']}, dtype={info['dtype']}, "
                 f"chunks={info['chunks']}, size_mb={info['size_mb']:.2f})")
+
 
 class ProductHandler(ZarrManager):
     """

@@ -33,7 +33,12 @@ from .transforms import perform_fft_custom
 from . import constants as cnst
 from ..utils.viz import dump
 
+
+# ---------- Global settings ----------
 environ['OMP_NUM_THREADS'] = '12' # Set OpenMP threads for parallel processing
+__VTIMING__ = False
+
+
 
 # ---------- Decorators and utility functions ----------
 def timing_decorator(func: Callable) -> Callable:
@@ -50,7 +55,11 @@ def timing_decorator(func: Callable) -> Callable:
         start_time = time.time()
         result = func(*args, **kwargs)
         elapsed_time = time.time() - start_time
-        print(f'Elapsed time for {func.__name__}: {elapsed_time:.4f} seconds')
+        if __VTIMING__:
+            print(f'Elapsed time for {func.__name__}: {elapsed_time:.4f} seconds')
+        else:
+            # Only print if __VTIMING__ is enabled
+            pass
         return result
     return wrapper
 
