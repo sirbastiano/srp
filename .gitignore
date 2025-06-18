@@ -12,7 +12,7 @@ venv.bak/
 data/
 decoded_data/
 focused_data/
-
+aws/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

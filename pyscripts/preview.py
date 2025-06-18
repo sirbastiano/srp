@@ -4,6 +4,7 @@ from pathlib import Path
 from sarpyx.utils.zarr_utils import ProductHandler
 import os
 import csv
+import gc
 
 data_dir = "/Data_large/marine/PythonProjects/SAR/sarpyx/focused_data"
 save_dir = Path("/Data_large/marine/PythonProjects/SAR/sarpyx/data/focused_prev")
@@ -20,6 +21,8 @@ print(f"Found {len(zarr_files)} zarr files:")
 
 
 for idx, zarr_file in enumerate(zarr_files):
+    if idx in [0,1]:
+        continue
     try:
         print(f"Processing file {idx+1}/{len(zarr_files)}: {zarr_file}")
         filepath = os.path.join('/Data_large/marine/PythonProjects/SAR/sarpyx/focused_data', zarr_file)
@@ -82,6 +85,19 @@ for idx, zarr_file in enumerate(zarr_files):
         plt.close('all')
         # Continue with next file instead of terminating
         continue
+    
+    finally:
+        # Clean up variables and force garbage collection
+        locals_to_delete = ['filepath', 'pHandler', 'shapes', 'H', 'W', 
+                           'row_start', 'row_end', 'col_start', 'col_end',
+                           'save_filename', 'save_path']
+        
+        for var_name in locals_to_delete:
+            if var_name in locals():
+                del locals()[var_name]
+        
+        # Force garbage collection
+        gc.collect()
 
 # Write CSV file with array information
 with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
@@ -91,4 +107,3 @@ with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
     writer.writerows(csv_data)
 
 print(f"Array information saved to: {csv_path}")
-

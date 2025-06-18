@@ -1,0 +1,12 @@
+
+ERROR - Wed Jun 18 16:04:47 UTC 2025
+File: /Data_large/marine/PythonProjects/SAR/sarpyx/decoded_data/s1a-s1-raw-s-vh-20141214t162845-20141214t162910-003717-0046b3_burst_0.zarr
+Exit code: 1
+Command: pdm run /Data_large/marine/PythonProjects/SAR/sarpyx/pyscripts/focusing.py /Data_large/marine/PythonProjects/SAR/sarpyx/decoded_data/s1a-s1-raw-s-vh-20141214t162845-20141214t162910-003717-0046b3_burst_0.zarr
+---
+
+ERROR - Wed Jun 18 16:15:28 UTC 2025
+File: /Data_large/marine/PythonProjects/SAR/sarpyx/decoded_data/s1a-s1-raw-s-vh-20141214t162845-20141214t162910-003717-0046b3_burst_0.zarr
+Exit code: 1
+Command: pdm run /Data_large/marine/PythonProjects/SAR/sarpyx/pyscripts/focusing.py /Data_large/marine/PythonProjects/SAR/sarpyx/decoded_data/s1a-s1-raw-s-vh-20141214t162845-20141214t162910-003717-0046b3_burst_0.zarr
+---
