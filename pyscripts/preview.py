@@ -20,43 +20,68 @@ print(f"Found {len(zarr_files)} zarr files:")
 
 
 for idx, zarr_file in enumerate(zarr_files):
-    
-    print(f"Processing file {idx+1}/{len(zarr_files)}: {zarr_file}")
-    filepath = os.path.join('/Data_large/marine/PythonProjects/SAR/sarpyx/focused_data', zarr_file)
-    pHandler = ProductHandler(filepath)
-    shapes = pHandler.array_shapes
-    H, W = pHandler.array_shapes['raw']
-    print(f"Shapes of arrays in {zarr_file}: {H}x{W}")
+    try:
+        print(f"Processing file {idx+1}/{len(zarr_files)}: {zarr_file}")
+        filepath = os.path.join('/Data_large/marine/PythonProjects/SAR/sarpyx/focused_data', zarr_file)
+        
+        # Initialize ProductHandler with error checking
+        pHandler = ProductHandler(filepath)
+        
+        # Check if arrays are available
+        if not hasattr(pHandler, 'array_shapes') or not pHandler.array_shapes:
+            print(f"Warning: No arrays found in {zarr_file}, skipping...")
+            continue
+            
+        shapes = pHandler.array_shapes
+        
+        # Check if 'raw' array exists
+        if 'raw' not in shapes:
+            print(f"Warning: 'raw' array not found in {zarr_file}, skipping...")
+            continue
+            
+        H, W = shapes['raw']
+        print(f"Shapes of arrays in {zarr_file}: {H}x{W}")
 
-    # Use complete image size
-    row_start, row_end = 0, H
-    col_start, col_end = 0, W
+        # Use complete image size
+        row_start, row_end = 0, H
+        col_start, col_end = 0, W
 
-    print(f"DISPLAYED: {zarr_file} with full size: {H}x{W}")
+        print(f"DISPLAYED: {zarr_file} with full size: {H}x{W}")
 
-    # Store array information for CSV
-    for array_name, shape in shapes.items():
-        csv_data.append({
-            'file_name': zarr_file,
-            'array_name': array_name,
-            'height': shape[0],
-            'width': shape[1],
-            'total_size': shape[0] * shape[1]
-        })
+        # Store array information for CSV
+        for array_name, shape in shapes.items():
+            csv_data.append({
+                'file_name': zarr_file,
+                'array_name': array_name,
+                'height': shape[0],
+                'width': shape[1],
+                'total_size': shape[0] * shape[1]
+            })
 
-    pHandler.visualize_arrays(
-        array_names=['raw','rc','az'], 
-        rows=(row_start, row_end), 
-        cols=(col_start, col_end),
-        plot_type='magnitude',
-        vminmax='auto',
-    )
-    
-    # Save the current figure
-    save_filename = f"{zarr_file.replace('.zarr', '')}_full_size.png"
-    save_path = save_dir / save_filename
-    plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    print(f"Saved plot to: {save_path}")
+        # Create visualization
+        pHandler.visualize_arrays(
+            array_names=['raw','rc','az'], 
+            rows=(row_start, row_end), 
+            cols=(col_start, col_end),
+            plot_type='magnitude',
+            vminmax='auto',
+        )
+        
+        # Save the current figure
+        save_filename = f"{zarr_file.replace('.zarr', '')}_full_size.png"
+        save_path = save_dir / save_filename
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        print(f"Saved plot to: {save_path}")
+        
+        # Close the plot to free memory
+        plt.close()
+        
+    except Exception as e:
+        print(f"Error processing {zarr_file}: {str(e)}")
+        # Close any open plots in case of error
+        plt.close('all')
+        # Continue with next file instead of terminating
+        continue
 
 # Write CSV file with array information
 with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
