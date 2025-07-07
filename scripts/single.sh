@@ -1,5 +1,5 @@
 #!/bin/bash
-
+clear
 # Usage: focus_single.sh <zarr_file_path>
 # Processes a single .zarr file using the focusing script and logs errors.
 

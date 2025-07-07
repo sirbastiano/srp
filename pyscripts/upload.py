@@ -21,7 +21,7 @@ def upload_to_huggingface(folder_path: str) -> None:
     assert os.path.exists(folder_path), f'Path does not exist: {folder_path}'
     
     # Extract repo_id from folder name
-    repo_id = os.path.basename(folder_path.rstrip('/\\'))
+    repo_id = 'sirbastiano94/Maya4'
     assert repo_id.strip(), 'Repository ID cannot be empty'
     
     api = HfApi()

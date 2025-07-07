@@ -12,6 +12,9 @@ venv.bak/
 data/
 decoded_data/
 focused_data/
+compressed_data/
+decompressed_data/
+
 aws/
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -50,3 +53,8 @@ coverage.xml
 # Sentinel-1 data files
 S1*
 *.pkl
+*.s3cfg
+*.s5cfg
+
+
+/logs

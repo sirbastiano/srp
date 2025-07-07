@@ -4,7 +4,7 @@
 
 set -euo pipefail  # Exit on error, undefined vars, pipe failures
 
-FOLDER="/Data_large/marine/PythonProjects/SAR/sarpyx/focused_data/"
+FOLDER="/Data_large/marine/PythonProjects/SAR/sarpyx/data/focused_data/"
 USER="sirbastiano94"
 DATASET="Maya4"
 LOG_DIR="/Data_large/marine/PythonProjects/SAR/sarpyx/logs"
