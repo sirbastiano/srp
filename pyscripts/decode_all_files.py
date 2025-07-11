@@ -59,8 +59,11 @@ def retrieve_input_files(safe_folders, verbose=False):
 if __name__ == '__main__':
     # ------ Setup paths ------
     cwd = Path.cwd().parent
-    data_dir = cwd / 'extracted_data'
-    output_dir = cwd / 'decoded_data'
+    data_dir = Path('/Data_large/marine/PythonProjects/SAR/sarpyx/extracted_data')
+    output_dir = Path('/Data_large/marine/PythonProjects/SAR/sarpyx/decoded_data')
+    
+    # Create output directory if it doesn't exist
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     # Find first SAFE folder and .dat file
     safe_folders = [f for f in data_dir.rglob('*.SAFE') if f.is_dir()]

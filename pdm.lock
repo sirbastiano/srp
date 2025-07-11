@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:03bfbe6f51df2a6f5a704117c2d5b7c33397335f49f58d73445c0dad90d6bcfe"
+content_hash = "sha256:f0771ba1abdf9147fed8cf9dec60e71e0817b78296bf880e17f53bbedb957814"
 
 [[metadata.targets]]
 requires_python = ">=3.11,<3.13"
@@ -3601,6 +3601,20 @@ dependencies = [
 files = [
     {file = "terminado-0.18.1-py3-none-any.whl", hash = "sha256:a4468e1b37bb318f8a86514f65814e1afc977cf29b3992a4500d9dd305dcceb0"},
     {file = "terminado-0.18.1.tar.gz", hash = "sha256:de09f2c4b85de4765f7714688fff57d3e75bad1f909b589fde880460c753fd2e"},
+]
+
+[[package]]
+name = "tifffile"
+version = "2025.6.11"
+requires_python = ">=3.11"
+summary = "Read and write TIFF files"
+groups = ["default"]
+dependencies = [
+    "numpy",
+]
+files = [
+    {file = "tifffile-2025.6.11-py3-none-any.whl", hash = "sha256:32effb78b10b3a283eb92d4ebf844ae7e93e151458b0412f38518b4e6d2d7542"},
+    {file = "tifffile-2025.6.11.tar.gz", hash = "sha256:0ece4c2e7a10656957d568a093b07513c0728d30c1bd8cc12725901fffdb7143"},
 ]
 
 [[package]]

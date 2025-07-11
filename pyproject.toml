@@ -30,6 +30,7 @@ dependencies = [
     "dask>=2025.5.1",
     "lxml>=5.4.0",
     "huggingface-hub[cli,torch]>=0.33.0",
+    "tifffile>=2025.6.11",
 ]
 
 [project.scripts]
