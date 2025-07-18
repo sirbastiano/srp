@@ -11,9 +11,14 @@ if [ $# -ne 1 ]; then
 fi
 
 zarr_file="$1"
+zarr_file_basename="$(basename "$zarr_file")"
+if [[ ! "$zarr_file_basename" == *.zarr ]]; then
+    echo "Error: The provided file is not a .zarr file."
+    exit 3
+fi
 EXECUTABLE=/Data_large/marine/PythonProjects/SAR/sarpyx/.venv/bin/python
 FOCUS_SCRIPT='/Data_large/marine/PythonProjects/SAR/sarpyx/pyscripts/focusing.py'
-LOG_FILE="/Data_large/marine/PythonProjects/SAR/sarpyx/logs/focus_errors_single.log"
+LOG_FILE="/Data_large/marine/PythonProjects/SAR/sarpyx/logs/focus/focus_$zarr_file_basename.log"
 
 # Create log directory if it doesn't exist
 mkdir -p "$(dirname "$LOG_FILE")"
@@ -35,7 +40,6 @@ mkdir -p "$output_dir"
 # Run the focusing script and capture exit code
 if $EXECUTABLE "$FOCUS_SCRIPT" --input-file "$zarr_file" --output-dir "$output_dir" 2>> "$LOG_FILE"; then
     echo "✓ Success: $zarr_file"
-    exit 0
 else
     exit_code=$?
     echo "✗ Failed: $zarr_file (exit code: $exit_code)"

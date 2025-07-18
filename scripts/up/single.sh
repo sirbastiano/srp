@@ -1,6 +1,7 @@
 #!/bin/bash
 # This script uploads the dataset to Hugging Face using the CLI.
 # Ensure you have the Hugging Face CLI installed and authenticated
+source /Data_large/marine/PythonProjects/SAR/sarpyx/.venv/bin/activate
 
 set -euo pipefail  # Exit on error, undefined vars, pipe failures
 
@@ -77,7 +78,6 @@ log "⬆️  Starting upload..."
 if huggingface-cli upload-large-folder "$USER/$DATASET" "$FOLDER" --repo-type=dataset; then
     log "✅ Upload completed successfully!"
     log "🌐 Dataset available at: https://huggingface.co/datasets/$USER/$DATASET"
-    exit 0
 else
     log "❌ Upload failed. Please check the error messages above."
     exit 1
