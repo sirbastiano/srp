@@ -463,26 +463,23 @@ def iterNodes(root, val_dict: dict) -> dict:
 
 def find_dat_file(folder: Path, pol: str) -> Path:
     """
-    Find the .dat file in a SAFE folder for a specific polarization.
-    
+    Find the .dat file in a SAFE folder for a specific polarization using recursive search.
+
     Args:
-        folder (Path): Path to the SAFE folder to search in
-        pol (str): Polarization string to match (e.g., 'vh', 'vv')
-        
+        folder (Path): Path to the SAFE folder to search in.
+        pol (str): Polarization string to match (e.g., 'vh', 'vv').
+
     Returns:
-        Path: Path to the matching .dat file
-        
+        Path: Path to the matching .dat file.
+
     Raises:
-        AssertionError: If folder doesn't exist or is not a directory
-        FileNotFoundError: If no valid .dat file is found matching criteria
+        AssertionError: If folder doesn't exist or is not a directory.
+        FileNotFoundError: If no valid .dat file is found matching criteria.
     """
     assert folder.exists() and folder.is_dir(), f'Invalid folder: {folder}'
-    
-    for file in folder.iterdir():
-        if (file.suffix == '.dat' and 
-            'annot' not in file.name and 
-            'index' not in file.name and 
-            pol in file.name):
+
+    for file in folder.rglob('*.dat'):
+        if 'annot' not in file.name and 'index' not in file.name and pol in file.name:
             return file
-    
-    raise FileNotFoundError(f'No valid .dat file found in {folder}')
+
+    raise FileNotFoundError(f'No valid .dat file found in {folder} for polarization {pol}')

@@ -251,8 +251,9 @@ def main() -> None:
     )
     
     parser.add_argument(
-        'input_file',
+        '--input-file',
         type=str,
+        required=True,
         help='Input Zarr file path'
     )
     

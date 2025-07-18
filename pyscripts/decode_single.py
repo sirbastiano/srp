@@ -72,6 +72,10 @@ def parse_arguments() -> argparse.Namespace:
     """
     parser = argparse.ArgumentParser(description='Decode S1 L0 products to zarr format')
     parser.add_argument('--input', type=str, required=True, help='Path to .dat file or SAFE folder')
+    parser.add_argument('--output', type=str, default='/Data_large/marine/PythonProjects/SAR/sarpyx/decoded_data',
+                        help='Output directory for decoded files')
+    parser.add_argument('--verbose', action='store_true', help='Enable verbose logging')
+    parser.add_argument('--debug', action='store_true', help='Enable debug logging')
     return parser.parse_args()
 
 def main() -> None:
@@ -84,6 +88,9 @@ def main() -> None:
 
     Args:
         --input (str): Path to the input .dat file or .SAFE folder.
+        --output (str): Directory to save the decoded output files. Defaults to '/Data_large/marine/PythonProjects/SAR/sarpyx/decoded_data'.
+        --verbose (bool): If set, enables verbose logging.
+        --debug (bool): If set, enables debug logging.
 
     Raises:
         AssertionError: If the input path does not exist or no valid input files are found.
@@ -94,7 +101,7 @@ def main() -> None:
         None
     """
     args = parse_arguments()
-    output_dir = Path('/Data_large/marine/PythonProjects/SAR/sarpyx/decoded_data')
+    output_dir = Path(args.output)
     output_dir.mkdir(parents=True, exist_ok=True)
     input_path = Path(args.input)
     assert input_path.exists(), f'Input path does not exist: {input_path}'
@@ -105,7 +112,8 @@ def main() -> None:
     elif input_path.is_dir() and input_path.name.endswith('.SAFE'):
         input_files, folders_map = retrieve_input_files([input_path], verbose=True)
     else:
-        logger.error(f'❌ Invalid input: {input_path}. Must be a .dat file or .SAFE folder.')
+        if args.verbose:
+            logger.error(f'❌ Invalid input: {input_path}. Must be a .dat file or .SAFE folder.')
         sys.exit(1)
 
     assert input_files, f'No valid input files found in: {input_path}'
@@ -117,7 +125,9 @@ def main() -> None:
         else:
             logger.warning(f'❌ {input_file.name} is not a valid file, skipping...')
 
-    logger.info(f'🔍 Processed {len(input_files)} files from {len(folders_map)} SAFE folders.')
+    if args.verbose:
+        logger.info(f'🔍 Processed {len(input_files)} files from {len(folders_map)} SAFE folders.')
+    sys.exit(0)
 
 if __name__ == '__main__':
     main()

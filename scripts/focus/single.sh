@@ -1,5 +1,7 @@
 #!/bin/bash
 clear
+source /Data_large/marine/PythonProjects/SAR/sarpyx/.venv/bin/activate
+
 # Usage: focus_single.sh <zarr_file_path>
 # Processes a single .zarr file using the focusing script and logs errors.
 
@@ -23,10 +25,15 @@ if [ ! -f "$LOG_FILE" ]; then
 fi
 
 echo "Processing: $zarr_file"
+parent_name="$(basename "$(dirname "$zarr_file")")"
 echo "Error log: $LOG_FILE"
 
+# Create output directory if it doesn't exist
+output_dir="/Data_large/marine/PythonProjects/SAR/sarpyx/data/3_parsed/$parent_name"
+mkdir -p "$output_dir"
+
 # Run the focusing script and capture exit code
-if $EXECUTABLE "$FOCUS_SCRIPT" "$zarr_file" --output-dir "/Data_large/marine/PythonProjects/SAR/sarpyx/data/focused_data"; then
+if $EXECUTABLE "$FOCUS_SCRIPT" --input-file "$zarr_file" --output-dir "$output_dir" 2>> "$LOG_FILE"; then
     echo "✓ Success: $zarr_file"
     exit 0
 else
@@ -37,7 +44,7 @@ else
         echo "ERROR - $(date)"
         echo "File: $zarr_file"
         echo "Exit code: $exit_code"
-        echo "Command: pdm run $FOCUS_SCRIPT $zarr_file"
+        echo "Command: $EXECUTABLE $FOCUS_SCRIPT --input-file $zarr_file --output-dir $output_dir"
         echo "---"
     } >> "$LOG_FILE"
     echo "⚠️  Error occurred. Check log file: $LOG_FILE"

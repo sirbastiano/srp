@@ -180,7 +180,7 @@ def extract_headers(file_path: Union[str, Path], mode: str = 's1isp', apply_tran
         raise RuntimeError(f'Header extraction failed: {e}') from e
 
 
-def decode_radar_file(input_file: Union[str, Path], apply_transformations: bool = False) -> Tuple[List[Dict[str, Any]], List[int]]:
+def decode_radar_file_old(input_file: Union[str, Path], apply_transformations: bool = False) -> Tuple[List[Dict[str, Any]], List[int]]:
     """Decode Sentinel-1 Level 0 radar file and extract burst data with ephemeris.
 
     This function performs complete decoding of a radar file, extracting both
@@ -265,6 +265,108 @@ def decode_radar_file(input_file: Union[str, Path], apply_transformations: bool 
         raise RuntimeError(f'File decoding failed: {e}') from e
 
 
+
+
+def decode_radar_file(input_file: Union[str, Path], apply_transformations: bool = True) -> Tuple[List[Dict[str, Any]], List[int]]:
+    """Decode Sentinel-1 Level 0 radar file and extract burst data with ephemeris.
+
+    This function performs complete decoding of a radar file, extracting both
+    the radar echo data and associated metadata including ephemeris information.
+
+    Args:
+        input_file (Union[str, Path]): Path to the input Level 0 radar file.
+        apply_transformations (bool): Whether to apply parameter transformations to convert raw values to physical units.
+
+    Returns:
+        Dict
+
+    Raises:
+        FileNotFoundError: If input file does not exist.
+        RuntimeError: If decoding process fails.
+    """
+    input_file = Path(input_file)
+    if not input_file.exists():
+        raise FileNotFoundError(f'Input file not found: {input_file}')
+    
+    logger.info(f'Starting decode process for: {input_file}')
+    
+    try:
+        # Decode the stream with UDF data
+        records, _, subcom_data_records = decode_stream(
+            str(input_file),
+            udf_decoding_mode=EUdfDecodingMode.DECODE,
+        )
+        
+        assert records, 'Records list cannot be empty'
+        logger.info(f'Decoded {len(records)} records from file')
+        
+        # A) EPHEMERIS EXTRACTION:
+        if subcom_data_records:
+            subcom_decoder = SubCommutatedDataDecoder()
+            subcom_decoded = subcom_decoder.decode(subcom_data_records)
+            subcom_dict = decoded_subcomm_to_dict(subcom_decoded=subcom_decoded)
+            ephemeris_df = pd.DataFrame(subcom_dict)
+            logger.info(f'Extracted ephemeris data with {len(ephemeris_df)} records')
+        else:
+            logger.warning('No subcommutated data found, creating empty ephemeris DataFrame')
+            ephemeris_df = pd.DataFrame()
+        
+    
+        # B) RADAR DATA & META
+        signal_types = {'noise': 1, 'tx_cal': 8, 'echo': 0}
+        echo_signal_type = signal_types['echo']
+        filtered_records = [ # Filter echo records
+            record for record in records 
+            if record[1].radar_configuration_support.ses.signal_type == echo_signal_type
+        ]
+        
+        # METADATA
+        headers_data = decoded_stream_to_dict(filtered_records, enum_value=True)
+        burst_metadata = pd.DataFrame(headers_data)
+        if apply_transformations:
+            burst_metadata = _apply_parameter_transformations(burst_metadata)
+        
+        # RADAR ECHOES
+        udf_data = [record.udf for record in filtered_records]
+        
+        if udf_data:
+            # Check if all arrays have the same length
+            lengths = [len(x) for x in udf_data]
+            if len(set(lengths)) == 1:
+                # All same length - can stack directly as rows
+                radar_data = np.vstack(udf_data)
+            else:
+                # Variable lengths - pad with zeros to max length
+                max_len = max(lengths)
+                padded_arrays = []
+                for arr in udf_data:
+                    if len(arr) < max_len:
+                        padded_arr = np.pad(arr, (0, max_len - len(arr)), mode='constant', constant_values=0)
+                        padded_arrays.append(padded_arr)
+                    else:
+                        padded_arrays.append(arr)
+                radar_data = np.vstack(padded_arrays)
+        else:
+            radar_data = np.array([])
+        
+        burst_dict = {
+            'echo': radar_data,
+            'metadata': burst_metadata,
+            'ephemeris': ephemeris_df
+        }
+        
+        return burst_dict
+        
+    except Exception as e:
+        logger.error(f'Decoding failed for {input_file}: {e}')
+        raise RuntimeError(f'File decoding failed: {e}') from e
+
+
+
+
+
+
+
 class S1L0Decoder:
     """Minimal API for decoding Sentinel-1 Level 0 data files."""
     
@@ -334,26 +436,21 @@ class S1L0Decoder:
             else:
                 # Full decoding
                 self.logger.info('Starting full decode process...')
-                burst_data, burst_indexes = decode_radar_file(input_path, apply_transformations=apply_transformations)
+                burst = decode_radar_file(input_path, apply_transformations=apply_transformations)
                 
-                result['burst_data'] = burst_data
-                result['burst_indexes'] = burst_indexes
-                result['num_bursts'] = len(burst_data)
+                result['burst_data'] = burst
+                result['burst_indexes'] = 0
+                result['num_bursts'] = 1
                 
                 # Add burst summaries
-                burst_summaries = []
-                for i, burst in enumerate(burst_data):
-                    summary = {
-                        'burst_id': i,
-                        'echo_shape': burst['echo'].shape,
-                        'metadata_records': len(burst['metadata']),
-                        'ephemeris_records': len(burst['ephemeris'])
-                    }
-                    burst_summaries.append(summary)
+                summary = {
+                    'echo_shape': burst['echo'].shape,
+                    'metadata_records': len(burst['metadata']),
+                    'ephemeris_records': len(burst['ephemeris'])
+                }
+                result['burst_summaries'] = summary
                 
-                result['burst_summaries'] = burst_summaries
-                
-                self.logger.info(f'Successfully decoded {len(burst_data)} bursts')
+                self.logger.info(f'Successfully decoded burst')
             
             # ------------ Save data ----------   if output directory is specified
             if output_dir is not None:
@@ -465,9 +562,10 @@ class S1L0Decoder:
             burst_data = decoded_data['burst_data']
             
             # Save each burst as separate Zarr array
-            for i, burst in enumerate(burst_data):
+            for i, burst in enumerate([burst_data]):
                 # Save radar echo data as Zarr with metadata and ephemeris
-                echo_zarr_path = output_dir / f'{file_stem}_burst_{i}.zarr'
+                # echo_zarr_path = output_dir / f'{file_stem}_burst_{i}.zarr'
+                echo_zarr_path = output_dir / f'{file_stem}.zarr'
                 
                 try:
                     save_array_to_zarr(
@@ -815,29 +913,27 @@ def main() -> int:
         logger.info(f'Processing file: {file_stem}')
         
         # Decode the radar file
-        burst_data, _ = decode_radar_file(input_file, apply_transformations=False)
+        # burst_data, _ = decode_radar_file(input_file, apply_transformations=False)
+        burst = decode_radar_file(input_file, apply_transformations=False)
         
-        # Save processed data
-        ephemeris_saved = False
-        for burst_idx, burst in enumerate(burst_data):
-            # Save ephemeris once (it's the same for all bursts)
-            if not ephemeris_saved and not burst['ephemeris'].empty:
-                ephemeris_path = output_dir / f'{file_stem}_ephemeris.pkl'
-                burst['ephemeris'].to_pickle(ephemeris_path)
-                logger.info(f'Saved ephemeris data: {ephemeris_path}')
-                ephemeris_saved = True
-            
-            # Save burst-specific metadata
-            metadata_path = output_dir / f'{file_stem}_pkt_{burst_idx}_metadata.pkl'
-            burst['metadata'].to_pickle(metadata_path)
-            
-            # Save radar data
-            radar_data_path = output_dir / f'{file_stem}_pkt_{burst_idx}.pkl'
-            save_pickle_file(radar_data_path, burst['echo'])
-            
-            logger.info(f'Saved burst {burst_idx} data: metadata and radar arrays')
+        # Save ephemeris data
+        if not burst['ephemeris'].empty:
+            ephemeris_path = output_dir / f'{file_stem}_ephemeris.pkl'
+            burst['ephemeris'].to_pickle(ephemeris_path)
+            logger.info(f'Saved ephemeris data: {ephemeris_path}')
         
-        logger.info(f'Successfully processed {len(burst_data)} bursts from {input_file}')
+        # Save metadata
+        metadata_path = output_dir / f'{file_stem}_metadata.pkl'
+        burst['metadata'].to_pickle(metadata_path)
+        
+        # Save radar data
+        radar_data_path = output_dir / f'{file_stem}_echo.pkl'
+        save_pickle_file(radar_data_path, burst['echo'])
+        
+        logger.info(f'Successfully processed radar data from {input_file}')
+        logger.info(f'Echo shape: {burst["echo"].shape}')
+        logger.info(f'Metadata records: {len(burst["metadata"])}')
+        logger.info(f'Ephemeris records: {len(burst["ephemeris"])}')
         return 0
         
     except Exception as e:
