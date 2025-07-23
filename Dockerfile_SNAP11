@@ -64,6 +64,9 @@ COPY Makefile /workspace/
 COPY pdm.lock /workspace/
 COPY pyproject.toml /workspace/
 COPY sarpyx /workspace/sarpyx/
+COPY scripts /workspace/scripts/
+COPY pyscripts /workspace/pyscripts/
+COPY notebooks /workspace/notebooks/
 
 WORKDIR /workspace
 
