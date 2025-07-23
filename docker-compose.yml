@@ -1,5 +1,5 @@
 services:
-  sarpyx-snap11:
+  s11:
     build:
       context: .
       dockerfile: Dockerfile_SNAP11

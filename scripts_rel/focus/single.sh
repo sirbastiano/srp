@@ -1,0 +1,56 @@
+#!/bin/bash
+clear
+source ../../.venv/bin/activate
+
+# Usage: focus_single.sh <zarr_file_path>
+# Processes a single .zarr file using the focusing script and logs errors.
+
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <zarr_file_path>"
+    exit 2
+fi
+
+zarr_file="$1"
+zarr_file_basename="$(basename "$zarr_file")"
+if [[ ! "$zarr_file_basename" == *.zarr ]]; then
+    echo "Error: The provided file is not a .zarr file."
+    exit 3
+fi
+EXECUTABLE=../../.venv/bin/python
+FOCUS_SCRIPT='../../pyscripts/focusing.py'
+LOG_FILE="../../logs/focus/focus_$zarr_file_basename.log"
+
+# Create log directory if it doesn't exist
+mkdir -p "$(dirname "$LOG_FILE")"
+
+# Initialize log file if not exists
+if [ ! -f "$LOG_FILE" ]; then
+    echo "Focus processing errors - $(date)" > "$LOG_FILE"
+    echo "=================================================" >> "$LOG_FILE"
+fi
+
+echo "Processing: $zarr_file"
+parent_name="$(basename "$(dirname "$zarr_file")")"
+echo "Error log: $LOG_FILE"
+
+# Create output directory if it doesn't exist
+output_dir="../../data/3_parsed/$parent_name"
+mkdir -p "$output_dir"
+
+# Run the focusing script and capture exit code
+if $EXECUTABLE "$FOCUS_SCRIPT" --input-file "$zarr_file" --output-dir "$output_dir" 2>> "$LOG_FILE"; then
+    echo "✓ Success: $zarr_file"
+else
+    exit_code=$?
+    echo "✗ Failed: $zarr_file (exit code: $exit_code)"
+    {
+        echo ""
+        echo "ERROR - $(date)"
+        echo "File: $zarr_file"
+        echo "Exit code: $exit_code"
+        echo "Command: $EXECUTABLE $FOCUS_SCRIPT --input-file $zarr_file --output-dir $output_dir"
+        echo "---"
+    } >> "$LOG_FILE"
+    echo "⚠️  Error occurred. Check log file: $LOG_FILE"
+    exit 1
+fi

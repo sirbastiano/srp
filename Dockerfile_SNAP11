@@ -64,7 +64,7 @@ COPY Makefile /workspace/
 COPY pdm.lock /workspace/
 COPY pyproject.toml /workspace/
 COPY sarpyx /workspace/sarpyx/
-COPY scripts /workspace/scripts/
+COPY scripts_rel /workspace/scripts/
 COPY pyscripts /workspace/pyscripts/
 COPY notebooks /workspace/notebooks/
 
@@ -72,7 +72,7 @@ WORKDIR /workspace
 
 # Install the package and Jupyter
 RUN pip install pdm jupyter jupyterlab ipykernel
-RUN cd sarpyx && pdm install && pdm add lxml
+RUN cd sarpyx && pdm install 
 
 # Install sarpyx as a Jupyter kernel
 RUN python -m ipykernel install --user --name=sarpyx --display-name="SAR Python (sarpyx-11.0)"
