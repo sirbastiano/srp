@@ -15,7 +15,7 @@ dependencies = [
     "matplotlib",
     "scipy",
     "s1isp @ git+https://github.com/avalentino/s1isp.git",
-    "geopandas",
+    "geopandas>=1.1.1",
     "shapely",
     "numpy",
     "openpyxl",
@@ -31,6 +31,8 @@ dependencies = [
     "lxml>=5.4.0",
     "huggingface-hub>=0.33.4",
     "tifffile>=2025.6.11",
+    "folium>=0.20.0",
+    "plotly>=6.2.0",
 ]
 
 [project.scripts]

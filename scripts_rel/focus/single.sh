@@ -1,6 +1,6 @@
 #!/bin/bash
 clear
-source ../../.venv/bin/activate
+source /workspace/.venv/bin/activate
 
 # Usage: focus_single.sh <zarr_file_path>
 # Processes a single .zarr file using the focusing script and logs errors.
@@ -16,9 +16,9 @@ if [[ ! "$zarr_file_basename" == *.zarr ]]; then
     echo "Error: The provided file is not a .zarr file."
     exit 3
 fi
-EXECUTABLE=../../.venv/bin/python
-FOCUS_SCRIPT='../../pyscripts/focusing.py'
-LOG_FILE="../../logs/focus/focus_$zarr_file_basename.log"
+EXECUTABLE=/workspace/.venv/bin/python
+FOCUS_SCRIPT='/workspace/pyscripts/focusing.py'
+LOG_FILE="/workspace/logs/focus/focus_$zarr_file_basename.log"
 
 # Create log directory if it doesn't exist
 mkdir -p "$(dirname "$LOG_FILE")"
@@ -34,7 +34,7 @@ parent_name="$(basename "$(dirname "$zarr_file")")"
 echo "Error log: $LOG_FILE"
 
 # Create output directory if it doesn't exist
-output_dir="../../data/3_parsed/$parent_name"
+output_dir="/workspace/data/3_parsed/$parent_name"
 mkdir -p "$output_dir"
 
 # Run the focusing script and capture exit code

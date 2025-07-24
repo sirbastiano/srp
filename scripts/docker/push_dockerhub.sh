@@ -1,7 +1,7 @@
 #!/bin/bash
 # Tag and push the Docker image to Docker Hub
 dockerhub_username="sirbastiano94"  # Replace with your Docker Hub username
-local_image_name="sarpyx-sarpyx"
+local_image_name="sarpyx-s11"
 remote_image_name="sarpyx"
 tag="latest"
 

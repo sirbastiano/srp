@@ -1,7 +1,7 @@
 #!/bin/bash
 # This script uploads the dataset to Hugging Face using the CLI.
 # Ensure you have the Hugging Face CLI installed and authenticated
-source ../../.venv/bin/activate
+source source /workspace/.venv/bin/activate
 
 set -euo pipefail  # Exit on error, undefined vars, pipe failures
 

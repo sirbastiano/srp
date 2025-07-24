@@ -1,12 +1,12 @@
 #!/bin/bash
 # =======================================================================================
 
-source ../../.venv/bin/activate
+source /workspace/.venv/bin/activate
 # STEP1: Download product
 echo "================ Downloading: $1 ====================="
 
-SCRIPT="../../pyscripts/down.py"
-PRD_PATH="../../data/1_downloaded/"
+SCRIPT="/workspace/pyscripts/down.py"
+PRD_PATH="/workspace/data/1_downloaded/"
 
 python "$SCRIPT" --filename "$1" --output_dir $PRD_PATH
 

@@ -1,10 +1,10 @@
 #!/bin/bash
 clear
-source ../../.venv/bin/activate
+source /workspace/.venv/bin/activate
 
-SCRIPT="../../pyscripts/decode_single.py"
-LOGFILE="../../logs/decode.log"
-OUTPUT_DIR="../../data/2_decoded"
+SCRIPT="/workspace/pyscripts/decode_single.py"
+LOGFILE="/workspace/logs/decode.log"
+OUTPUT_DIR="/workspace/data/2_decoded"
 set -euo pipefail
 
 

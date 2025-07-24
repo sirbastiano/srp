@@ -1,9 +1,10 @@
 services:
-  s11:
+  sarpyx:
     build:
       context: .
-      dockerfile: Dockerfile_SNAP11
-    container_name: sarpyx-s11
+      dockerfile: Dockerfile
+    image: sirbastiano94/sarpyx:latest
+    container_name: sarpyx
     ports:
       - "8888:8888"
     volumes:

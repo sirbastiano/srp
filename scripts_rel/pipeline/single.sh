@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-LOGFILE="../../logs/decoder/full_log_$1.log"
-BASE_PATH="../../scripts"
+LOGFILE="/workspace/logs/decoder/full_log_$1.log"
+BASE_PATH="/workspace/scripts"
 
 # Validate required argument
 if [[ -z "${1:-}" ]]; then
@@ -31,13 +31,15 @@ source "$BASE_PATH/down/single.sh" "$TARGET_ID"
 
 #------------- 2. Decode
 echo "Starting decode for: $TARGET_ID"
-source "$BASE_PATH/decode/single.sh" "../../data/1_downloaded/$TARGET_ID"
-rm -rf ../../data/1_downloaded/$TARGET_ID # Cleanup Down
+source "$BASE_PATH/decode/single.sh" "/workspace/data/1_downloaded/$TARGET_ID"
+rm -rf /workspace/data/1_downloaded/$TARGET_ID # Cleanup Down
 
 # Fix: Use correct path and add error handling
-decoded_json_path="../../data/2_decoded/$TARGET_ID/*.json"
+decoded_json_path="/workspace/data/2_decoded/$TARGET_ID/*.json"
 if ls $decoded_json_path 1> /dev/null 2>&1; then
-    cp $decoded_json_path "../../data/map/"
+    # Create target directory if it doesn't exist
+    mkdir -p "/workspace/data/map/"
+    cp $decoded_json_path "/workspace/data/map/"
 else
     echo "Warning: No JSON files found in decoded directory: $decoded_json_path" >&2
 fi
@@ -45,7 +47,7 @@ fi
 
 #------------- 3. Focus
 echo "Starting focus processing for: $TARGET_ID"
-decoded_dir="../../data/2_decoded/$TARGET_ID"
+decoded_dir="/workspace/data/2_decoded/$TARGET_ID"
 zarr_files=$(load_zarr_paths "$decoded_dir")
 
 # Processing
@@ -56,8 +58,8 @@ while IFS= read -r zarr_file; do
 done <<< "$zarr_files"
 
 # Cleanup Decoded:
-if [[ -d "../../data/2_decoded/$TARGET_ID" ]]; then
-    rm -rf "../../data/2_decoded/$TARGET_ID"
+if [[ -d "/workspace/data/2_decoded/$TARGET_ID" ]]; then
+    rm -rf "/workspace/data/2_decoded/$TARGET_ID"
     echo "Cleaned up decoded directory for: $TARGET_ID"
 else
     echo "Warning: Decoded directory not found for cleanup: $TARGET_ID" >&2
@@ -65,7 +67,7 @@ fi
 
 #------------- 4. Upload
 echo "Starting upload for: $TARGET_ID"
-upload_dir="../../data/3_parsed/$TARGET_ID"
+upload_dir="/workspace/data/3_parsed/$TARGET_ID"
 source "$BASE_PATH/up/single.sh" "$upload_dir"
 
 # Cleanup with error handling
