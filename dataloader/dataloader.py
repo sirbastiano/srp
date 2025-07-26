@@ -101,7 +101,7 @@ class SARZarrDataset(Dataset):
         cache_size: int = 1000
     ):
         self.data_dir = Path(data_dir)
-        self.files = sorted(self.data_dir.glob(file_pattern))
+        self.file_pattern = file_pattern
         self.return_whole_image = return_whole_image
         self.transform = transform
         self.patch_size = patch_size
@@ -114,99 +114,15 @@ class SARZarrDataset(Dataset):
         self.stride = stride
         self.backend = backend
         self.verbose = verbose
+        self.save_samples = save_samples
         
         self._load_chunk = functools.lru_cache(maxsize=cache_size)(
             self._load_chunk_uncached
         )
 
         self.stores: Dict[int, zarr.core.Array] = {}
-        self._initialize_stores()
-        
-        self.patch_index_file = self.data_dir / f"patch_index_{self.level_from}_{self.level_to}_{self.patch_mode}_{self.patch_size[0]}x{self.patch_size[1]}_a{self.parabola_a if self.patch_mode == 'parabolic' else 'none'}.json"
-        if self.patch_index_file.exists():
-            with open(self.patch_index_file, "r") as f:
-                loaded = json.load(f)
-            # Convert keys back to int and tuples
-            self.samples_by_file = {int(k): [tuple(coord) for coord in v] for k, v in loaded.items()}
-        else:
-            # Build sample indices grouped by file
-            start_time = time.time()
-            self.samples_by_file: Dict[int, List[Tuple[int,int]]] = {}
-            for file_idx, zfile in enumerate(self.files):
-                store = zarr.open(str(zfile), mode="r")
-                if not {self.level_from, self.level_to}.issubset(store.keys()):
-                    continue
-                h, w = store[self.level_from].shape
-                coords: List[Tuple[int,int]] = []
-                if self.return_whole_image:
-                    coords = [(0, 0)]
-                else:
-                    if self.patch_mode in ("square", "rectangular"):
-                        ph, pw = self.patch_size
-                        y_min, y_max = buffer[0], h - buffer[0]
-                        x_min, x_max = buffer[1], w - buffer[1]
-                        
-                        # Vectorized coordinate generation using NumPy
-                        y_coords = np.arange(y_min, y_max - self.stride[1] + 1, self.stride[1])
-                        x_coords = np.arange(x_min, x_max - self.stride[0] + 1, self.stride[0])
-                        
-                        # Create meshgrid and flatten to get all coordinate combinations
-                        Y_grid, X_grid = np.meshgrid(y_coords, x_coords, indexing='ij')
-                        coords.extend(list(zip(Y_grid.ravel(), X_grid.ravel())))
-                    elif self.patch_mode == "parabolic":
-                        ph, pw = self.patch_size
-                        a = self.parabola_a
-                        
-                        # For parabolic patches, we need to ensure the entire parabolic curve fits within image bounds
-                        # The parabolic curve is x = x_center + a * (j - pw//2)^2 for j in [0, pw)
-                        # Maximum x offset occurs at the edges: max_offset = a * (pw//2)^2
-                        max_offset = int(np.ceil(a * (pw // 2) ** 2))
-                        
-                        # Apply buffer and ensure parabolic patch fits
-                        y_min, y_max = self.buffer[0], h - ph - self.buffer[0]
-                        x_min = self.buffer[1] + max_offset  # Left bound considering parabolic curve
-                        x_max = w - self.buffer[1] - max_offset  # Right bound considering parabolic curve
-                        
-                        # Generate coordinates with appropriate stride for parabolic patches
-                        stride_y, stride_x = self.stride
-                        
-                        # Fully vectorized coordinate generation for maximum performance
-                        y_coords = np.arange(y_min, y_max + 1, stride_y)
-                        x_centers = np.arange(x_min, x_max + 1, stride_x)
-                        
-                        # Create meshgrid for all combinations
-                        Y_grid, X_grid = np.meshgrid(y_coords, x_centers, indexing='ij')
-                        
-                        # Vectorized validation for all center positions at once
-                        j_indices = np.arange(pw)
-                        offsets = j_indices - pw // 2
-                        
-                        # For each x_center, calculate all x_curve positions
-                        # Shape: (len(y_coords), len(x_centers), pw)
-                        X_curves = X_grid[:, :, np.newaxis] + a * offsets[np.newaxis, np.newaxis, :]
-                        
-                        # Check bounds for all positions simultaneously
-                        valid_mask = np.all((X_curves >= 0) & (X_curves < w), axis=2)
-                        
-                        # Extract valid coordinates
-                        valid_y, valid_x = np.where(valid_mask)
-                        coords.extend([(Y_grid[i, j], X_grid[i, j]) for i, j in zip(valid_y, valid_x)])
-                    else:
-                        raise ValueError(f"Unknown patch_mode {self.patch_mode}")
-                if coords:
-                    self.samples_by_file[file_idx] = coords
-            if save_samples:
-                with open(self.patch_index_file, "w") as f:
-                    json.dump({k: [list(coord) for coord in v] for k, v in self.samples_by_file.items()}, f)
-            elapsed = time.time() - start_time  # End timing
-            if self.verbose:
-                print(f"Patch coordinate calculation took {elapsed:.2f} seconds.")
-
-        self.total_patches = sum(len(v) for v in self.samples_by_file.values())
-        assert self.total_patches > 0, "No valid patches found."
-        
-        self.store = None
-        self.file_idx = None
+        self.samples_by_file: Dict[str, List[Tuple[int,int]]] = {}
+        self.init_samples()
         
     def _initialize_stores(self):
         """
@@ -218,6 +134,7 @@ class SARZarrDataset(Dataset):
         Raises:
             ValueError: If an unknown backend is specified.
         """
+        self.files = sorted(self.data_dir.glob(self.file_pattern))
         if self.backend == "zarr":
             for idx, zfile in enumerate(self.files):
                 store = LocalStore(str(zfile))
@@ -230,6 +147,115 @@ class SARZarrDataset(Dataset):
                     self.stores[idx][level] = da.from_zarr(complete_path).rechunk(self.patch_size)    
         else:
             raise ValueError(f"Unknown backend {self.backend}")
+        
+    def init_samples(self):
+        """
+        Initializes and indexes patch sample coordinates for each file in the dataset.
+        This method generates or loads patch coordinates used for sampling image patches from the dataset files.
+        It supports different patch modes ('square', 'rectangular', 'parabolic'), and can optionally return the whole image.
+        The coordinates are grouped by file index and stored in `self.samples_by_file`.
+        If a cached patch index file exists, it loads the coordinates from disk for efficiency.
+        Otherwise, it computes the coordinates, optionally saves them to disk, and prints timing information if verbose mode is enabled.
+        The method ensures that all generated patches fit within image bounds, taking into account patch size, stride, buffer, and (for parabolic patches) the parabolic curve parameters.
+        Raises:
+            ValueError: If an unknown patch mode is specified.
+            AssertionError: If no valid patches are found after initialization.
+        Side Effects:
+            - Updates `self.samples_by_file` with patch coordinates grouped by file name.
+            - Updates `self.total_patches` with the total number of patches.
+            - Optionally saves patch indices to a JSON file.
+            - Prints timing information if `self.verbose` is True.
+            - Resets `self.store` and `self.file_idx` to None.
+        """        
+        self._initialize_stores()
+        self.patch_index_file = self.data_dir / f"patch_index_{self.level_from}_{self.level_to}_{self.patch_mode}_{self.patch_size[0]}x{self.patch_size[1]}_a{self.parabola_a if self.patch_mode == 'parabolic' else 'none'}.json"
+        if self.patch_index_file.exists():
+            with open(self.patch_index_file, "r") as f:
+                loaded = json.load(f)
+            # Convert keys back to int and tuples
+            self.samples_by_file = {str(k): [tuple(coord) for coord in v] for k, v in loaded.items()}
+        else:
+            # Build sample indices grouped by file
+            start_time = time.time()
+            for file_idx in range(len(self.files)):
+                self.calculate_patches_from_store(file_idx)
+            if self.save_samples:
+                with open(self.patch_index_file, "w") as f:
+                    json.dump({k: [list(coord) for coord in v] for k, v in self.samples_by_file.items()}, f)
+            elapsed = time.time() - start_time  # End timing
+            if self.verbose:
+                print(f"Patch coordinate calculation took {elapsed:.2f} seconds.")
+
+        self.total_patches = sum(len(v) for v in self.samples_by_file.values())
+        assert self.total_patches > 0, "No valid patches found."
+        
+        self.store = None
+        self.file_idx = None
+        
+    def calculate_patches_from_store(self, file_idx:int):
+        zfile = self.files[file_idx]
+        store = zarr.open(str(zfile), mode="r")
+        if not {self.level_from, self.level_to}.issubset(store.keys()):
+            return
+        h, w = store[self.level_from].shape
+        coords: List[Tuple[int,int]] = []
+        if self.return_whole_image:
+            coords = [(0, 0)]
+        else:
+            if self.patch_mode in ("square", "rectangular"):
+                ph, pw = self.patch_size
+                y_min, y_max = self.buffer[0], h - self.buffer[0]
+                x_min, x_max = self.buffer[1], w - self.buffer[1]
+                
+                # Vectorized coordinate generation using NumPy
+                y_coords = np.arange(y_min, y_max - self.stride[1] + 1, self.stride[1])
+                x_coords = np.arange(x_min, x_max - self.stride[0] + 1, self.stride[0])
+                
+                # Create meshgrid and flatten to get all coordinate combinations
+                Y_grid, X_grid = np.meshgrid(y_coords, x_coords, indexing='ij')
+                coords.extend(list(zip(Y_grid.ravel(), X_grid.ravel())))
+            elif self.patch_mode == "parabolic":
+                ph, pw = self.patch_size
+                a = self.parabola_a
+                
+                # For parabolic patches, we need to ensure the entire parabolic curve fits within image bounds
+                # The parabolic curve is x = x_center + a * (j - pw//2)^2 for j in [0, pw)
+                # Maximum x offset occurs at the edges: max_offset = a * (pw//2)^2
+                max_offset = int(np.ceil(a * (pw // 2) ** 2))
+                
+                # Apply buffer and ensure parabolic patch fits
+                y_min, y_max = self.buffer[0], h - ph - self.buffer[0]
+                x_min = self.buffer[1] + max_offset  # Left bound considering parabolic curve
+                x_max = w - self.buffer[1] - max_offset  # Right bound considering parabolic curve
+                
+                # Generate coordinates with appropriate stride for parabolic patches
+                stride_y, stride_x = self.stride
+                
+                # Fully vectorized coordinate generation for maximum performance
+                y_coords = np.arange(y_min, y_max + 1, stride_y)
+                x_centers = np.arange(x_min, x_max + 1, stride_x)
+                
+                # Create meshgrid for all combinations
+                Y_grid, X_grid = np.meshgrid(y_coords, x_centers, indexing='ij')
+                
+                # Vectorized validation for all center positions at once
+                j_indices = np.arange(pw)
+                offsets = j_indices - pw // 2
+                
+                # For each x_center, calculate all x_curve positions
+                # Shape: (len(y_coords), len(x_centers), pw)
+                X_curves = X_grid[:, :, np.newaxis] + a * offsets[np.newaxis, np.newaxis, :]
+                
+                # Check bounds for all positions simultaneously
+                valid_mask = np.all((X_curves >= 0) & (X_curves < w), axis=2)
+                
+                # Extract valid coordinates
+                valid_y, valid_x = np.where(valid_mask)
+                coords.extend([(Y_grid[i, j], X_grid[i, j]) for i, j in zip(valid_y, valid_x)])
+            else:
+                raise ValueError(f"Unknown patch_mode {self.patch_mode}")
+        if coords:
+            self.samples_by_file[file_idx] = coords
     def __len__(self):
         return self.total_patches
 
@@ -584,7 +610,7 @@ class SARZarrDataset(Dataset):
         return patch
 
     def visualize_image_portion(self, 
-                               file_idx: int,
+                               zfile: Union[str, os.PathLike],
                                start_y: int, 
                                start_x: int,
                                portion_height: int,
@@ -602,7 +628,7 @@ class SARZarrDataset(Dataset):
         taking only the stride-sized portion from each patch (not the full patch) to avoid overlap.
         
         Args:
-            file_idx (int): Index of the file to visualize from.
+            zfile (Union[str, os.PathLike]): Path to the Zarr file to visualize from.
             start_y (int): Starting y-coordinate of the portion to visualize.
             start_x (int): Starting x-coordinate of the portion to visualize.
             portion_height (int): Height of the portion to visualize.
@@ -630,8 +656,8 @@ class SARZarrDataset(Dataset):
         if self.patch_mode == "parabolic":
             raise ValueError("Image portion visualization is not supported for parabolic patch mode.")
             
-        if file_idx not in self.samples_by_file:
-            raise ValueError(f"File index {file_idx} not found in dataset.")
+        if zfile not in self.samples_by_file:
+            raise ValueError(f"File {zfile} not found in dataset.")
         
         # Get patch and stride information
         patch_h, patch_w = self.patch_size
@@ -660,12 +686,12 @@ class SARZarrDataset(Dataset):
                 
                 # Check if this patch exists in our dataset
                 patch_coord = (patch_y, patch_x)
-                if patch_coord in self.samples_by_file[file_idx]:
+                if patch_coord in self.samples_by_file[zfile]:
                     patches_found += 1
                     
                     # Get the patch data using __getitem__
                     try:
-                        input_patch, target_patch = self.__getitem__((file_idx, patch_y, patch_x))
+                        input_patch, target_patch = self.__getitem__((self.files.index(str(zfile)), patch_y, patch_x))
                         
                         # Convert back to numpy and handle complex conversion
                         if not self.complex_valued:
@@ -781,7 +807,8 @@ class KPatchSampler(Sampler):
         shuffle_files: bool = True,
         shuffle_patches: bool = True,
         seed: int = 42, 
-        verbose: bool = True
+        verbose: bool = True, 
+        max_products: int = 1000
     ):
         self.dataset = dataset
         self.k = k
@@ -836,7 +863,8 @@ def get_sar_dataloader(
     complex_valued: bool = False,
     save_samples: bool = True, 
     verbose: bool = True, 
-    cache_size: int = 10000
+    cache_size: int = 10000, 
+    max_products: int = 1000
 ) -> DataLoader:
     """
     Creates and returns a DataLoader for SAR (Synthetic Aperture Radar) data using the SARZarrDataset and KPatchSampler.
@@ -861,6 +889,7 @@ def get_sar_dataloader(
         complex_valued (bool, optional): If True, loads data as complex-valued. Defaults to False.
         save_samples (bool, optional): If True, saves sampled patches. Defaults to True.
         cache_size (int, optional): size of the cache for saving least recently accessed chunks
+        max_products (int, optional): Maximum number of products to sample per file. Defaults to 1000.
 
     Returns:
         DataLoader: A PyTorch DataLoader for the SAR dataset.
@@ -888,6 +917,7 @@ def get_sar_dataloader(
         k=k,
         shuffle_files=shuffle_files,
         shuffle_patches=shuffle_patches, 
+        max_products=max_products,
         verbose=verbose
     )
     return DataLoader(
