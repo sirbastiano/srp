@@ -1,0 +1,162 @@
+import os
+import matplotlib.pyplot as plt
+from typing import Union, Optional, Tuple
+from pathlib import Path
+import numpy as np
+import torch
+import zarr
+
+RC_MIN = -3000
+RC_MAX = 3000
+
+GT_MIN = -12000
+GT_MAX = 12000
+
+def normalize(array, array_min, array_max):
+    """
+    Normalizes the input array to the range [0, 1].
+
+    Args:
+        array (np.ndarray): Input array.
+        array_min (float): Minimum value for normalization.
+        array_max (float): Maximum value for normalization.
+
+    Returns:
+        np.ndarray: Normalized array.
+    """
+    normalized_array = (array - array_min) / (array_max - array_min)
+    normalized_array = np.clip(normalized_array, 0, 1)
+    return normalized_array
+
+def get_sample_visualization( 
+                    data: np.ndarray,
+                    plot_type: str = 'magnitude',
+                    show: bool = True,
+                    vminmax: Optional[Union[Tuple[float, float], str]] = (0, 1000),
+                    figsize: Tuple[int, int] = (15, 15)) -> Tuple[np.ndarray, float, float]:
+    """
+    Visualize multiple arrays side by side.
+    
+    Args:
+        idx (Tuple(file_idx, y, x)): Tuple containing file index, y, and x coordinates
+        plot_type (str): Type of plot ('magnitude', 'phase', 'real', 'imag')
+        show (bool): Whether to show the plot or not
+        vminmax (Optional[Union[Tuple[float, float], str]]): Min/max values for colorbar or 'auto'
+        figsize (Tuple[int, int]): Figure size for matplotlib
+    """    
+
+        
+    if plot_type == 'magnitude' and np.iscomplexobj(data):
+        plot_data = np.abs(data)
+        title_suffix = 'Magnitude'
+    elif plot_type == 'phase' and np.iscomplexobj(data):
+        plot_data = np.angle(data)
+        title_suffix = 'Phase'
+    elif plot_type == 'real':
+        plot_data = np.real(data)
+        title_suffix = 'Real'
+    elif plot_type == 'imag':
+        plot_data = np.imag(data)
+        title_suffix = 'Imaginary'
+    else:
+        plot_data = data
+        title_suffix = 'Data'
+
+    
+    
+    # Set vmin/vmax for 'raw' array, otherwise use phase or provided/default
+    if vminmax == 'raw':
+        vmin, vmax = 0, 10
+    elif plot_type == 'phase':
+        vmin, vmax = -np.pi, np.pi
+    elif vminmax == 'auto':
+        mean_val = np.mean(plot_data)
+        std_val = np.std(plot_data)
+        vmin, vmax = mean_val - std_val, mean_val + std_val
+    elif vminmax is not None and isinstance(vminmax, tuple):
+        vmin, vmax = vminmax
+    else:
+        vmin, vmax = 0, 1000
+        
+    return plot_data, vmin, vmax
+def visualize_sample(self, sample: np.ndarray, figsize=(10, 5), show=True):
+        """
+        Visualize a sample from the dataset.
+
+        Args:
+            sample (np.ndarray): Sample to visualize.
+            figsize (tuple): Size of the figure (default: (10, 5)).
+            show (bool): Whether to show the plot (default: True).
+
+        Returns:
+            None
+        """
+        img, vmin, vmax = self.get_sample_visualization(sample, plot_type="magnitude", vminmax='raw')
+        img = {'name': self.level_from, 'img': img, 'vmin': vmin, 'vmax': vmax}
+        fig, axes = plt.subplots(1, 1, figsize=figsize)
+        im = axes.imshow(
+            img[0]['img'],
+            aspect='auto',
+            cmap='viridis',
+            vmin=img['vmin'],
+            vmax=img['vmax']
+        )
+
+        axes.set_title(f'{img['name'].upper()} product')
+        axes.set_xlabel('Range')
+        axes.set_ylabel('Azimuth')
+        cbar = plt.colorbar(im, ax=axes, fraction=0.046, pad=0.04)
+        cbar.ax.tick_params(labelsize=8)
+        # axis equal aspect ratio
+        axes.set_aspect('equal', adjustable='box')
+
+        plt.tight_layout()
+        if show:
+            plt.show()
+        else:
+            plt.close(fig)
+            
+def get_zarr_version(store_path) -> int:
+    import os
+    import json
+    # Try to find a .zarray, zarr.json or .zgroup file in the root
+    for meta_file in ['.zgroup', 'zarr.json']:
+        meta_path = os.path.join(store_path, meta_file)
+        if os.path.exists(meta_path):
+            try:
+                with open(meta_path, 'rb') as f:
+                    # Try to decode as UTF-8 (JSON, v2 or v3)
+                    content = f.read()
+                    try:
+                        meta = json.loads(content.decode('utf-8'))
+                        return int(meta.get('zarr_format', 'unknown'))
+                    except Exception:
+                        # If not JSON, likely v3 CBOR
+                        raise ValueError(f"Unsupported format in {meta_file}")
+            except Exception as e:
+                raise ValueError(f"Error reading {meta_file}: {e}")
+    raise ValueError("No .zgroup or zarr.json found")
+
+def get_chunk_name_from_coords(
+    y: int, x: int, zarr_file_name: str, level:str, chunks: Tuple[int, int] = (256, 256), version: int = 3
+) -> str:
+    """
+    Generate a chunk name from zarr archive and coordinates.
+    Args:
+        y (int): Y coordinate.
+        x (int): X coordinate.
+        ch (int): Chunk height.
+        cw (int): Chunk width.
+        zarr_file_name (str): Name of the Zarr file.
+        level (str): Level of the Zarr archive.
+    Returns:
+        str: Chunk name.
+    """
+
+    # Compute chunk indices for (y, x)
+    cy, cx = y // chunks[0], x // chunks[1]
+    if version == 3:
+        chunk_fname = f"{zarr_file_name}/{level}/c/{cy}/{cx}"
+    else:
+        chunk_fname = f"{zarr_file_name}/{level}/{cy}.{cx}"
+    return chunk_fname

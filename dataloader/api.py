@@ -4,11 +4,16 @@ This module provides functions to filter files by modalities and download files 
 It includes functions to filter files based on specified modalities and to download specific files from a dataset repository on the Hugging Face Hub.
 """
 
+import os
 from pathlib import Path
 from huggingface_hub import hf_hub_download, list_repo_tree
+from huggingface_hub.hf_api import RepoFile
 import huggingface_hub
 from multiprocessing import Pool
-from typing import Optional
+from typing import Optional, Union
+import numpy as np
+
+from utils import get_chunk_name_from_coords
 
 
 def filter_files_by_modalities(files: list, filters: list) -> list:
@@ -28,7 +33,7 @@ def filter_files_by_modalities(files: list, filters: list) -> list:
     assert isinstance(filters, list), 'filters must be a list'
     return [x for x in files if any(f in x.path for f in filters)]
 
-def download_file_from_hf(repo_id: str, filename: str, local_dir: str) -> Path:
+def download_file_from_hf(repo_id: str, filename: str, local_dir: Union[str, os.PathLike]) -> Path:
     """
     Download a specific file from a Hugging Face Hub dataset.
 
@@ -51,7 +56,7 @@ def download_file_from_hf(repo_id: str, filename: str, local_dir: str) -> Path:
             filename=filename,
             force_download=True,
             local_dir_use_symlinks=False,
-            local_dir=local_dir,
+            local_dir=str(local_dir)
         )
         downloaded_path = Path(downloaded_file)
         assert downloaded_path.exists(), f'File "{downloaded_path}" not found after download.'
@@ -60,6 +65,28 @@ def download_file_from_hf(repo_id: str, filename: str, local_dir: str) -> Path:
     except Exception as e:
         print(f'Download failed: {e}')
         raise
+def list_base_files_in_repo(repo_id: str, path_in_repo: str= "", relative_path: bool=False) -> list:
+    """
+    Efficiently list file names in the base directory of a Hugging Face dataset repository.
+
+    Args:
+        repo_id (str): Repository ID (e.g., 'sirbastiano94/Maya4').
+        path_in_repo (str): Path in the repository to list files from. Defaults to empty string for base directory.
+        relative_path (bool): If True, return only file names (not full paths).
+
+    Returns:
+        list: List of file and folder names (str) in the base directory.
+    """
+    tree = list_repo_tree(
+        repo_id=repo_id,
+        repo_type='dataset',
+        path_in_repo=path_in_repo,
+        recursive=False,
+    )
+    names = [x.path for x in tree if hasattr(x, 'path')]
+    if relative_path:
+        names = [os.path.basename(name) for name in names]
+    return names
 
 def list_files_in_repo(repo_id: str, path_in_repo: str, filters: list) -> list:
     """
@@ -163,6 +190,109 @@ def down(repo_id: str = 'sirbastiano94/Maya4',
         for file in files:
             download_wrapper(file, repo_id, output_dir)
 
+def download_metadata(
+    repo_id: str = 'sirbastiano94/Maya4', 
+    zarr_archive: str = 's1a-s1-raw-s-hh-20240130t151239-20240130t151254-052337-06541b.zarr', 
+    base_dir: str = "",
+    local_dir: Optional[str|os.PathLike] = None, 
+    download_all: bool = True
+) -> Optional[Path]:
+    """
+    Download metadata files from a Zarr archive on HuggingFace, only if not found locally.
+
+    Args:
+        repo_id (str): HuggingFace repo id.
+        zarr_archive (str): Path to the Zarr archive in the repo.
+        base_dir (str): Base directory within the Zarr archive to look for metadata files.
+        local_dir (str): Local directory for temporary storage.
+        download_all (bool): If True, download all metadata files. If False, only download the main metadata file.
+
+    Returns:
+        Path or None: Path to the main metadata file if found/downloaded, else None.
+    """
+    if base_dir == "":
+        base_remote_metadata_path = f"{zarr_archive}"
+        base_local_metadata_path = Path(local_dir) / zarr_archive
+    else:
+        base_remote_metadata_path = f"{zarr_archive}/{base_dir}"
+        base_local_metadata_path = Path(local_dir) / zarr_archive / base_dir
+    files = list_base_files_in_repo(repo_id, path_in_repo=base_remote_metadata_path, relative_path=True)
+
+    # Check for metadata files
+    meta_candidates = ['.zarray', '.zgroup', 'zarr.json']
+    misc_metadata = ['.zattrs']
+
+    # Download additional metadata if not found locally
+    if download_all:
+        for meta in misc_metadata:
+            meta_path = base_local_metadata_path / meta
+            if meta in files and not meta_path.exists():
+                download_file_from_hf(repo_id, f"{base_remote_metadata_path}/{meta}", local_dir)
+
+    found_meta = None
+    for meta in meta_candidates:
+        meta_path = base_local_metadata_path / meta
+        if meta in files:
+            found_meta = meta
+            # Only download if not found locally
+            if not meta_path.exists():
+                download_file_from_hf(repo_id, f"{base_remote_metadata_path}/{meta}", local_dir)
+            return meta_path
+    raise FileNotFoundError(f"No metadata file (.zarray or zarr.json) found in {base_remote_metadata_path}.")
+
+def fetch_chunk_from_hf_zarr(
+    level: str, 
+    y: int, 
+    x: int, 
+    local_dir:Union[str, os.PathLike],
+    repo_id: str = 'sirbastiano94/Maya4', 
+    zarr_archive: str = 's1a-s1-raw-s-hh-20240130t151239-20240130t151254-052337-06541b.zarr'
+    ) -> Path:
+    """
+    Download only the chunk containing (y, x) from a Zarr archive on HuggingFace.
+
+    Args:
+    repo_id (str): HuggingFace repo id.
+    zarr_archive (str): Path to the Zarr archive in the repo.
+    level (str): Zarr group/array name (e.g., 'rcmc', 'az').
+    y (int): Y coordinate.
+    x (int): X coordinate.
+    local_dir (str): Local directory for temporary storage.
+
+    Returns:
+    str: path to the downloaded chunk file.
+    """
+    # List all files in the zarr archive directory, excluding zarr metadata files
+    download_metadata(repo_id = repo_id,zarr_archive = zarr_archive, local_dir = local_dir)
+    zarray_meta_file = download_metadata(repo_id = repo_id,zarr_archive = zarr_archive, base_dir = level, local_dir = local_dir)
+    import json
+    with open(zarray_meta_file) as f:
+        zarr_meta = json.load(f)
+    shape = zarr_meta['shape']
+
+    if zarr_meta.get('zarr_format', 2) == 3:
+        chunks = zarr_meta['chunk_grid']['configuration']['chunk_shape']
+    else:
+        chunks = zarr_meta['chunks']
+
+    # Compute chunk indices for (y, x)
+    chunk_fname = get_chunk_name_from_coords(
+        y=y, 
+        x=x,  
+        zarr_file_name=zarr_archive, 
+        level=level, 
+        chunks=chunks, 
+        version=zarr_meta.get('zarr_format', 2)
+    )
+
+    # Download chunk file
+    chunk_file = download_file_from_hf(
+        repo_id,
+        chunk_fname,
+        local_dir
+    )
+
+    return chunk_file
 
 
 if __name__ == '__main__':
