@@ -116,26 +116,15 @@ def visualize_sample(self, sample: np.ndarray, figsize=(10, 5), show=True):
         else:
             plt.close(fig)
             
-def get_zarr_version(store_path) -> int:
+def get_zarr_version(store_path: os.PathLike) -> int:
     import os
     import json
-    # Try to find a .zarray, zarr.json or .zgroup file in the root
-    for meta_file in ['.zgroup', 'zarr.json']:
-        meta_path = os.path.join(store_path, meta_file)
-        if os.path.exists(meta_path):
-            try:
-                with open(meta_path, 'rb') as f:
-                    # Try to decode as UTF-8 (JSON, v2 or v3)
-                    content = f.read()
-                    try:
-                        meta = json.loads(content.decode('utf-8'))
-                        return int(meta.get('zarr_format', 'unknown'))
-                    except Exception:
-                        # If not JSON, likely v3 CBOR
-                        raise ValueError(f"Unsupported format in {meta_file}")
-            except Exception as e:
-                raise ValueError(f"Error reading {meta_file}: {e}")
-    raise ValueError("No .zgroup or zarr.json found")
+    if os.path.exists(store_path / 'zarr.json'):
+        return 3
+    elif os.path.exists(store_path / '.zgroup'):
+            return 2
+    else:
+        raise ValueError("No .zgroup or zarr.json found")
 
 def get_chunk_name_from_coords(
     y: int, x: int, zarr_file_name: str, level:str, chunks: Tuple[int, int] = (256, 256), version: int = 3

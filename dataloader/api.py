@@ -10,7 +10,7 @@ from huggingface_hub import hf_hub_download, list_repo_tree
 from huggingface_hub.hf_api import RepoFile
 import huggingface_hub
 from multiprocessing import Pool
-from typing import Optional, Union
+from typing import List, Optional, Union
 import numpy as np
 
 from utils import get_chunk_name_from_coords
@@ -196,7 +196,7 @@ def download_metadata(
     base_dir: str = "",
     local_dir: Optional[str|os.PathLike] = None, 
     download_all: bool = True
-) -> Optional[Path]:
+) -> Path:
     """
     Download metadata files from a Zarr archive on HuggingFace, only if not found locally.
 
@@ -210,35 +210,68 @@ def download_metadata(
     Returns:
         Path or None: Path to the main metadata file if found/downloaded, else None.
     """
+    
     if base_dir == "":
         base_remote_metadata_path = f"{zarr_archive}"
         base_local_metadata_path = Path(local_dir) / zarr_archive
     else:
         base_remote_metadata_path = f"{zarr_archive}/{base_dir}"
         base_local_metadata_path = Path(local_dir) / zarr_archive / base_dir
-    files = list_base_files_in_repo(repo_id, path_in_repo=base_remote_metadata_path, relative_path=True)
-
-    # Check for metadata files
-    meta_candidates = ['.zarray', '.zgroup', 'zarr.json']
+    
+    meta_candidates = ['.zgroup', '.zarray', 'zarr.json']
     misc_metadata = ['.zattrs']
-
+    files = list_base_files_in_repo(repo_id, path_in_repo=base_remote_metadata_path, relative_path=True)
+    print(f"Files in {base_remote_metadata_path}: {files}")
     # Download additional metadata if not found locally
     if download_all:
         for meta in misc_metadata:
             meta_path = base_local_metadata_path / meta
             if meta in files and not meta_path.exists():
-                download_file_from_hf(repo_id, f"{base_remote_metadata_path}/{meta}", local_dir)
-
-    found_meta = None
+                download_file_from_hf(repo_id, f"{base_remote_metadata_path}/{meta}", Path(local_dir))
+    meta_found = False
     for meta in meta_candidates:
-        meta_path = base_local_metadata_path / meta
         if meta in files:
-            found_meta = meta
-            # Only download if not found locally
+            meta_path = base_local_metadata_path / meta
             if not meta_path.exists():
-                download_file_from_hf(repo_id, f"{base_remote_metadata_path}/{meta}", local_dir)
-            return meta_path
+                download_file_from_hf(repo_id, f"{base_remote_metadata_path}/{meta}", Path(local_dir))
+            meta_found = True
+    if meta_found:
+        return meta_path
     raise FileNotFoundError(f"No metadata file (.zarray or zarr.json) found in {base_remote_metadata_path}.")
+
+def download_metadata_from_product(
+    zfile_name: str = 's1a-s1-raw-s-hh-20240130t151239-20240130t151254-052337-06541b.zarr',
+    local_dir: Union[str, os.PathLike] = 'data',
+    repo_id: str = 'sirbastiano94/Maya4',
+    levels: List[str] = ['raw', 'rc', 'rcmc', 'az']
+) -> os.PathLike:
+    """
+    Download metadata files from a Zarr archive on HuggingFace, only if not found locally.
+
+    Args:
+        zfile_name (str): Name of the Zarr file.
+        local_dir (Union[str, os.PathLike]): Local directory for temporary storage.
+        repo_id (str): HuggingFace repo id.
+        zarr_archive (str): Path to the Zarr archive in the repo.
+
+    Returns:
+        Path: Path to the downloaded metadata files.
+    """
+    meta_file_path = download_metadata(
+        repo_id=repo_id,
+        zarr_archive=zfile_name,
+        local_dir=local_dir,
+        base_dir=''
+    )
+    for level in levels:
+        meta_file_path = download_metadata(
+            repo_id=repo_id,
+            zarr_archive=zfile_name,
+            local_dir=local_dir, 
+            base_dir=level
+        )
+    return meta_file_path
+
 
 def fetch_chunk_from_hf_zarr(
     level: str, 

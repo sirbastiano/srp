@@ -18,7 +18,7 @@ from utils import get_chunk_name_from_coords, get_sample_visualization, get_zarr
 from api import list_base_files_in_repo
 from utils import normalize, RC_MAX, RC_MIN, GT_MAX, GT_MIN
 from api import fetch_chunk_from_hf_zarr
-from api import download_metadata
+from api import download_metadata_from_product
 
 class SARTransform(nn.Module):
     """
@@ -189,7 +189,8 @@ class SARZarrDataset(Dataset):
             matched_files = [Path(self.data_dir).joinpath(f) for f in self.remote_files if filename_regex.match(f)]
             self.files = sorted(matched_files)[:min(self._max_products, len(matched_files))]
         else:
-            self.files = sorted(self.data_dir.glob(self.file_pattern))[:min(self._max_products, len(self.files))]
+            self.files = sorted(self.data_dir.glob(self.file_pattern))
+            self.files = self.files[:min(self._max_products, len(self.files))]
         if self.verbose:
             print(f"Selected only files:  {self.files}")
 
@@ -224,9 +225,18 @@ class SARZarrDataset(Dataset):
         Raises:
             ValueError: If an unknown backend is specified.
         """
+        t0 = time.time()
         self._get_file_list()
+        if self.verbose:
+            dt = time.time() - t0
+            print(f"Files list calculation took {dt:.2f} seconds.")
+            
+        t0 = time.time()
         for zfile in self.files:
             self._append_file_to_stores(zfile)
+        if self.verbose:
+            df = time.time() - t0
+            print(f"Zarr stores initialization took {df:.2f} seconds.")
 
     # def init_samples(self):
     #     """
@@ -273,19 +283,26 @@ class SARZarrDataset(Dataset):
     #     self.file_idx = None
         
     def calculate_patches_from_store(self, zfile:os.PathLike):
-        store = zarr.open(zfile, mode="r")
-        if not {self.level_from, self.level_to}.issubset(store.keys()):
-            zfile_name = os.path.basename(zfile)
+
+        if not zfile.exists():
             if self.online:
-                for base_file in ['', self.level_from, self.level_to]:
-                    download_metadata(
-                        zarr_archive=str(zfile_name),
-                        local_dir=self.data_dir, 
-                        base_dir=base_file
-                    )
+                zfile_name = os.path.basename(zfile)
+                download_metadata_from_product(
+                    zfile_name=str(zfile_name),
+                    local_dir=self.data_dir, 
+                    levels=[self.level_from, self.level_to], 
+                    repo_id=self.repo_id
+                )
             else:
                 raise ValueError(f"Levels {self.level_from} and {self.level_to} not found in Zarr store {zfile}.")
-        h, w = store[self.level_from].shape
+        
+        self._append_file_to_stores(zfile)
+        # Print the directories (groups/arrays) inside the Zarr store
+        if self.backend == "zarr":
+            print("Store directories:", list(self._stores[zfile].keys()))
+        elif self.backend == "dask":
+            print("Store directories:", list(self._stores[zfile].keys()))
+        h, w = self._stores[zfile][self.level_from].shape
         coords: List[Tuple[int,int]] = []
         if self.return_whole_image:
             coords = [(0, 0)]
@@ -432,19 +449,22 @@ class SARZarrDataset(Dataset):
         Returns:
             Path: Path to the downloaded chunk file.
         """
-        if not zfile.exists():
-                if self.online:
-                    for base_file in ['', self.level_from, self.level_to]:
-                        download_metadata(
-                            zarr_archive=str(zfile_name),
-                            local_dir=self.data_dir, 
-                            base_dir=base_file
-                        )
-                    self.calculate_patches_from_store(zfile)
-                    self._append_file_to_stores(zfile)
-                else:
-                    raise FileNotFoundError(f"Zarr file {zfile} does not exist.")
         zfile_name = os.path.basename(zfile)
+        if not zfile.exists():
+            if self.online:
+                meta_file = download_metadata_from_product(
+                    zfile_name=str(zfile_name),
+                    local_dir=self.data_dir, 
+                    levels=[self.level_from, self.level_to], 
+                    repo_id=self.repo_id
+                )
+                with open(meta_file) as f:
+                    zarr_meta = json.load(f)
+                version = zarr_meta.get('zarr_format', 2)
+                self.calculate_patches_from_store(zfile)
+            else:
+                raise FileNotFoundError(f"Zarr file {zfile} does not exist.")
+        
         chunk_name = get_chunk_name_from_coords(y, x, zarr_file_name=zfile_name, level=level, chunks=self._stores[zfile][level].chunks, version=get_zarr_version(zfile))
         chunk_path = self.data_dir / chunk_name
         
@@ -452,7 +472,7 @@ class SARZarrDataset(Dataset):
             if self.verbose:
                 print(f"Chunk {chunk_name} not found locally. Downloading from Hugging Face Zarr archive...")
             zfile_name = os.path.basename(zfile)
-            fetch_chunk_from_hf_zarr(level=level, y=y, x=x, zarr_archive=zfile_name, local_dir=self.data_dir)
+            fetch_chunk_from_hf_zarr(level=level, y=y, x=x, zarr_archive=zfile_name, local_dir=self.data_dir, repo_id=self.repo_id)
         return chunk_path
 
     def _get_sample(self, zfile: os.PathLike, level: str, y, x, ph: int = 0, pw: int = 0) -> np.ndarray:
@@ -908,19 +928,16 @@ class KPatchSampler(Sampler):
         self.shuffle_patches = shuffle_patches
         self.seed = seed
         self.files = dataset.files #list(dataset._samples_by_file.keys())
-        self.loaded_patches = {}
         self.verbose = verbose
 
     def __iter__(self):
         rng = np.random.default_rng(self.seed)
         files = self.files.copy()
+        print(files)
         if self.shuffle_files:
             rng.shuffle(files)
         for f in files:
             # Mark patches as loaded for this file
-            self.loaded_patches[f] = True
-            if self.verbose:
-                print(f"Downloading patches for file {f}")
             self.dataset.calculate_patches_from_store(f)
             coords = self.dataset._samples_by_file[f].copy()
             t0 = time.time()
