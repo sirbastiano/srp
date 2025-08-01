@@ -149,3 +149,19 @@ def get_chunk_name_from_coords(
     else:
         chunk_fname = f"{zarr_file_name}/{level}/{cy}.{cx}"
     return chunk_fname
+
+def extract_stride_number_from_filename(filename: str) -> Optional[int]:
+    """
+    Extract the stride number from a filename formatted as ...-s{number}.zarr.
+
+    Args:
+        filename (str): The filename to parse.
+
+    Returns:
+        Optional[int]: The stride number if found, else None.
+    """
+    import re
+    match = re.search(r'([A-Za-z0-9]+)-s(\d+)-([A-Za-z0-9\-]+)\.zarr$', filename)
+    if match:
+        return int(match.group(2))
+    return None

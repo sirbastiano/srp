@@ -16,20 +16,22 @@ import os
 import functools
 from utils import get_chunk_name_from_coords, get_sample_visualization, get_zarr_version
 from api import list_base_files_in_repo
-from utils import normalize, RC_MAX, RC_MIN, GT_MAX, GT_MIN
+from utils import normalize, extract_stride_number_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN
 from api import fetch_chunk_from_hf_zarr
 from api import download_metadata_from_product
 
 class SARTransform(nn.Module):
     """
-    A PyTorch transform that normalizes SAR data patches.
+    PyTorch transform module for normalizing SAR data patches at different processing levels.
+
+    This class allows you to specify a separate transformation function for each SAR processing level (e.g., 'raw', 'rc', 'rcmc', 'az').
+    Each function should accept a NumPy array and return a transformed NumPy array.
 
     Args:
-        transform_raw (callable): Function to transform 'raw' level data.
-        transform_rc (callable): Function to transform 'rc' level data.
-        transform_rcmc (callable): Function to transform 'rcmc' level data.
-        transform_az (callable): Function to transform 'az' level data.
-        Each function should accept (x: np.ndarray, min: int, max: int).
+        transform_raw (callable, optional): Function to transform 'raw' level data.
+        transform_rc (callable, optional): Function to transform 'rc' level data.
+        transform_rcmc (callable, optional): Function to transform 'rcmc' level data.
+        transform_az (callable, optional): Function to transform 'az' level data.
     """
     def __init__(
         self,
@@ -47,6 +49,16 @@ class SARTransform(nn.Module):
         }
 
     def forward(self, x: np.ndarray, level: str) -> np.ndarray:
+        """
+        Apply the appropriate transform to the input array for the specified SAR processing level.
+
+        Args:
+            x (np.ndarray): Input data array.
+            level (str): SAR processing level ('raw', 'rc', 'rcmc', or 'az').
+
+        Returns:
+            np.ndarray: Transformed data array.
+        """
         assert level in self.transforms, f"Transform for level '{level}' not defined."
         if self.transforms[level] is None:
             return x
@@ -55,64 +67,41 @@ class SARTransform(nn.Module):
 
 class SARZarrDataset(Dataset):
     """
-    SARZarrDataset is a PyTorch Dataset for loading patches from SAR (Synthetic Aperture Radar) data stored in Zarr format.
+    PyTorch Dataset for loading SAR (Synthetic Aperture Radar) data patches from Zarr format archives.
 
-    This dataset supports efficient patch sampling from multiple Zarr files, allowing for square, rectangular, or parabolic patch extraction. It groups patch coordinates by file for efficient indexing and supports direct access to patches via (file_idx, y, x) tuples.
+    Supports efficient patch sampling from multiple Zarr files, with rectangular, or parabolic patch extraction. Handles both local and remote (Hugging Face) Zarr stores, with on-demand patch downloading and LRU chunk caching.
 
-    Key Features:
-    - Loads SAR data patches from Zarr stores, supporting both real and complex-valued data.
-    - Supports different patch sampling modes: "square", "rectangular", and "parabolic".
-    - Efficiently indexes and caches patch coordinates for fast repeated access.
-    - Allows optional transformation of patches and visualization utilities.
-    - Handles both input and target SAR processing levels (e.g., "rcmc" and "az").
-    - Supports saving and loading patch indices to avoid recomputation.
-    - Implements a chunk-level LRU (Least Recently Used) caching mechanism for efficient repeated access to data chunks.
-
-    Caching Mechanism:
-    ------------------
-    The class uses Python's functools.lru_cache to cache recently accessed data chunks. The `_load_chunk` method is wrapped with an LRU cache, whose size is controlled by the `cache_size` parameter. This means that when a patch is requested, the underlying chunk is loaded and stored in memory. If the same chunk is requested again (for a different patch or coordinate), it is retrieved from the cache, significantly speeding up repeated access and reducing disk I/O. When the cache is full, the least recently used chunks are evicted.
+    Features:
+        - Loads SAR data patches from Zarr stores (local or remote), supporting real and complex-valued data.
+        - Multiple patch sampling modes: "rectangular", "parabolic".
+        - Efficient patch coordinate indexing and caching for fast repeated access.
+        - Optional patch transformation and visualization utilities.
+        - Handles both input and target SAR processing levels (e.g., "rcmc" and "az").
+        - Supports saving/loading patch indices to avoid recomputation.
+        - Implements chunk-level LRU caching for efficient repeated access.
 
     Args:
         data_dir (str): Directory containing Zarr files.
-        file_pattern (str, optional): Glob pattern for Zarr files. Defaults to "*hh*.zarr".
+        file_pattern (str, optional): Glob pattern for Zarr files. Defaults to "*.zarr".
+        repo_id (str, optional): Hugging Face repo ID for remote access. Defaults to 'sirbastiano94/Maya4'.
+        online (bool, optional): If True, enables remote Hugging Face access. Defaults to False.
         return_whole_image (bool, optional): If True, returns the whole image as a single patch. Defaults to False.
         transform (callable, optional): Optional transform to apply to both input and target patches.
         patch_size (Tuple[int, int], optional): Size of the patch (height, width). Defaults to (256, 256).
         complex_valued (bool, optional): If True, returns complex-valued tensors. If False, returns real and imaginary parts stacked. Defaults to False.
-        level_from (str, optional): Key for the input SAR processing level in the Zarr store. Defaults to "rcmc".
-        level_to (str, optional): Key for the target SAR processing level in the Zarr store. Defaults to "az".
-        patch_mode (str, optional): Patch extraction mode: "square", "rectangular", or "parabolic". Defaults to "square".
-        parabola_a (Optional[float], optional): Curvature parameter for parabolic patch mode. Defaults to 0.001.
+        level_from (str, optional): Key for the input SAR processing level. Defaults to "rcmc".
+        level_to (str, optional): Key for the target SAR processing level. Defaults to "az".
+        patch_mode (str, optional): Patch extraction mode: "rectangular", or "parabolic". Defaults to "rectangular".
+        parabola_a (float, optional): Curvature parameter for parabolic patch mode. Defaults to 0.001.
         save_samples (bool, optional): If True, saves computed patch indices to disk. Defaults to True.
-        buffer (Optional[Tuple[int, int]], optional): Buffer (margin) to avoid sampling near image edges. Defaults to (100, 100).
-        stride (Optional[Tuple[int, int]], optional): Stride for patch extraction. Defaults to (50, 50).
+        buffer (Tuple[int, int], optional): Buffer (margin) to avoid sampling near image edges. Defaults to (100, 100).
+        stride (Tuple[int, int], optional): Stride for patch extraction. Defaults to (50, 50).
         backend (str, optional): Backend for loading Zarr data, either "zarr" or "dask". Defaults to "zarr".
-        cache_size (int, optional): Maximum number of chunks to cache in memory for fast repeated access.
-
-    Attributes:
-        files (List[Path]): List of Zarr file paths.
-        samples_by_file (Dict[int, List[Tuple[int, int]]]): Mapping from file index to list of patch coordinates.
-        total_patches (int): Total number of patches in the dataset.
-
-    Methods:
-        __len__(): Returns the total number of patches.
-        __getitem__(idx): Loads a patch given a (file_idx, y, x) tuple.
-        visualize_item(idx, ...): Visualizes a data sample at the specified index.
-        visualize_image_portion(file_idx, start_y, start_x, portion_height, portion_width, ...): Visualizes a whole portion of an image by merging multiple patches while respecting stride.
-        _sample_parabolic_patch(data, y_start): Samples a parabolic patch from the data.
-
-    Patch Coordinate Precomputation:
-    --------------------------------
-    For all patch modes, including parabolic, the valid patch coordinates are precomputed during initialization:
-    - Square/Rectangular: Regular grid sampling with stride and buffer constraints
-    - Parabolic: Center coordinates (x_center) that ensure the entire parabolic curve fits within image bounds
-      The parabolic curve equation: x = x_center + parabola_a * (j - patch_width//2)^2
-      Coordinates are validated to ensure all curve points remain within the image.
-
-    Raises:
-        AssertionError: If no valid patches are found in the dataset.
-        ValueError: If an unknown patch_mode is specified.
-        KeyError: If the specified levels are not found in the Zarr store.
+        cache_size (int, optional): Maximum number of chunks to cache in memory.
+        positional_encoding (bool, optional): If True, adds positional encoding to input patches. Defaults to True.
+        dataset_length (int, optional): Optional override for dataset length.
+        max_products (int, optional): Maximum number of Zarr products to use. Defaults to 10.
+        samples_per_prod (int, optional): Number of patches to sample per product. Defaults to 1000.
 
     Example:
         >>> dataset = SARZarrDataset("/path/to/zarrs", patch_size=(128, 128), cache_size=1000)
@@ -131,7 +120,7 @@ class SARZarrDataset(Dataset):
         complex_valued: bool = False,
         level_from: str = "rcmc",
         level_to: str = "az",
-        patch_mode: str = "square",      # square, rectangular, or parabolic
+        patch_mode: str = "rectangular",      # rectangular, or parabolic
         parabola_a: Optional[float] = 0.001,         # curvature parameter for parabolic mode
         save_samples: bool = True, 
         buffer: Tuple[int, int] = (100, 100), 
@@ -172,10 +161,16 @@ class SARZarrDataset(Dataset):
 
         self._stores: Dict[os.PathLike, zarr.core.Array] = {}
         self._samples_by_file: Dict[os.PathLike, List[Tuple[int,int]]] = {}
+        self._y_coords: Dict[os.PathLike, np.ndarray] = {}
+        self._x_coords: Dict[os.PathLike, np.ndarray] = {}
         #self.init_samples()
         self._initialize_stores()
         
     def _get_file_list(self):
+        """
+        Retrieve the list of Zarr files to use, either from the local directory or from a remote Hugging Face repository.
+        Filters files using the provided glob pattern and limits to max_products.
+        """
         if self.online:
             import fnmatch
             self.remote_files = list_base_files_in_repo(
@@ -238,53 +233,18 @@ class SARZarrDataset(Dataset):
             df = time.time() - t0
             print(f"Zarr stores initialization took {df:.2f} seconds.")
 
-    # def init_samples(self):
-    #     """
-    #     Initializes and indexes patch sample coordinates for each file in the dataset.
-    #     This method generates or loads patch coordinates used for sampling image patches from the dataset files.
-    #     It supports different patch modes ('square', 'rectangular', 'parabolic'), and can optionally return the whole image.
-    #     The coordinates are grouped by file index and stored in `self._samples_by_file`.
-    #     If a cached patch index file exists, it loads the coordinates from disk for efficiency.
-    #     Otherwise, it computes the coordinates, optionally saves them to disk, and prints timing information if verbose mode is enabled.
-    #     The method ensures that all generated patches fit within image bounds, taking into account patch size, stride, buffer, and (for parabolic patches) the parabolic curve parameters.
-    #     Raises:
-    #         ValueError: If an unknown patch mode is specified.
-    #         AssertionError: If no valid patches are found after initialization.
-    #     Side Effects:
-    #         - Updates `self._samples_by_file` with patch coordinates grouped by file name.
-    #         - Updates `self.total_patches` with the total number of patches.
-    #         - Optionally saves patch indices to a JSON file.
-    #         - Prints timing information if `self.verbose` is True.
-    #         - Resets `self.store` and `self.file_idx` to None.
-    #     """        
-    #     self._initialize_stores()
-    #     self.patch_index_file = self.data_dir / f"patch_index_{self.level_from}_{self.level_to}_{self.patch_mode}_{self.patch_size[0]}x{self.patch_size[1]}_a{self.parabola_a if self.patch_mode == 'parabolic' else 'none'}.json"
-    #     if self.patch_index_file.exists():
-    #         with open(self.patch_index_file, "r") as f:
-    #             loaded = json.load(f)
-    #         # Convert keys back to int and tuples
-    #         self._samples_by_file = {Path(k): [tuple(coord) for coord in v] for k, v in loaded.items()}
-    #     else:
-    #         # Build sample indices grouped by file
-    #         start_time = time.time()
-    #         for zfile in self.files:
-    #             self.calculate_patches_from_store(zfile)
-    #         if self.save_samples:
-    #             with open(self.patch_index_file, "w") as f:
-    #                 json.dump({k: [list(coord) for coord in v] for k, v in self._samples_by_file.items()}, f)
-    #         elapsed = time.time() - start_time  # End timing
-    #         if self.verbose:
-    #             print(f"Patch coordinate calculation took {elapsed:.2f} seconds.")
+    def calculate_patches_from_store(self, zfile:os.PathLike, patch_order: str = "row_major"):
+        """
+        Compute and store valid patch coordinates for a given Zarr file, according to the patch mode and parameters.
+        Downloads metadata if needed (in online mode) and ensures all patches fit within image bounds.
 
-    #     self.total_patches = sum(len(v) for v in self._samples_by_file.values())
-    #     assert self.total_patches > 0, "No valid patches found."
-        
-    #     self.store = None
-    #     self.file_idx = None
-        
-    def calculate_patches_from_store(self, zfile:os.PathLike):
-
-        if not zfile.exists():
+        Args:
+            zfile (os.PathLike): Path to the Zarr file.
+            patch_order (str): Ordering strategy for patch coordinates. Options are "row", "col", or "chunk".
+        """
+        level_from_dir = Path(zfile) / self.level_from
+        level_t_dir = Path(zfile) / self.level_to
+        if not Path(zfile).exists() or not level_from_dir.exists() or not level_t_dir.exists():
             if self.online:
                 zfile_name = os.path.basename(zfile)
                 download_metadata_from_product(
@@ -298,27 +258,21 @@ class SARZarrDataset(Dataset):
         
         self._append_file_to_stores(zfile)
         # Print the directories (groups/arrays) inside the Zarr store
-        if self.backend == "zarr":
-            print("Store directories:", list(self._stores[zfile].keys()))
-        elif self.backend == "dask":
-            print("Store directories:", list(self._stores[zfile].keys()))
+
         h, w = self._stores[zfile][self.level_from].shape
         coords: List[Tuple[int,int]] = []
         if self.return_whole_image:
             coords = [(0, 0)]
         else:
-            if self.patch_mode in ("square", "rectangular"):
+            stride_y, stride_x = self.stride
+            if self.patch_mode == "rectangular":
                 ph, pw = self.patch_size
                 y_min, y_max = self.buffer[0], h - self.buffer[0]
                 x_min, x_max = self.buffer[1], w - self.buffer[1]
-                
-                y_coords = np.arange(y_min, y_max - self.stride[1] + 1, self.stride[1])
-                x_coords = np.arange(x_min, x_max - self.stride[0] + 1, self.stride[0])
-                
-                # Create meshgrid and flatten to get all coordinate combinations
-                Y_grid, X_grid = np.meshgrid(y_coords, x_coords, indexing='ij')
-                # Use sample order: zip meshgrid as (y, x) in the order they appear
-                coords = list(zip(Y_grid.flatten(), X_grid.flatten()))
+
+                self._y_coords[zfile] = np.arange(y_min, y_max - stride_y + 1, stride_y)
+                self._x_coords[zfile] = np.arange(x_min, x_max - stride_x + 1, stride_x)
+
             elif self.patch_mode == "parabolic":
                 ph, pw = self.patch_size
                 a = self.parabola_a
@@ -331,40 +285,129 @@ class SARZarrDataset(Dataset):
                 # Apply buffer and ensure parabolic patch fits
                 y_min, y_max = self.buffer[0], h - ph - self.buffer[0]
                 x_min = self.buffer[1] + max_offset  # Left bound considering parabolic curve
-                x_max = w - self.buffer[1] - max_offset  # Right bound considering parabolic curve
-                
-                # Generate coordinates with appropriate stride for parabolic patches
-                stride_y, stride_x = self.stride
+                x_max = w - self.buffer[1] - max_offset  # Right bound considering parabolic curve        
                 
                 # Fully vectorized coordinate generation for maximum performance
-                y_coords = np.arange(y_min, y_max + 1, stride_y)
-                x_centers = np.arange(x_min, x_max + 1, stride_x)
-                
-                # Create meshgrid for all combinations
-                Y_grid, X_grid = np.meshgrid(y_coords, x_centers, indexing='ij')
-                
-                # Vectorized validation for all center positions at once
-                j_indices = np.arange(pw)
-                offsets = j_indices - pw // 2
-                
-                # For each x_center, calculate all x_curve positions
-                # Shape: (len(y_coords), len(x_centers), pw)
-                X_curves = X_grid[:, :, np.newaxis] + a * offsets[np.newaxis, np.newaxis, :]
-                
-                # Check bounds for all positions simultaneously
-                valid_mask = np.all((X_curves >= 0) & (X_curves < w), axis=2)
-                
-                # Extract valid coordinates
-                valid_y, valid_x = np.where(valid_mask)
-                coords.extend([(Y_grid[i, j], X_grid[i, j]) for i, j in zip(valid_y, valid_x)])
+                self._y_coords[zfile] = np.arange(y_min, y_max + 1, stride_y)
+                self._x_coords[zfile] = np.arange(x_min, x_max + 1, stride_x)
             else:
                 raise ValueError(f"Unknown patch_mode {self.patch_mode}")
-        if coords:
-            self._samples_by_file[zfile] = coords
+        coords = self.reorder_samples(zfile, patch_order=patch_order)
+        self._samples_by_file[zfile] = coords
+            
+    def reorder_samples(
+        self, zfile: os.PathLike, patch_order: str = "row"
+    ) -> List[Tuple[int, int]]:
+        """
+        Create ordered coordinates using np.meshgrid indexing parameter.
+        
+        Args:
+            zfile: Path to the Zarr file
+            patch_order: Ordering strategy for patch coordinates.
+
+        Returns:
+            List of (y, x) coordinate tuples in the specified order
+        """
+        
+        if patch_order == "row":
+            # Row-major: left-to-right, top-to-bottom (default 'xy' indexing)
+            Y_grid, X_grid = np.meshgrid(
+                self._y_coords[zfile], 
+                self._x_coords[zfile], 
+                indexing='ij' 
+            )
+            coords = list(zip(Y_grid.flatten().tolist(), X_grid.flatten().tolist()))
+            
+        elif patch_order == "col":
+            # Column-major: top-to-bottom, left-to-right
+            # Swap the order of coordinates in meshgrid and use different indexing
+            X_grid, Y_grid = np.meshgrid(
+                self._x_coords[zfile],
+                self._y_coords[zfile], 
+                indexing='ij'  
+            )
+            # For column-major, we want to iterate through Y first, then X
+            coords = list(zip(Y_grid.flatten(), X_grid.flatten()))
+            
+        elif patch_order == "chunk":
+            # Chunk-aware ordering: group by Zarr chunks
+            coords = self._create_chunk_aware_coordinates(zfile)
+            
+        else:
+            raise ValueError(f"Unknown patch_order: {patch_order}")
+        
+        return coords
+
+    def _create_chunk_aware_coordinates(self, zfile: os.PathLike) -> List[Tuple[int, int]]:
+        """
+        Generate a list of (y, x) coordinate tuples ordered by their Zarr chunk locations for improved cache performance.
+
+        This method creates a meshgrid of all possible (y, x) coordinates based on the internal coordinate arrays for the given Zarr file.
+        It then determines the chunk index for each coordinate, sorts all coordinates so that those belonging to the same chunk are grouped together,
+        and returns the sorted list. This chunk-aware ordering can significantly improve performance when accessing chunked array data.
+
+        Args:
+            zfile (os.PathLike): The path to the Zarr file for which to generate chunk-aware coordinates.
+
+        Returns:
+            List[Tuple[int, int]]: A list of (y, x) coordinate tuples, sorted such that coordinates within the same chunk are contiguous.
+
+        Notes:
+            - The chunk sizes are inferred from the Zarr store at the specified processing level (`self.level_from`).
+            - The method assumes that `self._stores`, `self._y_coords`, and `self._x_coords` are properly initialized and populated.
+            - The returned coordinate order is optimized for sequential chunk access, which can reduce I/O overhead and improve cache utilization.
+        """
+
+        # Get chunk size and patch size
+        sample = self._stores[zfile][self.level_from]
+        ch, cw = sample.chunks
+        
+        # Create coordinate grids
+        Y_grid, X_grid = np.meshgrid(
+            self._y_coords[zfile], 
+            self._x_coords[zfile], 
+            indexing='ij'
+        )
+        
+        # Calculate chunk indices
+        chunk_y_indices = Y_grid // ch
+        chunk_x_indices = X_grid // cw
+        
+        # Create a combined sorting key for chunk-aware ordering
+        # Primary sort: chunk_y, then chunk_x (process chunks row-major)
+        # Secondary sort: x_coord within chunk, then y_coord within column
+        max_chunk_x = chunk_x_indices.max() + 1
+        max_x = X_grid.max() + 1
+        
+        # Multi-level sorting key:
+        # 1. Chunk row (chunk_y)
+        # 2. Chunk column (chunk_x) 
+        # 3. X coordinate within chunk (for column-wise processing)
+        # 4. Y coordinate within column (for vertical sampling)
+        sort_key = (
+            chunk_y_indices * max_chunk_x * max_x * Y_grid.max() +
+            chunk_x_indices * max_x * Y_grid.max() +
+            X_grid * Y_grid.max() +
+            Y_grid
+        )
+        
+        # Get sort indices
+        sort_indices = np.argsort(sort_key.flatten())
+        
+        # Apply sorting to coordinates
+        flat_y, flat_x = Y_grid.flatten(), X_grid.flatten()
+        coords = [(int(flat_y[i]), int(flat_x[i])) for i in sort_indices]
+        
+        return coords
+    
     def __len__(self):
+        """
+        Return the total number of patches in the dataset (samples_per_prod * max_products).
+        """
         return self._samples_per_prod * self._max_products
 
     def __getitem__(self, idx: Tuple[str, int, int]) -> Tuple[torch.Tensor, torch.Tensor]:
+
         """
         Load a patch from the dataset given a (zfile, y, x) tuple.
 
@@ -387,15 +430,23 @@ class SARZarrDataset(Dataset):
             - If a `transform` is provided, it is applied to both input and target patches.
         """
         zfile, y, x = idx
+
+        # Extract stride number from filename if present
+        stride_number = extract_stride_number_from_filename(zfile.name)
         zfile = Path(zfile)
-        t0 = time.time() 
+        t0 = time.time()
+
+        # Retrieve the horizontal size (width) from the store for self.level_from
+        width = self._stores[zfile][self.level_from].shape[1]
+        # You can now use 'width' as needed in your logic
+
         if self.patch_mode == "parabolic":
             patch_from = self._sample_parabolic_patch(zfile, self.level_from, x, y)
             patch_to = self._sample_parabolic_patch(zfile, self.level_to, x, y)
         else:
             ph, pw = self.patch_size
-            patch_from = self._get_sample(zfile, self.level_from, y, x, ph, pw) # data_x[y:y+ph, x:x+pw].astype(np.complex64)
-            patch_to = self._get_sample(zfile, self.level_to, y, x, ph, pw) #data_y[y:y+ph, x:x+pw].astype(np.complex64)
+            patch_from = self._get_sample(zfile, self.level_from, y, x, ph, pw)
+            patch_to = self._get_sample(zfile, self.level_to, y, x, ph, pw)
 
         if self.transform:
             patch_from = self.transform(patch_from, self.level_from)
@@ -406,36 +457,17 @@ class SARZarrDataset(Dataset):
             patch_to = np.stack((patch_to.real, patch_to.imag), axis=0).astype(np.float32)
 
         if self.positional_encoding:
-            patch_from = self.add_position_embedding(patch_from, y)
-            
+            index = y + stride_number * width
+            patch_from = self.add_position_embedding(patch_from, index)
+
         x_tensor = torch.from_numpy(patch_from)
         y_tensor = torch.from_numpy(patch_to)
         if self.verbose:
             elapsed = time.time() - t0
-            print(f"Loading patch ({zfile}, {y}, {x}) took {elapsed:.2f} seconds.")
+            print(f"Loading patch ({zfile}, {y}, {x}) took {elapsed:.2f} seconds. Stride number: {stride_number}")
 
         return x_tensor, y_tensor
-
-    def _load_chunk_uncached(self, zfile: os.PathLike, level: str, cy: int, cx: int) -> np.ndarray:
-        """
-        Reads and decompresses a full chunk from a Zarr store for a specified file, level, and chunk indices.
-
-        Parameters:
-            zfile (os.PathLike): Path to the Zarr file in the dataset.
-            level (str): The resolution level or group within the Zarr store.
-            cy (int): The vertical chunk index.
-            cx (int): The horizontal chunk index.
-
-        Returns:
-            np.ndarray: The requested chunk as a NumPy array of type np.complex64.
-        """
-        arr = self._stores[zfile][level]
-        ch, cw = arr.chunks
-        y0, x0 = cy * ch, cx * cw
-        self._download_sample_if_missing(zfile, level, y0, x0)
-        chunk = arr[y0:y0+ch, x0:x0+cw]
-        return chunk.astype(np.complex64)
-
+    
     def _download_sample_if_missing(self, zfile: os.PathLike, level: str, y: int, x: int) -> Path:
         """
         Downloads a missing sample patch from the Hugging Face Zarr archive if it is not already available locally.
@@ -475,24 +507,225 @@ class SARZarrDataset(Dataset):
             fetch_chunk_from_hf_zarr(level=level, y=y, x=x, zarr_archive=zfile_name, local_dir=self.data_dir, repo_id=self.repo_id)
         return chunk_path
 
-    def _get_sample(self, zfile: os.PathLike, level: str, y, x, ph: int = 0, pw: int = 0) -> np.ndarray:
+
+    def _load_chunk_uncached(self, zfile: os.PathLike, level: str, cy: int, cx: int) -> np.ndarray:
         """
-        Retrieves a sample patch from the Zarr store at the specified level and coordinates.
+        Load a single chunk at chunk coordinates (cy, cx).
+        This is the cacheable unit - individual chunks.
         
         Args:
-            zfile (str): Path to the Zarr file in the dataset.
-            level (str): The processing level to retrieve data from (e.g., "rcmc", "az").
-            y (int): The y-coordinate of the patch.
-            x (int): The x-coordinate of the patch.
+            zfile (os.PathLike): Path to the Zarr file.
+            level (str): Zarr group/level name.
+            cy (int): Chunk y-index.
+            cx (int): Chunk x-index.
+            
+        Returns:
+            np.ndarray: Single chunk data.
+        """
+        arr = self._stores[zfile][level]
+        ch, cw = arr.chunks
+        
+        # Calculate actual array coordinates for this chunk
+        chunk_y_start = cy * ch
+        chunk_x_start = cx * cw
+        chunk_y_end = min(chunk_y_start + ch, arr.shape[0])
+        chunk_x_end = min(chunk_x_start + cw, arr.shape[1])
+        
+        # Ensure the chunk is downloaded if not already available
+        if self.online:
+            self._download_sample_if_missing(zfile, level, chunk_y_start, chunk_x_start)
+        
+        # Load the actual chunk data
+        chunk_data = arr[chunk_y_start:chunk_y_end, chunk_x_start:chunk_x_end]
+        
+        return chunk_data.astype(np.complex64)
+    
+    def _get_sample_from_cached_chunks_vectorized(self, zfile: os.PathLike, level: str, y: int, x: int, ph: int, pw: int) -> np.ndarray:
+        """
+        Optimized version that dispatches to specialized methods based on patch geometry.
+        """
+        arr = self._stores[zfile][level]
+        ch, cw = arr.chunks
+        
+        # Dispatch to optimized methods based on patch type
+        if ph == 1:
+            # Horizontal strip - most optimized
+            return self._get_horizontal_strip_optimized(zfile, level, y, x, pw, ch, cw)
+        elif pw == 1:
+            # Vertical strip
+            return self._get_vertical_strip_optimized(zfile, level, y, x, ph, ch, cw)
+        elif ph <= ch and pw <= cw:
+            # Small rectangular patch that likely fits in single chunk
+            return self._get_small_patch_optimized(zfile, level, y, x, ph, pw, ch, cw)
+        else:
+            # Large rectangular patch - needs multi-chunk handling
+            return self._get_large_patch_optimized(zfile, level, y, x, ph, pw, ch, cw)
+    def _get_large_patch_optimized(self, zfile: os.PathLike, level: str, y: int, x: int, ph: int, pw: int, ch: int, cw: int) -> np.ndarray:
+        """
+        Optimized for large rectangular patches spanning multiple chunks.
+        Uses direct extraction instead of creating large temporary arrays.
+        """
+        # Calculate chunk spans
+        cy_start, cx_start = y // ch, x // cw
+        cy_end, cx_end = (y + ph - 1) // ch, (x + pw - 1) // cw
+        
+        # Pre-allocate final patch only
+        patch = np.zeros((ph, pw), dtype=np.complex64)
+        
+        # Direct extraction without temporary arrays
+        for cy in range(cy_start, cy_end + 1):
+            for cx in range(cx_start, cx_end + 1):
+                chunk = self._load_chunk(zfile, level, cy, cx)
+                
+                # Calculate intersection bounds
+                chunk_y_start, chunk_x_start = cy * ch, cx * cw
+                chunk_y_end = chunk_y_start + chunk.shape[0]
+                chunk_x_end = chunk_x_start + chunk.shape[1]
+                
+                # Global coordinates
+                y_start = max(y, chunk_y_start)
+                y_end = min(y + ph, chunk_y_end)
+                x_start = max(x, chunk_x_start)
+                x_end = min(x + pw, chunk_x_end)
+                
+                if y_start < y_end and x_start < x_end:
+                    # Source indices in chunk
+                    src_y1, src_y2 = y_start - chunk_y_start, y_end - chunk_y_start
+                    src_x1, src_x2 = x_start - chunk_x_start, x_end - chunk_x_start
+                    
+                    # Destination indices in patch
+                    dst_y1, dst_y2 = y_start - y, y_end - y
+                    dst_x1, dst_x2 = x_start - x, x_end - x
+                    
+                    # Direct copy
+                    patch[dst_y1:dst_y2, dst_x1:dst_x2] = chunk[src_y1:src_y2, src_x1:src_x2]
+        
+        return patch
+    def _get_small_patch_optimized(self, zfile: os.PathLike, level: str, y: int, x: int, ph: int, pw: int, ch: int, cw: int) -> np.ndarray:
+        """
+        Optimized for small patches that likely fit in a single chunk.
+        """
+        cy, cx = y // ch, x // cw
+        chunk = self._load_chunk(zfile, level, cy, cx)
+        
+        dy, dx = y % ch, x % cw
+        
+        # Fast path: patch fits entirely in chunk
+        if dy + ph <= chunk.shape[0] and dx + pw <= chunk.shape[1]:
+            return chunk[dy:dy+ph, dx:dx+pw].copy()
+        
+        # Boundary case: use minimal allocation
+        patch = np.zeros((ph, pw), dtype=np.complex64)
+        max_h = min(ph, chunk.shape[0] - dy)
+        max_w = min(pw, chunk.shape[1] - dx)
+        
+        if max_h > 0 and max_w > 0:
+            patch[:max_h, :max_w] = chunk[dy:dy+max_h, dx:dx+max_w]
+        
+        return patch
+    def _get_strip_optimized(self, zfile: os.PathLike, level: str, y: int, x: int, length: int, ch: int, cw: int, axis: int) -> np.ndarray:
+        """
+        Optimized extraction for strips (vertical or horizontal).
+        axis=0: vertical strip (shape=(length, 1)), axis=1: horizontal strip (shape=(1, length))
+        """
+        if axis == 0:
+            # Vertical strip: patch_size=(length, 1)
+            cy_start, cy_end = y // ch, (y + length - 1) // ch
+            cx = x // cw
+            strip = np.zeros(length, dtype=np.complex64)
+            current_pos = 0
+            for cy in range(cy_start, cy_end + 1):
+                chunk = self._load_chunk(zfile, level, cy, cx)
+                chunk_y_start = cy * ch
+                global_start = max(y, chunk_y_start)
+                global_end = min(y + length, chunk_y_start + chunk.shape[0])
+                if global_start < global_end:
+                    dx = x % cw
+                    if dx < chunk.shape[1]:
+                        local_start = global_start - chunk_y_start
+                        local_end = global_end - chunk_y_start
+                        slice_height = local_end - local_start
+                        strip[current_pos:current_pos + slice_height] = chunk[local_start:local_end, dx]
+                        current_pos += slice_height
+            return strip.reshape(length, 1)
+        elif axis == 1:
+            # Horizontal strip: patch_size=(1, length)
+            cx_start, cx_end = x // cw, (x + length - 1) // cw
+            cy = y // ch
+            strip = np.zeros(length, dtype=np.complex64)
+            current_pos = 0
+            for cx in range(cx_start, cx_end + 1):
+                chunk = self._load_chunk(zfile, level, cy, cx)
+                chunk_x_start = cx * cw
+                global_start = max(x, chunk_x_start)
+                global_end = min(x + length, chunk_x_start + chunk.shape[1])
+                if global_start < global_end:
+                    dy = y % ch
+                    if dy < chunk.shape[0]:
+                        local_start = global_start - chunk_x_start
+                        local_end = global_end - chunk_x_start
+                        slice_width = local_end - local_start
+                        strip[current_pos:current_pos + slice_width] = chunk[dy, local_start:local_end]
+                        current_pos += slice_width
+            return strip.reshape(1, length)
+        else:
+            raise ValueError("axis must be 0 (vertical) or 1 (horizontal)")
+
+    # For backward compatibility, you can alias the old methods:
+    def _get_vertical_strip_optimized(self, zfile, level, y, x, ph, ch, cw):
+        return self._get_strip_optimized(zfile, level, y, x, ph, ch, cw, axis=0)
+
+    def _get_horizontal_strip_optimized(self, zfile, level, y, x, pw, ch, cw):
+        return self._get_strip_optimized(zfile, level, y, x, pw, ch, cw, axis=1)
+
+    def _get_sample_from_cached_chunks(self, zfile: os.PathLike, level: str, y: int, x: int, ph: int, pw: int) -> np.ndarray:
+        """
+        Highly optimized version with fast single-chunk path.
+        """
+        arr = self._stores[zfile][level]
+        ch, cw = arr.chunks
+        
+        # Pre-calculate chunk coordinates
+        cy_start, cx_start = y // ch, x // cw
+        cy_end, cx_end = (y + ph - 1) // ch, (x + pw - 1) // cw
+        
+        # Fast path: single chunk (handles ~80-90% of cases)
+        if cy_start == cy_end and cx_start == cx_end:
+            chunk = self._load_chunk(zfile, level, cy_start, cx_start)
+            dy, dx = y % ch, x % cw  # Faster than subtraction
+            
+            # Bounds check only once
+            if dy + ph <= chunk.shape[0] and dx + pw <= chunk.shape[1]:
+                return chunk[dy:dy+ph, dx:dx+pw].copy()  # Direct slice
+            else:
+                # Handle boundary case
+                patch = np.zeros((ph, pw), dtype=np.complex64)
+                max_h = min(ph, chunk.shape[0] - dy)
+                max_w = min(pw, chunk.shape[1] - dx)
+                patch[:max_h, :max_w] = chunk[dy:dy+max_h, dx:dx+max_w]
+                return patch
+        
+        # Multi-chunk path (only when necessary)
+        return self._get_sample_from_cached_chunks_vectorized(zfile, level, y, x, ph, pw)
+    
+    def _get_sample(self, zfile: os.PathLike, level: str, y, x, ph: int = 0, pw: int = 0) -> np.ndarray:
+        """
+        Retrieve a sample patch from the Zarr store at the specified level and coordinates.
+
+        Args:
+            zfile (os.PathLike): Path to the Zarr file.
+            level (str): Processing level (e.g., 'rcmc', 'az').
+            y (int): y-coordinate of the patch.
+            x (int): x-coordinate of the patch.
             ph (int): Patch height.
             pw (int): Patch width.
-        
+
         Returns:
-            np.ndarray: The desired patch as numpy array.
+            np.ndarray: The desired patch as a NumPy array.
         """
-        sample = self._stores[zfile][level]
         t0 = time.time()
         if self.backend == "dask":
+            sample = self._stores[zfile][level]
             if ph == 0 and pw == 0: 
                 arr = sample[y, x].compute() 
             elif ph == 0:   
@@ -506,36 +739,20 @@ class SARZarrDataset(Dataset):
                 print(f"Loading {level} data took {delta_t:.2f} seconds.")
             return arr.astype(np.complex64)
         elif self.backend == "zarr":
-            ch, cw = sample.chunks
-            cy, cx = y // ch, x // cw
-            chunk = self._load_chunk(zfile, level, cy, cx)
-            dy, dx = y - cy * ch, x - cx * cw
-            patch = chunk[dy:dy+ph, dx:dx+pw]
-            # pad if near array edge or chunk smaller
-            h0, w0 = patch.shape
-            
-            if h0 < ph or w0 < pw:
-                pad_h = ph - h0 if h0 < ph else 0
-                pad_w = pw - w0 if w0 < pw else 0
-                patch = np.pad(
-                    patch,
-                    ((0, pad_h), (0, pad_w)),
-                    mode='constant',
-                    constant_values=0
-                )
+            patch = self._get_sample_from_cached_chunks(zfile, level, y, x, ph, pw)
             return patch
         else:
             raise ValueError(f"Unknown backend {self.backend}")
         
     def open_archive(self, zfile: os.PathLike) -> (zarr.Group | zarr.Array):
         """
-        Opens a Zarr archive and returns the root group.
-        
+        Open a Zarr archive and return the root group or array, depending on backend.
+
         Args:
             zfile (os.PathLike): Path to the Zarr file.
-        
+
         Returns:
-            zarr.Group: The root group of the Zarr archive.
+            zarr.Group or zarr.Array: The root group or array of the Zarr archive.
         """
         if self.backend == "dask":
             return da.from_zarr(zfile)
@@ -703,16 +920,17 @@ class SARZarrDataset(Dataset):
         return patch
     def add_position_embedding(self, inp: np.ndarray, item_index: int, max_length: int = 10000) -> np.ndarray:
         """
-        Adds a position embedding column to the input numpy array.
+        Add a position embedding column to the input numpy array.
 
         Args:
             inp (np.ndarray): Input array of shape (N, D).
             item_index (int): Index of the item (used for position embedding).
-            max_length (int): Maximum length for position embedding (default: 10000).
+            max_length (int): Maximum length for position embedding.
 
         Returns:
             np.ndarray: Output array with position embedding appended as the last column.
         """
+
         position_embedding = np.full((max_length, 1), (item_index + 1) / (2 * max_length))
         # If inp has shape (N, D), position_embedding should have shape (N, 1)
         if inp.shape[0] != max_length:
@@ -720,217 +938,44 @@ class SARZarrDataset(Dataset):
         out = np.concatenate((inp, position_embedding), axis=1)
         return out
 
-    def visualize_image_portion(self, 
-                               zfile: Union[str, os.PathLike],
-                               start_y: int, 
-                               start_x: int,
-                               portion_height: int,
-                               portion_width: int,
-                               plot_type: str = 'magnitude',
-                               show: bool = True,
-                               vminmax: Optional[Union[Tuple[float, float], str]] = 'auto',
-                               figsize: Tuple[int, int] = (15, 8),
-                               save_path: Optional[str] = None) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Visualizes a whole portion of an image by merging multiple patches while handling stride properly.
-        
-        This method takes starting coordinates and a desired portion size, then samples and merges
-        multiple patches to reconstruct the requested image portion. It handles stride properly by
-        taking only the stride-sized portion from each patch (not the full patch) to avoid overlap.
-        
-        Args:
-            zfile (Union[str, os.PathLike]): Path to the Zarr file to visualize from.
-            start_y (int): Starting y-coordinate of the portion to visualize.
-            start_x (int): Starting x-coordinate of the portion to visualize.
-            portion_height (int): Height of the portion to visualize.
-            portion_width (int): Width of the portion to visualize.
-            plot_type (str, optional): Type of visualization ('magnitude', 'phase', 'real', 'imag'). Defaults to 'magnitude'.
-            show (bool, optional): Whether to display the plot. Defaults to True.
-            vminmax (Optional[Union[Tuple[float, float], str]], optional): Color scale limits or 'auto' for automatic scaling. Defaults to 'auto'.
-            figsize (Tuple[int, int], optional): Figure size for matplotlib. Defaults to (15, 8).
-            save_path (Optional[str], optional): Path to save the visualization. If None, image is not saved.
-            
-        Returns:
-            Tuple[np.ndarray, np.ndarray]: Merged arrays for input (level_from) and target (level_to) portions.
-            
-        Raises:
-            ValueError: If the requested portion extends beyond available patches or image boundaries.
-            
-        Notes:
-            - Only works with square/rectangular patch modes, not parabolic.
-            - Uses stride-sized portions from each patch to create seamless merging without overlap.
-            - For complex data, the visualization type determines what component is shown.
-            - The merged result represents a continuous image portion reconstructed from patches.
-        """
-        import matplotlib.pyplot as plt
-        
-        if self.patch_mode == "parabolic":
-            raise ValueError("Image portion visualization is not supported for parabolic patch mode.")
-            
-        if zfile not in self._samples_by_file:
-            raise ValueError(f"File {zfile} not found in dataset.")
-        
-        # Get patch and stride information
-        patch_h, patch_w = self.patch_size
-        stride_h, stride_w = self.stride
-        
-        # Calculate how many patches we need in each dimension
-        patches_needed_h = (portion_height + stride_h - 1) // stride_h
-        patches_needed_w = (portion_width + stride_w - 1) // stride_w
-        
-        # Initialize merged arrays
-        merged_input = np.zeros((portion_height, portion_width), dtype=np.complex64)
-        merged_target = np.zeros((portion_height, portion_width), dtype=np.complex64)
-        
-        # Track coverage for proper merging
-        coverage_mask = np.zeros((portion_height, portion_width), dtype=bool)
-        
-        patches_found = 0
-        patches_used = 0
-        
-        # Iterate through the grid of patches needed
-        for i in range(patches_needed_h):
-            for j in range(patches_needed_w):
-                # Calculate patch coordinates in the original image
-                patch_y = start_y + i * stride_h
-                patch_x = start_x + j * stride_w
-                
-                # Check if this patch exists in our dataset
-                patch_coord = (patch_y, patch_x)
-                if patch_coord in self._samples_by_file[zfile]:
-                    patches_found += 1
-                    
-                    # Get the patch data using __getitem__
-                    try:
-                        input_patch, target_patch = self.__getitem__((self.files.index(str(zfile)), patch_y, patch_x))
-                        
-                        # Convert back to numpy and handle complex conversion
-                        if not self.complex_valued:
-                            # Data is stored as [real, imag] channels, convert back to complex
-                            if input_patch.dim() == 3:  # Check if it's a 3D tensor
-                                input_patch_np = input_patch[0].numpy() + 1j * input_patch[1].numpy()
-                                target_patch_np = target_patch[0].numpy() + 1j * target_patch[1].numpy()
-                            else:
-                                # Handle 2D case
-                                input_patch_np = input_patch.numpy().astype(np.complex64)
-                                target_patch_np = target_patch.numpy().astype(np.complex64)
-                        else:
-                            input_patch_np = input_patch.numpy()
-                            target_patch_np = target_patch.numpy()
-                        
-                        # Calculate where this patch should go in the merged array
-                        merge_start_y = i * stride_h
-                        merge_start_x = j * stride_w
-                        merge_end_y = min(merge_start_y + stride_h, portion_height)
-                        merge_end_x = min(merge_start_x + stride_w, portion_width)
-                        
-                        # Calculate the actual patch region to copy (respecting stride, not full patch)
-                        patch_copy_h = merge_end_y - merge_start_y
-                        patch_copy_w = merge_end_x - merge_start_x
-                        
-                        # Copy the stride-sized portion from the patch to merged array
-                        merged_input[merge_start_y:merge_end_y, merge_start_x:merge_end_x] = \
-                            input_patch_np[:patch_copy_h, :patch_copy_w]
-                        merged_target[merge_start_y:merge_end_y, merge_start_x:merge_end_x] = \
-                            target_patch_np[:patch_copy_h, :patch_copy_w]
-                        
-                        coverage_mask[merge_start_y:merge_end_y, merge_start_x:merge_end_x] = True
-                        patches_used += 1
-                            
-                    except Exception as e:
-                        if self.verbose:
-                            print(f"Warning: Could not load patch at ({patch_y}, {patch_x}): {e}")
-                        continue
-        
-        if patches_used == 0:
-            raise ValueError(f"No valid patches found for the requested portion starting at ({start_y}, {start_x})")
-        
-        if self.verbose:
-            coverage_percent = np.sum(coverage_mask) / coverage_mask.size * 100
-            print(f"Merged {patches_used}/{patches_found} available patches. Coverage: {coverage_percent:.1f}%")
-        
-        # Create visualization
-        fig, axes = plt.subplots(1, 2, figsize=figsize)
-        
-        # Process data for visualization
-        input_vis, input_vmin, input_vmax = get_sample_visualization(
-            merged_input, plot_type=plot_type, vminmax=vminmax
-        )
-        target_vis, target_vmin, target_vmax = get_sample_visualization(
-            merged_target, plot_type=plot_type, vminmax=vminmax
-        )
-        
-        # Plot input (level_from)
-        im1 = axes[0].imshow(input_vis, aspect='auto', cmap='viridis', 
-                           vmin=input_vmin, vmax=input_vmax)
-        axes[0].set_title(f'{self.level_from.upper()} - {plot_type.title()}')
-        axes[0].set_xlabel('Range')
-        axes[0].set_ylabel('Azimuth')
-        cbar1 = plt.colorbar(im1, ax=axes[0], fraction=0.046, pad=0.04)
-        cbar1.ax.tick_params(labelsize=8)
-        
-        # Plot target (level_to)
-        im2 = axes[1].imshow(target_vis, aspect='auto', cmap='viridis',
-                           vmin=target_vmin, vmax=target_vmax)
-        axes[1].set_title(f'{self.level_to.upper()} - {plot_type.title()}')
-        axes[1].set_xlabel('Range')
-        axes[1].set_ylabel('Azimuth')
-        cbar2 = plt.colorbar(im2, ax=axes[1], fraction=0.046, pad=0.04)
-        cbar2.ax.tick_params(labelsize=8)
-        
-        # Add coverage information
-        fig.suptitle(f'Image Portion: File {file_idx}, Start ({start_y}, {start_x}), '
-                    f'Size ({portion_height}, {portion_width})\n'
-                    f'Patches Used: {patches_used}, Coverage: {np.sum(coverage_mask) / coverage_mask.size * 100:.1f}%',
-                    fontsize=12)
-        
-        plt.tight_layout()
-        
-        # Save if requested
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            if self.verbose:
-                print(f"Visualization saved to: {save_path}")
-        
-        if show:
-            plt.show()
-        else:
-            plt.close(fig)
-            
-        return merged_input, merged_target
-
 class KPatchSampler(Sampler):
     """
-    Sampler that yields (file_idx, y, x) tuples.
-    Draws k patches from each file in round-robin, shuffling between epochs.
+    PyTorch Sampler that yields (file_idx, y, x) tuples for patch sampling.
+    Draws k patches from each file in round-robin, with optional shuffling of files and patches.
 
     Args:
         dataset (SARZarrDataset): The dataset to sample patches from.
         samples_per_prod (int): Number of patches to sample per file. If 0, all patches are sampled.
         shuffle_files (bool): Whether to shuffle the order of files between epochs.
         shuffle_patches (bool): Whether to shuffle the patches within each file.
-        seed (int): Random seed for reproducibility of shuffling.
+        seed (int): Random seed for reproducibility.
+        verbose (bool): If True, prints timing and sampling info.
+        max_products (int): Maximum number of products to sample from.
+        patch_order (str): Order in which to sample patches from each file. Options are "row", "col", or "chunk".
+        samples_per_prod (int): Number of patches to sample per product. If 0, all patches are sampled.
     """
     def __init__(
         self,
         dataset: SARZarrDataset,
         samples_per_prod: int = 0,
         shuffle_files: bool = True,
-        shuffle_patches: bool = True,
         seed: int = 42, 
         verbose: bool = True, 
-        max_products: int = 3, 
-        window_size: Tuple[int, int] = (4000, 4000)
+        patch_order: str = "row",
     ):
         self.dataset = dataset
         self.samples_per_prod = samples_per_prod
         self.shuffle_files = shuffle_files
-        self.shuffle_patches = shuffle_patches
+        self.patch_order = patch_order
         self.seed = seed
         self.files = dataset.files #list(dataset._samples_by_file.keys())
         self.verbose = verbose
 
     def __iter__(self):
+        """
+        Iterate over the dataset, yielding (file_idx, y, x) tuples for patch sampling.
+        Shuffles files and/or patches if enabled.
+        """
         rng = np.random.default_rng(self.seed)
         files = self.files.copy()
         print(files)
@@ -938,11 +983,10 @@ class KPatchSampler(Sampler):
             rng.shuffle(files)
         for f in files:
             # Mark patches as loaded for this file
-            self.dataset.calculate_patches_from_store(f)
+            self.dataset.calculate_patches_from_store(f, patch_order=self.patch_order)
             coords = self.dataset._samples_by_file[f].copy()
             t0 = time.time()
-            if self.shuffle_patches:
-                rng.shuffle(coords)
+
             n = len(coords) if self.samples_per_prod <= 0 else min(self.samples_per_prod, len(coords))
             for y, x in coords[:n]:
                 if self.verbose:
@@ -953,6 +997,9 @@ class KPatchSampler(Sampler):
                 print(f"Sampling {n} patches from file {f} took {elapsed:.2f} seconds.")
 
     def __len__(self):
+        """
+        Return the total number of samples to be drawn by the sampler.
+        """
         if self.samples_per_prod > 0:
             return sum(min(self.samples_per_prod, len(v)) for v in self.dataset._samples_by_file.values())
         return self.dataset.total_patches
@@ -966,14 +1013,14 @@ def get_sar_dataloader(
     transform: Optional[Callable]=None,
     level_from: str = "rcmc",
     level_to: str = "az",
-    patch_mode: str = "square",
+    patch_mode: str = "rectangular",
     patch_size: Tuple[int, int] = (512, 512),
     buffer: Tuple[int, int] = (100, 100),
     stride: Tuple[int, int] = (50, 50),
     backend: str = "zarr",  # "zarr" or "dask
     parabola_a: float = 0.001,
     shuffle_files: bool = True,
-    shuffle_patches: bool = True, 
+    patch_order: str = "row",  # "row", "col", or "chunk"
     complex_valued: bool = False,
     save_samples: bool = True, 
     verbose: bool = True, 
@@ -983,35 +1030,35 @@ def get_sar_dataloader(
     online: bool = True
 ) -> DataLoader:
     """
-    Creates and returns a DataLoader for SAR (Synthetic Aperture Radar) data using the SARZarrDataset and KPatchSampler.
+    Create and return a PyTorch DataLoader for SAR data using SARZarrDataset and KPatchSampler.
 
     Args:
         data_dir (str): Path to the directory containing SAR data.
+        file_pattern (str, optional): Glob pattern for Zarr files. Defaults to "*.zarr".
         batch_size (int, optional): Number of samples per batch. Defaults to 8.
-        num_workers (int, optional): Number of subprocesses to use for data loading. Defaults to 2.
-        return_whole_image (bool, optional): If True, returns the whole image instead of patches. Defaults to False.
-        transform (callable, optional): Optional transform to be applied on a sample.
-        level_from (str, optional): The starting processing level of the SAR data. Defaults to "rcmc".
-        level_to (str, optional): The target processing level of the SAR data. Defaults to "az".
-        patch_mode (str, optional): Mode for patch extraction (e.g., "square"). Defaults to "square".
-        patch_size (Tuple[int, int], optional): Size of the patches to extract. Defaults to (512, 512).
-        buffer (Tuple[int, int], optional): Buffer size around patches. Defaults to (100, 100).
+        num_workers (int, optional): Number of subprocesses for data loading. Defaults to 2.
+        return_whole_image (bool, optional): If True, returns the whole image. Defaults to False.
+        transform (callable, optional): Optional transform to apply to samples.
+        level_from (str, optional): Input SAR processing level. Defaults to "rcmc".
+        level_to (str, optional): Target SAR processing level. Defaults to "az".
+        patch_mode (str, optional): Patch extraction mode. Defaults to "rectangular".
+        patch_size (Tuple[int, int], optional): Patch size. Defaults to (512, 512).
+        buffer (Tuple[int, int], optional): Buffer size. Defaults to (100, 100).
         stride (Tuple[int, int], optional): Stride for patch extraction. Defaults to (50, 50).
-        backend (str, optional): Backend for loading Zarr data, either "zarr"
+        backend (str, optional): Backend for loading Zarr data. Defaults to "zarr".
         parabola_a (float, optional): Parabola parameter for patch extraction. Defaults to 0.001.
-        samples_per_prod (int, optional): Number of patches to sample per image. Defaults to 0 (all patches).
-        shuffle_files (bool, optional): Whether to shuffle the order of files. Defaults to True.
-        shuffle_patches (bool, optional): Whether to shuffle the order of patches. Defaults to True.
+        shuffle_files (bool, optional): Shuffle file order. Defaults to True.
+        patch_order (str, optional): Patch extraction order. Defaults to "row".
         complex_valued (bool, optional): If True, loads data as complex-valued. Defaults to False.
         save_samples (bool, optional): If True, saves sampled patches. Defaults to True.
-        cache_size (int, optional): size of the cache for saving least recently accessed chunks
-        max_products (int, optional): Maximum number of products consider for the dataloader. Defaults to 10.
-        
+        cache_size (int, optional): LRU cache size for chunks. Defaults to 10000.
+        max_products (int, optional): Maximum number of products. Defaults to 10.
+        samples_per_prod (int, optional): Number of patches per product. Defaults to 0 (all patches).
         online (bool, optional): If True, uses online data loading. Defaults to True.
-        verbose (bool, optional): If True, prints additional information during processing. Defaults to True
+        verbose (bool, optional): If True, prints additional info. Defaults to True.
 
     Returns:
-        DataLoader: A PyTorch DataLoader for the SAR dataset.
+        DataLoader: PyTorch DataLoader for the SAR dataset.
     """
     dataset = SARZarrDataset(
         data_dir=data_dir,
@@ -1038,7 +1085,7 @@ def get_sar_dataloader(
         dataset,
         samples_per_prod=samples_per_prod,
         shuffle_files=shuffle_files,
-        shuffle_patches=shuffle_patches, 
+        patch_order=patch_order,
         verbose=verbose
     )
     return DataLoader(
@@ -1064,10 +1111,10 @@ if __name__ == "__main__":
        level_to="az",
        batch_size=4,
        num_workers=4,
-       patch_mode="square", 
+       patch_mode="rectangular", 
        complex_valued=False, 
        shuffle_files=False, 
-       shuffle_patches=False, 
+       patch_order="col", 
        transform=transforms
        #patch_mode="parabolic",
        #parabola_a=0.0005,

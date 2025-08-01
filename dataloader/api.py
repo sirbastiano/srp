@@ -123,6 +123,12 @@ def list_files_in_repo(repo_id: str, path_in_repo: str, filters: list) -> list:
 def parser():    
     """
     Parse command line arguments for the script.
+
+    Returns:
+        argparse.Namespace: Parsed arguments.
+    """
+    """
+    Parse command line arguments for the script.
     
     Returns:
         argparse.Namespace: Parsed arguments.
@@ -153,6 +159,17 @@ def download_wrapper(file: huggingface_hub.hf_api.RepoFile, repo_id: str, output
     Returns:
         None
     """
+    """
+    Wrapper function to download a file using the Hugging Face Hub.
+
+    Args:
+        file (RepoFile): File object to download.
+        repo_id (str): Repository ID.
+        output_dir (Optional[str]): Local directory to save the file.
+
+    Returns:
+        None
+    """
     filename = file.path
     try:
         download_file_from_hf(repo_id, filename, output_dir)
@@ -163,6 +180,21 @@ def down(repo_id: str = 'sirbastiano94/Maya4',
          path_in_repo: str = 's1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr', 
          filters: list = ['rc', 'az'], 
          output_dir: Optional[str] = None) -> None:
+    """
+    Main function to filter files by modalities and download them from the Hugging Face Hub.
+
+    Args:
+        repo_id (str): Repository ID.
+        path_in_repo (str): Path in the repository.
+        filters (list): List of modalities to filter by.
+        output_dir (Optional[str]): Local directory to download files to.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If filters is not a list.
+    """
     """
     Main function to filter files by modalities and download them from the Hugging Face Hub.
 
