@@ -456,7 +456,7 @@ class SARZarrDataset(Dataset):
         zfile, y, x = idx
 
         # Extract stride number from filename if present
-        stride_number = extract_stride_number_from_filename(zfile.name)
+        stride_number = extract_stride_number_from_filename(os.path.basename(zfile))
         zfile = Path(zfile)
         t0 = time.time()
 
@@ -1053,6 +1053,7 @@ def get_sar_dataloader(
     patch_size: Tuple[int, int] = (512, 512),
     buffer: Tuple[int, int] = (100, 100),
     stride: Tuple[int, int] = (50, 50),
+    positional_encoding: bool = True,
     backend: str = "zarr",  # "zarr" or "dask
     parabola_a: float = 0.001,
     shuffle_files: bool = True,
@@ -1081,6 +1082,7 @@ def get_sar_dataloader(
         patch_size (Tuple[int, int], optional): Patch size. Defaults to (512, 512).
         buffer (Tuple[int, int], optional): Buffer size. Defaults to (100, 100).
         stride (Tuple[int, int], optional): Stride for patch extraction. Defaults to (50, 50).
+        positional_encoding (bool, optional): If True, adds positional encoding to patches. Defaults to True.
         backend (str, optional): Backend for loading Zarr data. Defaults to "zarr".
         parabola_a (float, optional): Parabola parameter for patch extraction. Defaults to 0.001.
         shuffle_files (bool, optional): Shuffle file order. Defaults to True.
@@ -1115,7 +1117,8 @@ def get_sar_dataloader(
         cache_size=cache_size, 
         online=online, 
         max_products=max_products, 
-        samples_per_prod=samples_per_prod
+        samples_per_prod=samples_per_prod, 
+        positional_encoding=positional_encoding
     )
     sampler = KPatchSampler(
         dataset,
