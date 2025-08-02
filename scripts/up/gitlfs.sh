@@ -1,7 +1,9 @@
 #!/bin/bash
 # This script uploads the dataset to Hugging Face using the CLI.
 # Ensure you have the Hugging Face CLI installed and authenticated
-source /workspace/.venv/bin/activate
+# pip install -U "huggingface_hub[cli]"
+# Activate the virtual environment
+source /Data_large/marine/PythonProjects/SAR/sarpyx/.venv/bin/activate
 
 set -euo pipefail  # Exit on error, undefined vars, pipe failures
 
@@ -15,7 +17,7 @@ fi
 
 USER="sirbastiano94"
 DATASET="Maya4"
-LOG_DIR="/workspace/logs/up"
+LOG_DIR="/Data_large/marine/PythonProjects/SAR/sarpyx/logs/up"
 LOG_FILE="$LOG_DIR/upload_$(date '+%Y%m%d_%H%M%S').log"
 
 # Create logs directory if it doesn't exist

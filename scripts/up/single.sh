@@ -40,7 +40,7 @@ check_prerequisites() {
     
     # Check if user is authenticated
     if ! huggingface-cli whoami &> /dev/null; then
-        log "❌ Not authenticated with Hugging Face. Please run: huggingface-cli login"
+        log "❌ Not authenticated with Hugging Face. Please run: hf login"
         exit 1
     fi
     
@@ -72,10 +72,10 @@ log "📝 Log file: $LOG_FILE"
 
 check_prerequisites
 
-log "🔑 Authenticated as: $(huggingface-cli whoami)"
+log "🔑 Authenticated as: $(hf whoami)"
 
 log "⬆️  Starting upload..."
-if huggingface-cli upload-large-folder "$USER/$DATASET" "$FOLDER" --repo-type=dataset; then
+if hf upload-large-folder "$USER/$DATASET" "$FOLDER" --repo-type=dataset --num-workers 12 --no-bars; then
     log "✅ Upload completed successfully!"
     log "🌐 Dataset available at: https://huggingface.co/datasets/$USER/$DATASET"
 else
