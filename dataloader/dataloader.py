@@ -87,7 +87,7 @@ class SARZarrDataset(Dataset):
         online (bool, optional): If True, enables remote Hugging Face access. Defaults to False.
         return_whole_image (bool, optional): If True, returns the whole image as a single patch. Defaults to False.
         transform (callable, optional): Optional transform to apply to both input and target patches.
-        patch_size (Tuple[int, int], optional): Size of the patch (height, width). Defaults to (256, 256).
+        patch_size (Tuple[int, int], optional): Size of the patch (height, width). Defaults to (256, 256). If the patch width or height is set to a negative value, it will be computed based on the image dimensions minus the buffer.
         complex_valued (bool, optional): If True, returns complex-valued tensors. If False, returns real and imaginary parts stacked. Defaults to False.
         level_from (str, optional): Key for the input SAR processing level. Defaults to "rcmc".
         level_to (str, optional): Key for the target SAR processing level. Defaults to "az".
@@ -105,8 +105,8 @@ class SARZarrDataset(Dataset):
 
     Example:
         >>> dataset = SARZarrDataset("/path/to/zarrs", patch_size=(128, 128), cache_size=1000)
-        >>> x, y = dataset[(0, 100, 100)]
-        >>> dataset.visualize_item((0, 100, 100))
+        >>> x, y = dataset[("path/to/zarr", 100, 100)]
+        >>> dataset.visualize_item(("path/to/zarr", 100, 100))
     """
     def __init__(
         self,
@@ -138,7 +138,7 @@ class SARZarrDataset(Dataset):
         self.repo_id = repo_id
         self.return_whole_image = return_whole_image
         self.transform = transform
-        self.patch_size = patch_size
+        self._patch_size = patch_size
         self.level_from = level_from
         self.level_to = level_to
         self.patch_mode = patch_mode
@@ -165,7 +165,31 @@ class SARZarrDataset(Dataset):
         self._x_coords: Dict[os.PathLike, np.ndarray] = {}
         #self.init_samples()
         self._initialize_stores()
+
+    def _get_patch_size(self, zfile: os.PathLike) -> Tuple[int, int]:
+        """
+        Retrieve the patch size for a given Zarr file based on its processing level.
         
+        Args:
+            zfile (os.PathLike): Path to the Zarr file.
+
+        Returns:
+            Tuple[int, int]: Patch size (height, width) for the specified processing level.
+        """
+        ph, pw = self._patch_size
+        if ph > 0 and pw > 0:
+            return ph, pw
+        else:
+            if self.backend == "zarr":
+                y, x = self._stores[zfile][self.level_from].shape
+            elif self.backend == "dask":
+                y, x = self._stores[zfile][self.level_from].shape[1:]
+            if ph <= 0:
+                ph = y - 2*self.buffer[0]
+            if pw <= 0:
+                pw = x - 2*self.buffer[1]
+            return ph, pw
+
     def _get_file_list(self):
         """
         Retrieve the list of Zarr files to use, either from the local directory or from a remote Hugging Face repository.
@@ -206,7 +230,7 @@ class SARZarrDataset(Dataset):
             self._stores[zfile] = {}
             for level in (self.level_from, self.level_to):
                 complete_path = os.path.join(zfile, level) 
-                self._stores[zfile][level] = da.from_zarr(complete_path).rechunk(self.patch_size)  
+                self._stores[zfile][level] = da.from_zarr(complete_path) #.rechunk(self.patch_size)  
         else:
             raise ValueError(f"Unknown backend {self.backend}")
 
@@ -265,8 +289,9 @@ class SARZarrDataset(Dataset):
             coords = [(0, 0)]
         else:
             stride_y, stride_x = self.stride
+            ph, pw = self._get_patch_size(zfile)
             if self.patch_mode == "rectangular":
-                ph, pw = self.patch_size
+                
                 y_min, y_max = self.buffer[0], h - self.buffer[0]
                 x_min, x_max = self.buffer[1], w - self.buffer[1]
 
@@ -274,7 +299,6 @@ class SARZarrDataset(Dataset):
                 self._x_coords[zfile] = np.arange(x_min, x_max - stride_x + 1, stride_x)
 
             elif self.patch_mode == "parabolic":
-                ph, pw = self.patch_size
                 a = self.parabola_a
                 
                 # For parabolic patches, we need to ensure the entire parabolic curve fits within image bounds
@@ -444,7 +468,7 @@ class SARZarrDataset(Dataset):
             patch_from = self._sample_parabolic_patch(zfile, self.level_from, x, y)
             patch_to = self._sample_parabolic_patch(zfile, self.level_to, x, y)
         else:
-            ph, pw = self.patch_size
+            ph, pw = self._get_patch_size(zfile)
             patch_from = self._get_sample(zfile, self.level_from, y, x, ph, pw)
             patch_to = self._get_sample(zfile, self.level_to, y, x, ph, pw)
 
@@ -453,13 +477,12 @@ class SARZarrDataset(Dataset):
             patch_to = self.transform(patch_to, self.level_to)
 
         if not self.complex_valued:
-            patch_from = np.stack((patch_from.real, patch_from.imag), axis=0).astype(np.float32)
-            patch_to = np.stack((patch_to.real, patch_to.imag), axis=0).astype(np.float32)
+            patch_from = np.stack((patch_from.real, patch_from.imag), axis=-1).astype(np.float32)
+            patch_to = np.stack((patch_to.real, patch_to.imag), axis=-1).astype(np.float32)
 
         if self.positional_encoding:
             index = y + stride_number * width
             patch_from = self.add_position_embedding(patch_from, index)
-
         x_tensor = torch.from_numpy(patch_from)
         y_tensor = torch.from_numpy(patch_to)
         if self.verbose:
@@ -571,7 +594,7 @@ class SARZarrDataset(Dataset):
         
         # Pre-allocate final patch only
         patch = np.zeros((ph, pw), dtype=np.complex64)
-        
+        print("Loading large patch from chunks...")
         # Direct extraction without temporary arrays
         for cy in range(cy_start, cy_end + 1):
             for cx in range(cx_start, cx_end + 1):
@@ -692,7 +715,7 @@ class SARZarrDataset(Dataset):
         # Fast path: single chunk (handles ~80-90% of cases)
         if cy_start == cy_end and cx_start == cx_end:
             chunk = self._load_chunk(zfile, level, cy_start, cx_start)
-            dy, dx = y % ch, x % cw  # Faster than subtraction
+            dy, dx = y % ch, x % cw  
             
             # Bounds check only once
             if dy + ph <= chunk.shape[0] and dx + pw <= chunk.shape[1]:
@@ -833,7 +856,7 @@ class SARZarrDataset(Dataset):
             - For level_from: samples full parabolic curve with optimized chunk access.
             - For level_to: samples only central column and uses vectorized broadcasting for replication.
         """
-        ph, pw = self.patch_size
+        ph, pw = self._get_patch_size(zfile)
         patch = np.zeros((ph, pw), dtype=np.complex64)
         
         if level == self.level_to:
@@ -923,19 +946,32 @@ class SARZarrDataset(Dataset):
         Add a position embedding column to the input numpy array.
 
         Args:
-            inp (np.ndarray): Input array of shape (N, D).
+            inp (np.ndarray): Input array of shape (ph, pw, 2) for real-valued, or (ph, pw) for complex-valued.
             item_index (int): Index of the item (used for position embedding).
             max_length (int): Maximum length for position embedding.
 
         Returns:
-            np.ndarray: Output array with position embedding appended as the last column.
+            np.ndarray: Output array with position embedding appended as the last channel.
         """
+        # If input is real-valued (ph, pw, 2), flatten to (ph*pw, 2)
+        if inp.ndim == 3 and inp.shape[2] == 2:
+            ph, pw, channels = inp.shape
+            inp_flat = inp.reshape(-1, channels)
+        elif inp.ndim == 2:  # complex-valued (ph, pw)
+            ph, pw = inp.shape
+            inp_flat = inp.reshape(-1, 1)
+        else:
+            raise ValueError("Input shape not recognized for positional embedding.")
 
-        position_embedding = np.full((max_length, 1), (item_index + 1) / (2 * max_length))
-        # If inp has shape (N, D), position_embedding should have shape (N, 1)
-        if inp.shape[0] != max_length:
-            position_embedding = position_embedding[:inp.shape[0]]
-        out = np.concatenate((inp, position_embedding), axis=1)
+        # Create position embedding
+        position_embedding = np.full((inp_flat.shape[0], 1), (item_index + 1) / (2 * max_length), dtype=inp_flat.dtype)
+        out = np.concatenate((inp_flat, position_embedding), axis=1)
+
+        # Reshape back to original patch shape with extra channel
+        if inp.ndim == 3 and inp.shape[2] == 2:
+            out = out.reshape(ph, pw, channels + 1)
+        elif inp.ndim == 2:
+            out = out.reshape(ph, pw, 2)
         return out
 
 class KPatchSampler(Sampler):
