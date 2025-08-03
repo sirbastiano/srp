@@ -16,7 +16,7 @@ import os
 import functools
 from utils import get_chunk_name_from_coords, get_sample_visualization, get_zarr_version
 from api import list_base_files_in_repo
-from utils import normalize, extract_stride_number_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN
+from utils import normalize, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN
 from api import fetch_chunk_from_hf_zarr
 from api import download_metadata_from_product
 
@@ -166,7 +166,7 @@ class SARZarrDataset(Dataset):
         #self.init_samples()
         self._initialize_stores()
 
-    def _get_patch_size(self, zfile: os.PathLike) -> Tuple[int, int]:
+    def get_patch_size(self, zfile: os.PathLike) -> Tuple[int, int]:
         """
         Retrieve the patch size for a given Zarr file based on its processing level.
         
@@ -289,7 +289,7 @@ class SARZarrDataset(Dataset):
             coords = [(0, 0)]
         else:
             stride_y, stride_x = self.stride
-            ph, pw = self._get_patch_size(zfile)
+            ph, pw = self.get_patch_size(zfile)
             if self.patch_mode == "rectangular":
                 
                 y_min, y_max = self.buffer[0], h - self.buffer[0]
@@ -430,6 +430,39 @@ class SARZarrDataset(Dataset):
         """
         return self._samples_per_prod * self._max_products
 
+    def _get_base_sample(self, zfile: os.PathLike, y: int, x: int) -> np.ndarray:
+        """
+        Retrieve the raw input and target patches from the Zarr store at the specified coordinates,
+        without applying any transformation or positional encoding.
+
+        This method extracts patches from the specified Zarr file and coordinates, using either
+        rectangular or parabolic patch extraction based on the dataset configuration. The returned
+        patches are in their original format (complex-valued), suitable for further processing or
+        transformation.
+
+        Args:
+            zfile (os.PathLike): Path to the Zarr file.
+            y (int): y-coordinate of the top-left corner of the patch.
+            x (int): x-coordinate of the top-left corner of the patch.
+
+        Returns:
+            Tuple[np.ndarray, np.ndarray]: A tuple containing the input patch (from level_from)
+            and the target patch (from level_to), both as NumPy arrays.
+
+        Notes:
+            - If `patch_mode` is "parabolic", patches are sampled using the `_sample_parabolic_patch` method.
+            - Otherwise, rectangular patches are extracted using `_get_sample`.
+            - No normalization, transformation, or positional encoding is applied.
+        """
+        if self.patch_mode == "parabolic":
+            patch_from = self._sample_parabolic_patch(zfile, self.level_from, x, y)
+            patch_to = self._sample_parabolic_patch(zfile, self.level_to, x, y)
+        else:
+            ph, pw = self.get_patch_size(zfile)
+            patch_from = self._get_sample(zfile, self.level_from, y, x, ph, pw)
+            patch_to = self._get_sample(zfile, self.level_to, y, x, ph, pw)
+        return patch_from, patch_to
+
     def __getitem__(self, idx: Tuple[str, int, int]) -> Tuple[torch.Tensor, torch.Tensor]:
 
         """
@@ -454,12 +487,15 @@ class SARZarrDataset(Dataset):
             - If a `transform` is provided, it is applied to both input and target patches.
         """
         zfile, y, x = idx
-
         # Extract stride number from filename if present
-        stride_number = extract_stride_number_from_filename(os.path.basename(zfile))
+        stripmap_mode = extract_stripmap_mode_from_filename(os.path.basename(zfile))
         zfile = Path(zfile)
         t0 = time.time()
 
+        # Retrieve the horizontal size (width) from the store for self.level_from
+        width = self._stores[zfile][self.level_from].shape[1]
+
+        patch_from, patch_to = self._get_base_sample(zfile, y, x)
         # Retrieve the horizontal size (width) from the store for self.level_from
         width = self._stores[zfile][self.level_from].shape[1]
         # You can now use 'width' as needed in your logic
@@ -468,7 +504,7 @@ class SARZarrDataset(Dataset):
             patch_from = self._sample_parabolic_patch(zfile, self.level_from, x, y)
             patch_to = self._sample_parabolic_patch(zfile, self.level_to, x, y)
         else:
-            ph, pw = self._get_patch_size(zfile)
+            ph, pw = self.get_patch_size(zfile)
             patch_from = self._get_sample(zfile, self.level_from, y, x, ph, pw)
             patch_to = self._get_sample(zfile, self.level_to, y, x, ph, pw)
 
@@ -481,13 +517,13 @@ class SARZarrDataset(Dataset):
             patch_to = np.stack((patch_to.real, patch_to.imag), axis=-1).astype(np.float32)
 
         if self.positional_encoding:
-            index = y + stride_number * width
+            index = y + stripmap_mode * width
             patch_from = self.add_position_embedding(patch_from, index)
         x_tensor = torch.from_numpy(patch_from)
         y_tensor = torch.from_numpy(patch_to)
         if self.verbose:
             elapsed = time.time() - t0
-            print(f"Loading patch ({zfile}, {y}, {x}) took {elapsed:.2f} seconds. Stride number: {stride_number}")
+            print(f"Loading patch ({zfile}, {y}, {x}) took {elapsed:.2f} seconds. Stripmap mode: {stripmap_mode}")
 
         return x_tensor, y_tensor
     
@@ -802,11 +838,12 @@ class SARZarrDataset(Dataset):
             None
         """
         import matplotlib.pyplot as plt
-        x, y = self[idx]
+        zfile, y, x = idx
+        x, y = self._get_base_sample(Path(zfile), y, x)
         imgs = []
-        img, vmin, vmax = get_sample_visualization(data=x.detach().cpu().numpy(), plot_type="magnitude", vminmax='raw')
+        img, vmin, vmax = get_sample_visualization(data=x, plot_type="magnitude", vminmax=vminmax)
         imgs.append({'name': self.level_from, 'img': img, 'vmin': vmin, 'vmax': vmax})
-        img, vmin, vmax = get_sample_visualization(data=y.detach().cpu().numpy(), plot_type="magnitude")
+        img, vmin, vmax = get_sample_visualization(data=y, plot_type="magnitude", vminmax=vminmax)
         imgs.append({'name': self.level_to, 'img': img, 'vmin': vmin, 'vmax': vmax})
                 
         fig, axes = plt.subplots(1, 2, figsize=figsize)
@@ -819,7 +856,7 @@ class SARZarrDataset(Dataset):
                 vmax=imgs[i]['vmax']
             )
 
-            axes[i].set_title(f'{imgs[i]['name'].upper()} product')
+            axes[i].set_title(f"{imgs[i]['name'].upper()} product")
             axes[i].set_xlabel('Range')
             axes[i].set_ylabel('Azimuth')
             cbar = plt.colorbar(im, ax=axes[i], fraction=0.046, pad=0.04)
@@ -856,7 +893,7 @@ class SARZarrDataset(Dataset):
             - For level_from: samples full parabolic curve with optimized chunk access.
             - For level_to: samples only central column and uses vectorized broadcasting for replication.
         """
-        ph, pw = self._get_patch_size(zfile)
+        ph, pw = self.get_patch_size(zfile)
         patch = np.zeros((ph, pw), dtype=np.complex64)
         
         if level == self.level_to:

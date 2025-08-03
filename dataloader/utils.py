@@ -79,42 +79,7 @@ def get_sample_visualization(
         vmin, vmax = 0, 1000
         
     return plot_data, vmin, vmax
-def visualize_sample(self, sample: np.ndarray, figsize=(10, 5), show=True):
-        """
-        Visualize a sample from the dataset.
 
-        Args:
-            sample (np.ndarray): Sample to visualize.
-            figsize (tuple): Size of the figure (default: (10, 5)).
-            show (bool): Whether to show the plot (default: True).
-
-        Returns:
-            None
-        """
-        img, vmin, vmax = self.get_sample_visualization(sample, plot_type="magnitude", vminmax='raw')
-        img = {'name': self.level_from, 'img': img, 'vmin': vmin, 'vmax': vmax}
-        fig, axes = plt.subplots(1, 1, figsize=figsize)
-        im = axes.imshow(
-            img[0]['img'],
-            aspect='auto',
-            cmap='viridis',
-            vmin=img['vmin'],
-            vmax=img['vmax']
-        )
-
-        axes.set_title(f'{img['name'].upper()} product')
-        axes.set_xlabel('Range')
-        axes.set_ylabel('Azimuth')
-        cbar = plt.colorbar(im, ax=axes, fraction=0.046, pad=0.04)
-        cbar.ax.tick_params(labelsize=8)
-        # axis equal aspect ratio
-        axes.set_aspect('equal', adjustable='box')
-
-        plt.tight_layout()
-        if show:
-            plt.show()
-        else:
-            plt.close(fig)
             
 def get_zarr_version(store_path: os.PathLike) -> int:
     import os
@@ -150,9 +115,9 @@ def get_chunk_name_from_coords(
         chunk_fname = f"{zarr_file_name}/{level}/{cy}.{cx}"
     return chunk_fname
 
-def extract_stride_number_from_filename(filename: Union[os.PathLike, str]) -> Optional[int]:
+def extract_stripmap_mode_from_filename(filename: Union[os.PathLike, str]) -> Optional[int]:
     """
-    Extract the stride number from a filename formatted as ...-s{number}.zarr.
+    Extract the stripmap mode from a filename formatted as ...-s{number}.zarr.
 
     Args:
         filename (str): The filename to parse.
@@ -162,9 +127,8 @@ def extract_stride_number_from_filename(filename: Union[os.PathLike, str]) -> Op
     """
     if isinstance(filename, os.PathLike):
         filename = str(filename)
-    print(filename)
     import re
-    match = re.search(r'([A-Za-z0-9]+)-s(\d+)-([A-Za-z0-9\-]+)\.zarr$', filename)
+    match = re.search(r's(\d)a-s(\d)-', filename)
     if match:
         return int(match.group(2))
     return None
