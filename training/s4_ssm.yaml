@@ -1,0 +1,84 @@
+# Configuration for S4 SSM Training
+
+# Data directory
+data_dir: "/Data/sar_focusing"
+
+# Training parameters
+epochs: 250
+batch_size: 16
+lr: 1e-3
+mode: "column_wise"
+
+# Model configuration
+model:
+  name: "s4_ssm"
+  input_dim: 4
+  state_dim: 512
+  output_dim: 2
+  num_layers: 12
+  dropout: 0.2
+  use_pos_encoding: true
+
+# Training configuration
+training:
+  patience: 30
+  delta: 0.00005
+  weight_decay: 1e-3
+
+# Base save directory
+base_save_dir: "./results/s4_ssm_results"
+
+# Device configuration
+device: "cuda"
+
+# Dataloader configuration
+dataloader:
+  level_from: "rcmc"
+  level_to: "az"
+  num_workers: 6
+  patch_mode: "rectangular"
+  patch_size: [2000, 1]  # Longer columns for S4's long-range capabilities
+  buffer: [1000, 1000]
+  stride: [1000, 1]  # Non-overlapping with longer sequences
+  shuffle_files: true
+  complex_valued: false
+  save_samples: false
+  backend: "zarr"
+  verbose: true
+  cache_size: 800
+  online: false
+  concatenate_patches: false
+  positional_encoding: true
+  
+  # Training split
+  train:
+    batch_size: 16
+    samples_per_prod: 2500
+    patch_order: "col"
+    max_products: 4
+    pattern: "*052337*.zarr"
+    
+  # Validation split  
+  validation:
+    batch_size: 16
+    samples_per_prod: 800
+    patch_order: "col"
+    max_products: 1
+    pattern: "*048442*.zarr"
+    
+  # Test split
+  test:
+    batch_size: 8
+    samples_per_prod: 400
+    patch_order: "col"
+    max_products: 1
+    pattern: "*049667*.zarr"
+
+# Transform configuration
+transforms:
+  normalize: true
+  complex_valued: false
+  rc_min: -3000
+  rc_max: 3000
+  gt_min: -12000
+  gt_max: 12000

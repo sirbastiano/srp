@@ -1,3 +1,4 @@
+import math
 import re
 import torch
 from torch import nn
@@ -14,43 +15,117 @@ import dask.array as da
 import time 
 import os
 import functools
+import math
+
 from utils import get_chunk_name_from_coords, get_sample_visualization, get_zarr_version
 from api import list_base_files_in_repo
-from utils import normalize, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN
-from api import fetch_chunk_from_hf_zarr
-from api import download_metadata_from_product
+from utils import minmax_normalize, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN
+from api import fetch_chunk_from_hf_zarr, download_metadata_from_product
+
+class BaseTransformModule(nn.Module):
+    """Base class for SAR data transformations."""
+    
+    def __init__(self):
+        super(BaseTransformModule, self).__init__()
+    
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        """Apply transformation to input data."""
+        raise NotImplementedError("Subclasses must implement forward method")
+
+
+class NormalizationModule(BaseTransformModule):
+    """Normalization module for SAR data."""
+    
+    def __init__(self, data_min: float, data_max: float):
+        super(NormalizationModule, self).__init__()
+        self.data_min = data_min
+        self.data_max = data_max
+    
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        """Normalize array to range [0, 1]."""
+        # Apply normalization directly on numpy array
+        return minmax_normalize(x, self.data_min, self.data_max)
+
+
+class IdentityModule(BaseTransformModule):
+    """Identity transformation that returns input unchanged."""
+    
+    def __init__(self):
+        super(IdentityModule, self).__init__()
+    
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        """Return input unchanged."""
+        return x
+
+
+class ComplexNormalizationModule(BaseTransformModule):
+    """Complex-valued normalization module for SAR data."""
+    
+    def __init__(self, real_min: float, real_max: float, imag_min: float, imag_max: float):
+        super(ComplexNormalizationModule, self).__init__()
+        self.real_min = real_min
+        self.real_max = real_max
+        self.imag_min = imag_min
+        self.imag_max = imag_max
+    
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        """Normalize complex array separately for real and imaginary parts."""
+        if np.iscomplexobj(x):
+            # Normalize real and imaginary parts separately
+            # Use numpy functions to extract real and imaginary parts
+            real_part = minmax_normalize(np.real(x), self.real_min, self.real_max)
+            imag_part = minmax_normalize(np.imag(x), self.imag_min, self.imag_max)
+
+            real_part = np.clip(real_part, 0, 1)
+            imag_part = np.clip(imag_part, 0, 1)
+            
+            normalized = real_part + 1j * imag_part
+        else:
+            # Assume magnitude data
+            normalized = minmax_normalize(x, self.real_min, self.real_max)
+
+        return normalized
+
 
 class SARTransform(nn.Module):
     """
     PyTorch transform module for normalizing SAR data patches at different processing levels.
 
-    This class allows you to specify a separate transformation function for each SAR processing level (e.g., 'raw', 'rc', 'rcmc', 'az').
-    Each function should accept a NumPy array and return a transformed NumPy array.
+    This class uses separate PyTorch modules for each SAR processing level (e.g., 'raw', 'rc', 'rcmc', 'az').
+    Each module can be any PyTorch nn.Module that implements the transformation.
 
     Args:
-        transform_raw (callable, optional): Function to transform 'raw' level data.
-        transform_rc (callable, optional): Function to transform 'rc' level data.
-        transform_rcmc (callable, optional): Function to transform 'rcmc' level data.
-        transform_az (callable, optional): Function to transform 'az' level data.
+        transform_raw (BaseTransformModule, optional): Module to transform 'raw' level data.
+        transform_rc (BaseTransformModule, optional): Module to transform 'rc' level data.
+        transform_rcmc (BaseTransformModule, optional): Module to transform 'rcmc' level data.
+        transform_az (BaseTransformModule, optional): Module to transform 'az' level data.
     """
     def __init__(
         self,
-        transform_raw: Optional[Union[Callable[[np.ndarray], np.ndarray], functools.partial]] = None,
-        transform_rc: Optional[Union[Callable[[np.ndarray], np.ndarray], functools.partial]] = None,
-        transform_rcmc: Optional[Union[Callable[[np.ndarray], np.ndarray], functools.partial]] = None,
-        transform_az: Optional[Union[Callable[[np.ndarray], np.ndarray], functools.partial]] = None,
+        transform_raw: Optional[Union[Callable[[np.ndarray], np.ndarray], functools.partial, BaseTransformModule]] = None,
+        transform_rc: Optional[Union[Callable[[np.ndarray], np.ndarray], functools.partial, BaseTransformModule]] = None,
+        transform_rcmc: Optional[Union[Callable[[np.ndarray], np.ndarray], functools.partial, BaseTransformModule]] = None,
+        transform_az: Optional[Union[Callable[[np.ndarray], np.ndarray], functools.partial, BaseTransformModule]] = None,
     ):
         super(SARTransform, self).__init__()
-        self.transforms: dict[str, Optional[Callable[[np.ndarray], np.ndarray]]] = {
-            'raw': transform_raw if transform_raw else None,
-            'rc': transform_rc if transform_rc else None,
-            'rcmc': transform_rcmc if transform_rcmc else None,
-            'az': transform_az if transform_az else None,
+        
+        # Register transform modules
+        self.transform_raw = transform_raw if transform_raw is not None else IdentityModule()
+        self.transform_rc = transform_rc if transform_rc is not None else IdentityModule()
+        self.transform_rcmc = transform_rcmc if transform_rcmc is not None else IdentityModule()
+        self.transform_az = transform_az if transform_az is not None else IdentityModule()
+        
+        # Create a mapping for easy access
+        self.transforms = {
+            'raw': self.transform_raw,
+            'rc': self.transform_rc,
+            'rcmc': self.transform_rcmc,
+            'az': self.transform_az,
         }
 
     def forward(self, x: np.ndarray, level: str) -> np.ndarray:
         """
-        Apply the appropriate transform to the input array for the specified SAR processing level.
+        Apply the appropriate transform module to the input array for the specified SAR processing level.
 
         Args:
             x (np.ndarray): Input data array.
@@ -60,10 +135,52 @@ class SARTransform(nn.Module):
             np.ndarray: Transformed data array.
         """
         assert level in self.transforms, f"Transform for level '{level}' not defined."
-        if self.transforms[level] is None:
-            return x
+        return self.transforms[level](x)
+    
+    @classmethod
+    def create_minmax_normalized_transform(
+        cls,
+        normalize: bool = True,
+        rc_min: float = RC_MIN,
+        rc_max: float = RC_MAX,
+        gt_min: float = GT_MIN,
+        gt_max: float = GT_MAX,
+        complex_valued: bool = True
+    ):
+        """
+        Factory method to create a SARTransform with normalization modules.
+        
+        Args:
+            normalize (bool): Whether to apply normalization.
+            rc_min (float): Minimum value for RC data normalization.
+            rc_max (float): Maximum value for RC data normalization.
+            gt_min (float): Minimum value for ground truth data normalization.
+            gt_max (float): Maximum value for ground truth data normalization.
+            complex_valued (bool): Whether data is complex-valued.
+        
+        Returns:
+            SARTransform: Configured transform instance.
+        """
+        if not normalize:
+            return cls()
+        
+        if complex_valued:
+            # Use complex normalization with same range for real and imaginary parts
+            rc_transform = ComplexNormalizationModule(rc_min, rc_max, rc_min, rc_max)
+            rcmc_transform = ComplexNormalizationModule(rc_min, rc_max, rc_min, rc_max)
+            az_transform = ComplexNormalizationModule(gt_min, gt_max, gt_min, gt_max)
         else:
-            return self.transforms[level](x)
+            # Use simple normalization for magnitude data
+            rc_transform = NormalizationModule(rc_min, rc_max)
+            rcmc_transform = NormalizationModule(rc_min, rc_max)
+            az_transform = NormalizationModule(gt_min, gt_max)
+        
+        return cls(
+            transform_raw=IdentityModule(),
+            transform_rc=rc_transform,
+            transform_rcmc=rcmc_transform,
+            transform_az=az_transform
+        )
 
 class SARZarrDataset(Dataset):
     """
@@ -131,7 +248,10 @@ class SARZarrDataset(Dataset):
         positional_encoding: bool = True, 
         dataset_length: Optional[int] = None, 
         max_products: int = 10, 
-        samples_per_prod: int = 1000
+        samples_per_prod: int = 1000, 
+        concatenate_patches: bool = False,  # wether to concatenate 1D patches into 2D patches (useful for transformers from rcmc to az)
+        concat_axis: int = 1,               # Axis on which patches have to be concatenated: 0=vertical, 1=horizontal
+        max_stripmap_modes: int = 6
     ):
         self.data_dir = Path(data_dir)
         self.file_pattern = file_pattern
@@ -154,7 +274,18 @@ class SARZarrDataset(Dataset):
         self._dataset_length = dataset_length
         self._max_products = max_products
         self._samples_per_prod = samples_per_prod
+        self.max_stripmap_modes = max_stripmap_modes
         
+        self.concatenate_patches = concatenate_patches
+        self.concat_axis = concat_axis
+        
+        # Validate concatenation parameters
+        if self.concatenate_patches:
+            ph, pw = self._patch_size
+            if self.concat_axis == 0 and pw != 1:
+                raise ValueError("For vertical concatenation (axis=0), patch width must be 1")
+            elif self.concat_axis == 1 and ph != 1:
+                raise ValueError("For horizontal concatenation (axis=1), patch height must be 1")
         self._load_chunk = functools.lru_cache(maxsize=cache_size)(
             self._load_chunk_uncached
         )
@@ -165,6 +296,8 @@ class SARZarrDataset(Dataset):
         self._x_coords: Dict[os.PathLike, np.ndarray] = {}
         #self.init_samples()
         self._initialize_stores()
+        if self.verbose:
+            print(f"Initialized dataloader with config: buffer={buffer}, stride={stride}, patch_size={patch_size}, complex_values={complex_valued}")
 
     def get_patch_size(self, zfile: os.PathLike) -> Tuple[int, int]:
         """
@@ -181,9 +314,9 @@ class SARZarrDataset(Dataset):
             return ph, pw
         else:
             if self.backend == "zarr":
-                y, x = self._stores[zfile][self.level_from].shape
+                y, x = self._stores[zfile][self.level_from].shape - 2 * self.buffer
             elif self.backend == "dask":
-                y, x = self._stores[zfile][self.level_from].shape[1:]
+                y, x = self._stores[zfile][self.level_from].shape[1:] - 2 * self.buffer
             if ph <= 0:
                 ph = y - 2*self.buffer[0]
             if pw <= 0:
@@ -283,7 +416,7 @@ class SARZarrDataset(Dataset):
         self._append_file_to_stores(zfile)
         # Print the directories (groups/arrays) inside the Zarr store
 
-        h, w = self._stores[zfile][self.level_from].shape
+        h, w = self.get_whole_sample_shape(zfile) #self._stores[zfile][self.level_from].shape
         coords: List[Tuple[int,int]] = []
         if self.return_whole_image:
             coords = [(0, 0)]
@@ -295,8 +428,22 @@ class SARZarrDataset(Dataset):
                 y_min, y_max = self.buffer[0], h - self.buffer[0]
                 x_min, x_max = self.buffer[1], w - self.buffer[1]
 
-                self._y_coords[zfile] = np.arange(y_min, y_max - stride_y + 1, stride_y)
-                self._x_coords[zfile] = np.arange(x_min, x_max - stride_x + 1, stride_x)
+                if self.concatenate_patches:
+                    if self.concat_axis == 0:
+                        # Vertical concatenation: fix y-coordinate to 0, vary x-coordinates
+                        self._y_coords[zfile] = np.array([y_min]) 
+                        self._x_coords[zfile] = np.arange(x_min, x_max - stride_x + 1, stride_x)
+                    elif self.concat_axis == 1:
+                        # Horizontal concatenation: fix y-coordinate to 0, vary x-coordinates
+                        self._y_coords[zfile] = np.arange(y_min, y_max - stride_y + 1, stride_y)
+                        self._x_coords[zfile] = np.array([x_min])  
+                    else:
+                        raise ValueError(f"Invalid concat_axis: {self.concat_axis}. Must be 0 (vertical) or 1 (horizontal).")
+                else:
+                    # Original logic when not concatenating patches
+                    self._y_coords[zfile] = np.arange(y_min, y_max - stride_y + 1, stride_y)
+                    self._x_coords[zfile] = np.arange(x_min, x_max - stride_x + 1, stride_x)
+
 
             elif self.patch_mode == "parabolic":
                 a = self.parabola_a
@@ -459,8 +606,18 @@ class SARZarrDataset(Dataset):
             patch_to = self._sample_parabolic_patch(zfile, self.level_to, x, y)
         else:
             ph, pw = self.get_patch_size(zfile)
-            patch_from = self._get_sample(zfile, self.level_from, y, x, ph, pw)
-            patch_to = self._get_sample(zfile, self.level_to, y, x, ph, pw)
+            sh, sw = self.get_whole_sample_shape(zfile)
+            if self.concatenate_patches:
+                if self.concat_axis == 0:
+                    patch_from = self._get_sample(zfile, self.level_from, self.buffer[1], x, sh, pw)
+                    patch_to = self._get_sample(zfile, self.level_to, self.buffer[1], x, sh, pw)
+                elif self.concat_axis == 1:
+                    patch_from = self._get_sample(zfile, self.level_from, y, self.buffer[0], ph, sw)
+                    patch_to = self._get_sample(zfile, self.level_to, y, self.buffer[0], ph, sw)
+            else:
+                patch_from = self._get_sample(zfile, self.level_from, y, x, ph, pw)
+                patch_to = self._get_sample(zfile, self.level_to, y, x, ph, pw)
+
         return patch_from, patch_to
 
     def __getitem__(self, idx: Tuple[str, int, int]) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -490,41 +647,62 @@ class SARZarrDataset(Dataset):
         # Extract stride number from filename if present
         stripmap_mode = extract_stripmap_mode_from_filename(os.path.basename(zfile))
         zfile = Path(zfile)
+        start_time = time.time()
+
         t0 = time.time()
 
         # Retrieve the horizontal size (width) from the store for self.level_from
-        width = self._stores[zfile][self.level_from].shape[1]
-
+        sample_height, sample_width = self.get_whole_sample_shape(zfile) #self._stores[zfile][self.level_from].shape[1]
+        if self.verbose:
+            dt = time.time() - t0
+            print(f"Sample shape for {zfile} at level {self.level_from}: {sample_height}x{sample_width} took {dt:.4f} seconds")
+            
+        t0 = time.time()
         patch_from, patch_to = self._get_base_sample(zfile, y, x)
-        # Retrieve the horizontal size (width) from the store for self.level_from
-        width = self._stores[zfile][self.level_from].shape[1]
-        # You can now use 'width' as needed in your logic
-
-        if self.patch_mode == "parabolic":
-            patch_from = self._sample_parabolic_patch(zfile, self.level_from, x, y)
-            patch_to = self._sample_parabolic_patch(zfile, self.level_to, x, y)
-        else:
-            ph, pw = self.get_patch_size(zfile)
-            patch_from = self._get_sample(zfile, self.level_from, y, x, ph, pw)
-            patch_to = self._get_sample(zfile, self.level_to, y, x, ph, pw)
-
+        if self.verbose:
+            dt = time.time() - t0
+            print(f"Base sample loading for {zfile} at ({y}, {x}) took {dt:.4f} seconds")
+            
+            
         if self.transform:
+            t0 = time.time()
             patch_from = self.transform(patch_from, self.level_from)
             patch_to = self.transform(patch_to, self.level_to)
-
+            if self.verbose:
+                dt = time.time() - t0
+                print(f"Patch transformation took {dt:.4f} seconds")
+        #print(f"Patch shape before stacking: {patch_from.shape}, {patch_to.shape}")
         if not self.complex_valued:
-            patch_from = np.stack((patch_from.real, patch_from.imag), axis=-1).astype(np.float32)
-            patch_to = np.stack((patch_to.real, patch_to.imag), axis=-1).astype(np.float32)
-
+            t0 = time.time()
+            patch_from = np.stack((np.real(patch_from), np.imag(patch_from)), axis=-1).astype(np.float32)
+            patch_to = np.stack((np.real(patch_to), np.imag(patch_to)), axis=-1).astype(np.float32)
+            if self.verbose:
+                dt = time.time() - t0
+                print(f"Patch stacking took {dt:.4f} seconds")
+        #print(f"Shape before positional encoding: {patch_from.shape}")
         if self.positional_encoding:
-            index = y + stripmap_mode * width
-            patch_from = self.add_position_embedding(patch_from, index)
+            t0 = time.time()
+            global_column_index = x + stripmap_mode * sample_width
+            
+            patch_from = self.add_position_embedding(patch_from, (y, global_column_index), (sample_height, sample_width * self.max_stripmap_modes))
+            patch_to = self.add_position_embedding(patch_to, (y, global_column_index), (sample_height, sample_width * self.max_stripmap_modes))
+            if self.verbose:
+                dt = time.time() - t0
+                print(f"Patch positional encoding took {dt:.4f} seconds")
+        #print(f"Shape after positional encoding: {patch_from.shape}, {patch_to.shape}")
+        if self.concatenate_patches:
+            t0 = time.time()
+            # Get concatenated patches instead of single patch
+            patch_from = self._get_concatenated_patch(patch_from, zfile)
+            patch_to = self._get_concatenated_patch(patch_to, zfile)
+            if self.verbose:
+                dt = time.time() - t0
+                print(f"Concatenated patch shapes: from={patch_from.shape}, to={patch_to.shape} took {dt:.4f} seconds")
         x_tensor = torch.from_numpy(patch_from)
         y_tensor = torch.from_numpy(patch_to)
         if self.verbose:
-            elapsed = time.time() - t0
-            print(f"Loading patch ({zfile}, {y}, {x}) took {elapsed:.2f} seconds. Stripmap mode: {stripmap_mode}")
-
+            elapsed = time.time() - start_time
+            print(f"Loading patch ({zfile}, {y}, {x}) took {elapsed:.4f} seconds. Stripmap mode: {stripmap_mode}")
         return x_tensor, y_tensor
     
     def _download_sample_if_missing(self, zfile: os.PathLike, level: str, y: int, x: int) -> Path:
@@ -629,8 +807,8 @@ class SARZarrDataset(Dataset):
         cy_end, cx_end = (y + ph - 1) // ch, (x + pw - 1) // cw
         
         # Pre-allocate final patch only
-        patch = np.zeros((ph, pw), dtype=np.complex64)
-        print("Loading large patch from chunks...")
+        if not hasattr(self, "_patch") or self._patch.shape != (ph, pw):
+            self._patch = np.zeros((ph, pw), dtype=np.complex64)
         # Direct extraction without temporary arrays
         for cy in range(cy_start, cy_end + 1):
             for cx in range(cx_start, cx_end + 1):
@@ -657,9 +835,9 @@ class SARZarrDataset(Dataset):
                     dst_x1, dst_x2 = x_start - x, x_end - x
                     
                     # Direct copy
-                    patch[dst_y1:dst_y2, dst_x1:dst_x2] = chunk[src_y1:src_y2, src_x1:src_x2]
-        
-        return patch
+                    self._patch[dst_y1:dst_y2, dst_x1:dst_x2] = chunk[src_y1:src_y2, src_x1:src_x2]
+
+        return self._patch
     def _get_small_patch_optimized(self, zfile: os.PathLike, level: str, y: int, x: int, ph: int, pw: int, ch: int, cw: int) -> np.ndarray:
         """
         Optimized for small patches that likely fit in a single chunk.
@@ -691,7 +869,9 @@ class SARZarrDataset(Dataset):
             # Vertical strip: patch_size=(length, 1)
             cy_start, cy_end = y // ch, (y + length - 1) // ch
             cx = x // cw
-            strip = np.zeros(length, dtype=np.complex64)
+            if not hasattr(self, "_patch") or self._patch.shape[0] != length:
+                self._patch = np.zeros(length, dtype=np.complex64)
+                #print(f"Allocating patch for vertical strip: {self._patch.shape}")
             current_pos = 0
             for cy in range(cy_start, cy_end + 1):
                 chunk = self._load_chunk(zfile, level, cy, cx)
@@ -704,14 +884,17 @@ class SARZarrDataset(Dataset):
                         local_start = global_start - chunk_y_start
                         local_end = global_end - chunk_y_start
                         slice_height = local_end - local_start
-                        strip[current_pos:current_pos + slice_height] = chunk[local_start:local_end, dx]
+                        self._patch[current_pos:current_pos + slice_height] = chunk[local_start:local_end, dx]
                         current_pos += slice_height
-            return strip.reshape(length, 1)
+            return self._patch.reshape(length, 1)
         elif axis == 1:
             # Horizontal strip: patch_size=(1, length)
             cx_start, cx_end = x // cw, (x + length - 1) // cw
             cy = y // ch
-            strip = np.zeros(length, dtype=np.complex64)
+            if not hasattr(self, "_patch") or self._patch.shape[0] != length:
+                self._patch = np.zeros(length, dtype=np.complex64)
+                #print(f"Allocating patch for horizontal strip: {self._patch.shape}")
+
             current_pos = 0
             for cx in range(cx_start, cx_end + 1):
                 chunk = self._load_chunk(zfile, level, cy, cx)
@@ -724,9 +907,9 @@ class SARZarrDataset(Dataset):
                         local_start = global_start - chunk_x_start
                         local_end = global_end - chunk_x_start
                         slice_width = local_end - local_start
-                        strip[current_pos:current_pos + slice_width] = chunk[dy, local_start:local_end]
+                        self._patch[current_pos:current_pos + slice_width] = chunk[dy, local_start:local_end]
                         current_pos += slice_width
-            return strip.reshape(1, length)
+            return self._patch.reshape(1, length)
         else:
             raise ValueError("axis must be 0 (vertical) or 1 (horizontal)")
 
@@ -819,6 +1002,87 @@ class SARZarrDataset(Dataset):
             return zarr.open(zfile, mode='r')
         else: 
             raise ValueError(f"Unknown backend {self.backend}")
+    def get_whole_sample_shape(self, zfile: os.PathLike) -> Tuple[int, int]:
+        """
+        Get the shape of the whole sample (image) at the specified level from the Zarr file.
+
+        Args:
+            zfile (os.PathLike): Path to the Zarr file.
+
+        Returns:
+            Tuple[int, int]: Shape of the whole sample (height, width).
+        """
+        if zfile not in self._stores:
+            raise KeyError(f"Zarr file {zfile} not found in stores.")
+        
+        pw, ph = self._stores[zfile][self.level_from].shape
+        return (ph - self.buffer[0] * 2, pw - self.buffer[1] * 2)
+    
+    def _get_concatenated_patch(self, patch: np.ndarray, zfile: os.PathLike) -> np.ndarray:
+        """
+        Get concatenated patches by sampling multiple 1D patches and concatenating them.
+        
+        For concat_axis=0 (vertical concatenation):
+        - patch_size = (1, 1000) - horizontal strips  
+        - stride = (1000, 1000)
+        - Concatenate 10 horizontal strips vertically -> result: (10, 1000)
+        
+        For concat_axis=1 (horizontal concatenation):
+        - patch_size = (1000, 1) - vertical strips
+        - stride = (1000, 1000) 
+        - Concatenate 10 vertical strips horizontally -> result: (1000, 10)
+        
+        Args:
+            zfile: Path to Zarr file
+            y, x: Starting coordinates
+            
+        Returns:
+            Tuple of concatenated patches (from_level, to_level)
+        """
+        ph, pw = self.get_patch_size(zfile)
+        stride_y, stride_x = self.stride
+        
+        if self.concat_axis == 0:
+            # Vertical concatenation: stack multiple (1, pw) patches as rows
+            # num_patches = sh // stride_y if sh > stride_y else 1
+
+            patch = patch.squeeze()
+
+            max_start = len(patch) - ph + 1
+
+            # Create start indices for each window
+            start_indices = np.arange(0, max_start, stride_y)
+
+            # Create offset indices within each window
+            offset_indices = np.arange(ph)
+
+            # Use broadcasting to create all indices
+            indices = start_indices[:, np.newaxis] + offset_indices[np.newaxis, :]
+
+            # Extract windows and transpose
+            patch = patch[indices].swapaxes(0, 1)
+                
+        elif self.concat_axis == 1:
+            patch = patch.squeeze()
+
+            max_start = len(patch) - pw + 1
+
+            # Create start indices for each window
+            start_indices = np.arange(0, max_start, stride_x)
+
+            # Create offset indices within each window
+            offset_indices = np.arange(pw)
+
+            # Use broadcasting to create all indices
+            indices = start_indices[:, np.newaxis] + offset_indices[np.newaxis, :]
+
+            # Extract windows
+            patch = patch[indices]
+        else:
+            raise ValueError(f"Invalid concat_axis: {self.concat_axis}")
+            
+        return patch
+
     def visualize_item(self, 
                        idx: Tuple[str, int, int],
                        show: bool = True,
@@ -978,38 +1242,73 @@ class SARZarrDataset(Dataset):
                         patch[i, j] = self._get_sample(zfile, level, Y_coords[i, j], X_coords[i, j], 1, 1).item()
         
         return patch
-    def add_position_embedding(self, inp: np.ndarray, item_index: int, max_length: int = 10000) -> np.ndarray:
+    
+    def add_position_embedding(self, inp: np.ndarray, pos: Tuple[int, int], max_length: Tuple[int, int]) -> np.ndarray:
         """
-        Add a position embedding column to the input numpy array.
+        Add both horizontal and vertical position embedding to the input numpy array.
+        Uses cached position arrays for better performance.
 
         Args:
             inp (np.ndarray): Input array of shape (ph, pw, 2) for real-valued, or (ph, pw) for complex-valued.
-            item_index (int): Index of the item (used for position embedding).
-            max_length (int): Maximum length for position embedding.
+            pos (Tuple[int, int]): Position tuple (y_offset, x_offset) for global positioning.
+            max_length (Tuple[int, int]): Maximum length tuple (max_y, max_x) for normalization.
 
         Returns:
-            np.ndarray: Output array with position embedding appended as the last channel.
+            np.ndarray: Output array with position embeddings appended as the last channels.
+                        - For real-valued input (ph, pw, 2): returns (ph, pw, 4) - adds 2 position channels
+                        - For complex input (ph, pw): returns (ph, pw, 4) - converts to real + adds 2 position channels
         """
-        # If input is real-valued (ph, pw, 2), flatten to (ph*pw, 2)
+        y_offset, x_offset = pos
+        max_y, max_x = max_length
+        
+        # Handle input format conversion
         if inp.ndim == 3 and inp.shape[2] == 2:
+            # Real-valued input (ph, pw, 2)
             ph, pw, channels = inp.shape
             inp_flat = inp.reshape(-1, channels)
-        elif inp.ndim == 2:  # complex-valued (ph, pw)
+        elif inp.ndim == 2:  
+            # Complex-valued input (ph, pw) - convert to real format
             ph, pw = inp.shape
+            # Convert complex to real format: stack real and imaginary parts
+            #inp_real = np.stack([np.real(inp), np.imag(inp)], axis=-1)
+            #inp_flat = inp_real.reshape(-1, 2)
             inp_flat = inp.reshape(-1, 1)
+            channels = 1
         else:
             raise ValueError("Input shape not recognized for positional embedding.")
 
-        # Create position embedding
-        position_embedding = np.full((inp_flat.shape[0], 1), (item_index + 1) / (2 * max_length), dtype=inp_flat.dtype)
-        out = np.concatenate((inp_flat, position_embedding), axis=1)
+        # Check if cached position arrays exist and have correct dimensions
+        cache_key = (ph, pw)
+        
+        if (not hasattr(self, '_y_positions') or 
+            not hasattr(self, '_x_positions') or 
+            not hasattr(self, '_pos_cache_key') or
+            self._pos_cache_key != cache_key):
+            
+            # Recompute position arrays
+            self._y_positions = np.repeat(np.arange(ph), pw)  # [0,0,0,...,pw times, 1,1,1,...,pw times, ...]
+            self._x_positions = np.tile(np.arange(pw), ph)    # [0,1,2,...,pw-1, 0,1,2,...,pw-1, ...]
+            self._pos_cache_key = cache_key
+            
+            if hasattr(self, 'verbose') and self.verbose:
+                print(f"Recomputed position arrays for patch size {cache_key}")
+        
+        # Add global offsets to cached arrays
+        global_y_positions = y_offset + self._y_positions
+        global_x_positions = x_offset + self._x_positions
+        
+        # Normalize positions to [0, 1] range
+        y_position_embedding = (global_y_positions / max_y).reshape(-1, 1).astype(inp_flat.dtype)
+        x_position_embedding = (global_x_positions / max_x).reshape(-1, 1).astype(inp_flat.dtype)
 
-        # Reshape back to original patch shape with extra channel
-        if inp.ndim == 3 and inp.shape[2] == 2:
-            out = out.reshape(ph, pw, channels + 1)
-        elif inp.ndim == 2:
-            out = out.reshape(ph, pw, 2)
+        # Concatenate original data with both position embeddings
+        out = np.concatenate((inp_flat, y_position_embedding, x_position_embedding), axis=1)
+
+        # Reshape back to patch format with additional channels
+        out = out.reshape(ph, pw, channels + 2)
+        
         return out
+
 
 class KPatchSampler(Sampler):
     """
@@ -1051,7 +1350,8 @@ class KPatchSampler(Sampler):
         """
         rng = np.random.default_rng(self.seed)
         files = self.files.copy()
-        print(files)
+        if self.verbose:
+            print(files)
         if self.shuffle_files:
             rng.shuffle(files)
         for f in files:
@@ -1075,7 +1375,7 @@ class KPatchSampler(Sampler):
         """
         if self.samples_per_prod > 0:
             return sum(min(self.samples_per_prod, len(v)) for v in self.dataset._samples_by_file.values())
-        return self.dataset.total_patches
+        return len(self.dataset)
 
 def get_sar_dataloader(
     data_dir: str,
@@ -1101,7 +1401,9 @@ def get_sar_dataloader(
     cache_size: int = 10000, 
     max_products: int = 10, 
     samples_per_prod: int = 0,
-    online: bool = True
+    online: bool = True, 
+    concatenate_patches: bool = False,
+    concat_axis: int = 0  # 0 for vertical, 1 for horizontal
 ) -> DataLoader:
     """
     Create and return a PyTorch DataLoader for SAR data using SARZarrDataset and KPatchSampler.
@@ -1155,7 +1457,9 @@ def get_sar_dataloader(
         online=online, 
         max_products=max_products, 
         samples_per_prod=samples_per_prod, 
-        positional_encoding=positional_encoding
+        positional_encoding=positional_encoding, 
+        concatenate_patches=concatenate_patches,
+        concat_axis=concat_axis
     )
     sampler = KPatchSampler(
         dataset,
@@ -1175,12 +1479,16 @@ def get_sar_dataloader(
 # Example usage
 if __name__ == "__main__":
     
-    transforms = SARTransform(
-        transform_raw = functools.partial(normalize, array_min=RC_MIN, array_max=RC_MAX),
-        transform_rc = functools.partial(normalize, array_min=RC_MIN, array_max=RC_MAX),
-        transform_rcmc =functools.partial(normalize, array_min=RC_MIN, array_max=RC_MAX),
-        transform_az = functools.partial(normalize, array_min=GT_MIN, array_max=GT_MAX)
+    # Create SARTransform using the factory method
+    transforms = SARTransform.create_minmax_normalized_transform(
+        normalize=True,
+        rc_min=RC_MIN,
+        rc_max=RC_MAX,
+        gt_min=GT_MIN,
+        gt_max=GT_MAX,
+        complex_valued=True
     )
+    
     loader = get_sar_dataloader(
        data_dir="/Data/sar_focusing",
        level_from="rc",

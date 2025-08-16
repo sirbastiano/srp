@@ -12,7 +12,7 @@ RC_MAX = 3000
 GT_MIN = -12000
 GT_MAX = 12000
 
-def normalize(array, array_min, array_max):
+def minmax_normalize(array, array_min, array_max):
     """
     Normalizes the input array to the range [0, 1].
 
