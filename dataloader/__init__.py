@@ -38,6 +38,7 @@ def _import_with_fallback():
             get_sample_visualization,
             get_zarr_version,
             minmax_normalize,
+            minmax_inverse,
             extract_stripmap_mode_from_filename,
             RC_MAX, RC_MIN, GT_MAX, GT_MIN
         )
@@ -46,7 +47,7 @@ def _import_with_fallback():
             IdentityModule, BaseTransformModule, KPatchSampler, SARDataloader, get_sar_dataloader,
             list_base_files_in_repo, fetch_chunk_from_hf_zarr, download_metadata_from_product,
             get_chunk_name_from_coords, get_sample_visualization, get_zarr_version,
-            minmax_normalize, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN
+            minmax_normalize, minmax_inverse, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN
         )
     except ImportError as e1:
         print(f"Relative import failed: {e1}")
@@ -74,6 +75,7 @@ def _import_with_fallback():
                 get_sample_visualization,
                 get_zarr_version,
                 minmax_normalize,
+                minmax_inverse,
                 extract_stripmap_mode_from_filename,
                 RC_MAX, RC_MIN, GT_MAX, GT_MIN
             )
@@ -82,7 +84,7 @@ def _import_with_fallback():
                 IdentityModule, BaseTransformModule, KPatchSampler, SARDataloader, get_sar_dataloader,
                 list_base_files_in_repo, fetch_chunk_from_hf_zarr, download_metadata_from_product,
                 get_chunk_name_from_coords, get_sample_visualization, get_zarr_version,
-                minmax_normalize, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN
+                minmax_normalize, minmax_inverse, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN
             )
         except ImportError as e2:
             print(f"Absolute import from dataloader failed: {e2}")
@@ -130,7 +132,8 @@ def _import_with_fallback():
                     utils_module.get_chunk_name_from_coords,
                     utils_module.get_sample_visualization,
                     utils_module.get_zarr_version,
-                    utils_module.normalize,
+                    utils_module.minmax_normalize,
+                    utils_module.minmax_inverse,
                     utils_module.extract_stripmap_mode_from_filename,
                     utils_module.RC_MAX, utils_module.RC_MIN, 
                     utils_module.GT_MAX, utils_module.GT_MIN
@@ -145,7 +148,7 @@ try:
      IdentityModule, BaseTransformModule, KPatchSampler, SARDataloader, get_sar_dataloader,
      list_base_files_in_repo, fetch_chunk_from_hf_zarr, download_metadata_from_product,
      get_chunk_name_from_coords, get_sample_visualization, get_zarr_version,
-     normalize, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN) = _import_with_fallback()
+     minmax_normalize, minmax_inverse, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN) = _import_with_fallback()
 except ImportError as e:
     print(f"Failed to import dataloader modules: {e}")
     # Create dummy objects to prevent further import errors
@@ -182,7 +185,8 @@ __all__ = [
     'get_chunk_name_from_coords',
     'get_sample_visualization',
     'get_zarr_version',
-    'normalize',
+    'minmax_normalize',
+    'minmax_inverse',
     'extract_stripmap_mode_from_filename',
     
     # Constants

@@ -10,9 +10,57 @@ from typing import Optional, Callable, Union
 from dataloader.dataloader import SARZarrDataset, get_sar_dataloader
 from model.transformers.rv_transformer import RealValuedTransformer  
 from model.transformers.cv_transformer import ComplexTransformer
-from training.visualize import compute_metrics, visualize_pair, save_metrics
-                
-class TrainRVTransformer():
+from training.visualize import compute_metrics, save_metrics
+from sarpyx.utils.losses import get_loss_function
+import numpy as np
+
+class TrainerBase():
+    def __init__(
+        self, 
+        base_save_dir:str,
+        model , 
+        mode: str = "parallel",
+        criterion: Callable = nn.MSELoss
+    ):
+        self.base_save_dir = base_save_dir
+        self.model = model 
+        self.mode = mode
+        self.criterion_fn = criterion
+        
+    def compute_loss(self, output: torch.Tensor, target: torch.Tensor):
+        pass
+    def preprocess_sample(self, x: Union[np.ndarray, torch.Tensor], device: Union[str, torch.device]):                
+        if isinstance(x, np.ndarray):
+            x = torch.from_numpy(x)
+        return x.to(device)
+    def forward_pass(self, x: Union[np.ndarray, torch.Tensor], y: Optional[Union[np.ndarray, torch.Tensor]]=None, device: Union[str, torch.device]="cuda") -> torch.Tensor:
+        """
+        Forward pass through the model.
+        Args:
+            x: Input tensor
+            y: Target tensor
+        Returns:
+            Model output tensor
+        """
+        x_preprocessed = self.preprocess_sample(x, device)
+        if y is None:
+            y_preprocessed = None
+        else:
+            y_preprocessed = self.preprocess_sample(y, device)
+        return self.model(src=x_preprocessed, tgt=y_preprocessed)
+    def train(
+            self,
+            train_loader,
+            val_loader,
+            device:Union[str, torch.device], 
+            epochs:int=50, 
+            patience:int=10, 
+            delta:float=0.001, 
+            lr: float=1e-5, 
+            resume_from: Optional[str|os.PathLike] = None):
+        pass
+
+class TrainRVTransformer(TrainerBase):
     def __init__(self, 
                 base_save_dir:str,
                 model , 
@@ -39,7 +87,9 @@ class TrainRVTransformer():
             
         loss = self.criterion_fn(output, target)
         return loss
-    def preprocess_sample(self, x: torch.Tensor, device: Union[str, torch.device]):                
+    def preprocess_sample(self, x: torch.Tensor, device: Union[str, torch.device]):    
+        if isinstance(x, np.ndarray):
+            x = torch.from_numpy(x)       
         x = x.to(device).float()
         return x
     def train(
@@ -69,14 +119,9 @@ class TrainRVTransformer():
             epoch_loss = 0.0
             train_bar = tqdm(train_loader, unit="batch", desc=f"Training epoch {epoch}/{epochs}", leave=True)
             for x, y in train_bar:
-                #print(f"x={x}, y={y}")
-                #print(f"Input shape: {x.shape}, Target shape: {y.shape}")
-                x = self.preprocess_sample(x, device)
-                y = self.preprocess_sample(y, device)
-                #tgt_inp, tgt_real = make_seq_batch(y)
 
                 optimizer.zero_grad()
-                output = self.model(src=x, tgt=y)  
+                output = self.forward_pass(x, y, device)  
                 loss = self.compute_loss(output, y)
                 loss.backward()
                 optimizer.step()
@@ -299,7 +344,9 @@ class TrainCVTransformer(TrainRVTransformer):
             self.logger.info("Using patch preprocessing pipeline")
         else:
             self.logger.info("Using standard complex transformer")
-    def preprocess_sample(self, x: torch.Tensor, device: Union[str, torch.device]):                
+    def preprocess_sample(self, x: Union[torch.Tensor, np.ndarray], device: Union[str, torch.device]):   
+        if isinstance(x, np.ndarray):
+            x = torch.from_numpy(x)              
         if torch.is_complex(x):
             x = x.to(device).to(torch.complex64)
         else:
@@ -605,5 +652,36 @@ class TrainSSM:
             lr=lr
         )
 
-class TrainDUN():
+class TrainDUN(TrainerBase):
     pass
+
+def get_training_loop_by_model_name(model_name: str, model: nn.Module, save_dir: Union[str, os.PathLike] = './results', loss_fn_name: str = "mse", mode: str = 'parallel') -> TrainerBase:
+    if model_name == 'cv_transformer':
+        # Use enhanced trainer for complex transformers
+        trainer = TrainCVTransformer(
+            base_save_dir=str(save_dir),
+            model=model,
+            mode=mode,
+            criterion = get_loss_function("complex_mse")
+        )
+        
+        #logger.info("Created Complex transformer")
+    elif 'transformer' in model_name.lower():
+        trainer = TrainRVTransformer(
+            base_save_dir=str(save_dir),
+            model=model,
+            criterion = get_loss_function("mse"),
+            mode=mode
+        )
+        #logger.info("Created TrainRVTransformer")
+    # elif 'ssm' in model_name.lower():
+    #     trainer = TrainSSM(
+    #         base_save_dir=str(save_dir),
+    #         model=model,
+    #         criterion = get_loss_function("mse"),
+    #         mode=mode
+    #     )
+        #logger.info("Created TrainSSM")
+    else:
+        raise ValueError(f"Unsupported model type: {model_name}")
+    return trainer

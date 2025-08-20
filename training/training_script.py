@@ -13,9 +13,8 @@ from typing import Dict, Any
 
 from dataloader.dataloader import get_sar_dataloader, SARTransform
 from model.model_utils import get_model_from_configs
-from training.training_loops import TrainRVTransformer, TrainCVTransformer, TrainSSM
+from training.training_loops import get_training_loop_by_model_name
 from training.visualize import save_results_and_metrics
-from sarpyx.utils.losses import get_loss_function
 
 def setup_logging():
     """Setup logging configuration."""
@@ -329,34 +328,13 @@ def main():
     logger.info(f"Created dataloaders - Train: {len(train_loader)}, Val: {len(val_loader)}, Test: {len(test_loader)}")
     
     # Determine trainer class and create trainer
-    if model_cfg.get('name') == 'cv_transformer':
-        # Use enhanced trainer for complex transformers
-        trainer = TrainCVTransformer(
-            base_save_dir=training_cfg.get('save_dir', './results'),
-            model=model,
-            mode=training_cfg.get('mode', 'parallel'),
-            criterion = get_loss_function("complex_mse")
-        )
-        
-        logger.info("Created Complex transformer")
-    elif 'transformer' in model_cfg.get('name', '').lower():
-        trainer = TrainRVTransformer(
-            base_save_dir=training_cfg.get('save_dir', './results'),
-            model=model,
-            criterion = get_loss_function("mse"),
-            mode=training_cfg.get('mode', 'parallel')
-        )
-        logger.info("Created TrainRVTransformer")
-    elif 'ssm' in model_cfg.get('name', '').lower():
-        trainer = TrainSSM(
-            base_save_dir=training_cfg.get('save_dir', './results'),
-            model=model,
-            criterion = get_loss_function("mse"),
-            mode=training_cfg.get('mode', 'parallel')
-        )
-        logger.info("Created TrainSSM")
-    else:
-        raise ValueError(f"Unsupported model type: {model_cfg.get('name')}")
+    trainer = get_training_loop_by_model_name(
+        model_cfg.get('name', ''), 
+        model=model, 
+        save_dir=training_cfg.get('save_dir', './results'), 
+        loss_fn_name=training_cfg.get('loss_fn', 'mse'),
+        mode=training_cfg.get('mode', 'parallel')
+    )
     # Start training
     logger.info("Starting training process...")
     try:
