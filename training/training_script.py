@@ -12,12 +12,10 @@ import time
 from typing import Dict, Any
 
 from dataloader.dataloader import get_sar_dataloader, SARTransform
-from model.model_utils import get_model_from_configs, create_sar_complex_transformer
+from model.model_utils import get_model_from_configs
 from training.training_loops import TrainRVTransformer, TrainCVTransformer, TrainSSM
 from training.visualize import save_results_and_metrics
-from preprocessing.patch_processor import SARPatchProcessor
-from examples.sar_transformer_pipeline import SARTransformerPipeline
-from sarpyx.utils.losses import ComplexMSELoss, MSELoss
+from sarpyx.utils.losses import get_loss_function
 
 def setup_logging():
     """Setup logging configuration."""
@@ -337,7 +335,7 @@ def main():
             base_save_dir=training_cfg.get('save_dir', './results'),
             model=model,
             mode=training_cfg.get('mode', 'parallel'),
-            criterion = ComplexMSELoss()
+            criterion = get_loss_function("complex_mse")
         )
         
         logger.info("Created Complex transformer")
@@ -345,7 +343,7 @@ def main():
         trainer = TrainRVTransformer(
             base_save_dir=training_cfg.get('save_dir', './results'),
             model=model,
-            criterion = MSELoss(),
+            criterion = get_loss_function("mse"),
             mode=training_cfg.get('mode', 'parallel')
         )
         logger.info("Created TrainRVTransformer")
@@ -353,7 +351,7 @@ def main():
         trainer = TrainSSM(
             base_save_dir=training_cfg.get('save_dir', './results'),
             model=model,
-            criterion = MSELoss(),
+            criterion = get_loss_function("mse"),
             mode=training_cfg.get('mode', 'parallel')
         )
         logger.info("Created TrainSSM")

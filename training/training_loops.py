@@ -32,9 +32,16 @@ class TrainRVTransformer():
     def compute_loss(self, output: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         """Compute loss for complex-valued output."""
         # For complex output, we can use MSE on both real and imaginary parts
-
-        loss = self.criterion_fn(output[..., :-2], target[..., :-2])
+        if output.shape[-1] > 2:
+            output = output[..., :-2]
+        if target.shape[-1] > 2:
+            target = target[..., :-2]
+            
+        loss = self.criterion_fn(output, target)
         return loss
+    def preprocess_sample(self, x: torch.Tensor, device: Union[str, torch.device]):                
+        x = x.to(device).float()
+        return x
     def train(
             self, 
             train_loader, 
@@ -43,9 +50,16 @@ class TrainRVTransformer():
             epochs:int=50, 
             patience:int=10, 
             delta:float=0.001, 
-            lr: float=1e-5
+            lr: float=1e-5, 
+            resume_from: Optional[str|os.PathLike] = None
         ):
         optimizer = optim.Adam(self.model.parameters(), lr=lr)
+        if resume_from:
+            if self.resume_from_checkpoint(str(resume_from), optimizer, None):
+                print(f"Resuming training from epoch {self.start_epoch}")
+            else:
+                print("Failed to resume, starting from scratch")
+                self.start_epoch = 0
         last_improve_epochs = 0
         min_val_loss = float('inf')
 
@@ -57,15 +71,8 @@ class TrainRVTransformer():
             for x, y in train_bar:
                 #print(f"x={x}, y={y}")
                 #print(f"Input shape: {x.shape}, Target shape: {y.shape}")
-                if torch.is_complex(x):
-                    x = x.to(device).to(torch.complex64)
-                else:
-                    x = x.to(device).float()
-
-                if torch.is_complex(y):
-                    y = y.to(device).to(torch.complex64)
-                else:
-                    y = y.to(device).float()
+                x = self.preprocess_sample(x, device)
+                y = self.preprocess_sample(y, device)
                 #tgt_inp, tgt_real = make_seq_batch(y)
 
                 optimizer.zero_grad()
@@ -116,8 +123,81 @@ class TrainRVTransformer():
         metrics_path = os.path.join(self.base_save_dir, "train_metrics.json")
         with open(metrics_path, 'w') as f:
             f.write(str(self.val_losses))
-        print("Training complete and model saved.")        
-    
+        print("Training complete and model saved.")  
+          
+    def save_checkpoint(self, epoch: int, optimizer, scheduler=None, is_best: bool = False, **kwargs):
+        """Save training checkpoint with all necessary information."""
+        from model.model_utils import save_checkpoint
+        
+        # Determine filename based on checkpoint type
+        if is_best:
+            filename = "checkpoint_best.pth"
+        else:
+            filename = f"checkpoint_epoch_{epoch}.pth"
+            
+        checkpoint_path = os.path.join(self.base_save_dir, filename)
+        
+        # Prepare metrics
+        metrics = {
+            'epoch': epoch,
+            'val_losses': self.val_losses,
+            'best_val_loss': self.best_val_loss
+        }
+        metrics.update(kwargs)
+        
+        # Save comprehensive checkpoint
+        save_checkpoint(
+            model=self.model,
+            save_path=checkpoint_path,
+            epoch=epoch,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            metrics=metrics,
+            model_config=getattr(self.model, '_model_config', None)
+        )
+        
+        # Also save legacy format for compatibility
+        if is_best:
+            torch.save(self.model.state_dict(), f"{self.base_save_dir}/sar_transformer_best.pth")
+        torch.save(self.model.state_dict(), f"{self.base_save_dir}/sar_transformer_last.pth")
+        
+    def resume_from_checkpoint(self, checkpoint_path: str, optimizer, scheduler=None):
+        """Resume training from a checkpoint."""
+        from model.model_utils import load_pretrained_weights
+        
+        if not os.path.exists(checkpoint_path):
+            print(f"Checkpoint not found: {checkpoint_path}")
+            return False
+            
+        try:
+            # Load checkpoint
+            checkpoint = torch.load(checkpoint_path, map_location='cpu')
+            
+            # Load model weights
+            self.model.load_state_dict(checkpoint['model_state_dict'])
+            
+            # Load optimizer state
+            if optimizer and 'optimizer_state_dict' in checkpoint:
+                optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+                
+            # Load scheduler state
+            if scheduler and 'scheduler_state_dict' in checkpoint:
+                scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+                
+            # Load training state
+            self.start_epoch = checkpoint.get('epoch', 0) + 1
+            if 'metrics' in checkpoint:
+                metrics = checkpoint['metrics']
+                self.val_losses = metrics.get('val_losses', [])
+                self.best_val_loss = metrics.get('best_val_loss', float('inf'))
+                
+            print(f"✅ Resumed training from epoch {self.start_epoch}")
+            print(f"📊 Best validation loss so far: {self.best_val_loss:.6f}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Failed to resume from checkpoint: {str(e)}")
+            return False
     def test(
         self,
         test_loader: torch.utils.data.DataLoader,
@@ -143,10 +223,9 @@ class TrainRVTransformer():
                 # here assume parallel and full-target pass
                 output = self.model(src=raw, tgt=target)  
                 
-                # Move to CPU numpy arrays (squeeze channel dim if needed)
-                raw_np = raw.cpu().numpy().squeeze()
-                out_np = output.cpu().numpy().squeeze()
-                tgt_np = target.cpu().numpy().squeeze()
+                raw_np = raw.cpu().numpy() #.squeeze()
+                out_np = output.cpu().numpy() #.squeeze()
+                tgt_np = target.cpu().numpy() #.squeeze()
 
                 # Compute metrics for this sample
                 m = compute_metrics(raw_np, out_np, mainlobe_size=mainlobe_size)
@@ -172,7 +251,6 @@ class TrainRVTransformer():
 
         print(f"Test visuals saved to: {self.base_save_dir}")
         print(f"Test metrics saved to: {metrics_path}")
-
             
     def train_loop(
             self, 
@@ -181,7 +259,7 @@ class TrainRVTransformer():
             device:Union[str|torch.device], 
             epochs:int=50, 
             patience:int=10, 
-            delta:int=0.001, 
+            delta:float=0.001, 
         ):
         
         self.model.to(device)
@@ -221,7 +299,12 @@ class TrainCVTransformer(TrainRVTransformer):
             self.logger.info("Using patch preprocessing pipeline")
         else:
             self.logger.info("Using standard complex transformer")
-
+    def preprocess_sample(self, x: torch.Tensor, device: Union[str, torch.device]):                
+        if torch.is_complex(x):
+            x = x.to(device).to(torch.complex64)
+        else:
+            x = x.to(device).float()
+        return x
     def compute_loss(self, output: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         """
         Compute loss for complex-valued output.

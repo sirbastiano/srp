@@ -5,6 +5,7 @@ files=(
     "training/rv_transformer_parallel.yaml"
     "training/rv_transformer_encoder.yaml"
     "training/cv_transformer.yaml"
+    "training/cv_transformer_autoregressive.yaml"
 )
 
 for file in "${files[@]}"; do

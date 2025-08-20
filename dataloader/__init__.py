@@ -25,7 +25,8 @@ def _import_with_fallback():
             IdentityModule,
             BaseTransformModule,
             KPatchSampler,
-            get_sar_dataloader
+            get_sar_dataloader, 
+            SARDataloader
         )
         from .api import (
             list_base_files_in_repo,
@@ -42,7 +43,7 @@ def _import_with_fallback():
         )
         return (
             SARZarrDataset, SARTransform, NormalizationModule, ComplexNormalizationModule,
-            IdentityModule, BaseTransformModule, KPatchSampler, get_sar_dataloader,
+            IdentityModule, BaseTransformModule, KPatchSampler, SARDataloader, get_sar_dataloader,
             list_base_files_in_repo, fetch_chunk_from_hf_zarr, download_metadata_from_product,
             get_chunk_name_from_coords, get_sample_visualization, get_zarr_version,
             minmax_normalize, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN
@@ -59,8 +60,9 @@ def _import_with_fallback():
                 ComplexNormalizationModule,
                 IdentityModule,
                 BaseTransformModule,
-                KPatchSampler, 
-                get_sar_dataloader
+                KPatchSampler,
+                get_sar_dataloader,
+                SARDataloader
             )
             from dataloader.api import (
                 list_base_files_in_repo,
@@ -77,7 +79,7 @@ def _import_with_fallback():
             )
             return (
                 SARZarrDataset, SARTransform, NormalizationModule, ComplexNormalizationModule,
-                IdentityModule, BaseTransformModule, KPatchSampler, get_sar_dataloader,
+                IdentityModule, BaseTransformModule, KPatchSampler, SARDataloader, get_sar_dataloader,
                 list_base_files_in_repo, fetch_chunk_from_hf_zarr, download_metadata_from_product,
                 get_chunk_name_from_coords, get_sample_visualization, get_zarr_version,
                 minmax_normalize, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN
@@ -120,6 +122,7 @@ def _import_with_fallback():
                     dataloader_module.IdentityModule,
                     dataloader_module.BaseTransformModule,
                     dataloader_module.KPatchSampler,
+                    dataloader_module.SARDataloader,
                     dataloader_module.get_sar_dataloader,
                     api_module.list_base_files_in_repo,
                     api_module.fetch_chunk_from_hf_zarr,
@@ -139,7 +142,7 @@ def _import_with_fallback():
 # Import all modules
 try:
     (SARZarrDataset, SARTransform, NormalizationModule, ComplexNormalizationModule,
-     IdentityModule, BaseTransformModule, KPatchSampler, get_sar_dataloader,
+     IdentityModule, BaseTransformModule, KPatchSampler, SARDataloader, get_sar_dataloader,
      list_base_files_in_repo, fetch_chunk_from_hf_zarr, download_metadata_from_product,
      get_chunk_name_from_coords, get_sample_visualization, get_zarr_version,
      normalize, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN) = _import_with_fallback()
@@ -168,6 +171,7 @@ __all__ = [
     'BaseTransformModule',
     'KPatchSampler',
     'get_sar_dataloader',
+    'SARDataloader',
     
     # API functions
     'list_base_files_in_repo',

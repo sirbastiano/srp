@@ -3,6 +3,11 @@ from model.transformers.cv_transformer import ComplexTransformer
 from model.SSMs.SSM import MambaModel, SimpleSSM, sarSSM, S4D
 import torch
 import torch.nn as nn
+from typing import Optional, Dict, Any
+import os
+from pathlib import Path
+import time
+
 
 class SARTransformerFactory:
     @staticmethod
@@ -527,3 +532,180 @@ def get_model_from_configs(
     return model
 
 
+def load_pretrained_weights(
+    model: nn.Module, 
+    checkpoint_path: str, 
+    strict: bool = True,
+    map_location: str = 'cpu',
+    verbose: bool = True
+) -> Dict[str, Any]:
+    """
+    Load pretrained weights into a model with comprehensive error handling.
+    
+    Args:
+        model: PyTorch model to load weights into
+        checkpoint_path: Path to the checkpoint file
+        strict: Whether to strictly enforce that keys match
+        map_location: Device to map tensors to
+        verbose: Whether to print loading information
+        
+    Returns:
+        Dictionary containing loading information and metadata
+    """
+    from pathlib import Path
+    import torch
+    
+    checkpoint_path_obj = Path(checkpoint_path)
+    if not checkpoint_path_obj.exists():
+        raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path_obj}")
+    
+    if verbose:
+        print(f"Loading pretrained weights from: {checkpoint_path_obj}")
+    
+    # Load checkpoint
+    try:
+        checkpoint = torch.load(checkpoint_path, map_location=map_location)
+        
+        # Handle different checkpoint formats
+        if isinstance(checkpoint, dict):
+            if 'model_state_dict' in checkpoint:
+                state_dict = checkpoint['model_state_dict']
+                metadata = {k: v for k, v in checkpoint.items() if k != 'model_state_dict'}
+            elif 'state_dict' in checkpoint:
+                state_dict = checkpoint['state_dict']
+                metadata = {k: v for k, v in checkpoint.items() if k != 'state_dict'}
+            else:
+                # Assume the entire dict is the state_dict
+                state_dict = checkpoint
+                metadata = {}
+        else:
+            raise ValueError(f"Unexpected checkpoint format: {type(checkpoint)}")
+            
+    except Exception as e:
+        raise RuntimeError(f"Failed to load checkpoint: {str(e)}")
+    
+    # Load weights into model
+    try:
+        missing_keys, unexpected_keys = model.load_state_dict(state_dict, strict=strict)
+        
+        loading_info = {
+            'checkpoint_path': str(checkpoint_path),
+            'missing_keys': missing_keys,
+            'unexpected_keys': unexpected_keys,
+            'metadata': metadata,
+            'total_params_loaded': len(state_dict),
+            'loading_successful': len(missing_keys) == 0 and len(unexpected_keys) == 0
+        }
+        
+        if verbose:
+            if loading_info['loading_successful']:
+                print(f"Successfully loaded {loading_info['total_params_loaded']} parameters")
+            else:
+                print(f"Loaded with issues:")
+                if missing_keys:
+                    print(f"   Missing keys: {missing_keys}")
+                if unexpected_keys:
+                    print(f"   Unexpected keys: {unexpected_keys}")
+                    
+            # Print metadata if available
+            if metadata:
+                print("Checkpoint metadata:")
+                for key, value in metadata.items():
+                    if isinstance(value, (int, float, str, bool)):
+                        print(f"   {key}: {value}")
+        
+        return loading_info
+        
+    except Exception as e:
+        raise RuntimeError(f"Failed to load state dict: {str(e)}")
+
+def create_model_with_pretrained(
+    model_config: Dict[str, Any],
+    pretrained_path: Optional[str] = None,
+    strict_loading: bool = True,
+    device: str = 'cpu'
+) -> nn.Module:
+    """
+    Create a model and optionally load pretrained weights.
+    
+    Args:
+        model_config: Configuration dictionary for model creation
+        pretrained_path: Optional path to pretrained weights
+        strict_loading: Whether to use strict loading
+        device: Device to load model on
+        
+    Returns:
+        Model with optionally loaded pretrained weights
+    """
+    # Create model using existing factory
+    model = get_model_from_configs(**model_config)
+    model = model.to(device)
+    
+    # Load pretrained weights if provided
+    if pretrained_path:
+        loading_info = load_pretrained_weights(
+            model=model,
+            checkpoint_path=pretrained_path,
+            strict=strict_loading,
+            map_location=device
+        )
+        
+        # Store loading info as model attribute for reference
+        model._pretrained_info = loading_info
+    
+    return model
+
+def save_checkpoint(
+    model: nn.Module,
+    save_path: str,
+    epoch: Optional[int] = None,
+    optimizer: Optional[torch.optim.Optimizer] = None,
+    scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
+    metrics: Optional[Dict] = None,
+    model_config: Optional[Dict] = None,
+    **kwargs
+):
+    """
+    Save a comprehensive checkpoint with model weights and training state.
+    
+    Args:
+        model: PyTorch model to save
+        save_path: Path to save checkpoint
+        epoch: Current epoch number
+        optimizer: Optimizer state to save
+        scheduler: Scheduler state to save  
+        metrics: Training metrics to save
+        model_config: Model configuration for reproducibility
+        **kwargs: Additional metadata to save
+    """
+    
+    # Create directory if needed
+    save_path_obj = Path(save_path)
+    os.makedirs(save_path_obj.parent, exist_ok=True)
+    
+    # Prepare checkpoint dictionary
+    checkpoint = {
+        'model_state_dict': model.state_dict(),
+        'epoch': epoch,
+        'model_config': model_config,
+        'timestamp': torch.tensor(time.time()),  # Save as tensor for device consistency
+    }
+    
+    # Add optimizer state if provided
+    if optimizer is not None:
+        checkpoint['optimizer_state_dict'] = optimizer.state_dict()
+        
+    # Add scheduler state if provided  
+    if scheduler is not None:
+        checkpoint['scheduler_state_dict'] = scheduler.state_dict()
+        
+    # Add metrics if provided
+    if metrics is not None:
+        checkpoint['metrics'] = metrics
+        
+    # Add any additional metadata
+    checkpoint.update(kwargs)
+    
+    # Save checkpoint
+    torch.save(checkpoint, save_path)
+    print(f"Saved checkpoint to: {save_path}")

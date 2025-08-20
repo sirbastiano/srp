@@ -25,8 +25,22 @@ def minmax_normalize(array, array_min, array_max):
         np.ndarray: Normalized array.
     """
     normalized_array = (array - array_min) / (array_max - array_min)
-    normalized_array = np.clip(normalized_array, 0, 1)
+    #normalized_array = np.clip(normalized_array, 0, 1)
     return normalized_array
+def minmax_inverse(array, array_min, array_max):
+    """
+    Inverse normalization for the input array.
+
+    Args:
+        array (np.ndarray): Input array.
+        array_min (float): Minimum value for normalization.
+        array_max (float): Maximum value for normalization.
+
+    Returns:
+        np.ndarray: Inverse normalized array.
+    """
+    # Apply inverse normalization
+    return array * (array_max - array_min) + array_min
 
 def get_sample_visualization( 
                     data: np.ndarray,

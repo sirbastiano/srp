@@ -11,7 +11,7 @@ lr: 1e-3
 model:
   name: "rv_transformer"
   seq_len: 100  # Maximum number of patches in column (1000, 1)
-  input_dim: 4000   # patch size (1000, 1) * (num_channels + pos_encoding_shape)
+  input_dim: 2000   # patch size (1000, 1) * (num_channels + pos_encoding_shape)
   model_dim: 1024
   num_layers: 4
   num_heads: 4
@@ -58,7 +58,7 @@ dataloader:
     pattern: "*2024*.zarr"
   test: 
     batch_size: 32
-    samples_per_prod: 1000
+    samples_per_prod: 5000
     patch_order: "row"
     max_products: 1
     pattern: "*2025*.zarr"

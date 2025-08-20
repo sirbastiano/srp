@@ -1,0 +1,87 @@
+# Configuration for Complex-Valued Transformer Training
+
+# Data directory
+data_dir: "/Data/sar_focusing"
+
+# Training parameters
+epochs: 200
+batch_size: 16
+lr: 1e-4
+mode: "autoregressive"  # parallel, autoregressive, encoder_decoder, encoder_only
+
+# Model configuration
+model:
+  name: "cv_transformer"
+  seq_len: 200  # Number of vertical patches (tokens in sequence)
+  input_dim: 1000 
+  model_dim: 512
+  num_layers: 6
+  num_heads: 8
+  ff_dim: 2048
+  dropout: 0.1
+  dim_head: 64
+  pos_encoding_type: "complex"
+
+# Training configuration
+training:
+  patience: 20
+  delta: 0.001
+
+# Base save directory
+base_save_dir: "./results/cv_transformer_autoregressive_results"
+
+# Device configuration
+device: "cuda"
+
+# Dataloader configuration
+dataloader:
+  level_from: "rcmc"
+  level_to: "az"
+  num_workers: 0
+  patch_mode: "rectangular"
+  patch_size: [1000, 1]  # Vertical patches: height=1000, width=1
+  buffer: [1000, 1000]
+  stride: [300, 1]  # Stride for vertical patches
+  shuffle_files: false
+  complex_valued: true  # Load as complex values
+  save_samples: false
+  backend: "zarr"
+  verbose: false
+  cache_size: 1000
+  online: false
+  concatenate_patches: true  # Stack vertical patches into sequences
+  concat_axis: 0  # Vertical concatenation (axis=0)
+  positional_encoding: true  # Enable positional encoding
+  
+  # Training split
+  train:
+    batch_size: 1
+    samples_per_prod: 1
+    patch_order: "row"
+    max_products: 1
+    pattern: "*2023*.zarr"
+    
+  # Validation split  
+  validation:
+    batch_size: 16
+    samples_per_prod: 500
+    patch_order: "row"
+    max_products: 1
+    pattern: "*2024*.zarr"
+    
+  # Test split
+  test:
+    batch_size: 8
+    samples_per_prod: 200
+    patch_order: "row"
+    max_products: 1
+    pattern: "*2025*.zarr"
+
+# Transform configuration
+transforms:
+  normalize: true
+  complex_valued: true  
+  rc_min: -3000.0    
+  rc_max: 3000.0     
+  gt_min: -12000.0   
+  gt_max: 12000.0     

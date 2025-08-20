@@ -4,176 +4,243 @@ import matplotlib.pyplot as plt
 from skimage.metrics import peak_signal_noise_ratio
 import json
 from torch.utils.data import DataLoader
+from dataloader.dataloader import SARZarrDataset
+from tqdm import tqdm
+from torch import nn
 from typing import Union, Optional, Tuple, Dict
+import torch
+import logging
 
-def visualize_image_portion(dataloader: DataLoader, 
-                            zfile: Union[str, os.PathLike],
-                            start_y: int, 
-                            start_x: int,
-                            portion_height: int,
-                            portion_width: int,
-                            plot_type: str = 'magnitude',
-                            show: bool = True,
-                            vminmax: Optional[Union[Tuple[float, float], str]] = 'auto',
-                            figsize: Tuple[int, int] = (15, 8),
-                            save_path: Optional[str] = None) -> Tuple[np.ndarray, np.ndarray]:
+logging.basicConfig(level=logging.INFO)
+
+def visualize_batch_samples(
+    model, 
+    test_loader, 
+    device: str = 'cuda',
+    save_dir: str = './visualizations', 
+    max_batches: int = 5, 
+    max_samples_per_batch: int = 4
+):
     """
-    Visualize a portion of an image by merging multiple patches, handling stride and overlap.
-    Only works with square/rectangular patch modes.
-
+    Visualize samples from the test dataloader with model predictions.
+    
     Args:
-        dataloader (DataLoader): DataLoader instance for the dataset.
-        zfile (Union[str, os.PathLike]): Path to the Zarr file.
-        start_y (int): Starting y-coordinate.
-        start_x (int): Starting x-coordinate.
-        portion_height (int): Height of the portion.
-        portion_width (int): Width of the portion.
-        plot_type (str, optional): Visualization type ('magnitude', 'phase', etc.).
-        show (bool, optional): Whether to display the plot.
-        vminmax (Optional[Union[Tuple[float, float], str]], optional): Color scale limits or 'auto'.
-        figsize (Tuple[int, int], optional): Figure size.
-        save_path (Optional[str], optional): Path to save the visualization.
-
-    Returns:
-        Tuple[np.ndarray, np.ndarray]: Merged arrays for input and target portions.
+        model: Trained model for inference
+        test_loader: Test dataloader
+        device: Device to run model inference on
+        save_dir: Directory to save visualizations
+        max_batches: Maximum number of batches to visualize
+        max_samples_per_batch: Maximum samples to show per batch
     """
-
-    import matplotlib.pyplot as plt
+    os.makedirs(save_dir, exist_ok=True)
     
-    if patch_mode == "parabolic":
-        raise ValueError("Image portion visualization is not supported for parabolic patch mode.")
-        
-    if zfile not in _samples_by_file:
-        raise ValueError(f"File {zfile} not found in dataset.")
+    logger = logging.getLogger(__name__)
+    logger.info(f"Starting visualization of test samples with model predictions")
+    logger.info(f"Saving visualizations to: {save_dir}")
     
-    # Get patch and stride information
-    patch_h, patch_w = patch_size
-    stride_h, stride_w = stride
+    # Setup model for inference
+    model.to(device)
+    model.eval()
     
-    # Calculate how many patches we need in each dimension
-    patches_needed_h = (portion_height + stride_h - 1) // stride_h
-    patches_needed_w = (portion_width + stride_w - 1) // stride_w
-    
-    # Initialize merged arrays
-    merged_input = np.zeros((portion_height, portion_width), dtype=np.complex64)
-    merged_target = np.zeros((portion_height, portion_width), dtype=np.complex64)
-    
-    # Track coverage for proper merging
-    coverage_mask = np.zeros((portion_height, portion_width), dtype=bool)
-    
-    patches_found = 0
-    patches_used = 0
-    
-    # Iterate through the grid of patches needed
-    for i in range(patches_needed_h):
-        for j in range(patches_needed_w):
-            # Calculate patch coordinates in the original image
-            patch_y = start_y + i * stride_h
-            patch_x = start_x + j * stride_w
-            
-            # Check if this patch exists in our dataset
-            patch_coord = (patch_y, patch_x)
-            if patch_coord in _samples_by_file[zfile]:
-                patches_found += 1
+    try:
+        batch_count = 0
+        with torch.no_grad():
+            for batch_idx, (inputs, targets) in enumerate(test_loader):
+                if batch_count >= max_batches:
+                    break
+                    
+                logger.info(f"Processing batch {batch_idx + 1}/{max_batches}")
+                logger.info(f"Batch input shape: {inputs.shape}, target shape: {targets.shape}")
                 
-                # Get the patch data using __getitem__
+                # Move data to device and run inference
+                inputs_device = inputs.to(device)
+                targets_device = targets.to(device)
+                
+                # Get model predictions
                 try:
-                    input_patch, target_patch = __getitem__((files.index(str(zfile)), patch_y, patch_x))
-                    
-                    # Convert back to numpy and handle complex conversion
-                    if not complex_valued:
-                        # Data is stored as [real, imag] channels, convert back to complex
-                        if input_patch.dim() == 3:  # Check if it's a 3D tensor
-                            input_patch_np = input_patch[0].numpy() + 1j * input_patch[1].numpy()
-                            target_patch_np = target_patch[0].numpy() + 1j * target_patch[1].numpy()
-                        else:
-                            # Handle 2D case
-                            input_patch_np = input_patch.numpy().astype(np.complex64)
-                            target_patch_np = target_patch.numpy().astype(np.complex64)
-                    else:
-                        input_patch_np = input_patch.numpy()
-                        target_patch_np = target_patch.numpy()
-                    
-                    # Calculate where this patch should go in the merged array
-                    merge_start_y = i * stride_h
-                    merge_start_x = j * stride_w
-                    merge_end_y = min(merge_start_y + stride_h, portion_height)
-                    merge_end_x = min(merge_start_x + stride_w, portion_width)
-                    
-                    # Calculate the actual patch region to copy (respecting stride, not full patch)
-                    patch_copy_h = merge_end_y - merge_start_y
-                    patch_copy_w = merge_end_x - merge_start_x
-                    
-                    # Copy the stride-sized portion from the patch to merged array
-                    merged_input[merge_start_y:merge_end_y, merge_start_x:merge_end_x] = \
-                        input_patch_np[:patch_copy_h, :patch_copy_w]
-                    merged_target[merge_start_y:merge_end_y, merge_start_x:merge_end_x] = \
-                        target_patch_np[:patch_copy_h, :patch_copy_w]
-                    
-                    coverage_mask[merge_start_y:merge_end_y, merge_start_x:merge_end_x] = True
-                    patches_used += 1
-                        
+                    # # Try complex transformer interface first
+                    # if hasattr(model, 'preprocess_input'):
+                    #     predictions = model(src=inputs_device, tgt=targets_device)
+                    # else:
+                    #     # Fallback to standard forward pass
+                    predictions = model(inputs_device)
                 except Exception as e:
-                    if verbose:
-                        print(f"Warning: Could not load patch at ({patch_y}, {patch_x}): {e}")
+                    logger.warning(f"Model inference failed with {type(model).__name__}: {str(e)}")
+                    # Try alternative interfaces
+                    try:
+                        predictions = model(inputs_device, targets_device)
+                    except Exception as e2:
+                        logger.error(f"All inference attempts failed: {str(e2)}")
+                        continue
+                
+                # Move back to CPU for visualization
+                inputs_cpu = inputs.detach().cpu().numpy()
+                targets_cpu = targets.detach().cpu().numpy()
+                predictions_cpu = predictions.detach().cpu().numpy()
+                
+                # Get dataset reference
+                dataset = test_loader.dataset
+                
+                try:
+                    # Determine number of samples to visualize
+                    num_samples = min(max_samples_per_batch, inputs_cpu.shape[0])
+                    
+                    logger.info(f"Visualizing {num_samples} samples from batch {batch_idx + 1}")
+                    logger.info(f"Input shape: {inputs_cpu.shape}, Prediction shape: {predictions_cpu.shape}, Target shape: {targets_cpu.shape}")
+                    
+                    # Use dataset's batch visualization method
+                    if hasattr(test_loader, 'get_batch_visualization'):
+                        # Create comprehensive batch visualization using dataset method
+                        save_path = os.path.join(save_dir, f"batch_{batch_idx}_inputs_targets.png")
+                        
+                        # Visualize inputs and targets together
+                        test_loader.get_batch_visualization(
+                            inputs_batch=inputs_cpu,
+                            targets_batch=targets_cpu,
+                            batch_indices=list(range(num_samples)),
+                            max_samples=num_samples,
+                            titles=None,  # Use default titles
+                            show=False,
+                            save_path=save_path,
+                            figsize=(20, 6 * num_samples),
+                            vminmax=(0, 1000),
+                            ncols=2
+                        )
+                        logger.info(f"Saved input/target visualization to: {save_path}")
+                        
+                        # Create model prediction comparison visualization
+                        save_path_pred = os.path.join(save_dir, f"batch_{batch_idx}_predictions.png")   
+                        logger.info(f"Saved manual prediction comparison to: {save_path_pred}")
+                    
+                    else:
+                        # Fallback if dataset doesn't have batch visualization
+                        logger.warning("Dataset doesn't have get_batch_visualization method, using manual approach")
+                        
+                        # Create manual visualization
+                        fig, axes = plt.subplots(num_samples, 3, figsize=(18, 6 * num_samples))
+                        if num_samples == 1:
+                            axes = axes.reshape(1, -1)
+                        
+                        for sample_idx in range(num_samples):
+                            # Get individual samples and process them
+                            input_sample = inputs_cpu[sample_idx]
+                            pred_sample = predictions_cpu[sample_idx]
+                            target_sample = targets_cpu[sample_idx]
+                            
+                            # Simple processing - remove positional encoding and take magnitude
+                            if input_sample.shape[-1] > 2:
+                                input_sample = input_sample[..., :-2]
+                            if pred_sample.shape[-1] > 2:
+                                pred_sample = pred_sample[..., :-2]
+                            if target_sample.shape[-1] > 2:
+                                target_sample = target_sample[..., :-2]
+                            
+                            # Convert to magnitude if complex
+                            input_data = np.abs(input_sample.squeeze()) if np.iscomplexobj(input_sample) else input_sample.squeeze()
+                            pred_data = np.abs(pred_sample.squeeze()) if np.iscomplexobj(pred_sample) else pred_sample.squeeze()
+                            target_data = np.abs(target_sample.squeeze()) if np.iscomplexobj(target_sample) else target_sample.squeeze()
+                            
+                            # Ensure 2D for imshow
+                            if input_data.ndim == 1:
+                                input_data = input_data.reshape(-1, 1)
+                            if pred_data.ndim == 1:
+                                pred_data = pred_data.reshape(-1, 1)
+                            if target_data.ndim == 1:
+                                target_data = target_data.reshape(-1, 1)
+                            
+                            # Plot
+                            im1 = axes[sample_idx, 0].imshow(input_data, aspect='auto', cmap='viridis')
+                            axes[sample_idx, 0].set_title(f'Input {sample_idx} ({dataset.level_from.upper()})')
+                            plt.colorbar(im1, ax=axes[sample_idx, 0], fraction=0.046, pad=0.04)
+                            
+                            im2 = axes[sample_idx, 1].imshow(pred_data, aspect='auto', cmap='viridis')
+                            axes[sample_idx, 1].set_title(f'Prediction {sample_idx} ({dataset.level_to.upper()})')
+                            plt.colorbar(im2, ax=axes[sample_idx, 1], fraction=0.046, pad=0.04)
+                            
+                            im3 = axes[sample_idx, 2].imshow(target_data, aspect='auto', cmap='viridis')
+                            axes[sample_idx, 2].set_title(f'Target {sample_idx} ({dataset.level_to.upper()})')
+                            plt.colorbar(im3, ax=axes[sample_idx, 2], fraction=0.046, pad=0.04)
+                        
+                        plt.tight_layout()
+                        save_path = os.path.join(save_dir, f"batch_{batch_idx}_manual_comparison.png")
+                        plt.savefig(save_path, dpi=150, bbox_inches='tight')
+                        plt.close()
+                        
+                        logger.info(f"Saved manual comparison to: {save_path}")
+                    
+                    # Create error analysis if desired
+                    try:
+                        error_save_path = os.path.join(save_dir, f"batch_{batch_idx}_prediction_error.png")
+                        
+                        fig_error, axes_error = plt.subplots(num_samples, 2, figsize=(12, 6 * num_samples))
+                        if num_samples == 1:
+                            axes_error = axes_error.reshape(1, -1)
+                        
+                        for sample_idx in range(num_samples):
+                            pred_sample = predictions_cpu[sample_idx]
+                            target_sample = targets_cpu[sample_idx]
+                            
+                            # Remove positional encoding if present
+                            if pred_sample.shape[-1] > 2:
+                                pred_sample = pred_sample[..., :-2]
+                            if target_sample.shape[-1] > 2:
+                                target_sample = target_sample[..., :-2]
+                            
+                            # Compute error (handle complex data)
+                            if np.iscomplexobj(pred_sample) or np.iscomplexobj(target_sample):
+                                pred_mag = np.abs(pred_sample.squeeze())
+                                target_mag = np.abs(target_sample.squeeze())
+                            else:
+                                pred_mag = pred_sample.squeeze()
+                                target_mag = target_sample.squeeze()
+                            
+                            # Ensure 2D for visualization
+                            if pred_mag.ndim == 1:
+                                pred_mag = pred_mag.reshape(-1, 1)
+                                target_mag = target_mag.reshape(-1, 1)
+                            
+                            # Compute absolute and relative errors
+                            abs_error = np.abs(pred_mag - target_mag)
+                            rel_error = abs_error / (target_mag + 1e-8)  # Avoid division by zero
+                            
+                            # Plot absolute error
+                            im1 = axes_error[sample_idx, 0].imshow(abs_error, aspect='auto', cmap='hot')
+                            axes_error[sample_idx, 0].set_title(f'Absolute Error {sample_idx}')
+                            axes_error[sample_idx, 0].set_xlabel('Range')
+                            axes_error[sample_idx, 0].set_ylabel('Azimuth')
+                            plt.colorbar(im1, ax=axes_error[sample_idx, 0], fraction=0.046, pad=0.04)
+                            
+                            # Plot relative error
+                            im2 = axes_error[sample_idx, 1].imshow(rel_error, aspect='auto', cmap='hot')
+                            axes_error[sample_idx, 1].set_title(f'Relative Error {sample_idx}')
+                            axes_error[sample_idx, 1].set_xlabel('Range') 
+                            axes_error[sample_idx, 1].set_ylabel('Azimuth')
+                            plt.colorbar(im2, ax=axes_error[sample_idx, 1], fraction=0.046, pad=0.04)
+                        
+                        plt.tight_layout()
+                        plt.savefig(error_save_path, dpi=150, bbox_inches='tight')
+                        plt.close()
+                        
+                        logger.info(f"Saved error analysis to: {error_save_path}")
+                        
+                    except Exception as e:
+                        logger.warning(f"Error analysis failed: {str(e)}")
+                    
+                except Exception as e:
+                    logger.error(f"Error creating visualization for batch {batch_idx}: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
                     continue
+                
+                batch_count += 1
+                
+    except Exception as e:
+        logger.error(f"Error during model visualization: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise
     
-    if patches_used == 0:
-        raise ValueError(f"No valid patches found for the requested portion starting at ({start_y}, {start_x})")
-    
-    if verbose:
-        coverage_percent = np.sum(coverage_mask) / coverage_mask.size * 100
-        print(f"Merged {patches_used}/{patches_found} available patches. Coverage: {coverage_percent:.1f}%")
-    
-    # Create visualization
-    fig, axes = plt.subplots(1, 2, figsize=figsize)
-    
-    # Process data for visualization
-    input_vis, input_vmin, input_vmax = get_sample_visualization(
-        merged_input, plot_type=plot_type, vminmax=vminmax
-    )
-    target_vis, target_vmin, target_vmax = get_sample_visualization(
-        merged_target, plot_type=plot_type, vminmax=vminmax
-    )
-    
-    # Plot input (level_from)
-    im1 = axes[0].imshow(input_vis, aspect='auto', cmap='viridis', 
-                        vmin=input_vmin, vmax=input_vmax)
-    axes[0].set_title(f'{level_from.upper()} - {plot_type.title()}')
-    axes[0].set_xlabel('Range')
-    axes[0].set_ylabel('Azimuth')
-    cbar1 = plt.colorbar(im1, ax=axes[0], fraction=0.046, pad=0.04)
-    cbar1.ax.tick_params(labelsize=8)
-    
-    # Plot target (level_to)
-    im2 = axes[1].imshow(target_vis, aspect='auto', cmap='viridis',
-                        vmin=target_vmin, vmax=target_vmax)
-    axes[1].set_title(f'{level_to.upper()} - {plot_type.title()}')
-    axes[1].set_xlabel('Range')
-    axes[1].set_ylabel('Azimuth')
-    cbar2 = plt.colorbar(im2, ax=axes[1], fraction=0.046, pad=0.04)
-    cbar2.ax.tick_params(labelsize=8)
-    
-    # Add coverage information
-    fig.suptitle(f'Image Portion: File {file_idx}, Start ({start_y}, {start_x}), '
-                f'Size ({portion_height}, {portion_width})\n'
-                f'Patches Used: {patches_used}, Coverage: {np.sum(coverage_mask) / coverage_mask.size * 100:.1f}%',
-                fontsize=12)
-    
-    plt.tight_layout()
-    
-    # Save if requested
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        if verbose:
-            print(f"Visualization saved to: {save_path}")
-    
-    if show:
-        plt.show()
-    else:
-        plt.close(fig)
-        
-    return merged_input, merged_target
+    logger.info(f"Model visualization complete! Saved {batch_count} batch comparisons to {save_dir}")
 
 def visualize_pair(raw_image: np.ndarray, focused_image: np.ndarray, save_path: str, cmap: str = 'gray') -> None:
     """

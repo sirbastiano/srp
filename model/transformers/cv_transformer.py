@@ -433,7 +433,7 @@ class ComplexTransformer(nn.Module):
         rotary: bool = True,
         flash_attn: bool = True,
         use_data_positions: bool = False,
-        pos_encoding_type: str = 'complex',
+        pos_encoding_type: str = 'concat',
         verbose: bool = False
     ):
         super().__init__()
@@ -584,13 +584,7 @@ class ComplexTransformer(nn.Module):
                     if self.pos_proj is not None:
                         pos_encoding = self.pos_proj(pos_concat)  # [batch, seq_len, dim]
                         x = x + pos_encoding
-                        
-                elif self.pos_encoding_type == 'add':
-                    # Add separate projections for each position
-                    if hasattr(self, 'pos_proj_h') and hasattr(self, 'pos_proj_v'):
-                        pos_h_enc = self.pos_proj_h(pos_h.unsqueeze(-1))  # [batch, seq_len, dim]
-                        pos_v_enc = self.pos_proj_v(pos_v.unsqueeze(-1))  # [batch, seq_len, dim]
-                        x = x + pos_h_enc + pos_v_enc
+                
         
         if self.verbose:
             print(f"Preprocessed tensor shape: {x.shape}, dtype: {x.dtype}")

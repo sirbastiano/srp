@@ -19,9 +19,10 @@ import math
 
 from utils import get_chunk_name_from_coords, get_sample_visualization, get_zarr_version
 from api import list_base_files_in_repo
-from utils import minmax_normalize, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN
+from utils import minmax_normalize, minmax_inverse, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN
 from api import fetch_chunk_from_hf_zarr, download_metadata_from_product
-
+import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 class BaseTransformModule(nn.Module):
     """Base class for SAR data transformations."""
     
@@ -31,6 +32,9 @@ class BaseTransformModule(nn.Module):
     def forward(self, x: np.ndarray) -> np.ndarray:
         """Apply transformation to input data."""
         raise NotImplementedError("Subclasses must implement forward method")
+    def inverse(self, x: np.ndarray) -> np.ndarray:
+        """Inverse transformation, if applicable."""
+        raise NotImplementedError("Subclasses must implement inverse method")
 
 
 class NormalizationModule(BaseTransformModule):
@@ -45,6 +49,10 @@ class NormalizationModule(BaseTransformModule):
         """Normalize array to range [0, 1]."""
         # Apply normalization directly on numpy array
         return minmax_normalize(x, self.data_min, self.data_max)
+    def inverse(self, x: np.ndarray) -> np.ndarray:
+        """Inverse normalization."""
+        # Apply inverse normalization
+        return minmax_inverse(x, self.data_min, self.data_max)
 
 
 class IdentityModule(BaseTransformModule):
@@ -54,6 +62,9 @@ class IdentityModule(BaseTransformModule):
         super(IdentityModule, self).__init__()
     
     def forward(self, x: np.ndarray) -> np.ndarray:
+        """Return input unchanged."""
+        return x
+    def inverse(self, x: np.ndarray) -> np.ndarray:
         """Return input unchanged."""
         return x
 
@@ -76,8 +87,8 @@ class ComplexNormalizationModule(BaseTransformModule):
             real_part = minmax_normalize(np.real(x), self.real_min, self.real_max)
             imag_part = minmax_normalize(np.imag(x), self.imag_min, self.imag_max)
 
-            real_part = np.clip(real_part, 0, 1)
-            imag_part = np.clip(imag_part, 0, 1)
+            #real_part = np.clip(real_part, 0, 1)
+            #imag_part = np.clip(imag_part, 0, 1)
             
             normalized = real_part + 1j * imag_part
         else:
@@ -85,6 +96,16 @@ class ComplexNormalizationModule(BaseTransformModule):
             normalized = minmax_normalize(x, self.real_min, self.real_max)
 
         return normalized
+    def inverse(self, x: np.ndarray) -> np.ndarray:
+        """Inverse normalization."""
+        if np.iscomplexobj(x):
+            # Inverse normalize real and imaginary parts separately
+            real_part = minmax_inverse(np.real(x), self.real_min, self.real_max)
+            imag_part = minmax_inverse(np.imag(x), self.imag_min, self.imag_max)
+            return real_part + 1j * imag_part
+        else:
+            # Assume magnitude data
+            return minmax_inverse(x, self.real_min, self.real_max)
 
 
 class SARTransform(nn.Module):
@@ -136,7 +157,24 @@ class SARTransform(nn.Module):
         """
         assert level in self.transforms, f"Transform for level '{level}' not defined."
         return self.transforms[level](x)
-    
+    def inverse(self, x: np.ndarray, level: str) -> np.ndarray:
+        """
+        Apply the appropriate inverse transform module to the input array for the specified SAR processing level.
+
+        Args:
+            x (np.ndarray): Input data array.
+            level (str): SAR processing level ('raw', 'rc', 'rcmc', or 'az').
+
+        Returns:
+            np.ndarray: Inverse transformed data array.
+        """
+        assert level in self.transforms, f"Transform for level '{level}' not defined."
+        if isinstance(self.transforms[level], BaseTransformModule):
+            # If the transform is a custom module, use its inverse method
+            return self.transforms[level].inverse(x)
+        print("[WARNING] Inverse transform not defined, returning input unchanged.")
+        return x
+
     @classmethod
     def create_minmax_normalized_transform(
         cls,
@@ -165,18 +203,19 @@ class SARTransform(nn.Module):
             return cls()
         
         if complex_valued:
-            # Use complex normalization with same range for real and imaginary parts
-            rc_transform = ComplexNormalizationModule(rc_min, rc_max, rc_min, rc_max)
-            rcmc_transform = ComplexNormalizationModule(rc_min, rc_max, rc_min, rc_max)
+            raw_transform = ComplexNormalizationModule(rc_min, rc_max, rc_min, rc_max)
+            rc_transform = ComplexNormalizationModule(gt_min, gt_max, gt_min, gt_max)
+            rcmc_transform = ComplexNormalizationModule(gt_min, gt_max, gt_min, gt_max)
             az_transform = ComplexNormalizationModule(gt_min, gt_max, gt_min, gt_max)
         else:
             # Use simple normalization for magnitude data
-            rc_transform = NormalizationModule(rc_min, rc_max)
-            rcmc_transform = NormalizationModule(rc_min, rc_max)
+            raw_transform = NormalizationModule(rc_min, rc_max)
+            rc_transform = NormalizationModule(gt_min, gt_max)
+            rcmc_transform = NormalizationModule(gt_min, gt_max)
             az_transform = NormalizationModule(gt_min, gt_max)
         
         return cls(
-            transform_raw=IdentityModule(),
+            transform_raw=raw_transform,
             transform_rc=rc_transform,
             transform_rcmc=rcmc_transform,
             transform_az=az_transform
@@ -278,7 +317,11 @@ class SARZarrDataset(Dataset):
         
         self.concatenate_patches = concatenate_patches
         self.concat_axis = concat_axis
-        
+
+        self._patch: Dict[str, np.ndarray] = {
+            self.level_from: np.array([0]),
+            self.level_to: np.array([0])
+        }
         # Validate concatenation parameters
         if self.concatenate_patches:
             ph, pw = self._patch_size
@@ -314,9 +357,9 @@ class SARZarrDataset(Dataset):
             return ph, pw
         else:
             if self.backend == "zarr":
-                y, x = self._stores[zfile][self.level_from].shape - 2 * self.buffer
+                y, x = self._stores[zfile][self.level_from].shape 
             elif self.backend == "dask":
-                y, x = self._stores[zfile][self.level_from].shape[1:] - 2 * self.buffer
+                y, x = self._stores[zfile][self.level_from].shape[1:]
             if ph <= 0:
                 ph = y - 2*self.buffer[0]
             if pw <= 0:
@@ -577,7 +620,7 @@ class SARZarrDataset(Dataset):
         """
         return self._samples_per_prod * self._max_products
 
-    def _get_base_sample(self, zfile: os.PathLike, y: int, x: int) -> np.ndarray:
+    def _get_base_sample(self, zfile: os.PathLike, y: int, x: int) -> Tuple[np.ndarray, np.ndarray]:
         """
         Retrieve the raw input and target patches from the Zarr store at the specified coordinates,
         without applying any transformation or positional encoding.
@@ -616,8 +659,28 @@ class SARZarrDataset(Dataset):
                     patch_to = self._get_sample(zfile, self.level_to, y, self.buffer[0], ph, sw)
             else:
                 patch_from = self._get_sample(zfile, self.level_from, y, x, ph, pw)
+                
+                # if pw == 1:
+                #     original_patch = self._stores[zfile][self.level_from][y:y+ph, x]
+                # elif ph == 1:
+                #     original_patch = self._stores[zfile][self.level_from][y, x:x+pw]
+                # else:
+                #     original_patch = self._stores[zfile][self.level_from][y:y+ph,x:x+pw]
+                # #print(f"Original patch shape")
+                # assert (patch_from.squeeze() ==original_patch).all(), f"Patch data mismatch! Patch: {patch_from.squeeze()}, original patch: {original_patch}"
+                # print(f"Comparison is ok between the patches: {patch_from.squeeze()[:50]} and {original_patch[:50]}")
+                
                 patch_to = self._get_sample(zfile, self.level_to, y, x, ph, pw)
-
+                # if pw == 1:
+                #     original_patch = self._stores[zfile][self.level_to][y:y+ph, x]
+                # elif ph == 1:
+                #     original_patch = self._stores[zfile][self.level_to][y, x:x+pw]
+                # else:
+                #     original_patch = self._stores[zfile][self.level_to][y:y+ph,x:x+pw]
+                # #print(f"Original patch shape")
+                # assert (patch_to.squeeze() ==original_patch).all(), f"Patch data mismatch! Patch: {patch_to.squeeze()}, original patch: {original_patch}"
+                # print(f"Comparison is ok between the patches: {patch_from.squeeze()[:50]} and {original_patch[:50]}")
+                # assert (patch_from == patch_to).all(), f"Patch data mismatch! Patch from: {patch_from.squeeze()}, Patch to: {patch_to.squeeze()}"
         return patch_from, patch_to
 
     def __getitem__(self, idx: Tuple[str, int, int]) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -694,7 +757,9 @@ class SARZarrDataset(Dataset):
             t0 = time.time()
             # Get concatenated patches instead of single patch
             patch_from = self._get_concatenated_patch(patch_from, zfile)
+            #print(f"Concatenated patch from: {patch_from}")
             patch_to = self._get_concatenated_patch(patch_to, zfile)
+            #print(f"Concatenated patch to: {patch_to}")
             if self.verbose:
                 dt = time.time() - t0
                 print(f"Concatenated patch shapes: from={patch_from.shape}, to={patch_to.shape} took {dt:.4f} seconds")
@@ -775,7 +840,7 @@ class SARZarrDataset(Dataset):
         # Load the actual chunk data
         chunk_data = arr[chunk_y_start:chunk_y_end, chunk_x_start:chunk_x_end]
         
-        return chunk_data.astype(np.complex64)
+        return chunk_data.astype(np.complex128)
     
     def _get_sample_from_cached_chunks_vectorized(self, zfile: os.PathLike, level: str, y: int, x: int, ph: int, pw: int) -> np.ndarray:
         """
@@ -807,8 +872,8 @@ class SARZarrDataset(Dataset):
         cy_end, cx_end = (y + ph - 1) // ch, (x + pw - 1) // cw
         
         # Pre-allocate final patch only
-        if not hasattr(self, "_patch") or self._patch.shape != (ph, pw):
-            self._patch = np.zeros((ph, pw), dtype=np.complex64)
+        if not hasattr(self, "_patch") or level not in self._patch.keys() or self._patch[level].shape != (ph, pw):
+            self._patch[level] = np.zeros((ph, pw), dtype=np.complex128)
         # Direct extraction without temporary arrays
         for cy in range(cy_start, cy_end + 1):
             for cx in range(cx_start, cx_end + 1):
@@ -835,9 +900,9 @@ class SARZarrDataset(Dataset):
                     dst_x1, dst_x2 = x_start - x, x_end - x
                     
                     # Direct copy
-                    self._patch[dst_y1:dst_y2, dst_x1:dst_x2] = chunk[src_y1:src_y2, src_x1:src_x2]
+                    self._patch[level][dst_y1:dst_y2, dst_x1:dst_x2] = chunk[src_y1:src_y2, src_x1:src_x2]
 
-        return self._patch
+        return self._patch[level]
     def _get_small_patch_optimized(self, zfile: os.PathLike, level: str, y: int, x: int, ph: int, pw: int, ch: int, cw: int) -> np.ndarray:
         """
         Optimized for small patches that likely fit in a single chunk.
@@ -852,7 +917,7 @@ class SARZarrDataset(Dataset):
             return chunk[dy:dy+ph, dx:dx+pw].copy()
         
         # Boundary case: use minimal allocation
-        patch = np.zeros((ph, pw), dtype=np.complex64)
+        patch = np.zeros((ph, pw), dtype=np.complex128)
         max_h = min(ph, chunk.shape[0] - dy)
         max_w = min(pw, chunk.shape[1] - dx)
         
@@ -869,8 +934,8 @@ class SARZarrDataset(Dataset):
             # Vertical strip: patch_size=(length, 1)
             cy_start, cy_end = y // ch, (y + length - 1) // ch
             cx = x // cw
-            if not hasattr(self, "_patch") or self._patch.shape[0] != length:
-                self._patch = np.zeros(length, dtype=np.complex64)
+            if not hasattr(self, "_patch") or level not in self._patch.keys() or self._patch[level].shape[0] != length:
+                self._patch[level] = np.zeros(length, dtype=np.complex128)
                 #print(f"Allocating patch for vertical strip: {self._patch.shape}")
             current_pos = 0
             for cy in range(cy_start, cy_end + 1):
@@ -884,15 +949,15 @@ class SARZarrDataset(Dataset):
                         local_start = global_start - chunk_y_start
                         local_end = global_end - chunk_y_start
                         slice_height = local_end - local_start
-                        self._patch[current_pos:current_pos + slice_height] = chunk[local_start:local_end, dx]
+                        self._patch[level][current_pos:current_pos + slice_height] = chunk[local_start:local_end, dx]
                         current_pos += slice_height
-            return self._patch.reshape(length, 1)
+            return self._patch[level].reshape(length, 1)
         elif axis == 1:
             # Horizontal strip: patch_size=(1, length)
             cx_start, cx_end = x // cw, (x + length - 1) // cw
             cy = y // ch
-            if not hasattr(self, "_patch") or self._patch.shape[0] != length:
-                self._patch = np.zeros(length, dtype=np.complex64)
+            if not hasattr(self, "_patch") or level not in self._patch.keys() or self._patch[level].shape[0] != length:
+                self._patch[level] = np.zeros(length, dtype=np.complex128)
                 #print(f"Allocating patch for horizontal strip: {self._patch.shape}")
 
             current_pos = 0
@@ -907,9 +972,9 @@ class SARZarrDataset(Dataset):
                         local_start = global_start - chunk_x_start
                         local_end = global_end - chunk_x_start
                         slice_width = local_end - local_start
-                        self._patch[current_pos:current_pos + slice_width] = chunk[dy, local_start:local_end]
+                        self._patch[level][current_pos:current_pos + slice_width] = chunk[dy, local_start:local_end]
                         current_pos += slice_width
-            return self._patch.reshape(1, length)
+            return self._patch[level].reshape(1, length)
         else:
             raise ValueError("axis must be 0 (vertical) or 1 (horizontal)")
 
@@ -941,7 +1006,8 @@ class SARZarrDataset(Dataset):
                 return chunk[dy:dy+ph, dx:dx+pw].copy()  # Direct slice
             else:
                 # Handle boundary case
-                patch = np.zeros((ph, pw), dtype=np.complex64)
+                #print("HEYYYYYYYYY")
+                patch = np.zeros((ph, pw), dtype=np.complex128)
                 max_h = min(ph, chunk.shape[0] - dy)
                 max_w = min(pw, chunk.shape[1] - dx)
                 patch[:max_h, :max_w] = chunk[dy:dy+max_h, dx:dx+max_w]
@@ -979,9 +1045,17 @@ class SARZarrDataset(Dataset):
             delta_t = time.time() - t0
             if self.verbose:
                 print(f"Loading {level} data took {delta_t:.2f} seconds.")
-            return arr.astype(np.complex64)
+            return arr.astype(np.complex128)
         elif self.backend == "zarr":
             patch = self._get_sample_from_cached_chunks(zfile, level, y, x, ph, pw)
+            # if pw == 1:
+            #     original_patch = self._stores[zfile][level][y:y+ph, x]
+            # elif ph == 1:
+            #     original_patch = self._stores[zfile][level][y, x:x+pw]
+            # else:
+            #     original_patch = self._stores[zfile][level][y:y+ph,x:x+pw]
+            # #print(f"Original patch shape")
+            # assert (patch.squeeze() ==original_patch).all(), f"Patch data mismatch! Patch: {patch.squeeze()}, original patch: {original_patch}"
             return patch
         else:
             raise ValueError(f"Unknown backend {self.backend}")
@@ -1015,7 +1089,7 @@ class SARZarrDataset(Dataset):
         if zfile not in self._stores:
             raise KeyError(f"Zarr file {zfile} not found in stores.")
         
-        pw, ph = self._stores[zfile][self.level_from].shape
+        ph, pw = self._stores[zfile][self.level_from].shape
         return (ph - self.buffer[0] * 2, pw - self.buffer[1] * 2)
     
     def _get_concatenated_patch(self, patch: np.ndarray, zfile: os.PathLike) -> np.ndarray:
@@ -1047,7 +1121,7 @@ class SARZarrDataset(Dataset):
             # num_patches = sh // stride_y if sh > stride_y else 1
 
             patch = patch.squeeze()
-
+            #print(f"Patch shape: {patch.shape}")
             max_start = len(patch) - ph + 1
 
             # Create start indices for each window
@@ -1058,9 +1132,15 @@ class SARZarrDataset(Dataset):
 
             # Use broadcasting to create all indices
             indices = start_indices[:, np.newaxis] + offset_indices[np.newaxis, :]
-
             # Extract windows and transpose
+            # indices = indices.T
+            #print(f"Indices shape: {indices.shape}")
+            #print(indices)
+            #print(f"Patch before concatenation: {patch}")
             patch = patch[indices].swapaxes(0, 1)
+            #print(f"Patch after concatenation: {patch}")
+            
+            #print(f"Patch shape:{patch.shape}")
                 
         elif self.concat_axis == 1:
             patch = patch.squeeze()
@@ -1075,14 +1155,143 @@ class SARZarrDataset(Dataset):
 
             # Use broadcasting to create all indices
             indices = start_indices[:, np.newaxis] + offset_indices[np.newaxis, :]
-
+            #indices = indices.T
             # Extract windows
             patch = patch[indices]
         else:
             raise ValueError(f"Invalid concat_axis: {self.concat_axis}")
             
         return patch
-
+    def get_patch_visualization(
+        self, 
+        patch: np.ndarray, 
+        level: str,
+        remove_positional_encoding: bool = True,
+        restore_complex: bool = None,
+        prepare_for_plotting: bool = True,
+        vminmax: Optional[Union[Tuple[float, float], str]] = 'auto',
+        plot_type: str = "magnitude"
+        ) -> np.ndarray:
+        """
+        Convert a model-generated patch back to its original visualization format.
+        
+        This method reverses the operations performed in __getitem__:
+        1. Removes positional encoding if present
+        2. Restores complex format if needed
+        3. Reverses concatenation operations to restore original patch structure
+        
+        Args:
+            patch (np.ndarray): Model-generated patch to visualize
+            remove_positional_encoding (bool): Whether to remove positional encoding channels
+            restore_complex (bool): Whether to restore complex format. If None, uses self.complex_valued
+            vminmax: Value range for visualization
+            prepare_for_plotting: Whether to prepare the patch for plotting (e.g., by adding color channels)
+            figsize: Figure size for plotting
+            
+        Returns:
+            np.ndarray: Visualized patch
+        """
+        if restore_complex is None:
+            restore_complex = not self.complex_valued
+        if isinstance(patch, torch.Tensor):
+            patch = patch.detach().cpu().numpy()
+        # Step 1: Handle input format and remove positional encoding
+        if remove_positional_encoding and self.positional_encoding:
+            if patch.ndim == 3:
+                # Remove last 2 channels (positional encoding)
+                if patch.shape[-1] >= 2:
+                    patch = patch[..., :-2]
+            elif patch.ndim == 2:
+                # For 2D patches, positional encoding might be embedded differently
+                # This case might need specific handling based on your model architecture
+                pass
+        
+        # Step 2: Restore complex format if needed
+        if not restore_complex and patch.shape[-1] == 2:
+            # Convert from stacked real/imaginary to complex
+            patch = patch[..., 0] + 1j * patch[..., 1]
+        elif restore_complex and patch.ndim == 3 and patch.shape[-1] == 2:
+            # Already in real/imaginary stacked format, convert to complex for processing
+            patch = patch[..., 0] + 1j * patch[..., 1]
+        
+        # Step 3: Reverse concatenation operations
+        if self.concatenate_patches:
+            #print(f"Patch shape before concatenation: {patch.shape}")
+            patch = self._reverse_concatenation(patch)
+        
+        if not self.transform is None:
+            patch = self.transform.inverse(patch, level)
+        if prepare_for_plotting:
+            patch, vmin, vmax = get_sample_visualization(data=patch, plot_type=plot_type, vminmax=vminmax)
+        return patch
+    def _reverse_concatenation(self, patch: np.ndarray) -> np.ndarray:
+        """
+        Reverse the concatenation operation performed in _get_concatenated_patch.
+        
+        For concat_axis=0 (vertical concatenation):
+        - Input: (ph, num_patches) where ph is the original patch height
+        - Output: (ph * num_patches, 1) - reconstructed as vertical strip
+        
+        For concat_axis=1 (horizontal concatenation):  
+        - Input: (num_patches, pw) where pw is the original patch width
+        - Output: (1, pw * num_patches) - reconstructed as horizontal strip
+        
+        Args:
+            patch (np.ndarray): Concatenated patch from model
+            
+        Returns:
+            np.ndarray: Reconstructed patch in original strip format
+        """
+        stride_y, stride_x = self.stride
+        if len(patch.shape) == 3:
+            patch = patch.squeeze(axis=2)
+        elif len(patch.shape) != 2:
+            raise ValueError(f"Expected patch to be 2D or 3D, got shape {patch.shape}")
+        if self.concat_axis == 1:
+            # Reverse vertical concatenation
+            # Original: multiple (1, pw) patches stacked vertically -> (num_patches, pw)
+            # Reverse: (num_patches, pw) -> (ph_total, pw) where ph_total = num_patches * stride_y
+            
+            num_patches, pw = patch.shape
+            
+            # Calculate total height based on stride
+            pw_total = num_patches * stride_x
+            
+            # Create output array
+            output = np.zeros((1, pw_total), dtype=patch.dtype)
+            
+            # Place each patch row at its correct position
+            for i in range(num_patches):
+                start_y = i * stride_x
+                end_y = start_y + pw  # Each original patch was height 1
+                output[:, start_y:end_y] = patch[i:i+1, :]
+            
+            return output
+            
+        elif self.concat_axis == 0:
+            # Reverse horizontal concatenation  
+            # Original: multiple (ph, 1) patches stacked horizontally -> (ph, num_patches)
+            # Reverse: (ph, num_patches) -> (ph, pw_total) where pw_total = num_patches * stride_x
+            
+            ph, num_patches = patch.shape
+            
+            # Calculate total width based on stride
+            ph_total = (num_patches-1) * stride_y + ph
+            
+            # Create output array
+            output = np.zeros((ph_total, 1), dtype=patch.dtype)
+            
+            # Place each patch column at its correct position
+            for i in range(num_patches):
+                start_x = i * stride_y
+                end_x = start_x + ph  # Each original patch was width 1
+                #print(patch[:, i:i+1][:50])
+                output[start_x:end_x, :] = patch[:, i:i+1]
+                
+            return output
+            
+        else:
+            raise ValueError(f"Invalid concat_axis: {self.concat_axis}")
     def visualize_item(self, 
                        idx: Tuple[str, int, int],
                        show: bool = True,
@@ -1103,7 +1312,7 @@ class SARZarrDataset(Dataset):
         """
         import matplotlib.pyplot as plt
         zfile, y, x = idx
-        x, y = self._get_base_sample(Path(zfile), y, x)
+        x, y = self._get_base_sample(Path(zfile), y, x) # x, y) 
         imgs = []
         img, vmin, vmax = get_sample_visualization(data=x, plot_type="magnitude", vminmax=vminmax)
         imgs.append({'name': self.level_from, 'img': img, 'vmin': vmin, 'vmax': vmax})
@@ -1127,7 +1336,7 @@ class SARZarrDataset(Dataset):
             cbar.ax.tick_params(labelsize=8)
             # axis equal aspect ratio
             axes[i].set_aspect('equal', adjustable='box')
-        
+         
         plt.tight_layout()
         if show:
             plt.show()
@@ -1149,7 +1358,7 @@ class SARZarrDataset(Dataset):
             y_start (int): Starting y-coordinate (row index) for the top of the patch.
 
         Returns:
-            np.ndarray: A 2D NumPy array of shape `patch_size` containing the sampled patch, with dtype `np.complex64`.
+            np.ndarray: A 2D NumPy array of shape `patch_size` containing the sampled patch, with dtype `np.complex128`.
 
         Notes:
             - Uses chunk-aware sampling to leverage the existing LRU caching mechanism.
@@ -1158,7 +1367,7 @@ class SARZarrDataset(Dataset):
             - For level_to: samples only central column and uses vectorized broadcasting for replication.
         """
         ph, pw = self.get_patch_size(zfile)
-        patch = np.zeros((ph, pw), dtype=np.complex64)
+        patch = np.zeros((ph, pw), dtype=np.complex128)
         
         if level == self.level_to:
             # For target level, sample only the central column (straight line)
@@ -1308,6 +1517,108 @@ class SARZarrDataset(Dataset):
         out = out.reshape(ph, pw, channels + 2)
         
         return out
+    
+
+    def get_full_image_and_prediction(
+        self,
+        zfile: Union[str, int, os.PathLike],
+        inference_fn: Callable[[np.ndarray], np.ndarray],
+        max_samples_per_prod: Optional[int] = None,
+        batch_size: int = 16,
+        return_input: bool = False,
+        verbose: bool = True
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Given a file name or index, runs inference on the first max_samples_per_prod patches,
+        and reconstructs the full image (at level_to) and the corresponding prediction.
+
+        Args:
+            zfile: File name, index, or Path to the Zarr file.
+            inference_fn: Callable that takes a batch of input patches and returns predictions.
+            max_samples_per_prod: Maximum number of patches to use (default: self._samples_per_prod).
+            batch_size: Batch size for inference.
+            return_input: If True, also returns the reconstructed input image.
+            verbose: If True, prints progress.
+
+        Returns:
+            (gt_full, pred_full, [input_full]): Tuple of ground truth image, prediction image,
+            and optionally the reconstructed input image (all as numpy arrays).
+        """
+        # Resolve zfile from index if needed
+        if isinstance(zfile, int):
+            zfile = self.files[zfile]
+        else:
+            zfile = Path(zfile)
+
+        # Ensure patches are calculated
+        self.calculate_patches_from_store(zfile)
+        coords = self._samples_by_file[zfile]
+        if max_samples_per_prod is None:
+            max_samples_per_prod = self._samples_per_prod
+        coords = coords[:max_samples_per_prod]
+
+        # Get patch and image shapes
+        ph, pw = self.get_patch_size(zfile)
+        h, w = self.get_whole_sample_shape(zfile)
+        stride_y, stride_x = self.stride
+
+        # Prepare empty arrays for reconstruction
+        gt_full = np.zeros((h, w), dtype=np.complex64)
+        pred_full = np.zeros((h, w), dtype=np.complex64)
+        input_full = np.zeros((h, w), dtype=np.complex64) if return_input else None
+        count_map = np.zeros((h, w), dtype=np.int32)
+
+        # Collect all input patches for inference
+        input_patches = []
+        gt_patches = []
+        positions = []
+        for (y, x) in coords:
+            patch_from, patch_to = self._get_base_sample(zfile, y, x)
+            input_patches.append(patch_from)
+            gt_patches.append(patch_to)
+            positions.append((y, x))
+
+        input_patches = np.stack(input_patches, axis=0)  # (N, ph, pw)
+        gt_patches = np.stack(gt_patches, axis=0)        # (N, ph, pw)
+
+        # Run inference in batches
+        preds = []
+        for i in range(0, len(input_patches), batch_size):
+            batch = input_patches[i:i+batch_size]
+            pred = inference_fn(batch)  # Should return (B, ph, pw) or (B, ph, pw, ...)
+            if isinstance(pred, torch.Tensor):
+                pred = pred.detach().cpu().numpy()
+            preds.append(pred)
+        preds = np.concatenate(preds, axis=0)
+
+        # Place patches into the full image arrays
+        for idx, (y, x) in enumerate(positions):
+            gt_patch = gt_patches[idx]
+            pred_patch = preds[idx]
+            if return_input:
+                input_patch = input_patches[idx]
+
+            # Place patch in the correct location
+            gt_full[y:y+ph, x:x+pw] += gt_patch
+            pred_full[y:y+ph, x:x+pw] += pred_patch
+            if return_input:
+                input_full[y:y+ph, x:x+pw] += input_patch
+            count_map[y:y+ph, x:x+pw] += 1
+
+        # Average overlapping regions
+        mask = count_map > 0
+        gt_full[mask] /= count_map[mask]
+        pred_full[mask] /= count_map[mask]
+        if return_input:
+            input_full[mask] /= count_map[mask]
+
+        if verbose:
+            print(f"Reconstructed image shape: {gt_full.shape}, prediction shape: {pred_full.shape}")
+
+        if return_input:
+            return gt_full, pred_full, input_full
+        else:
+            return gt_full, pred_full
 
 
 class KPatchSampler(Sampler):
@@ -1340,7 +1651,7 @@ class KPatchSampler(Sampler):
         self.shuffle_files = shuffle_files
         self.patch_order = patch_order
         self.seed = seed
-        self.files = dataset.files #list(dataset._samples_by_file.keys())
+        #self.files = dataset.files #list(dataset._samples_by_file.keys())
         self.verbose = verbose
 
     def __iter__(self):
@@ -1349,7 +1660,7 @@ class KPatchSampler(Sampler):
         Shuffles files and/or patches if enabled.
         """
         rng = np.random.default_rng(self.seed)
-        files = self.files.copy()
+        files = self.dataset.files.copy() #files.copy()
         if self.verbose:
             print(files)
         if self.shuffle_files:
@@ -1376,6 +1687,213 @@ class KPatchSampler(Sampler):
         if self.samples_per_prod > 0:
             return sum(min(self.samples_per_prod, len(v)) for v in self.dataset._samples_by_file.values())
         return len(self.dataset)
+
+class SARDataloader(DataLoader):
+    dataset: SARZarrDataset
+    def __init__(self, dataset: SARZarrDataset, batch_size: int = 8, num_workers: int = 2, sampler: Optional[Sampler] = None, pin_memory: bool= True, verbose: bool = False):
+        super().__init__(dataset, batch_size=batch_size, num_workers=num_workers, sampler=sampler, pin_memory=pin_memory)
+        self.verbose = verbose
+
+    def get_batch_visualization(
+        self,
+        inputs_batch: Union[torch.Tensor, np.ndarray],
+        targets_batch: Optional[Union[torch.Tensor, np.ndarray]] = None,
+        batch_indices: Optional[List[int]] = None,
+        max_samples: Optional[int] = 4,
+        titles: Optional[List[str]] = None,
+        show: bool = True,
+        save_path: Optional[str] = None,
+        vminmax: Optional[Union[Tuple[float, float], str]] = (0, 1000),
+        figsize: Optional[Tuple[int, int]] = None,
+        ncols: int = 2
+    ) -> Optional[Figure]:
+        """
+        Visualize a batch of model inputs and targets with proper inverse transformations.
+        
+        This method handles:
+        - Inverse positional encoding removal
+        - Inverse concatenation operations  
+        - Complex format restoration
+        - Inverse normalization/transforms
+        - Batch dimension handling
+        
+        Args:
+            inputs_batch: Batch of input data [batch_size, ...] 
+            targets_batch: Optional batch of target data [batch_size, ...]
+            batch_indices: Specific indices within batch to visualize. If None, uses first max_samples
+            max_samples: Maximum number of samples from batch to show
+            titles: Custom titles for each subplot
+            show: Whether to display the plot
+            save_path: Path to save the figure
+            vminmax: Value range for visualization
+            figsize: Figure size. If None, auto-computed based on layout
+            ncols: Number of columns in subplot grid
+            
+        Returns:
+            matplotlib.pyplot.Figure if show=False, None otherwise
+        """
+        import matplotlib.pyplot as plt
+        
+        # Convert tensors to numpy if needed
+        if isinstance(inputs_batch, torch.Tensor):
+            inputs_batch = inputs_batch.detach().cpu().numpy()
+        if targets_batch is not None and isinstance(targets_batch, torch.Tensor):
+            targets_batch = targets_batch.detach().cpu().numpy()
+        
+        # Determine which samples to visualize
+        batch_size = inputs_batch.shape[0]
+        if not isinstance(max_samples, int):
+            if batch_indices is None:
+                batch_indices = list(range(min(max_samples, batch_size)))
+            else:
+                batch_indices = [idx for idx in batch_indices if idx < batch_size][:max_samples]
+        else:
+            if batch_indices is None:
+                batch_indices = list(range(batch_size))
+            else:
+                batch_indices = [idx for idx in batch_indices if idx < batch_size]
+        
+        num_samples = len(batch_indices)
+        if num_samples == 0:
+            print("No valid batch indices to visualize")
+            return None
+        
+        # Determine subplot layout
+        has_targets = targets_batch is not None
+        plots_per_sample = 2 if has_targets else 1
+        total_plots = num_samples * plots_per_sample
+        
+        nrows = (total_plots + ncols - 1) // ncols  # Ceiling division
+        
+        # Auto-compute figure size if not provided
+        if figsize is None:
+            figsize = (ncols * 6, nrows * 5)
+        
+        fig, axes = plt.subplots(nrows, ncols, figsize=figsize)
+        
+        # Ensure axes is always 2D array for consistent indexing
+        if nrows == 1 and ncols == 1:
+            axes = np.array([[axes]])
+        elif nrows == 1:
+            axes = axes.reshape(1, -1)
+        elif ncols == 1:
+            axes = axes.reshape(-1, 1)
+        
+        plot_idx = 0
+        
+        for sample_idx, batch_idx in enumerate(batch_indices):
+            # Process input sample
+            input_sample = inputs_batch[batch_idx]
+            input_vis = self.dataset.get_patch_visualization(
+                input_sample, 
+                level=self.dataset.level_from,
+                remove_positional_encoding=True,
+                restore_complex=True
+            )
+            
+            
+            # Plot input
+            row, col = divmod(plot_idx, ncols)
+            if row < nrows and col < ncols:
+                img_input, vmin_input, vmax_input = get_sample_visualization(
+                    data=input_vis, 
+                    plot_type="magnitude", 
+                    vminmax=vminmax
+                )
+                
+                im = axes[row, col].imshow(
+                    img_input,
+                    aspect='auto',
+                    cmap='viridis',
+                    vmin=vmin_input,
+                    vmax=vmax_input
+                )
+                
+                # Set title
+                if titles and plot_idx < len(titles):
+                    title = titles[plot_idx]
+                else:
+                    title = f'Input {batch_idx} ({self.dataset.level_from.upper()})'
+                
+                axes[row, col].set_title(title)
+                axes[row, col].set_xlabel('Range')
+                axes[row, col].set_ylabel('Azimuth')
+                
+                # Add colorbar
+                cbar = plt.colorbar(im, ax=axes[row, col], fraction=0.046, pad=0.04)
+                cbar.ax.tick_params(labelsize=8)
+                axes[row, col].set_aspect('equal', adjustable='box')
+            
+            plot_idx += 1
+            
+            # Process target sample if available
+            if has_targets:
+                target_sample = targets_batch[batch_idx]
+                target_vis = self.dataset.get_patch_visualization(
+                    target_sample,
+                    level=self.dataset.level_to,
+                    remove_positional_encoding=True,
+                    restore_complex=True
+                )
+                
+                # Convert complex to magnitude for visualization  
+                if np.iscomplexobj(target_vis):
+                    target_vis = np.abs(target_vis)
+                
+                # Plot target
+                row, col = divmod(plot_idx, ncols)
+                if row < nrows and col < ncols:
+                    img_target, vmin_target, vmax_target = get_sample_visualization(
+                        data=target_vis,
+                        plot_type="magnitude", 
+                        vminmax=vminmax
+                    )
+                    
+                    im = axes[row, col].imshow(
+                        img_target,
+                        aspect='auto',
+                        cmap='viridis',
+                        vmin=vmin_target,
+                        vmax=vmax_target
+                    )
+                    
+                    # Set title
+                    if titles and plot_idx < len(titles):
+                        title = titles[plot_idx]
+                    else:
+                        title = f'Target {batch_idx} ({self.dataset.level_to.upper()})'
+                    
+                    axes[row, col].set_title(title)
+                    axes[row, col].set_xlabel('Range')
+                    axes[row, col].set_ylabel('Azimuth')
+                    
+                    # Add colorbar
+                    cbar = plt.colorbar(im, ax=axes[row, col], fraction=0.046, pad=0.04)
+                    cbar.ax.tick_params(labelsize=8)
+                    axes[row, col].set_aspect('equal', adjustable='box')
+                
+                plot_idx += 1
+        
+        # Hide unused subplots
+        for idx in range(plot_idx, nrows * ncols):
+            row, col = divmod(idx, ncols)
+            if row < nrows and col < ncols:
+                axes[row, col].set_visible(False)
+        
+        plt.tight_layout()
+        
+        # Save if requested
+        if save_path:
+            plt.savefig(save_path, dpi=150, bbox_inches='tight')
+            if self.verbose:
+                print(f"Batch visualization saved to: {save_path}")
+        
+        if show:
+            plt.show()
+            return None
+        else:
+            return fig
+    
 
 def get_sar_dataloader(
     data_dir: str,
@@ -1404,7 +1922,7 @@ def get_sar_dataloader(
     online: bool = True, 
     concatenate_patches: bool = False,
     concat_axis: int = 0  # 0 for vertical, 1 for horizontal
-) -> DataLoader:
+) -> SARDataloader:
     """
     Create and return a PyTorch DataLoader for SAR data using SARZarrDataset and KPatchSampler.
 
@@ -1435,7 +1953,7 @@ def get_sar_dataloader(
         verbose (bool, optional): If True, prints additional info. Defaults to True.
 
     Returns:
-        DataLoader: PyTorch DataLoader for the SAR dataset.
+        SARDataloader: PyTorch DataLoader for the SAR dataset.
     """
     dataset = SARZarrDataset(
         data_dir=data_dir,
@@ -1468,12 +1986,13 @@ def get_sar_dataloader(
         patch_order=patch_order,
         verbose=verbose
     )
-    return DataLoader(
+    return SARDataloader(
         dataset,
         batch_size=batch_size,
         sampler=sampler,
         num_workers=num_workers,
         pin_memory=True,
+        verbose=verbose
     )
 
 # Example usage

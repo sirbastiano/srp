@@ -117,7 +117,11 @@ class RealValuedTransformer(nn.Module):
                 # Treat each of the 79 vectors as a sequence element
                 # Each element has 1000*3=3000 features
                 x = x.permute(0, 2, 1, 3)  # [B, 79, 1000, 3]
-                x = x.contiguous().view(batch_size, num_vectors, vector_len * channels)
+                pos_embedding = x[..., -2:]
+                x = x[..., :-2]
+                
+                x = x + pos_embedding
+                x = x.contiguous().view(batch_size, num_vectors, vector_len * (channels - 2))
                 if self.verbose:
                     print(f"Reshaped to sequence format: {x.shape}")
         
@@ -158,10 +162,15 @@ class RealValuedTransformer(nn.Module):
             else:
                 # Fallback: add singleton dimension
                 output = output.unsqueeze(2)
+                if features == vector_len * (channels - 2):
+                    output = output.view(batch_size, num_vectors, vector_len, (channels-2))
+                else:
+                    output = output.view(batch_size, num_vectors, vector_len, -1) 
+                output = output.permute(0, 2, 1, 3)  # [B, 1000, 79, 2]
                 #output = output[..., :2]
                 if self.verbose:
                     print(f"Added singleton dimension: {output.shape}")
-        
+
         elif len(original_shape) == 3:
             # Keep as is for 3D inputs
             if self.verbose:
