@@ -77,15 +77,15 @@ class TrainRVTransformer(TrainerBase):
         self.criterion_fn = criterion
         if not os.path.exists(self.base_save_dir):
             os.makedirs(self.base_save_dir)
-    def compute_loss(self, output: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    def compute_loss(self, output: torch.Tensor, target: torch.Tensor, device: Union[str, torch.device]) -> torch.Tensor:
         """Compute loss for complex-valued output."""
         # For complex output, we can use MSE on both real and imaginary parts
         if output.shape[-1] > 2:
             output = output[..., :-2]
         if target.shape[-1] > 2:
             target = target[..., :-2]
-            
-        loss = self.criterion_fn(output, target)
+
+        loss = self.criterion_fn(output.to(device), target.to(device))
         return loss
     def preprocess_sample(self, x: torch.Tensor, device: Union[str, torch.device]):    
         if isinstance(x, np.ndarray):
@@ -122,7 +122,7 @@ class TrainRVTransformer(TrainerBase):
 
                 optimizer.zero_grad()
                 output = self.forward_pass(x, y, device)  
-                loss = self.compute_loss(output, y)
+                loss = self.compute_loss(output, y, device)
                 loss.backward()
                 optimizer.step()
                 epoch_loss += loss.item()
@@ -146,7 +146,7 @@ class TrainRVTransformer(TrainerBase):
                 #gt_inp, tgt_real = make_seq_batch(y)
 
                 output = self.model(src=x, tgt=y)  # [B, T-1, 1]
-                loss = self.compute_loss(output, y)
+                loss = self.compute_loss(output, y, device)
                 val_loss += loss.item()
                 val_bar.set_postfix(train_loss=loss.item())
             
@@ -352,7 +352,7 @@ class TrainCVTransformer(TrainRVTransformer):
         else:
             x = x.to(device).float()
         return x
-    def compute_loss(self, output: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    def compute_loss(self, output: torch.Tensor, target: torch.Tensor, device: Union[str, torch.device]) -> torch.Tensor:
         """
         Compute loss for complex-valued output.
         Converts complex tensors to real-valued with last dimension 2 (real, imag).
@@ -366,7 +366,7 @@ class TrainCVTransformer(TrainRVTransformer):
         # print(f"Output shape: {output.shape}, Target shape: {target.shape}")
         # print(f"Output patch: {output}")
         # print(f"Target patch: {target}")
-        loss = self.criterion_fn(output, target)
+        loss = self.criterion_fn(output.to(device), target.to(device))
         return loss
 
 class TrainSSM:

@@ -121,6 +121,7 @@ def get_full_image_and_prediction(
         concatenate_patches=True,
         concat_axis=0
     )
+    print(f"Total patch reconstructed dimensions: ({h}, {w})")
     #dataset.get_whole_sample_shape(zfile)
     
     stride_y, stride_x = dataset.stride
@@ -163,9 +164,9 @@ def get_full_image_and_prediction(
 
     # Place patches into the full image arrays
     for idx, (y, x) in enumerate(positions):
-        gt_patch = dataset.get_patch_visualization(gt_patches[idx], dataset.level_to, vminmax=vminmax, restore_complex=True)
+        gt_patch = dataset.get_patch_visualization(gt_patches[idx], dataset.level_to, vminmax=vminmax, restore_complex=True,)
         print(f"Ground truth patch with index {idx} has shape: {gt_patches[idx].shape}, while reconstructed ground truth patch has dimension {gt_patch.shape}")
-        pred_patch = dataset.get_patch_visualization(preds[idx], dataset.level_to, vminmax=vminmax, restore_complex=True)
+        pred_patch = dataset.get_patch_visualization(preds[idx], dataset.level_to, vminmax=vminmax, restore_complex=True, remove_positional_encoding=False)
         print(f"Prediction with index {idx} has shape: {preds[idx].shape}, while reconstructed prediction patch has dimension {pred_patch.shape}")
         if return_input:
             input_patch = dataset.get_patch_visualization(input_patches[idx], dataset.level_from, vminmax=vminmax, restore_complex=True)

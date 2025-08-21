@@ -300,6 +300,7 @@ class SARZarrDataset(Dataset):
         self._patch_size = patch_size
         self.level_from = level_from
         self.level_to = level_to
+        
         self.patch_mode = patch_mode
         self.parabola_a = parabola_a
         self.complex_valued = complex_valued
@@ -333,7 +334,7 @@ class SARZarrDataset(Dataset):
             self._load_chunk_uncached
         )
 
-        self._stores: Dict[os.PathLike, zarr.core.Array] = {}
+        self._stores: Dict[os.PathLike, zarr.Group] = {}
         self._samples_by_file: Dict[os.PathLike, List[Tuple[int,int]]] = {}
         self._y_coords: Dict[os.PathLike, np.ndarray] = {}
         self._x_coords: Dict[os.PathLike, np.ndarray] = {}
@@ -352,19 +353,49 @@ class SARZarrDataset(Dataset):
         Returns:
             Tuple[int, int]: Patch size (height, width) for the specified processing level.
         """
+        arr = self.get_store_at_level(zfile, self.level_from)
         ph, pw = self._patch_size
         if ph > 0 and pw > 0:
             return ph, pw
         else:
             if self.backend == "zarr":
-                y, x = self._stores[zfile][self.level_from].shape 
+                y, x = arr.shape 
             elif self.backend == "dask":
-                y, x = self._stores[zfile][self.level_from].shape[1:]
+                y, x = arr.shape[1:]
             if ph <= 0:
                 ph = y - 2*self.buffer[0]
             if pw <= 0:
                 pw = x - 2*self.buffer[1]
             return ph, pw
+    def get_metadata(self, zfile: Union[str, os.PathLike], rows: Optional[Union[Tuple[int, int], slice]] = None):
+        """
+        Extract metadata from zarr attributes.
+        
+        Returns:
+            pandas DataFrame containing metadata if available, None otherwise
+        """
+        arr = self.get_store(Path(zfile))
+        print(f"Available zarr attributes: {list(arr.attrs.keys())}")
+        if 'metadata' in arr.attrs:
+            import pandas as pd
+            #print(arr.attrs['metadata'].keys())
+            metadata = pd.DataFrame(arr.attrs['metadata']['data'])
+            
+            if rows is not None and isinstance(rows, slice):
+                start, stop, step_val = rows.indices(len(metadata))
+                row_indices = list(range(start, stop, step_val or 1))
+                metadata = metadata.iloc[row_indices].reset_index(drop=True)
+        else:
+            metadata = None
+            
+        if 'ephemeris' in arr.attrs:
+            import pandas as pd
+            ephemeris = pd.DataFrame(arr.attrs['ephemeris']['data'])
+            
+        else:
+            ephemeris = None
+        return metadata, ephemeris
+    
 
     def _get_file_list(self):
         """
@@ -397,7 +428,9 @@ class SARZarrDataset(Dataset):
         Args:
             zfile (os.PathLike): Path to the Zarr file to be added.
         """
-        if not zfile.exists():
+        if not Path(zfile).exists():
+            return
+        if zfile in self._stores:
             return
         if self.backend == "zarr":
             store = LocalStore(str(zfile))
@@ -1076,6 +1109,38 @@ class SARZarrDataset(Dataset):
             return zarr.open(zfile, mode='r')
         else: 
             raise ValueError(f"Unknown backend {self.backend}")
+        
+    def get_store_at_level(self, zfile: Union[os.PathLike, str], level: str) -> zarr.Array:
+        level_dir = Path(zfile) / level
+        if not Path(zfile).exists() or not level_dir.exists() or not level_dir.exists():
+            if self.online:
+                zfile_name = os.path.basename(zfile)
+                download_metadata_from_product(
+                    zfile_name=str(zfile_name),
+                    local_dir=self.data_dir, 
+                    levels=[level, self.level_from, self.level_to], 
+                    repo_id=self.repo_id
+                )
+            else:
+                raise ValueError(f"Levels {self.level_from} and {self.level_to} not found in Zarr store {zfile}.")
+        self._append_file_to_stores(zfile=Path(zfile))
+        return self._stores[Path(zfile)][level]
+    
+    def get_store(self, zfile: Union[os.PathLike, str]) -> zarr.Group:
+        if not Path(zfile).exists():
+            if self.online:
+                zfile_name = os.path.basename(zfile)
+                download_metadata_from_product(
+                    zfile_name=str(zfile_name),
+                    local_dir=self.data_dir, 
+                    levels=[self.level_from, self.level_to], 
+                    repo_id=self.repo_id
+                )
+            else:
+                raise ValueError(f"Levels {self.level_from} and {self.level_to} not found in Zarr store {zfile}.")
+        self._append_file_to_stores(zfile=Path(zfile))
+        return self._stores[Path(zfile)]
+        
     def get_whole_sample_shape(self, zfile: os.PathLike) -> Tuple[int, int]:
         """
         Get the shape of the whole sample (image) at the specified level from the Zarr file.
@@ -1089,7 +1154,7 @@ class SARZarrDataset(Dataset):
         if zfile not in self._stores:
             raise KeyError(f"Zarr file {zfile} not found in stores.")
         
-        ph, pw = self._stores[zfile][self.level_from].shape
+        ph, pw = self.get_store_at_level(zfile, self.level_from).shape #self._stores[zfile][self.level_from].shape
         return (ph - self.buffer[0] * 2, pw - self.buffer[1] * 2)
     
     def _get_concatenated_patch(self, patch: np.ndarray, zfile: os.PathLike) -> np.ndarray:
@@ -1195,6 +1260,7 @@ class SARZarrDataset(Dataset):
             restore_complex = not self.complex_valued
         if isinstance(patch, torch.Tensor):
             patch = patch.detach().cpu().numpy()
+        #print(f"Patch shape at the beginning: {patch.shape}")
         # Step 1: Handle input format and remove positional encoding
         if remove_positional_encoding and self.positional_encoding:
             if patch.ndim == 3:
@@ -1202,10 +1268,9 @@ class SARZarrDataset(Dataset):
                 if patch.shape[-1] >= 2:
                     patch = patch[..., :-2]
             elif patch.ndim == 2:
-                # For 2D patches, positional encoding might be embedded differently
-                # This case might need specific handling based on your model architecture
-                pass
-        
+                #The positional encoding is concatenated along one single dimension as complex number
+                patch = patch[...: :-1]
+        #print(f"Patch shape after positional encoding removal: {patch.shape}")
         # Step 2: Restore complex format if needed
         if not restore_complex and patch.shape[-1] == 2:
             # Convert from stacked real/imaginary to complex
@@ -1213,12 +1278,12 @@ class SARZarrDataset(Dataset):
         elif restore_complex and patch.ndim == 3 and patch.shape[-1] == 2:
             # Already in real/imaginary stacked format, convert to complex for processing
             patch = patch[..., 0] + 1j * patch[..., 1]
-        
+        #print(f"Patch shape after complex restoration: {patch.shape}")
         # Step 3: Reverse concatenation operations
         if self.concatenate_patches:
             #print(f"Patch shape before concatenation: {patch.shape}")
             patch = self._reverse_concatenation(patch)
-        
+        #print(f"Patch shape in the end: {patch.shape}")
         if not self.transform is None:
             patch = self.transform.inverse(patch, level)
         if prepare_for_plotting:
