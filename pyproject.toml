@@ -33,6 +33,14 @@ dependencies = [
     "tifffile>=2025.6.11",
     "folium>=0.20.0",
     "plotly>=6.2.0",
+    "lightning>=2.5.3",
+    "einops>=0.8.1",
+    "opt-einsum>=3.4.0",
+    "scikit-image>=0.25.2",
+    "pykeops>=2.3",
+    "kornia>=0.8.1",
+    "tensorboard>=2.20.0",
+    "tensorboardX>=2.6.4",
 ]
 
 [project.scripts]

@@ -8,7 +8,11 @@ ENV/
 env.bak/
 venv.bak/
 
+
 # Dataset
+SSM4SAR/maya4_data/
+SSM4SAR/src/
+
 data/
 decoded_data/
 focused_data/
