@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sarpyx"
-version = "0.1.0"
+version = "0.1.2"
 description = "A swissknife for SAR processing."
 authors = [
     { name = "Roberto Del Prete", email = "roberto.delprete@esa.int" }
@@ -22,7 +22,6 @@ dependencies = [
     "h5py",
     "numba",
     "jupyter",
-    "torch>=1.9.0",
     "phidown>=0.1.17",
     "rasterio>=1.4.3",
     "zarr>=3.0.8",
@@ -49,6 +48,8 @@ sarpyx-shipdet = "sarpyx.cli.shipdet:main"
 
 [tool.setuptools]
 packages = ["sarpyx"]
+
+
 
 [tool.setuptools.package-data]
 "*" = ["*.csv", "*.json", "*.xml"]
