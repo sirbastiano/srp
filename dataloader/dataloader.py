@@ -300,6 +300,7 @@ class SARZarrDataset(Dataset):
         self._patch_size = patch_size
         self.level_from = level_from
         self.level_to = level_to
+        
         self.patch_mode = patch_mode
         self.parabola_a = parabola_a
         self.complex_valued = complex_valued
@@ -333,7 +334,7 @@ class SARZarrDataset(Dataset):
             self._load_chunk_uncached
         )
 
-        self._stores: Dict[os.PathLike, zarr.core.Array] = {}
+        self._stores: Dict[os.PathLike, zarr.Group] = {}
         self._samples_by_file: Dict[os.PathLike, List[Tuple[int,int]]] = {}
         self._y_coords: Dict[os.PathLike, np.ndarray] = {}
         self._x_coords: Dict[os.PathLike, np.ndarray] = {}
@@ -352,19 +353,49 @@ class SARZarrDataset(Dataset):
         Returns:
             Tuple[int, int]: Patch size (height, width) for the specified processing level.
         """
+        arr = self.get_store_at_level(zfile, self.level_from)
         ph, pw = self._patch_size
         if ph > 0 and pw > 0:
             return ph, pw
         else:
             if self.backend == "zarr":
-                y, x = self._stores[zfile][self.level_from].shape 
+                y, x = arr.shape 
             elif self.backend == "dask":
-                y, x = self._stores[zfile][self.level_from].shape[1:]
+                y, x = arr.shape[1:]
             if ph <= 0:
                 ph = y - 2*self.buffer[0]
             if pw <= 0:
                 pw = x - 2*self.buffer[1]
             return ph, pw
+    def get_metadata(self, zfile: Union[str, os.PathLike], rows: Optional[Union[Tuple[int, int], slice]] = None):
+        """
+        Extract metadata from zarr attributes.
+        
+        Returns:
+            pandas DataFrame containing metadata if available, None otherwise
+        """
+        arr = self.get_store(Path(zfile))
+        print(f"Available zarr attributes: {list(arr.attrs.keys())}")
+        if 'metadata' in arr.attrs:
+            import pandas as pd
+            #print(arr.attrs['metadata'].keys())
+            metadata = pd.DataFrame(arr.attrs['metadata']['data'])
+            
+            if rows is not None and isinstance(rows, slice):
+                start, stop, step_val = rows.indices(len(metadata))
+                row_indices = list(range(start, stop, step_val or 1))
+                metadata = metadata.iloc[row_indices].reset_index(drop=True)
+        else:
+            metadata = None
+            
+        if 'ephemeris' in arr.attrs:
+            import pandas as pd
+            ephemeris = pd.DataFrame(arr.attrs['ephemeris']['data'])
+            
+        else:
+            ephemeris = None
+        return metadata, ephemeris
+    
 
     def _get_file_list(self):
         """
@@ -397,7 +428,9 @@ class SARZarrDataset(Dataset):
         Args:
             zfile (os.PathLike): Path to the Zarr file to be added.
         """
-        if not zfile.exists():
+        if not Path(zfile).exists():
+            return
+        if zfile in self._stores:
             return
         if self.backend == "zarr":
             store = LocalStore(str(zfile))
@@ -433,7 +466,7 @@ class SARZarrDataset(Dataset):
             df = time.time() - t0
             print(f"Zarr stores initialization took {df:.2f} seconds.")
 
-    def calculate_patches_from_store(self, zfile:os.PathLike, patch_order: str = "row_major"):
+    def calculate_patches_from_store(self, zfile:os.PathLike, patch_order: str = "row"):
         """
         Compute and store valid patch coordinates for a given Zarr file, according to the patch mode and parameters.
         Downloads metadata if needed (in online mode) and ensures all patches fit within image bounds.
@@ -1076,6 +1109,38 @@ class SARZarrDataset(Dataset):
             return zarr.open(zfile, mode='r')
         else: 
             raise ValueError(f"Unknown backend {self.backend}")
+        
+    def get_store_at_level(self, zfile: Union[os.PathLike, str], level: str) -> zarr.Array:
+        level_dir = Path(zfile) / level
+        if not Path(zfile).exists() or not level_dir.exists() or not level_dir.exists():
+            if self.online:
+                zfile_name = os.path.basename(zfile)
+                download_metadata_from_product(
+                    zfile_name=str(zfile_name),
+                    local_dir=self.data_dir, 
+                    levels=[level, self.level_from, self.level_to], 
+                    repo_id=self.repo_id
+                )
+            else:
+                raise ValueError(f"Levels {self.level_from} and {self.level_to} not found in Zarr store {zfile}.")
+        self._append_file_to_stores(zfile=Path(zfile))
+        return self._stores[Path(zfile)][level]
+    
+    def get_store(self, zfile: Union[os.PathLike, str]) -> zarr.Group:
+        if not Path(zfile).exists():
+            if self.online:
+                zfile_name = os.path.basename(zfile)
+                download_metadata_from_product(
+                    zfile_name=str(zfile_name),
+                    local_dir=self.data_dir, 
+                    levels=[self.level_from, self.level_to], 
+                    repo_id=self.repo_id
+                )
+            else:
+                raise ValueError(f"Levels {self.level_from} and {self.level_to} not found in Zarr store {zfile}.")
+        self._append_file_to_stores(zfile=Path(zfile))
+        return self._stores[Path(zfile)]
+        
     def get_whole_sample_shape(self, zfile: os.PathLike) -> Tuple[int, int]:
         """
         Get the shape of the whole sample (image) at the specified level from the Zarr file.
@@ -1089,7 +1154,7 @@ class SARZarrDataset(Dataset):
         if zfile not in self._stores:
             raise KeyError(f"Zarr file {zfile} not found in stores.")
         
-        ph, pw = self._stores[zfile][self.level_from].shape
+        ph, pw = self.get_store_at_level(zfile, self.level_from).shape #self._stores[zfile][self.level_from].shape
         return (ph - self.buffer[0] * 2, pw - self.buffer[1] * 2)
     
     def _get_concatenated_patch(self, patch: np.ndarray, zfile: os.PathLike) -> np.ndarray:
@@ -1195,6 +1260,7 @@ class SARZarrDataset(Dataset):
             restore_complex = not self.complex_valued
         if isinstance(patch, torch.Tensor):
             patch = patch.detach().cpu().numpy()
+        #print(f"Patch shape at the beginning: {patch.shape}")
         # Step 1: Handle input format and remove positional encoding
         if remove_positional_encoding and self.positional_encoding:
             if patch.ndim == 3:
@@ -1202,10 +1268,9 @@ class SARZarrDataset(Dataset):
                 if patch.shape[-1] >= 2:
                     patch = patch[..., :-2]
             elif patch.ndim == 2:
-                # For 2D patches, positional encoding might be embedded differently
-                # This case might need specific handling based on your model architecture
-                pass
-        
+                #The positional encoding is concatenated along one single dimension as complex number
+                patch = patch[...: :-1]
+        #print(f"Patch shape after positional encoding removal: {patch.shape}")
         # Step 2: Restore complex format if needed
         if not restore_complex and patch.shape[-1] == 2:
             # Convert from stacked real/imaginary to complex
@@ -1213,12 +1278,12 @@ class SARZarrDataset(Dataset):
         elif restore_complex and patch.ndim == 3 and patch.shape[-1] == 2:
             # Already in real/imaginary stacked format, convert to complex for processing
             patch = patch[..., 0] + 1j * patch[..., 1]
-        
+        #print(f"Patch shape after complex restoration: {patch.shape}")
         # Step 3: Reverse concatenation operations
         if self.concatenate_patches:
             #print(f"Patch shape before concatenation: {patch.shape}")
             patch = self._reverse_concatenation(patch)
-        
+        #print(f"Patch shape in the end: {patch.shape}")
         if not self.transform is None:
             patch = self.transform.inverse(patch, level)
         if prepare_for_plotting:
@@ -1517,109 +1582,6 @@ class SARZarrDataset(Dataset):
         out = out.reshape(ph, pw, channels + 2)
         
         return out
-    
-
-    def get_full_image_and_prediction(
-        self,
-        zfile: Union[str, int, os.PathLike],
-        inference_fn: Callable[[np.ndarray], np.ndarray],
-        max_samples_per_prod: Optional[int] = None,
-        batch_size: int = 16,
-        return_input: bool = False,
-        verbose: bool = True
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """
-        Given a file name or index, runs inference on the first max_samples_per_prod patches,
-        and reconstructs the full image (at level_to) and the corresponding prediction.
-
-        Args:
-            zfile: File name, index, or Path to the Zarr file.
-            inference_fn: Callable that takes a batch of input patches and returns predictions.
-            max_samples_per_prod: Maximum number of patches to use (default: self._samples_per_prod).
-            batch_size: Batch size for inference.
-            return_input: If True, also returns the reconstructed input image.
-            verbose: If True, prints progress.
-
-        Returns:
-            (gt_full, pred_full, [input_full]): Tuple of ground truth image, prediction image,
-            and optionally the reconstructed input image (all as numpy arrays).
-        """
-        # Resolve zfile from index if needed
-        if isinstance(zfile, int):
-            zfile = self.files[zfile]
-        else:
-            zfile = Path(zfile)
-
-        # Ensure patches are calculated
-        self.calculate_patches_from_store(zfile)
-        coords = self._samples_by_file[zfile]
-        if max_samples_per_prod is None:
-            max_samples_per_prod = self._samples_per_prod
-        coords = coords[:max_samples_per_prod]
-
-        # Get patch and image shapes
-        ph, pw = self.get_patch_size(zfile)
-        h, w = self.get_whole_sample_shape(zfile)
-        stride_y, stride_x = self.stride
-
-        # Prepare empty arrays for reconstruction
-        gt_full = np.zeros((h, w), dtype=np.complex64)
-        pred_full = np.zeros((h, w), dtype=np.complex64)
-        input_full = np.zeros((h, w), dtype=np.complex64) if return_input else None
-        count_map = np.zeros((h, w), dtype=np.int32)
-
-        # Collect all input patches for inference
-        input_patches = []
-        gt_patches = []
-        positions = []
-        for (y, x) in coords:
-            patch_from, patch_to = self._get_base_sample(zfile, y, x)
-            input_patches.append(patch_from)
-            gt_patches.append(patch_to)
-            positions.append((y, x))
-
-        input_patches = np.stack(input_patches, axis=0)  # (N, ph, pw)
-        gt_patches = np.stack(gt_patches, axis=0)        # (N, ph, pw)
-
-        # Run inference in batches
-        preds = []
-        for i in range(0, len(input_patches), batch_size):
-            batch = input_patches[i:i+batch_size]
-            pred = inference_fn(batch)  # Should return (B, ph, pw) or (B, ph, pw, ...)
-            if isinstance(pred, torch.Tensor):
-                pred = pred.detach().cpu().numpy()
-            preds.append(pred)
-        preds = np.concatenate(preds, axis=0)
-
-        # Place patches into the full image arrays
-        for idx, (y, x) in enumerate(positions):
-            gt_patch = gt_patches[idx]
-            pred_patch = preds[idx]
-            if return_input:
-                input_patch = input_patches[idx]
-
-            # Place patch in the correct location
-            gt_full[y:y+ph, x:x+pw] += gt_patch
-            pred_full[y:y+ph, x:x+pw] += pred_patch
-            if return_input:
-                input_full[y:y+ph, x:x+pw] += input_patch
-            count_map[y:y+ph, x:x+pw] += 1
-
-        # Average overlapping regions
-        mask = count_map > 0
-        gt_full[mask] /= count_map[mask]
-        pred_full[mask] /= count_map[mask]
-        if return_input:
-            input_full[mask] /= count_map[mask]
-
-        if verbose:
-            print(f"Reconstructed image shape: {gt_full.shape}, prediction shape: {pred_full.shape}")
-
-        if return_input:
-            return gt_full, pred_full, input_full
-        else:
-            return gt_full, pred_full
-
 
 class KPatchSampler(Sampler):
     """
@@ -1693,206 +1655,7 @@ class SARDataloader(DataLoader):
     def __init__(self, dataset: SARZarrDataset, batch_size: int = 8, num_workers: int = 2, sampler: Optional[Sampler] = None, pin_memory: bool= True, verbose: bool = False):
         super().__init__(dataset, batch_size=batch_size, num_workers=num_workers, sampler=sampler, pin_memory=pin_memory)
         self.verbose = verbose
-
-    def get_batch_visualization(
-        self,
-        inputs_batch: Union[torch.Tensor, np.ndarray],
-        targets_batch: Optional[Union[torch.Tensor, np.ndarray]] = None,
-        batch_indices: Optional[List[int]] = None,
-        max_samples: Optional[int] = 4,
-        titles: Optional[List[str]] = None,
-        show: bool = True,
-        save_path: Optional[str] = None,
-        vminmax: Optional[Union[Tuple[float, float], str]] = (0, 1000),
-        figsize: Optional[Tuple[int, int]] = None,
-        ncols: int = 2
-    ) -> Optional[Figure]:
-        """
-        Visualize a batch of model inputs and targets with proper inverse transformations.
-        
-        This method handles:
-        - Inverse positional encoding removal
-        - Inverse concatenation operations  
-        - Complex format restoration
-        - Inverse normalization/transforms
-        - Batch dimension handling
-        
-        Args:
-            inputs_batch: Batch of input data [batch_size, ...] 
-            targets_batch: Optional batch of target data [batch_size, ...]
-            batch_indices: Specific indices within batch to visualize. If None, uses first max_samples
-            max_samples: Maximum number of samples from batch to show
-            titles: Custom titles for each subplot
-            show: Whether to display the plot
-            save_path: Path to save the figure
-            vminmax: Value range for visualization
-            figsize: Figure size. If None, auto-computed based on layout
-            ncols: Number of columns in subplot grid
-            
-        Returns:
-            matplotlib.pyplot.Figure if show=False, None otherwise
-        """
-        import matplotlib.pyplot as plt
-        
-        # Convert tensors to numpy if needed
-        if isinstance(inputs_batch, torch.Tensor):
-            inputs_batch = inputs_batch.detach().cpu().numpy()
-        if targets_batch is not None and isinstance(targets_batch, torch.Tensor):
-            targets_batch = targets_batch.detach().cpu().numpy()
-        
-        # Determine which samples to visualize
-        batch_size = inputs_batch.shape[0]
-        if not isinstance(max_samples, int):
-            if batch_indices is None:
-                batch_indices = list(range(min(max_samples, batch_size)))
-            else:
-                batch_indices = [idx for idx in batch_indices if idx < batch_size][:max_samples]
-        else:
-            if batch_indices is None:
-                batch_indices = list(range(batch_size))
-            else:
-                batch_indices = [idx for idx in batch_indices if idx < batch_size]
-        
-        num_samples = len(batch_indices)
-        if num_samples == 0:
-            print("No valid batch indices to visualize")
-            return None
-        
-        # Determine subplot layout
-        has_targets = targets_batch is not None
-        plots_per_sample = 2 if has_targets else 1
-        total_plots = num_samples * plots_per_sample
-        
-        nrows = (total_plots + ncols - 1) // ncols  # Ceiling division
-        
-        # Auto-compute figure size if not provided
-        if figsize is None:
-            figsize = (ncols * 6, nrows * 5)
-        
-        fig, axes = plt.subplots(nrows, ncols, figsize=figsize)
-        
-        # Ensure axes is always 2D array for consistent indexing
-        if nrows == 1 and ncols == 1:
-            axes = np.array([[axes]])
-        elif nrows == 1:
-            axes = axes.reshape(1, -1)
-        elif ncols == 1:
-            axes = axes.reshape(-1, 1)
-        
-        plot_idx = 0
-        
-        for sample_idx, batch_idx in enumerate(batch_indices):
-            # Process input sample
-            input_sample = inputs_batch[batch_idx]
-            input_vis = self.dataset.get_patch_visualization(
-                input_sample, 
-                level=self.dataset.level_from,
-                remove_positional_encoding=True,
-                restore_complex=True
-            )
-            
-            
-            # Plot input
-            row, col = divmod(plot_idx, ncols)
-            if row < nrows and col < ncols:
-                img_input, vmin_input, vmax_input = get_sample_visualization(
-                    data=input_vis, 
-                    plot_type="magnitude", 
-                    vminmax=vminmax
-                )
-                
-                im = axes[row, col].imshow(
-                    img_input,
-                    aspect='auto',
-                    cmap='viridis',
-                    vmin=vmin_input,
-                    vmax=vmax_input
-                )
-                
-                # Set title
-                if titles and plot_idx < len(titles):
-                    title = titles[plot_idx]
-                else:
-                    title = f'Input {batch_idx} ({self.dataset.level_from.upper()})'
-                
-                axes[row, col].set_title(title)
-                axes[row, col].set_xlabel('Range')
-                axes[row, col].set_ylabel('Azimuth')
-                
-                # Add colorbar
-                cbar = plt.colorbar(im, ax=axes[row, col], fraction=0.046, pad=0.04)
-                cbar.ax.tick_params(labelsize=8)
-                axes[row, col].set_aspect('equal', adjustable='box')
-            
-            plot_idx += 1
-            
-            # Process target sample if available
-            if has_targets:
-                target_sample = targets_batch[batch_idx]
-                target_vis = self.dataset.get_patch_visualization(
-                    target_sample,
-                    level=self.dataset.level_to,
-                    remove_positional_encoding=True,
-                    restore_complex=True
-                )
-                
-                # Convert complex to magnitude for visualization  
-                if np.iscomplexobj(target_vis):
-                    target_vis = np.abs(target_vis)
-                
-                # Plot target
-                row, col = divmod(plot_idx, ncols)
-                if row < nrows and col < ncols:
-                    img_target, vmin_target, vmax_target = get_sample_visualization(
-                        data=target_vis,
-                        plot_type="magnitude", 
-                        vminmax=vminmax
-                    )
-                    
-                    im = axes[row, col].imshow(
-                        img_target,
-                        aspect='auto',
-                        cmap='viridis',
-                        vmin=vmin_target,
-                        vmax=vmax_target
-                    )
-                    
-                    # Set title
-                    if titles and plot_idx < len(titles):
-                        title = titles[plot_idx]
-                    else:
-                        title = f'Target {batch_idx} ({self.dataset.level_to.upper()})'
-                    
-                    axes[row, col].set_title(title)
-                    axes[row, col].set_xlabel('Range')
-                    axes[row, col].set_ylabel('Azimuth')
-                    
-                    # Add colorbar
-                    cbar = plt.colorbar(im, ax=axes[row, col], fraction=0.046, pad=0.04)
-                    cbar.ax.tick_params(labelsize=8)
-                    axes[row, col].set_aspect('equal', adjustable='box')
-                
-                plot_idx += 1
-        
-        # Hide unused subplots
-        for idx in range(plot_idx, nrows * ncols):
-            row, col = divmod(idx, ncols)
-            if row < nrows and col < ncols:
-                axes[row, col].set_visible(False)
-        
-        plt.tight_layout()
-        
-        # Save if requested
-        if save_path:
-            plt.savefig(save_path, dpi=150, bbox_inches='tight')
-            if self.verbose:
-                print(f"Batch visualization saved to: {save_path}")
-        
-        if show:
-            plt.show()
-            return None
-        else:
-            return fig
+    
     
 
 def get_sar_dataloader(

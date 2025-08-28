@@ -10,261 +10,191 @@ from torch import nn
 from typing import Union, Optional, Tuple, Dict
 import torch
 import logging
+from pathlib import Path
+from typing import Callable, List
 
 logging.basicConfig(level=logging.INFO)
 
-def visualize_batch_samples(
-    model, 
-    test_loader, 
-    device: str = 'cuda',
-    save_dir: str = './visualizations', 
-    max_batches: int = 5, 
-    max_samples_per_batch: int = 4
-):
+def calculate_reconstruction_dimensions(
+    coordinates: List[Tuple[int, int]], 
+    patch_height: int, 
+    patch_width: int, 
+    stride_height: int = None, 
+    stride_width: int = None,
+    concatenate_patches: bool = False,
+    concat_axis: int = 0
+) -> Tuple[int, int, int, int, int, int]:
     """
-    Visualize samples from the test dataloader with model predictions.
+    Calculate optimal reconstruction dimensions based on actual patch coordinates.
     
     Args:
-        model: Trained model for inference
-        test_loader: Test dataloader
-        device: Device to run model inference on
-        save_dir: Directory to save visualizations
-        max_batches: Maximum number of batches to visualize
-        max_samples_per_batch: Maximum samples to show per batch
+        coordinates: List of (y, x) patch coordinates that will be used
+        patch_height: Height of each patch
+        patch_width: Width of each patch  
+        stride_height: Vertical stride between patches (optional, for validation)
+        stride_width: Horizontal stride between patches (optional, for validation)
+        concatenate_patches: Whether patches are concatenated
+        concat_axis: Concatenation axis (0=vertical, 1=horizontal)
+        
+    Returns:
+        Tuple[int, int, int, int, int, int]: 
+        (final_height, final_width, min_y, max_y, min_x, max_x)
     """
-    os.makedirs(save_dir, exist_ok=True)
+    if not coordinates:
+        return patch_height, patch_width, 0, patch_height, 0, patch_width
     
-    logger = logging.getLogger(__name__)
-    logger.info(f"Starting visualization of test samples with model predictions")
-    logger.info(f"Saving visualizations to: {save_dir}")
+    # Extract coordinate ranges
+    y_coords = [y for y, x in coordinates]
+    x_coords = [x for y, x in coordinates]
     
-    # Setup model for inference
-    model.to(device)
-    model.eval()
+    min_y, max_y = min(y_coords), max(y_coords)
+    min_x, max_x = min(x_coords), max(x_coords)
     
-    try:
-        batch_count = 0
-        with torch.no_grad():
-            for batch_idx, (inputs, targets) in enumerate(test_loader):
-                if batch_count >= max_batches:
-                    break
-                    
-                logger.info(f"Processing batch {batch_idx + 1}/{max_batches}")
-                logger.info(f"Batch input shape: {inputs.shape}, target shape: {targets.shape}")
-                
-                # Move data to device and run inference
-                inputs_device = inputs.to(device)
-                targets_device = targets.to(device)
-                
-                # Get model predictions
-                try:
-                    # # Try complex transformer interface first
-                    # if hasattr(model, 'preprocess_input'):
-                    #     predictions = model(src=inputs_device, tgt=targets_device)
-                    # else:
-                    #     # Fallback to standard forward pass
-                    predictions = model(inputs_device)
-                except Exception as e:
-                    logger.warning(f"Model inference failed with {type(model).__name__}: {str(e)}")
-                    # Try alternative interfaces
-                    try:
-                        predictions = model(inputs_device, targets_device)
-                    except Exception as e2:
-                        logger.error(f"All inference attempts failed: {str(e2)}")
-                        continue
-                
-                # Move back to CPU for visualization
-                inputs_cpu = inputs.detach().cpu().numpy()
-                targets_cpu = targets.detach().cpu().numpy()
-                predictions_cpu = predictions.detach().cpu().numpy()
-                
-                # Get dataset reference
-                dataset = test_loader.dataset
-                
-                try:
-                    # Determine number of samples to visualize
-                    num_samples = min(max_samples_per_batch, inputs_cpu.shape[0])
-                    
-                    logger.info(f"Visualizing {num_samples} samples from batch {batch_idx + 1}")
-                    logger.info(f"Input shape: {inputs_cpu.shape}, Prediction shape: {predictions_cpu.shape}, Target shape: {targets_cpu.shape}")
-                    
-                    # Use dataset's batch visualization method
-                    if hasattr(test_loader, 'get_batch_visualization'):
-                        # Create comprehensive batch visualization using dataset method
-                        save_path = os.path.join(save_dir, f"batch_{batch_idx}_inputs_targets.png")
-                        
-                        # Visualize inputs and targets together
-                        test_loader.get_batch_visualization(
-                            inputs_batch=inputs_cpu,
-                            targets_batch=targets_cpu,
-                            batch_indices=list(range(num_samples)),
-                            max_samples=num_samples,
-                            titles=None,  # Use default titles
-                            show=False,
-                            save_path=save_path,
-                            figsize=(20, 6 * num_samples),
-                            vminmax=(0, 1000),
-                            ncols=2
-                        )
-                        logger.info(f"Saved input/target visualization to: {save_path}")
-                        
-                        # Create model prediction comparison visualization
-                        save_path_pred = os.path.join(save_dir, f"batch_{batch_idx}_predictions.png")   
-                        logger.info(f"Saved manual prediction comparison to: {save_path_pred}")
-                    
-                    else:
-                        # Fallback if dataset doesn't have batch visualization
-                        logger.warning("Dataset doesn't have get_batch_visualization method, using manual approach")
-                        
-                        # Create manual visualization
-                        fig, axes = plt.subplots(num_samples, 3, figsize=(18, 6 * num_samples))
-                        if num_samples == 1:
-                            axes = axes.reshape(1, -1)
-                        
-                        for sample_idx in range(num_samples):
-                            # Get individual samples and process them
-                            input_sample = inputs_cpu[sample_idx]
-                            pred_sample = predictions_cpu[sample_idx]
-                            target_sample = targets_cpu[sample_idx]
-                            
-                            # Simple processing - remove positional encoding and take magnitude
-                            if input_sample.shape[-1] > 2:
-                                input_sample = input_sample[..., :-2]
-                            if pred_sample.shape[-1] > 2:
-                                pred_sample = pred_sample[..., :-2]
-                            if target_sample.shape[-1] > 2:
-                                target_sample = target_sample[..., :-2]
-                            
-                            # Convert to magnitude if complex
-                            input_data = np.abs(input_sample.squeeze()) if np.iscomplexobj(input_sample) else input_sample.squeeze()
-                            pred_data = np.abs(pred_sample.squeeze()) if np.iscomplexobj(pred_sample) else pred_sample.squeeze()
-                            target_data = np.abs(target_sample.squeeze()) if np.iscomplexobj(target_sample) else target_sample.squeeze()
-                            
-                            # Ensure 2D for imshow
-                            if input_data.ndim == 1:
-                                input_data = input_data.reshape(-1, 1)
-                            if pred_data.ndim == 1:
-                                pred_data = pred_data.reshape(-1, 1)
-                            if target_data.ndim == 1:
-                                target_data = target_data.reshape(-1, 1)
-                            
-                            # Plot
-                            im1 = axes[sample_idx, 0].imshow(input_data, aspect='auto', cmap='viridis')
-                            axes[sample_idx, 0].set_title(f'Input {sample_idx} ({dataset.level_from.upper()})')
-                            plt.colorbar(im1, ax=axes[sample_idx, 0], fraction=0.046, pad=0.04)
-                            
-                            im2 = axes[sample_idx, 1].imshow(pred_data, aspect='auto', cmap='viridis')
-                            axes[sample_idx, 1].set_title(f'Prediction {sample_idx} ({dataset.level_to.upper()})')
-                            plt.colorbar(im2, ax=axes[sample_idx, 1], fraction=0.046, pad=0.04)
-                            
-                            im3 = axes[sample_idx, 2].imshow(target_data, aspect='auto', cmap='viridis')
-                            axes[sample_idx, 2].set_title(f'Target {sample_idx} ({dataset.level_to.upper()})')
-                            plt.colorbar(im3, ax=axes[sample_idx, 2], fraction=0.046, pad=0.04)
-                        
-                        plt.tight_layout()
-                        save_path = os.path.join(save_dir, f"batch_{batch_idx}_manual_comparison.png")
-                        plt.savefig(save_path, dpi=150, bbox_inches='tight')
-                        plt.close()
-                        
-                        logger.info(f"Saved manual comparison to: {save_path}")
-                    
-                    # Create error analysis if desired
-                    try:
-                        error_save_path = os.path.join(save_dir, f"batch_{batch_idx}_prediction_error.png")
-                        
-                        fig_error, axes_error = plt.subplots(num_samples, 2, figsize=(12, 6 * num_samples))
-                        if num_samples == 1:
-                            axes_error = axes_error.reshape(1, -1)
-                        
-                        for sample_idx in range(num_samples):
-                            pred_sample = predictions_cpu[sample_idx]
-                            target_sample = targets_cpu[sample_idx]
-                            
-                            # Remove positional encoding if present
-                            if pred_sample.shape[-1] > 2:
-                                pred_sample = pred_sample[..., :-2]
-                            if target_sample.shape[-1] > 2:
-                                target_sample = target_sample[..., :-2]
-                            
-                            # Compute error (handle complex data)
-                            if np.iscomplexobj(pred_sample) or np.iscomplexobj(target_sample):
-                                pred_mag = np.abs(pred_sample.squeeze())
-                                target_mag = np.abs(target_sample.squeeze())
-                            else:
-                                pred_mag = pred_sample.squeeze()
-                                target_mag = target_sample.squeeze()
-                            
-                            # Ensure 2D for visualization
-                            if pred_mag.ndim == 1:
-                                pred_mag = pred_mag.reshape(-1, 1)
-                                target_mag = target_mag.reshape(-1, 1)
-                            
-                            # Compute absolute and relative errors
-                            abs_error = np.abs(pred_mag - target_mag)
-                            rel_error = abs_error / (target_mag + 1e-8)  # Avoid division by zero
-                            
-                            # Plot absolute error
-                            im1 = axes_error[sample_idx, 0].imshow(abs_error, aspect='auto', cmap='hot')
-                            axes_error[sample_idx, 0].set_title(f'Absolute Error {sample_idx}')
-                            axes_error[sample_idx, 0].set_xlabel('Range')
-                            axes_error[sample_idx, 0].set_ylabel('Azimuth')
-                            plt.colorbar(im1, ax=axes_error[sample_idx, 0], fraction=0.046, pad=0.04)
-                            
-                            # Plot relative error
-                            im2 = axes_error[sample_idx, 1].imshow(rel_error, aspect='auto', cmap='hot')
-                            axes_error[sample_idx, 1].set_title(f'Relative Error {sample_idx}')
-                            axes_error[sample_idx, 1].set_xlabel('Range') 
-                            axes_error[sample_idx, 1].set_ylabel('Azimuth')
-                            plt.colorbar(im2, ax=axes_error[sample_idx, 1], fraction=0.046, pad=0.04)
-                        
-                        plt.tight_layout()
-                        plt.savefig(error_save_path, dpi=150, bbox_inches='tight')
-                        plt.close()
-                        
-                        logger.info(f"Saved error analysis to: {error_save_path}")
-                        
-                    except Exception as e:
-                        logger.warning(f"Error analysis failed: {str(e)}")
-                    
-                except Exception as e:
-                    logger.error(f"Error creating visualization for batch {batch_idx}: {str(e)}")
-                    import traceback
-                    traceback.print_exc()
-                    continue
-                
-                batch_count += 1
-                
-    except Exception as e:
-        logger.error(f"Error during model visualization: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise
+    # Calculate final dimensions
+    if concatenate_patches:
+        if concat_axis == 0:
+            # Vertical concatenation: patches are stacked as columns
+            # Height determined by patch height, width by coordinate spread
+            final_height = patch_height
+            final_width = max_x - min_x + patch_width
+        elif concat_axis == 1:
+            # Horizontal concatenation: patches are stacked as rows  
+            # Width determined by patch width, height by coordinate spread
+            final_height = max_y - min_y + patch_height
+            final_width = patch_width
+        else:
+            raise ValueError(f"Invalid concat_axis: {concat_axis}")
+    else:
+        # Standard patches: simple bounding box calculation
+        final_height = max_y - min_y + patch_height
+        final_width = max_x - min_x + patch_width
     
-    logger.info(f"Model visualization complete! Saved {batch_count} batch comparisons to {save_dir}")
-
-def visualize_pair(raw_image: np.ndarray, focused_image: np.ndarray, save_path: str, cmap: str = 'gray') -> None:
+    return final_height, final_width, min_y, max_y, min_x, max_x
+def get_full_image_and_prediction(
+    dataset: SARZarrDataset,
+    zfile: Union[str, int, os.PathLike],
+    inference_fn: Callable[[np.ndarray], np.ndarray],
+    max_samples_per_prod: Optional[int] = None,
+    batch_size: int = 16,
+    return_input: bool = False,
+    vminmax: Union[Tuple[int, int], str] = 'auto', 
+    device: Union[str, torch.device] = "cuda"
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    Plot raw and focused SAR images side by side and save the figure.
+    Given a file name or index, runs inference on the first max_samples_per_prod patches,
+    and reconstructs the full image (at level_to) and the corresponding prediction.
 
     Args:
-        raw_image (np.ndarray): The input raw SAR image.
-        focused_image (np.ndarray): The output focused SAR image.
-        save_path (str): File path to save the plotted figure (including filename and extension, e.g., .png).
-        cmap (str): Matplotlib colormap to use. Defaults to 'gray'.
+        zfile: File name, index, or Path to the Zarr file.
+        inference_fn: Callable that takes a batch of input patches and returns predictions.
+        max_samples_per_prod: Maximum number of patches to use (default: self._samples_per_prod).
+        batch_size: Batch size for inference.
+        return_input: If True, also returns the reconstructed input image.
+        verbose: If True, prints progress.
+
+    Returns:
+        (gt_full, pred_full, [input_full]): Tuple of ground truth image, prediction image,
+        and optionally the reconstructed input image (all as numpy arrays).
     """
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
-    axes[0].imshow(raw_image, cmap=cmap)
-    axes[0].set_title('Raw SAR Image')
-    axes[0].axis('off')
+    # Resolve zfile from index if needed
+    if isinstance(zfile, int):
+        zfile = dataset.files[zfile]
+    else:
+        zfile = Path(zfile)
 
-    axes[1].imshow(focused_image, cmap=cmap)
-    axes[1].set_title('Focused SAR Image')
-    axes[1].axis('off')
+    # Ensure patches are calculated
+    dataset.calculate_patches_from_store(zfile, patch_order="row")
+    coords = dataset._samples_by_file[zfile]
+    if max_samples_per_prod is None:
+        max_samples_per_prod = dataset._samples_per_prod
+    coords = coords[:max_samples_per_prod]
 
-    plt.tight_layout()
-    plt.savefig(save_path, dpi=300)
-    plt.close(fig)
+    # Get patch and image shapes
+    ph, pw = dataset.get_patch_size(zfile)
+    stride_x, stride_y = dataset.stride
+    h, w, _, _, _, _= calculate_reconstruction_dimensions(
+        coords,
+        patch_height=ph,
+        patch_width=pw,
+        stride_height=stride_y,
+        stride_width=stride_x,
+        concatenate_patches=True,
+        concat_axis=0
+    )
+    print(f"Total patch reconstructed dimensions: ({h}, {w})")
+    #dataset.get_whole_sample_shape(zfile)
+    
+    stride_y, stride_x = dataset.stride
+
+    # Prepare empty arrays for reconstruction
+    # gt_full = np.zeros((h, w), dtype=np.complex64)
+    # pred_full = np.zeros((h, w), dtype=np.complex64)
+    # input_full = np.zeros((h, w), dtype=np.complex64) if return_input else None
+    # count_map = np.zeros((h, w), dtype=np.int32)
+
+    # Collect all input patches for inference
+    input_patches = []
+    gt_patches = []
+    positions = []
+    for (y, x) in coords:
+        patch_from, patch_to = dataset[(str(zfile), y, x)]
+        input_patches.append(patch_from)
+        gt_patches.append(patch_to)
+        positions.append((y, x))
+
+    input_patches = np.stack(input_patches, axis=0)  # (N, ph, pw)
+    gt_patches = np.stack(gt_patches, axis=0)        # (N, ph, pw)
+
+    # Run inference in batches
+    preds = []
+    for i in range(0, len(input_patches), batch_size):
+        batch = input_patches[i:i+batch_size]
+        
+        pred = inference_fn(x=batch, device=device)  # Should return (B, ph, pw) or (B, ph, pw, ...)
+        if isinstance(pred, torch.Tensor):
+            pred = pred.detach().cpu().numpy()
+        preds.append(pred)
+    preds = np.concatenate(preds, axis=0)
+    
+    gt_full = np.zeros((h, w), dtype=np.complex64)
+    pred_full = np.zeros((h, w), dtype=np.complex64)
+    input_full = np.zeros((h, w), dtype=np.complex64) if return_input else None
+    count_map = np.zeros((h, w), dtype=np.int32)
+
+
+    # Place patches into the full image arrays
+    for idx, (y, x) in enumerate(positions):
+        gt_patch = dataset.get_patch_visualization(gt_patches[idx], dataset.level_to, vminmax=vminmax, restore_complex=True,)
+        print(f"Ground truth patch with index {idx} has shape: {gt_patches[idx].shape}, while reconstructed ground truth patch has dimension {gt_patch.shape}")
+        pred_patch = dataset.get_patch_visualization(preds[idx], dataset.level_to, vminmax=vminmax, restore_complex=True, remove_positional_encoding=False)
+        print(f"Prediction with index {idx} has shape: {preds[idx].shape}, while reconstructed prediction patch has dimension {pred_patch.shape}")
+        if return_input:
+            input_patch = dataset.get_patch_visualization(input_patches[idx], dataset.level_from, vminmax=vminmax, restore_complex=True)
+
+        assert gt_patch.shape == pred_patch.shape, f"Prediction patch has a different size than original patch. Original patch shape: {gt_patch.shape}, prediction patch shape: {pred_patch.shape}"
+        ph, pw = gt_patch.shape
+        # Place patch in the correct location
+        gt_full[y:y+ph, x:x+pw] += gt_patch
+        pred_full[y:y+ph, x:x+pw] += pred_patch
+        if return_input:
+            input_full[y:y+ph, x:x+pw] += input_patch
+        count_map[y:y+ph, x:x+pw] += 1
+
+    # Average overlapping regions
+    mask = count_map > 0
+    gt_full[mask] /= count_map[mask]
+    pred_full[mask] /= count_map[mask]
+    if return_input:
+        input_full[mask] /= count_map[mask]
+
+    if dataset.verbose:
+        print(f"Reconstructed image shape: {gt_full.shape}, prediction shape: {pred_full.shape}")
+
+    if return_input:
+        return gt_full, pred_full, input_full
+    else:
+        return gt_full, pred_full
+
 
 
 def compute_sidelobe_ratio(image: np.ndarray, mainlobe_size: int = 5) -> float:
