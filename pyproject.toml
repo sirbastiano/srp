@@ -23,7 +23,7 @@ dependencies = [
     "numba",
     "jupyter",
     "torch>=1.9.0",
-    "phidown>=0.1.16",
+    "phidown>=0.1.17",
     "rasterio>=1.4.3",
     "zarr>=3.0.8",
     "joblib>=1.5.1",

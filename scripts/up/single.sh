@@ -13,8 +13,8 @@ if [[ -z "$FOLDER" ]]; then
 fi
 
 
-USER="sirbastiano94"
-DATASET="Maya4"
+USER="dagus01"
+DATASET="pt4"
 LOG_DIR="/Data_large/marine/PythonProjects/SAR/sarpyx/logs/up"
 LOG_FILE="$LOG_DIR/upload_$(date '+%Y%m%d_%H%M%S').log"
 
@@ -72,10 +72,8 @@ log "📝 Log file: $LOG_FILE"
 
 check_prerequisites
 
-log "🔑 Authenticated as: $(hf whoami)"
-
 log "⬆️  Starting upload..."
-if hf upload-large-folder "$USER/$DATASET" "$FOLDER" --repo-type=dataset --num-workers 12 --no-bars; then
+if hf upload-large-folder "$USER/$DATASET" "$FOLDER" --repo-type=dataset --num-workers 16 --no-bars; then
     log "✅ Upload completed successfully!"
     log "🌐 Dataset available at: https://huggingface.co/datasets/$USER/$DATASET"
 else

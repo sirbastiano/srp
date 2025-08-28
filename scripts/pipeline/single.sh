@@ -64,17 +64,17 @@ else
 fi
 
 #------------- 4. Upload
-echo "Starting upload for: $TARGET_ID"
-upload_dir="/Data_large/marine/PythonProjects/SAR/sarpyx/data/3_parsed/$TARGET_ID"
-source "$BASE_PATH/up/single.sh" "$upload_dir"
+# echo "Starting upload for: $TARGET_ID"
+# upload_dir="/Data_large/marine/PythonProjects/SAR/sarpyx/data/3_parsed/$TARGET_ID"
+# source "$BASE_PATH/up/single.sh" "$upload_dir"
 
-# Cleanup with error handling
-if [[ -d "$upload_dir" ]]; then
-    rm -rf "$upload_dir"
-    echo "Cleaned up parsed directory for: $TARGET_ID"
-else
-    echo "Warning: Parsed directory not found for cleanup: $upload_dir" >&2
-fi
+# # Cleanup with error handling
+# if [[ -d "$upload_dir" ]]; then
+#     rm -rf "$upload_dir"
+#     echo "Cleaned up parsed directory for: $TARGET_ID"
+# else
+#     echo "Warning: Parsed directory not found for cleanup: $upload_dir" >&2
+# fi
 
 
 #------------- 4. Finish

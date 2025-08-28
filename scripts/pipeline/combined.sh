@@ -1,1014 +1,346 @@
 #bin/bash
 
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20241116T185333_20241116T185403_056583_06F070_EC30.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20230713T072353_20230713T072419_049401_05F0BE_AB37.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20240308T063716_20240308T063737_052886_0666A9_C279.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20230628T214409_20230628T214440_049191_05EA4F_FF02.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240718T082859_20240718T082932_054813_06ACC5_D68C.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20250313T214403_20250313T214434_058291_073495_3564.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20250224T025030_20250224T025046_058032_072A18_25D3.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20231008T020732_20231008T020757_050667_061AD2_1FCE.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDV_20241216T014915_20241216T014936_057011_070160_135D.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDH_20250425T164600_20250425T164633_058915_074DCB_D390.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20240807T152909_20240807T152930_055108_06B70D_7786.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20250323T152904_20250323T152924_058433_073A28_CA6D.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20240909T213604_20240909T213629_055593_06C93C_E461.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240901T201503_20240901T201534_055476_06C494_1AE8.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDH_20250128T121300_20250128T121332_057644_071A79_CEA3.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20231028T073127_20231028T073148_050962_0624D1_C3A9.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20240824T185332_20240824T185402_055358_06C048_FDD5.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20231228T072354_20231228T072420_051851_06438E_40AF.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20250307T200729_20250307T200802_058203_073115_1B33.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20231201T214413_20231201T214444_051466_063635_9F85.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240413T082925_20240413T082958_053413_067A9F_6A9F.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20231114T123137_20231114T123203_051213_062D7F_7A40.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDH_20240818T121144_20240818T121215_055267_06BCDD_E2C9.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDH_20231014T151242_20231014T151258_050762_061E12_998E.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDH_20240213T213535_20240213T213601_052546_065B15_EAB0.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDH_20230326T213531_20230326T213557_047821_05BED7_2499.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20241217T152907_20241217T152928_057033_070247_7A9F.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SSH_20230410T000110_20230410T000131_048026_05C5D2_EA74.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SSH_20250113T105236_20250113T105307_057424_0711CC_5793.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20250322T062917_20250322T062938_058413_073962_255A.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SSH_20240803T051443_20240803T051504_055044_06B4BE_8BC7.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20250109T193650_20250109T193721_057371_070FAB_838E.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20230830T072356_20230830T072421_050101_060771_314B.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240213T082950_20240213T083021_052538_065AD0_7D80.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240105T115528_20240105T115554_051971_0647AE_4296.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20231116T195134_20231116T195155_051247_062EA3_68BC.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDH_20240106T151240_20240106T151255_051987_06483E_8B50.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20250212T025030_20250212T025046_057857_0722F4_A352.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDH_20231023T121150_20231023T121220_050892_06226D_99CF.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDV_20241029T014918_20241029T014939_056311_06E594_B056.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDV_20240408T014919_20240408T014939_053336_06778B_C283.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20250131T213558_20250131T213623_057693_071C6A_3CDB.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20231030T094439_20231030T094509_050992_0625E5_240D.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20250224T213555_20250224T213626_058043_072A8A_DBF2.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20241206T201502_20241206T201533_056876_06FC0B_36E6.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20230419T073118_20230419T073139_048162_05CA61_C2F9.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20250421T072346_20250421T072412_058851_074B2F_874E.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20231029T185337_20231029T185407_050983_062593_1863.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20230510T115524_20230510T115549_048471_05D4AB_E0D6.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20231109T082904_20231109T082936_051138_062ADD_A007.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20240909T123133_20240909T123158_055588_06C902_0430.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20240524T123135_20240524T123200_054013_069103_1FAD.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDH_20240208T121145_20240208T121216_052467_06586D_33D2.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDH_20240519T213537_20240519T213603_053946_068EB7_24EA.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20241117T094435_20241117T094505_056592_06F0CB_D631.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20240527T152912_20240527T152932_054058_0692A0_83FF.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20231017T153601_20231017T153616_050806_061F95_818B.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20230407T073118_20230407T073139_047987_05C47A_9F79.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20240803T200800_20240803T200831_055053_06B50F_C8E6.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SSH_20241015T041930_20241015T042000_056108_06DD88_1E37.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20230420T185328_20230420T185359_048183_05CB12_266F.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20250207T082854_20250207T082927_057788_072028_5FE4.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20250102T082946_20250102T083017_057263_070B5A_3F93.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDH_20250124T002758_20250124T002814_057579_0717E5_D3DE.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20241010T114546_20241010T114556_056040_06DAD3_E6B9.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDH_20241122T121145_20241122T121215_056667_06F3CD_4765.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDH_20250130T120038_20250130T120111_057673_071BA0_249B.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20240109T153558_20240109T153613_052031_0649BA_1EC6.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20231204T153600_20231204T153615_051506_063795_116B.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SSH_20241106T000114_20241106T000135_056426_06EA2B_091D.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240312T183638_20240312T183648_052952_0668FB_7489.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDH_20250128T121620_20250128T121645_057644_071A79_0DE1.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240621T201504_20240621T201535_054426_069F58_B0BD.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20250220T072346_20250220T072411_057976_0727C5_CE67.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20241014T200737_20241014T200809_056103_06DD59_1C26.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20230513T145327_20230513T145353_048516_05D5FD_1CBF.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20250422T121238_20250422T121311_058869_074BEA_1C76.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20241120T025037_20241120T025052_056632_06F269_D369.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20230506T123130_20230506T123156_048413_05D2C5_3165.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20250307T020721_20250307T020746_058192_0730A4_66BF.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20230813T152912_20230813T152933_049858_05FF23_231A.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20250126T173145_20250126T173201_057618_071970_09BE.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240408T193656_20240408T193727_053346_067801_94D4.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20230809T183639_20230809T183659_049802_05FD47_5177.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20240213T063716_20240213T063737_052536_065AC3_DAC3.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20240520T185334_20240520T185404_053958_068F27_3EF0.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20230627T115526_20230627T115552_049171_05E9B7_7D0A.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240901T115526_20240901T115552_055471_06C461_1DD1.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20241024T234244_20241024T234305_056251_06E33B_8D34.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDH_20250425T164625_20250425T164701_058915_074DCB_9DB8.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20230713T153557_20230713T153613_049406_05F0E9_26D9.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20240209T152910_20240209T152931_052483_0658FE_FFAE.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20250103T153552_20250103T153608_057281_070C17_DFF7.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDH_20240814T234917_20240814T234943_055216_06BAF7_B7CC.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240913T201504_20240913T201534_055651_06CB7D_1863.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20240226T185333_20240226T185403_052733_066178_76AE.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20230408T072348_20230408T072414_048001_05C4F2_DFD8.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20230731T195132_20230731T195152_049672_05F914_BC9A.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20231212T115530_20231212T115555_051621_063BA8_EF4A.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20241122T055856_20241122T055927_056663_06F3A4_7571.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20250130T020721_20250130T020747_057667_071B60_E533.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDH_20231225T151240_20231225T151255_051812_064241_6397.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDH_20240624T213536_20240624T213601_054471_06A0E5_1095.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDH_20230922T213540_20230922T213605_050446_061327_9366.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20241229T152907_20241229T152927_057208_070934_DEA0.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20231029T153601_20231029T153616_050981_062580_8097.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20230426T193651_20230426T193722_048271_05CE0C_F173.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20241022T073123_20241022T073144_056212_06E1A8_9216.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20230830T185336_20230830T185406_050108_0607B6_3110.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20240405T200737_20240405T200810_053303_067640_B325.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20240707T072352_20240707T072418_054651_06A72F_1887.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240130T214410_20240130T214441_052341_06543F_CCFE.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20230615T115526_20230615T115551_048996_05E461_D80E.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SSH_20240729T050635_20240729T050656_054971_06B249_3978.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20240113T123134_20240113T123200_052088_064BA6_65D1.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDH_20230630T213535_20230630T213601_049221_05EB26_4B95.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20250220T153550_20250220T153605_057981_0727FB_1A34.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20241119T183637_20241119T183648_056627_06F234_CD89.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20250127T185327_20250127T185357_057633_071A12_D3DE.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240103T055256_20240103T055327_051938_064680_87E4.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240818T195130_20240818T195150_055272_06BD0C_D6B4.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240303T195131_20240303T195151_052822_066482_AD90.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20241015T123134_20241015T123159_056113_06DDB7_7144.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDH_20230429T151235_20230429T151250_048312_05CF77_1087.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDV_20231104T014922_20231104T014942_051061_06282F_6A76.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20250223T115859_20250223T115932_058023_0729BD_4C4D.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20250331T120104_20250331T120137_058548_073ED0_D681.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240222T201504_20240222T201535_052676_065F8E_FDF4.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240806T062922_20240806T062943_055088_06B657_164F.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20230419T063712_20230419T063732_048161_05CA59_52A2.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20250109T195126_20250109T195146_057372_070FAD_C18C.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20230513T082922_20230513T082955_048513_05D5E3_E2CB.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20241127T082859_20241127T082932_056738_06F697_47A0.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20230318T020722_20230318T020748_047692_05BA94_FA3D.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SSH_20240808T052250_20240808T052323_055117_06B756_B234.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20240226T153556_20240226T153612_052731_066165_86FC.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SSH_20240307T105246_20240307T105311_052874_066655_3883.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240514T062924_20240514T062945_053863_068BE5_A6AE.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240920T183637_20240920T183648_055752_06CF7E_88F5.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20250221T121324_20250221T121356_057994_07287F_079B.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20241103T063717_20241103T063737_056386_06E88D_5274.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240106T214411_20240106T214442_051991_064863_8735.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20230817T145333_20230817T145358_049916_060116_69C0.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240624T145330_20240624T145356_054466_06A0C0_10C2.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDV_20240502T014919_20240502T014940_053686_068553_FB9C.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20240121T153557_20240121T153613_052206_064FA4_39D5.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20241223T171935_20241223T172006_057122_0705D2_1F45.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20230817T073125_20230817T073146_049912_0600F2_9451.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20250114T073117_20250114T073138_057437_071244_2E28.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20241009T223237_20241009T223310_056032_06DA83_4FAD.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20240625T072353_20240625T072418_054476_06A116_8AC1.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240201T145330_20240201T145356_052366_06550C_6F97.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240612T082901_20240612T082933_054288_069A8E_61AB.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDH_20240306T151238_20240306T151254_052862_0665E6_E757.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDV_20230625T014917_20230625T014938_049136_05E894_3E7D.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20231111T171942_20231111T172013_051172_062C0E_58F7.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20250329T171932_20250329T172002_058522_073DB3_653C.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20240804T213603_20240804T213629_055068_06B598_7BAD.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20230615T201503_20230615T201534_049001_05E485_09BC.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240213T073123_20240213T073143_052537_065ACB_EFF8.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20231204T185336_20231204T185406_051508_0637A8_F225.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20230824T055900_20230824T055930_050013_06045B_0786.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20230712T082951_20230712T083021_049388_05F05F_D2B2.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20241026T020727_20241026T020753_056267_06E3DE_9006.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDV_20250307T115923_20250307T115956_058198_0730E8_541C.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SSV_20240903T105240_20240903T105306_055499_06C586_4DA1.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20230726T171939_20230726T172010_049597_05F6C2_9212.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240317T201504_20240317T201535_053026_066BA1_DA7C.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDH_20241212T234917_20241212T234942_056966_06FF8C_35B6.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20240507T063718_20240507T063739_053761_068852_66DA.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20250126T082854_20250126T082927_057613_07193C_B6A0.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20250422T121508_20250422T121541_058869_074BEA_5518.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SSH_20240626T053116_20240626T053149_054490_06A193_06E6.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20241117T234244_20241117T234305_056601_06F127_E44D.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SSH_20231230T000116_20231230T000137_051876_064473_5A32.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20250403T225907_20250403T225938_058598_0740DC_5ECB.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20230606T073121_20230606T073141_048862_05E048_C106.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDH_20230317T234913_20230317T234939_047691_05BA87_A5D1.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20231122T185336_20231122T185407_051333_0631AB_B838.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20241115T082925_20241115T082958_056563_06EF96_DEB3.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20240908T020727_20240908T020752_055567_06C831_FB0C.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDH_20240118T151239_20240118T151254_052162_064E2E_946E.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20241223T094432_20241223T094502_057117_0705AC_8CB1.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20240313T213604_20240313T213630_052968_06697A_E7E3.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20230707T193655_20230707T193726_049321_05EE52_4D4B.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20230919T201508_20230919T201539_050401_0611B0_9E76.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20240417T200737_20240417T200810_053478_067D30_49A0.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20230818T072355_20230818T072421_049926_06016C_0C39.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240413T082950_20240413T083020_053413_067A9F_4432.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20240922T222431_20240922T222452_055784_06D0BB_5B7A.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20241226T123130_20241226T123156_057163_07076E_9934.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20230910T173155_20230910T173210_050268_060D18_995D.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20230316T094429_20230316T094500_047667_05B9B3_904C.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20231130T201507_20231130T201538_051451_0635AB_D022.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20230806T072355_20230806T072420_049751_05FB7F_48ED.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20230910T082929_20230910T083002_050263_060CEC_6898.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20230606T082923_20230606T082956_048863_05E04C_680D.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20241004T222429_20241004T222455_055959_06D7B3_B654.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDV_20230613T014916_20230613T014937_048961_05E340_9BD1.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20230316T171933_20230316T172003_047672_05B9D5_B27A.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20241211T171936_20241211T172007_056947_06FEC7_2F57.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20241209T073121_20241209T073142_056912_06FD6C_6640.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDH_20240802T234918_20240802T234943_055041_06B4AF_AD73.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20231004T063720_20231004T063741_050611_0618D8_1478.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20231121T145334_20231121T145359_051316_06310E_942A.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20230501T082947_20230501T083017_048338_05D045_4EA6.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20230412T123129_20230412T123155_048063_05C70D_FED1.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDH_20250118T120104_20250118T120140_057498_0714B4_9FAF.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20230717T213605_20230717T213631_049468_05F2CD_86AA.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20231008T183642_20231008T183652_050677_061B2E_75E4.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240624T073123_20240624T073143_054462_06A09A_E1BF.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20240929T072353_20240929T072418_055876_06D465_B9EE.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240612T145331_20240612T145356_054291_069AAD_19EE.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20240920T020727_20240920T020753_055742_06CF19_E502.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDH_20241113T151238_20241113T151254_056537_06EE9E_11BD.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20250223T120129_20250223T120145_058023_0729BD_2948.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20240924T152910_20240924T152931_055808_06D1B4_5A31.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240911T062923_20240911T062943_055613_06CA03_DC3C.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20241007T201505_20241007T201536_056001_06D950_A8E2.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20250409T185326_20250409T185357_058683_074451_772C.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20231004T082929_20231004T083002_050613_0618E5_2CB0.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20240125T123134_20240125T123159_052263_065183_BA04.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDV_20250325T002609_20250325T002642_058453_073AF8_4E3D.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20241011T153557_20241011T153612_056056_06DB7D_9280.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20240509T094437_20240509T094457_053792_068975_6CFD.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDH_20250117T234913_20250117T234939_057491_071460_0092.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20250331T200755_20250331T200826_058553_073EFE_2619.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20241231T214406_20241231T214437_057241_070A89_55AF.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20250227T044959_20250227T045029_058077_072BE1_2E03.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDH_20240220T121145_20240220T121216_052642_065E5D_9936.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDV_20250224T164600_20250224T164633_058040_072A6A_CD79.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20230427T152906_20230427T152927_048283_05CE6F_0B25.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20230831T094438_20230831T094509_050117_060800_9E6D.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240928T073123_20240928T073143_055862_06D3D6_B771.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240827T183637_20240827T183647_055402_06C1EB_511E.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20241128T072352_20241128T072417_056751_06F721_74FE.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240127T055255_20240127T055326_052288_065259_10FE.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20231013T115531_20231013T115557_050746_061D7C_E620.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDH_20250425T042629_20250425T042644_058908_074D7F_955B.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDH_20250315T213529_20250315T213555_058321_0735B2_E9BF.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SSH_20240915T105241_20240915T105307_055674_06CC71_57EF.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDH_20250412T115721_20250412T115754_058723_0745FA_317B.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240619T062924_20240619T062944_054388_069E09_5C8B.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20240917T185333_20240917T185403_055708_06CDC0_C3D8.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20230905T055901_20230905T055931_050188_060A65_9157.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20250303T145323_20250303T145349_058141_072E86_6A86.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240220T055255_20240220T055325_052638_065E33_BB7D.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20230809T020729_20230809T020754_049792_05FCE6_12A0.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20250115T153551_20250115T153607_057456_071300_FA33.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20241129T171937_20241129T172008_056772_06F7EF_1F99.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SSH_20230329T000110_20230329T000130_047851_05BFEB_045E.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDH_20240111T234919_20240111T234945_052066_064AE7_8E31.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20240426T185334_20240426T185405_053608_06824C_D936.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20230724T145331_20230724T145357_049566_05F5CF_B9D8.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SSH_20240720T053115_20240720T053148_054840_06ADB4_B666.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20241104T153557_20241104T153612_056406_06E95E_2E9F.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20230607T153554_20230607T153610_048881_05E0D8_9459.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDH_20231019T234923_20231019T234949_050841_0620BE_A8B3.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240904T145329_20240904T145355_055516_06C621_8E95.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20250408T082919_20250408T082952_058663_074376_28F3.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20250118T020722_20250118T020747_057492_071470_4B10.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDH_20240811T213535_20240811T213600_055171_06B952_8A91.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20231006T094439_20231006T094459_050642_0619EB_81A3.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SSH_20241114T105241_20241114T105307_056549_06EF17_9C25.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDH_20231206T234921_20231206T234947_051541_0638CF_C201.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20240908T200801_20240908T200831_055578_06C8A2_BBA4.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20231104T055901_20231104T055931_051063_062845_F616.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20230922T082904_20230922T082937_050438_0612E2_FD0E.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDH_20230426T121141_20230426T121212_048267_05CDE4_7019.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20230501T173147_20230501T173203_048343_05D070_AF09.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SSH_20241118T000114_20241118T000135_056601_06F129_E855.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20230922T073127_20230922T073147_050437_0612DD_8A2E.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240315T055857_20240315T055928_052988_066A28_75F7.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20231203T082953_20231203T083024_051488_0636E9_4215.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20250217T002523_20250217T002555_057928_0725D8_F4C2.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20231122T153600_20231122T153615_051331_063198_93E8.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20230601T193653_20230601T193724_048796_05DE46_1F95.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20240309T072352_20240309T072418_052901_066726_116D.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20250219T082918_20250219T082951_057963_072732_4325.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20230705T123133_20230705T123159_049288_05ED3D_3027.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SSH_20230504T000111_20230504T000131_048376_05D192_FC6D.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240303T062923_20240303T062944_052813_066434_CE91.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20231215T063719_20231215T063739_051661_063D00_0C6F.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20230724T082926_20230724T082959_049563_05F5B3_668A.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20231109T145334_20231109T145359_051141_062AFC_C958.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDV_20250202T014911_20250202T014932_057711_071D18_2F79.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20240605T213605_20240605T213631_054193_069743_4FE7.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20240917T153556_20240917T153612_055706_06CDAB_6D92.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20240508T153558_20240508T153614_053781_068910_74AD.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDH_20240603T234920_20240603T234945_054166_069651_D0B8.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20241208T223257_20241208T223318_056907_06FD38_7BFD.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240730T145329_20240730T145355_054991_06B301_785E.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20230414T055853_20230414T055923_048088_05C7DC_38F3.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20230822T213607_20230822T213633_049993_0603C2_0B1A.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20231220T213606_20231220T213631_051743_063FDE_FA56.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDH_20240428T234920_20240428T234946_053641_068393_1A6C.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20250322T193649_20250322T193719_058421_0739B8_AA9C.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20231104T195134_20231104T195155_051072_062894_69D7.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDH_20231128T121148_20231128T121219_051417_063484_CABF.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDH_20241207T151236_20241207T151252_056887_06FC7A_D5D3.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20231011T062927_20231011T062948_050713_061C57_DF9F.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240923T062923_20240923T062944_055788_06D0EE_9D93.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20231215T145333_20231215T145358_051666_063D2C_285D.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDH_20250205T002523_20250205T002556_057753_071ECD_F0ED.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SSH_20230820T000117_20230820T000138_049951_060253_EF5B.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20230922T063720_20230922T063741_050436_0612D5_88A1.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20230323T115522_20230323T115548_047771_05BD33_F125.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDH_20230520T121143_20230520T121213_048617_05D8ED_B6F9.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDV_20250211T115808_20250211T115841_057848_0722A0_92CA.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20230412T213600_20230412T213626_048068_05C73E_87E6.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240528T201505_20240528T201536_054076_069341_3A66.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20241222T185330_20241222T185400_057108_07054C_C682.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20231227T145332_20231227T145357_051841_064338_784D.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240413T082900_20240413T082933_053413_067A9F_E1AF.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDV_20230926T020732_20230926T020757_050492_0614D3_5D51.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20250227T152903_20250227T152924_058083_072C26_0453.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20250310T062916_20250310T062937_058238_07327C_F035.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20241008T214411_20241008T214442_056016_06D9EC_E48F.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S1_RAW__0SDH_20230812T121147_20230812T121218_049842_05FE94_C6E4.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20230322T152905_20230322T152926_047758_05BCC7_D662.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDH_20230621T234917_20230621T234943_049091_05E73E_54CB.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20241208T223232_20241208T223305_056907_06FD38_682B.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDV_20250307T115808_20250307T115841_058198_0730E8_78DD.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240124T183638_20240124T183649_052252_065132_FBA6.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240413T073122_20240413T073143_053412_067A99_FCF4.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20241216T195128_20241216T195148_057022_0701D6_DD43.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240913T115527_20240913T115552_055646_06CB4D_0D5E.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20240930T094435_20240930T094506_055892_06D50C_C43A.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20250412T200730_20250412T200802_058728_07462A_2A8D.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20230719T195131_20230719T195152_049497_05F3AE_535E.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDH_20250224T042540_20250224T042612_058033_072A21_B70A.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20241024T171938_20241024T172009_056247_06E307_C450.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240725T062922_20240725T062943_054913_06B04C_0C77.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20240830T193654_20240830T193725_055446_06C37F_B3E5.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20240120T082901_20240120T082934_052188_064EFE_0742.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S2_RAW__0SDV_20250307T120038_20250307T120111_058198_0730E8_6245.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDV_20230708T152911_20230708T152931_049333_05EEB1_745A.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SDH_20240828T213604_20240828T213629_055418_06C272_0321.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20231113T183641_20231113T183652_051202_062D2C_2C59.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20231017T185337_20231017T185408_050808_061FA8_68A4.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S6_RAW__0SDV_20231016T082954_20231016T083025_050788_061EED_820A.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S3_RAW__0SSH_20230317T000109_20230317T000130_047676_05BA02_A757.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S4_RAW__0SDV_20230525T073120_20230525T073141_048687_05DB08_AAE5.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh 'S1A_S5_RAW__0SDV_20250424T200755_20250424T200825_058903_074D50_3A55.SAFE'
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20250219T063709_20250219T063730_057961_072720_AE5E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20250421T185326_20250421T185357_058858_074B7B_1DDB.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20231216T072355_20231216T072421_051676_063D7E_71A1.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20231213T214413_20231213T214443_051641_063C5E_C219.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230919T115531_20230919T115557_050396_061180_7606.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20250502T145324_20250502T145350_059016_0751D9_1320.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20241225T020724_20241225T020749_057142_0706A5_706A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20230729T123135_20230729T123200_049638_05F80A_ED09.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SSH_20240708T053130_20240708T053200_054665_06A7A8_414D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDH_20241127T213535_20241127T213600_056746_06F6E3_E81F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SSH_20231124T000118_20231124T000138_051351_063246_4A64.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20230611T213603_20230611T213628_048943_05E2B5_32EB.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20240507T173152_20240507T173208_053768_068892_9EF0.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20230601T062921_20230601T062942_048788_05DE04_9D8C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20241225T183634_20241225T183645_057152_07070C_8409.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDH_20241118T234918_20241118T234944_056616_06F1BB_0880.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20250208T185326_20250208T185357_057808_0720F5_C6AB.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20231016T063721_20231016T063741_050786_061EE0_E048.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20231128T055258_20231128T055328_051413_06345A_9FC0.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240727T115525_20240727T115551_054946_06B16D_B689.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230630T082949_20230630T083020_049213_05EAED_7290.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20240911T121145_20240911T121215_055617_06CA29_AAA1.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20240711T123133_20240711T123158_054713_06A945_8937.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDH_20231109T213539_20231109T213605_051146_062B22_29D1.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDH_20230606T213534_20230606T213559_048871_05E084_9BB0.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDH_20240916T213536_20240916T213601_055696_06CD3A_F941.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20231102T213608_20231102T213634_051043_0627A2_7AAC.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20241003T213605_20241003T213630_055943_06D713_78CB.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDH_20240615T234919_20240615T234945_054341_069C5E_2F47.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDH_20230703T234918_20230703T234944_049266_05EC92_BF51.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20240516T201506_20240516T201536_053901_068D28_2553.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20240426T072354_20240426T072420_053601_068205_975A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20230526T185330_20230526T185401_048708_05DBA6_1C67.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20241204T195129_20241204T195149_056847_06FAE8_251C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240716T214409_20240716T214440_054791_06AC07_8A67.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240612T082926_20240612T082958_054288_069A8E_6D2B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20240420T121147_20240420T121217_053517_067EBD_7335.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20231219T020729_20231219T020755_051717_063EF8_2E57.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20240604T020728_20240604T020754_054167_06965D_104D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDH_20241209T213534_20241209T213559_056921_06FDBF_89FA.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20241222T153553_20241222T153609_057106_070537_B2C5.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SSV_20240530T105247_20240530T105313_054099_069415_5911.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20231117T152914_20231117T152935_051258_062F08_35CD.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20240916T073123_20240916T073143_055687_06CCE8_7489.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20230627T201503_20230627T201534_049176_05E9DD_9CA2.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDH_20230727T234920_20230727T234946_049616_05F75E_531A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20231110T072356_20231110T072422_051151_062B52_E720.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDH_20250122T004207_20250122T004223_057549_0716C1_2807.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20250427T055249_20250427T055320_058938_074EBD_912E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SSH_20240810T050635_20240810T050656_055146_06B867_968F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20230319T123128_20230319T123154_047713_05BB3E_F2E9.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20230710T151239_20230710T151254_049362_05EF97_F591.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20230810T123135_20230810T123200_049813_05FD94_CF9F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDH_20240201T213536_20240201T213602_052371_065534_0F2D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20230726T094436_20230726T094447_049592_05F6A0_9C02.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20240614T094435_20240614T094446_054317_069B93_6DB6.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SSV_20240224T105246_20240224T105311_052699_06605A_83FA.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20240904T073122_20240904T073142_055512_06C5F8_3E04.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20250126T063711_20250126T063731_057611_07192A_A0DF.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20230701T185332_20230701T185403_049233_05EB8D_E612.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240928T082900_20240928T082933_055863_06D3DC_6B92.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240621T115527_20240621T115553_054421_069F31_B077.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230513T082947_20230513T083018_048513_05D5E3_0997.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20230902T020731_20230902T020756_050142_0608E7_AD7D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20240511T020729_20240511T020755_053817_068A4A_E01C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDH_20240507T213537_20240507T213603_053771_0688AF_4427.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDV_20231023T014922_20231023T014943_050886_06222E_5E12.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20231006T171942_20231006T172013_050647_061A11_3E1D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20230409T171934_20230409T172005_048022_05C5A6_1D27.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20240708T094434_20240708T094445_054667_06A7C2_B39B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDH_20250209T121259_20250209T121332_057819_072164_F8F4.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20230905T062927_20230905T062947_050188_060A6A_A365.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20230607T072350_20230607T072416_048876_05E0B1_9D4F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20241213T200734_20241213T200807_056978_07000D_D021.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20231122T072356_20231122T072422_051326_063166_C6FB.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20241103T082901_20241103T082933_056388_06E89E_8CCA.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20231203T082903_20231203T082936_051488_0636E9_CC58.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20231213T151241_20231213T151256_051637_063C3D_DFFD.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20250107T123129_20250107T123154_057338_070E53_F581.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDH_20230805T213538_20230805T213603_049746_05FB54_0893.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SSV_20240717T105245_20240717T105310_054799_06AC55_B05D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20250502T173145_20250502T173200_059018_0751E5_AF72.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20240108T073124_20240108T073145_052012_06490D_CC90.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDH_20231124T234921_20231124T234947_051366_0632CD_ACE0.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20250103T072348_20250103T072414_057276_070BE3_1508.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240308T145330_20240308T145355_052891_0666D5_7DDC.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230805T082927_20230805T083000_049738_05FB18_40B8.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20241127T082924_20241127T082957_056738_06F697_CD2F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20240827T020727_20240827T020752_055392_06C18A_AC02.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDV_20250211T120038_20250211T120111_057848_0722A0_C0E0.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SSH_20241224T000111_20241224T000132_057126_070606_EFF1.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20241103T173151_20241103T173207_056393_06E8CD_95E6.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SSH_20240919T000114_20240919T000135_055726_06CE79_341A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20240117T201505_20240117T201535_052151_064DCB_A389.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20240609T201505_20240609T201535_054251_06994D_3D0A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20240905T185332_20240905T185403_055533_06C6D3_BC22.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20230701T072352_20230701T072418_049226_05EB51_8C28.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230508T055252_20230508T055322_048438_05D397_4584.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230414T055251_20230414T055321_048088_05C7DB_3BC3.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230917T055259_20230917T055329_050363_061050_C2D6.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20240301T123133_20240301T123159_052788_066352_5956.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20230518T123131_20230518T123156_048588_05D807_8EEB.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDH_20250118T115834_20250118T115907_057498_0714B4_9471.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20250212T213558_20250212T213623_057868_072363_E942.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20231129T152913_20231129T152934_051433_063512_D6C9.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SSH_20240119T105246_20240119T105312_052174_064E98_65E2.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20240701T062923_20240701T062944_054563_06A421_8578.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20240612T073123_20240612T073144_054287_069A88_25E1.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20250329T121326_20250329T121359_058519_073D97_7BFD.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20240214T185333_20240214T185403_052558_065B83_3E56.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20241005T055857_20241005T055928_055963_06D7D3_5772.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240401T082901_20240401T082934_053238_0673B5_8E1A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230812T195132_20230812T195153_049847_05FEBE_63BC.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20231222T121147_20231222T121218_051767_0640AE_0BE5.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20250425T025031_20250425T025046_058907_074D76_476F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20231111T094438_20231111T094509_051167_062BE7_A469.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SSH_20241212T000112_20241212T000133_056951_06FEFB_D98A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDH_20240228T234919_20240228T234944_052766_06629A_FA49.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20241104T072353_20241104T072418_056401_06E929_CF94.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20241022T082926_20241022T082958_056213_06E1AE_BA91.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230616T214409_20230616T214440_049016_05E4FE_D4F9.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20231224T115529_20231224T115554_051796_0641AF_DE80.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20230917T121149_20230917T121220_050367_061079_8C72.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20240716T151237_20240716T151253_054787_06ABE3_BA99.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDH_20240531T213537_20240531T213602_054121_0694C8_96B3.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20240414T153557_20240414T153612_053431_067B58_C776.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20230602T152908_20230602T152929_048808_05DE9F_59B1.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20240417T183639_20240417T183649_053477_067D26_6297.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDH_20240919T234919_20240919T234944_055741_06CF09_3EE6.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20230914T200740_20230914T200813_050328_060F38_CEC5.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230604T214408_20230604T214439_048841_05DFA7_A89F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240420T055858_20240420T055929_053513_067E90_D729.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230817T082903_20230817T082935_049913_0600F7_1C1E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20240430T123135_20240430T123200_053663_06846A_EC68.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDH_20250130T115718_20250130T115751_057673_071BA0_1D3C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20241120T213604_20241120T213629_056643_06F2DA_C800.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20240110T171939_20240110T172010_052047_064A42_18FA.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDH_20250128T121555_20250128T121627_057644_071A79_D113.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20231013T201508_20231013T201539_050751_061DAC_2A2D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20250220T185326_20250220T185356_057983_072810_DA3D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20241023T072353_20241023T072418_056226_06E235_5268.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20250315T082918_20250315T082951_058313_073568_9062.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230910T082904_20230910T082937_050263_060CEC_2253.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20240529T151239_20240529T151255_054087_0693A7_B260.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDV_20240220T014918_20240220T014938_052636_065E1E_482F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20241127T173150_20241127T173205_056743_06F6C6_17E5.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20250203T152904_20250203T152924_057733_071E00_01A0.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20241110T062923_20241110T062944_056488_06ECA0_21CA.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDH_20240311T234919_20240311T234944_052941_066890_803B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20240225T063716_20240225T063737_052711_0660BB_F13B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20230501T063713_20230501T063733_048336_05D039_2B2B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20231222T055257_20231222T055327_051763_064084_5025.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20241029T055858_20241029T055928_056313_06E5B0_ED35.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20230517T020725_20230517T020750_048567_05D779_7C11.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDH_20231203T213539_20231203T213604_051496_06372E_2F0D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20231216T153559_20231216T153614_051681_063DB1_C206.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20240602T171939_20240602T172010_054147_0695AB_8F6F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20240702T152910_20240702T152930_054583_06A4D3_7F12.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20240818T062922_20240818T062943_055263_06BCB5_1C6D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20230321T062918_20230321T062939_047738_05BC19_911E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20241127T063715_20241127T063736_056736_06F686_BD81.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230321T055852_20230321T055923_047738_05BC14_FC24.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20231014T214414_20231014T214445_050766_061E37_1169.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20240823T114544_20240823T114555_055340_06BF8D_26B7.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20240430T213606_20240430T213631_053668_0684A3_8760.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SSH_20240802T000113_20240802T000134_055026_06B434_36C9.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20230319T213559_20230319T213625_047718_05BB6E_4E69.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SSH_20240722T051443_20240722T051504_054869_06AEB4_70E2.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20240920T200736_20240920T200809_055753_06CF88_7E91.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20250412T200755_20250412T200825_058728_07462A_D77B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20250323T004252_20250323T004325_058424_0739D7_AC39.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20241221T145327_20241221T145353_057091_07049A_3EFE.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20240816T123132_20240816T123158_055238_06BBC5_4E12.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDH_20240413T213536_20240413T213601_053421_067AEB_0AC4.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20240612T173151_20240612T173207_054293_069AB8_01C9.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20230825T152913_20230825T152934_050033_060515_E172.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDH_20250128T121530_20250128T121602_057644_071A79_05F4.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDH_20250412T115656_20250412T115729_058723_0745FA_C659.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20241222T072349_20241222T072415_057101_070502_1298.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20250422T121558_20250422T121613_058869_074BEA_3ADD.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20240406T123134_20240406T123200_053313_06769B_03ED.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20240701T121145_20240701T121215_054567_06A444_22F5.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20240418T213606_20240418T213631_053493_067DC9_F04B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20230831T171941_20230831T172012_050122_060827_95BC.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDH_20231112T234922_20231112T234948_051191_062CC3_24AA.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20240526T062925_20240526T062945_054038_0691ED_9D98.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20230619T185332_20230619T185402_049058_05E642_E8FC.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240809T214409_20240809T214439_055141_06B852_BE94.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240619T195131_20240619T195151_054397_069E56_8617.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20250217T002433_20250217T002505_057928_0725D8_E916.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20231002T151242_20231002T151258_050587_061811_0F91.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20241015T213605_20241015T213630_056118_06DDF0_59C3.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20231229T094436_20231229T094507_051867_064425_0B34.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20250111T201459_20250111T201530_057401_0710D5_9BA6.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20240425T063718_20240425T063738_053586_068169_8922.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240411T214410_20240411T214440_053391_0679CA_D019.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20241218T115524_20241218T115550_057046_0702D0_C710.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDH_20250130T120103_20250130T120139_057673_071BA0_3B9A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDV_20250224T164625_20250224T164701_058040_072A6A_1454.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20230518T213602_20230518T213627_048593_05D835_F012.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20240218T213604_20240218T213630_052618_065D8B_C3C5.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDH_20250209T121619_20250209T121645_057819_072164_EAEC.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20250207T063710_20250207T063731_057786_072018_D251.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20231023T195135_20231023T195155_050897_062297_C855.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230814T115529_20230814T115555_049871_05FF94_69F3.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDH_20250410T121558_20250410T121613_058694_0744C0_E852.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20250325T151231_20250325T151247_058462_073B4E_5682.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SSH_20240703T052316_20240703T052341_054592_06A51E_F6C2.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20241209T173149_20241209T173205_056918_06FDA2_BEC5.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20230929T062927_20230929T062948_050538_061651_99D0.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20230713T185333_20230713T185404_049408_05F0FB_3215.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20241119T200801_20241119T200831_056628_06F23E_3B93.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDH_20250404T045024_20250404T045040_058602_0740FB_5D8A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20240809T151237_20240809T151252_055137_06B82D_20C0.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20240229T020727_20240229T020753_052767_0662A6_6626.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20241018T152911_20241018T152931_056158_06DF86_7E0B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20240304T152910_20240304T152931_052833_0664DD_110F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDH_20250209T121324_20250209T121357_057819_072164_69BE.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20231215T073125_20231215T073146_051662_063D08_EE39.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240811T082859_20240811T082932_055163_06B908_47F3.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20250315T082853_20250315T082926_058313_073568_C777.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20240303T121145_20240303T121216_052817_066459_0A29.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDH_20250219T213529_20250219T213554_057971_072784_E8E2.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20240310T171938_20240310T172009_052922_0667E0_43DE.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20230821T183640_20230821T183651_049977_060340_4050.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDH_20230516T234916_20230516T234942_048566_05D770_471F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20240413T063716_20240413T063737_053411_067A8E_DA4D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230905T195134_20230905T195155_050197_060AB9_8DB5.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20240312T020727_20240312T020753_052942_06689C_D969.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20241204T121144_20241204T121214_056842_06FAB9_2582.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDV_20240818T014917_20240818T014937_055261_06BC98_A52B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20240626T094435_20240626T094455_054492_06A1AB_7A1F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20240718T173150_20240718T173205_054818_06ACF0_DEAF.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20240120T073123_20240120T073144_052187_064EF9_C50B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20240420T062925_20240420T062945_053513_067E96_08DF.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SSH_20241003T041929_20241003T042000_055933_06D6AC_BEEE.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240425T082951_20240425T083022_053588_06817A_7FE7.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240220T195130_20240220T195151_052647_065E87_11E1.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20250212T123127_20250212T123152_057863_072329_BC2F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20250331T120129_20250331T120145_058548_073ED0_2A79.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SSH_20240404T000115_20240404T000136_053276_067530_F91F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20240201T073123_20240201T073144_052362_0654E8_C3D3.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20230502T072349_20230502T072415_048351_05D0B3_ED40.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20250304T185326_20250304T185356_058158_072F3F_FB97.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240502T055859_20240502T055929_053688_06856F_E1EA.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230805T145332_20230805T145358_049741_05FB34_B3B5.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20240223T151238_20240223T151254_052687_065FF2_8285.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDH_20250130T115858_20250130T115931_057673_071BA0_1F6A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20230701T153556_20230701T153612_049231_05EB7B_5F05.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20230626T152909_20230626T152930_049158_05E949_14C1.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20231023T062928_20231023T062948_050888_062249_E932.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20241011T185333_20241011T185403_056058_06DB92_9CC1.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230326T082920_20230326T082953_047813_05BE95_9409.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230613T195129_20230613T195150_048972_05E3A2_0137.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20240514T121146_20240514T121217_053867_068C09_CCF2.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20231223T152912_20231223T152933_051783_064133_7677.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20240911T193655_20240911T193725_055621_06CA57_E9AF.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20241009T223302_20241009T223318_056032_06DA83_83D6.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20231130T115530_20231130T115555_051446_06357B_206E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230829T082953_20230829T083024_050088_0606FB_33F3.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20250320T025031_20250320T025046_058382_073822_6CE9.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDH_20250130T115808_20250130T115841_057673_071BA0_6FEF.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20240601T153558_20240601T153613_054131_069522_79C4.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20230613T062922_20230613T062943_048963_05E357_7F16.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20250130T183631_20250130T183652_057677_071BC5_A92F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20241225T200733_20241225T200805_057153_070716_207A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20241206T115525_20241206T115551_056871_06FBDD_6550.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240425T082901_20240425T082934_053588_06817A_9EC5.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20240526T121147_20240526T121217_054042_06920F_6B62.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20240824T153556_20240824T153611_055356_06C033_159D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20230421T094430_20230421T094501_048192_05CB5D_A6AA.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20250331T200730_20250331T200803_058553_073EFE_4248.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20231004T082904_20231004T082937_050613_0618E5_8BD9.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SSH_20240825T053140_20240825T053206_055365_06C086_996C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDV_20250225T223617_20250225T223642_058059_072B2F_4967.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20240127T193656_20240127T193726_052296_0652AD_96CE.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SSH_20240925T052641_20240925T052707_055817_06D20B_D597.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240519T145332_20240519T145357_053941_068E91_20F0.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20250124T002733_20250124T002806_057579_0717E5_10B6.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SSH_20240703T052251_20240703T052323_054592_06A51E_292F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20240731T153555_20240731T153611_055006_06B380_5269.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDH_20230808T234920_20230808T234946_049791_05FCDA_0B45.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230601T195128_20230601T195149_048797_05DE48_29B6.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20241209T082858_20241209T082931_056913_06FD72_5D41.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20250408T114539_20250408T114549_058665_074389_44F0.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDH_20250303T213529_20250303T213554_058146_072EB3_069D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SSH_20231202T105249_20231202T105315_051474_06367F_BB08.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SSH_20241025T000114_20241025T000135_056251_06E33D_EC0E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20250424T183631_20250424T183642_058902_074D46_FB7A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20231016T073127_20231016T073148_050787_061EE8_378A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20240908T200736_20240908T200808_055578_06C8A2_5579.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20241113T214410_20241113T214441_056541_06EEC2_F5D0.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20240804T123132_20240804T123158_055063_06B560_1CF3.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SSH_20241126T105244_20241126T105310_056724_06F61B_F799.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20250328T153550_20250328T153606_058506_073D12_C641.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20230510T201501_20230510T201531_048476_05D4D0_31C4.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20241115T063716_20241115T063737_056561_06EF85_8707.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240730T082859_20240730T082932_054988_06B2E1_9BCA.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20230405T151233_20230405T151249_047962_05C3AD_36AC.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDV_20250211T115653_20250211T115726_057848_0722A0_35F4.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20240823T073122_20240823T073142_055337_06BF75_08EB.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20240429T200803_20240429T200833_053653_068410_92A9.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230812T055859_20230812T055929_049838_05FE69_EE44.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20230522T003711_20230522T003741_048639_05D99C_EE7B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20240426T153558_20240426T153613_053606_068238_76A6.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20241119T200736_20241119T200808_056628_06F23E_85B9.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240706T082950_20240706T083020_054638_06A6B6_A490.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20240728T151237_20240728T151252_054962_06B1FE_2995.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDH_20250413T164600_20250413T164633_058740_0746A8_3B31.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20250223T115654_20250223T115727_058023_0729BD_3C76.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20230625T062923_20230625T062943_049138_05E8AA_9F6B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20231028T063721_20231028T063741_050961_0624C9_7C3C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240928T082925_20240928T082958_055863_06D3DC_A832.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240504T115529_20240504T115554_053721_0686C2_D2D7.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S2_RAW__0SDV_20240725T014917_20240725T014937_054911_06B031_FD07.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20240812T153555_20240812T153611_055181_06B9B5_8497.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20250219T073116_20250219T073136_057962_07272C_B860.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20241101T214410_20241101T214441_056366_06E7CD_EFD5.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDH_20240423T151239_20240423T151255_053562_068086_0390.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20230623T213604_20230623T213629_049118_05E80A_08E9.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDH_20230901T234922_20230901T234948_050141_0608DB_9A26.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDH_20250410T121303_20250410T121335_058694_0744C0_7732.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SSH_20241013T000115_20241013T000135_056076_06DC49_B483.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDH_20250225T100600_20250225T100633_058051_072ADB_0BE0.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20240514T193656_20240514T193727_053871_068C31_D594.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20240408T055256_20240408T055326_053338_0677A6_6EC2.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S1_RAW__0SDV_20250224T123126_20250224T123152_058038_072A51_B8C8.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20231018T094439_20231018T094510_050817_061FF2_FF1C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230803T214412_20230803T214443_049716_05FA76_A81F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20241228T195127_20241228T195147_057197_0708C7_D706.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20250122T152904_20250122T152925_057558_071711_4EAA.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20240624T173151_20240624T173206_054468_06A0CB_0520.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20250315T073116_20250315T073136_058312_073562_35C2.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20230910T145334_20230910T145400_050266_060D0B_2661.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S6_RAW__0SDV_20241005T195131_20241005T195151_055972_06D82A_9228.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20250226T225907_20250226T225937_058073_072BC1_94AD.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDV_20250114T173145_20250114T173201_057443_071279_3BD5.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDH_20230528T234917_20230528T234942_048741_05DCA1_9BBD.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20240806T193654_20240806T193725_055096_06B6AE_F39E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S5_RAW__0SDV_20241114T223259_20241114T223320_056557_06EF58_4B66.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20250409T045742_20250409T045814_058675_0743EF_6867.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S3_RAW__0SDH_20230526T153554_20230526T153610_048706_05DB97_CB19.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh S1A_S4_RAW__0SDV_20250118T183632_20250118T183643_057502_0714D8_143D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20231004T082954_20231004T083025_050613_0618E5_FF72.SAFE # SPLIT 0 - REMAINING
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240811T082924_20240811T082957_055163_06B908_203A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250121T055851_20250121T055922_057538_071645_D00E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20240617T123134_20240617T123159_054363_069D19_268D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20250205T002732_20250205T002758_057754_071ECF_31F6.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDV_20250427T014912_20250427T014933_058936_074EA4_CD79.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20241022T213536_20241022T213602_056221_06E1FA_D7C4.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20230729T213606_20230729T213631_049643_05F839_5F2A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240814T000113_20240814T000133_055201_06BA79_FDDC.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240916T173151_20240916T173206_055693_06CD1D_4649.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20240404T234919_20240404T234945_053291_0675C0_FC08.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230910T073126_20230910T073147_050262_060CE7_E1A5.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20240204T234919_20240204T234944_052416_0656C0_4A34.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20231216T185335_20231216T185406_051683_063DC4_F347.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20250103T185328_20250103T185359_057283_070C2C_51E6.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240904T082949_20240904T083020_055513_06C5FE_DE3B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250327T082943_20250327T083014_058488_073C4B_2B0A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230802T115528_20230802T115554_049696_05F9DA_D194.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SSH_20240801T053140_20240801T053206_055015_06B3CF_8EBF.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20231116T121149_20231116T121220_051242_062E79_25F0.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20240324T020728_20240324T020753_053117_066F27_4C68.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDV_20240713T014917_20240713T014938_054736_06AA17_6EC4.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240823T173150_20240823T173205_055343_06BFAE_0659.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20250413T213558_20250413T213623_058743_0746CC_F70B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230918T152914_20230918T152935_050383_061108_7061.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20240820T201503_20240820T201534_055301_06BE17_9CC3.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20241031T201505_20241031T201535_056351_06E72C_FDE4.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20230911T072356_20230911T072422_050276_060D64_C683.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240803T200735_20240803T200808_055053_06B50F_1085.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20231225T214412_20231225T214442_051816_064264_2F74.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDH_20250227T004049_20250227T004100_058074_072BCB_21CA.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250114T145325_20250114T145350_057441_07126D_8591.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20230625T121145_20230625T121215_049142_05E8CB_9A81.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20241214T123131_20241214T123157_056988_07006E_AFD5.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDV_20240303T014918_20240303T014939_052811_066416_711A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20250118T115859_20250118T115932_057498_0714B4_A5D7.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240906T094434_20240906T094505_055542_06C732_9A86.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230829T173154_20230829T173209_050093_060728_D4D6.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230326T073118_20230326T073139_047812_05BE91_518D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20230609T234917_20230609T234942_048916_05E1E7_E177.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20250307T200754_20250307T200825_058203_073115_91DF.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240920T200801_20240920T200832_055753_06CF88_E59E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20241017T195131_20241017T195152_056147_06DF16_A889.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240725T195129_20240725T195150_054922_06B097_3135.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20231227T082927_20231227T082959_051838_064319_DB81.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SSH_20240801T053115_20240801T053148_055015_06B3CF_A6EC.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20240622T151238_20240622T151254_054437_069FBC_0591.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SSH_20240808T052315_20240808T052341_055117_06B756_684C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20230419T213531_20230419T213557_048171_05CAA7_B25B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240912T152910_20240912T152930_055633_06CAC9_CF7F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20230609T000112_20230609T000133_048901_05E176_B31F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20250202T225907_20250202T225938_057723_071DA4_B562.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250415T062917_20250415T062937_058763_07479B_6888.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230812T062925_20230812T062946_049838_05FE6E_A5F4.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20230327T185328_20230327T185359_047833_05BF4D_A604.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDH_20250122T004142_20250122T004215_057549_0716C1_0BEE.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20241022T145330_20241022T145356_056216_06E1D1_5B8F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230712T082901_20230712T082933_049388_05F05F_0BEB.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240115T055858_20240115T055928_052113_064C77_28E7.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20230827T151241_20230827T151257_050062_060626_36CF.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20230616T151237_20230616T151253_049012_05E4DA_4099.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDV_20240701T014917_20240701T014938_054561_06A406_8604.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20231110T153600_20231110T153616_051156_062B84_BE32.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20250331T115654_20250331T115727_058548_073ED0_EBDF.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250228T201457_20250228T201528_058101_072CDE_8F35.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20241005T062923_20241005T062944_055963_06D7D9_F4BB.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240320T063717_20240320T063737_053061_066D03_16B3.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240718T082949_20240718T083020_054813_06ACC5_46DF.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250109T055852_20250109T055923_057363_070F4E_F6C5.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20231016T082929_20231016T083002_050788_061EED_D097.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SSH_20240720T053140_20240720T053206_054840_06ADB4_8F0D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDV_20231222T014919_20231222T014940_051761_06406C_11B7.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20230619T153555_20230619T153611_049056_05E631_3D48.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240331T105247_20240331T105312_053224_06733D_F769.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20230808T000116_20230808T000137_049776_05FC54_B4E7.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20240216T234919_20240216T234944_052591_065CAA_20BC.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20240715T201503_20240715T201534_054776_06AB7E_6D02.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240324T200801_20240324T200832_053128_066F8E_878B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20241225T200758_20241225T200828_057153_070716_62C7.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240622T214410_20240622T214441_054441_069FE0_77A7.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250323T004407_20250323T004440_058425_0739D7_22AC.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240806T055856_20240806T055927_055088_06B651_97A7.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20250214T121138_20250214T121209_057892_072461_3586.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20230728T020729_20230728T020754_049617_05F767_FAB1.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDV_20250211T115743_20250211T115816_057848_0722A0_F656.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20230725T153558_20230725T153613_049581_05F645_899E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230328T171933_20230328T172004_047847_05BFBF_8CB4.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20240329T201505_20240329T201535_053201_06724E_AEDE.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SSH_20240815T051443_20240815T051504_055219_06BB17_590F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20241204T193654_20241204T193724_056846_06FAE6_9017.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20230526T072350_20230526T072416_048701_05DB70_E5E2.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240613T072353_20240613T072419_054301_069B00_9980.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250207T082919_20250207T082952_057788_072028_BD6D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230513T082857_20230513T082930_048513_05D5E3_F952.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240308T082900_20240308T082933_052888_0666B6_710A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20240713T121145_20240713T121215_054742_06AA53_323C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20230511T151235_20230511T151251_048487_05D521_D409.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230614T152909_20230614T152929_048983_05E3FB_E04D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240424T105242_20240424T105308_053574_0680FF_07CC.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230707T062923_20230707T062944_049313_05EE0C_D29A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20230818T185335_20230818T185406_049933_0601B1_BFCB.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250214T195123_20250214T195144_057897_072491_D3C5.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240916T082950_20240916T083021_055688_06CCEE_972F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20240610T151239_20240610T151254_054262_0699B2_E1CC.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20240211T151238_20240211T151254_052512_0659FF_0095.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20231210T121148_20231210T121219_051592_063A96_2703.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240826T000114_20240826T000134_055376_06C0F4_57A3.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240729T105245_20240729T105310_054974_06B272_8095.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20241214T213602_20241214T213628_056993_0700A9_D6B1.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20240504T201506_20240504T201536_053726_0686F3_D1F9.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20231222T193657_20231222T193728_051771_0640D7_89D0.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240508T072354_20240508T072420_053776_0688E4_72AB.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20231002T214414_20231002T214445_050591_061836_BB80.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230905T055258_20230905T055329_050188_060A64_3F37.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20250212T164627_20250212T164659_057865_072342_3135.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20241101T151239_20241101T151254_056362_06E7A7_C251.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20230501T213532_20230501T213558_048346_05D088_657E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230403T152906_20230403T152926_047933_05C2A7_F6BD.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240621T052251_20240621T052323_054417_069F07_E1CF.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250303T073116_20250303T073136_058137_072E59_E16B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230411T183633_20230411T183644_048052_05C6BF_A8ED.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240121T185333_20240121T185404_052208_064FB7_C7DB.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20241228T055251_20241228T055322_057188_070869_B0C3.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20231016T145334_20231016T145400_050791_061F0C_C2A7.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240213T082900_20240213T082933_052538_065AD0_2DF8.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20250425T042604_20250425T042637_058908_074D7F_CF87.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20231031T000118_20231031T000139_051001_062637_35FB.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230714T094435_20230714T094446_049417_05F146_C5B6.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20250411T234912_20250411T234938_058716_0745A5_9193.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20240709T234918_20240709T234944_054691_06A889_A89E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20231101T200740_20231101T200812_051028_062730_1A26.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20230407T063712_20230407T063732_047986_05C472_CFAD.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240108T082951_20240108T083022_052013_064912_7FD8.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20231121T082904_20231121T082936_051313_0630EF_ACB4.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240823T082859_20240823T082932_055338_06BF7B_E148.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20230611T123132_20230611T123157_048938_05E288_7EE4.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20250118T115654_20250118T115727_057498_0714B4_DB18.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSV_20240107T105247_20240107T105313_051999_0648AC_ACA2.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20240520T153558_20240520T153613_053956_068F15_48AF.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20240206T213604_20240206T213630_052443_0657A0_ED26.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20241124T201503_20241124T201534_056701_06F523_2DEF.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20241218T201501_20241218T201532_057051_070301_8D1E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20250329T121621_20250329T121637_058519_073D97_F124.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20241110T195130_20241110T195151_056497_06ECFA_5844.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250219T082853_20250219T082926_057963_072732_1B34.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20230905T121149_20230905T121219_050192_060A8F_BBAC.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240215T171938_20240215T172009_052572_065BF9_0473.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230608T171936_20230608T172007_048897_05E153_CCFE.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20240220T193655_20240220T193726_052646_065E85_2D0D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230522T201502_20230522T201532_048651_05D9FE_8308.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20231204T072356_20231204T072421_051501_063763_2CC2.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20241014T200802_20241014T200832_056103_06DD59_BA48.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230929T055259_20230929T055330_050538_06164B_2BED.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20241202T123132_20241202T123158_056813_06F990_229A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20240704T151238_20240704T151253_054612_06A5D7_2EE0.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20230910T213539_20230910T213605_050271_060D31_CB4C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240705T105245_20240705T105311_054624_06A649_A2C3.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230721T201505_20230721T201536_049526_05F495_74DB.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20231207T183640_20231207T183651_051552_063935_C98E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDH_20250305T121351_20250305T121424_058169_072FAC_0208.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250310T195124_20250310T195144_058247_0732CE_38A8.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20241230T115523_20241230T115549_057221_0709BA_6E9A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20231011T121149_20231011T121220_050717_061C7A_A7FB.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20230525T213533_20230525T213559_048696_05DB45_C0BE.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240221T152910_20240221T152931_052658_065EE9_BB6E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240907T000114_20240907T000134_055551_06C790_151A.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20231224T201506_20231224T201537_051801_0641DE_AA7E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20240826T234918_20240826T234944_055391_06C17D_2F01.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240915T223238_20240915T223304_055682_06CCB4_65CD.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230712T145331_20230712T145356_049391_05F07B_FF65.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230501T145327_20230501T145352_048341_05D063_BA6D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20250106T020723_20250106T020748_057317_070D82_4CB9.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20230407T213531_20230407T213557_047996_05C4C2_DE24.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240421T152911_20240421T152932_053533_067F5C_471B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20231011T193659_20231011T193729_050721_061CA3_C816.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250331T183631_20250331T183642_058552_073EF6_9571.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240719T185332_20240719T185402_054833_06AD77_E52C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250124T214403_20250124T214435_057591_071869_2C8E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20241228T121142_20241228T121212_057192_070898_90FC.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20230829T213539_20230829T213604_050096_060741_CC2E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240614T171939_20240614T172009_054322_069BB6_0BAC.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20231030T171942_20231030T172013_050997_06260A_7CD1.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20231116T193659_20231116T193730_051246_062EA2_F5F8.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230613T193654_20230613T193725_048971_05E3A0_94B8.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20250303T063709_20250303T063730_058136_072E4D_D038.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250323T004457_20250323T004530_058425_0739D7_5F91.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240108T082926_20240108T082959_052013_064912_D7F0.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20231104T121149_20231104T121220_051067_06286A_F490.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20230719T121146_20230719T121217_049492_05F38B_0C84.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20250401T213558_20250401T213624_058568_073F9D_4DA7.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230807T171940_20230807T172011_049772_05FC2A_5B21.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SSH_20240827T051444_20240827T051504_055394_06C19B_6520.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20231227T063718_20231227T063738_051836_06430C_FD90.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240823T063715_20240823T063736_055336_06BF6A_B24C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240703T115526_20240703T115552_054596_06A549_D424.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20250320T123127_20250320T123152_058388_07385B_5BDF.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDV_20250307T115653_20250307T115726_058198_0730E8_25B0.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20230424T213600_20230424T213626_048243_05CD16_3597.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230702T171938_20230702T172008_049247_05EBF9_CCCA.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20231109T073126_20231109T073147_051137_062AD8_4F17.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240202T185333_20240202T185403_052383_0655A7_DE8C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240408T055858_20240408T055929_053338_0677A8_4BA4.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20230822T123136_20230822T123201_049988_060391_A6F0.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20240706T213535_20240706T213601_054646_06A6FB_5E53.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240822T105240_20240822T105306_055324_06BF00_188F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20250101T105237_20250101T105303_057249_070AE0_B043.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20231121T073126_20231121T073147_051312_0630EA_F0D5.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250424T115837_20250424T115909_058898_074D24_27FB.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240413T145330_20240413T145356_053416_067AC2_C2AF.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230826T115530_20230826T115556_050046_060590_6196.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20230402T121141_20230402T121211_047917_05C215_FAAF.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20230927T123137_20230927T123203_050513_06157B_5857.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240201T173151_20240201T173207_052368_065519_2E52.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20231114T213608_20231114T213634_051218_062DB0_15DE.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20241022T173151_20241022T173207_056218_06E1DD_E98B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20240320T073123_20240320T073144_053062_066D0E_5AAE.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230728T183639_20230728T183650_049627_05F7B4_97ED.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20230408T185328_20230408T185359_048008_05C535_2262.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230707T195131_20230707T195151_049322_05EE54_D5E4.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20241216T121143_20241216T121213_057017_0701A7_BCD3.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20240718T213535_20240718T213600_054821_06AD09_238B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240727T052249_20240727T052321_054942_06B142_0C0B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20240101T213605_20240101T213631_051918_0645D9_E9CA.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230805T073125_20230805T073145_049737_05FB13_CF75.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20241104T185333_20241104T185403_056408_06E973_F737.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20231207T200739_20231207T200812_051553_06393E_A80F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20241228T055853_20241228T055924_057188_07086B_0757.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240715T115526_20240715T115552_054771_06AB57_3BAC.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20240411T151238_20240411T151253_053387_0679A4_65F4.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20240225T213536_20240225T213601_052721_06610C_B4CB.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20250209T171932_20250209T172002_057822_072180_DD69.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230906T152914_20230906T152934_050208_060B13_D67F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230917T062927_20230917T062948_050363_061056_E225.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240226T072352_20240226T072418_052726_066135_0294.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240904T082924_20240904T082957_055513_06C5FE_231C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240823T145329_20240823T145355_055341_06BFA2_14FF.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20230411T020723_20230411T020749_048042_05C663_7EBB.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20250407T105235_20250407T105306_058649_0742F8_349C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20231118T201508_20231118T201538_051276_062FB1_9080.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240613T185333_20240613T185404_054308_069B3E_61BF.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240519T082902_20240519T082934_053938_068E72_96F5.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230606T082858_20230606T082931_048863_05E04C_3A28.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20230604T151236_20230604T151252_048837_05DF85_AF7E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20250224T042630_20250224T042645_058033_072A21_77C9.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20250411T000108_20250411T000128_058701_07450F_070C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20250412T115901_20250412T115934_058723_0745FA_0448.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20240210T201504_20240210T201535_052501_065997_0547.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20250215T004051_20250215T004102_057899_0724AF_E270.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230829T082903_20230829T082936_050088_0606FB_BA3B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20241020T214411_20241020T214441_056191_06E0DB_068D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20250316T153550_20250316T153605_058331_073621_5EC9.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240627T000114_20240627T000135_054501_06A1F3_008F.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230414T193651_20230414T193722_048096_05C82C_CAFA.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20231121T063720_20231121T063740_051311_0630E2_EEA8.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20241115T145330_20241115T145356_056566_06EFB9_4753.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20240725T121144_20240725T121215_054917_06B06D_F928.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240930T171938_20240930T172009_055897_06D534_2718.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250307T183631_20250307T183651_058202_07310D_C129.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240417T200802_20240417T200833_053478_067D30_AE1B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20231109T082954_20231109T083024_051138_062ADD_5C44.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20240325T123134_20240325T123159_053138_066FEB_02B3.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20250130T115653_20250130T115726_057673_071BA0_56BD.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20250420T173145_20250420T173200_058843_074AD0_8A97.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230926T183642_20230926T183652_050502_06152E_064B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240127T055857_20240127T055928_052288_06525A_BE57.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250502T082919_20250502T082952_059013_0751B6_23E5.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20250205T002458_20250205T002531_057753_071ECD_6B2C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20231227T213537_20231227T213603_051846_06435E_C0B3.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20250209T094428_20250209T094439_057817_072155_3C2E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240122T094435_20240122T094456_052217_065000_4ED2.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250106T183633_20250106T183644_057327_070DE8_5663.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250327T073116_20250327T073137_058487_073C45_2194.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20250106T200732_20250106T200804_057328_070DF2_386C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240821T214409_20240821T214440_055316_06BEB0_1994.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20240206T123133_20240206T123159_052438_065773_35C9.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20240214T153556_20240214T153612_052556_065B70_A852.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20231005T153601_20231005T153616_050631_061986_B82E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20250209T121504_20250209T121537_057819_072164_AECE.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20230923T185337_20230923T185407_050458_06139C_DC11.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230321T195125_20230321T195146_047747_05BC67_9B34.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20231028T114549_20231028T114600_050965_0624E5_FE04.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20241008T042730_20241008T042806_056006_06D982_0CC6.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250424T120017_20250424T120049_058898_074D24_D754.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240120T063717_20240120T063738_052186_064EF1_DCD6.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20230908T151242_20230908T151257_050237_060C18_1880.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230521T152908_20230521T152928_048633_05D96E_5438.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20230715T234919_20230715T234945_049441_05F1FD_DEAD.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250406T214404_20250406T214434_058641_07429C_67CE.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250217T214427_20250217T214442_057941_07265C_9850.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20250126T114539_20250126T114550_057615_07194F_6D37.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20230911T153600_20230911T153616_050281_060D96_722C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20250104T171934_20250104T172004_057297_070CB0_9E28.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250424T115657_20250424T115729_058898_074D24_99FC.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250322T055851_20250322T055921_058413_07395C_4027.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250102T082856_20250102T082929_057263_070B5A_E468.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20240523T020728_20240523T020754_053992_069051_3388.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20250418T002609_20250418T002625_058803_07493A_C553.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240730T173150_20240730T173205_054993_06B30C_DF16.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20230913T234922_20230913T234948_050316_060ED1_A9E6.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240103T055858_20240103T055929_051938_064681_34C0.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20250118T115809_20250118T115842_057498_0714B4_4E88.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20231126T213607_20231126T213633_051393_0633B4_24FF.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250123T201458_20250123T201529_057576_0717C5_70ED.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240624T082925_20240624T082958_054463_06A0A0_66B9.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20230329T234914_20230329T234939_047866_05C06E_341B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20241029T062924_20241029T062944_056313_06E5B6_BBDD.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240414T072353_20240414T072418_053426_067B24_1AE9.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20231011T055901_20231011T055931_050713_061C52_7541.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20230324T151233_20230324T151249_047787_05BDC5_7E93.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240428T000116_20240428T000136_053626_068302_D24E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250207T145324_20250207T145349_057791_07204F_7410.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250126T082944_20250126T083015_057613_07193C_C0B3.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20240321T153557_20240321T153612_053081_066DCE_269C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240906T171938_20240906T172008_055547_06C759_FC05.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20250128T121350_20250128T121422_057644_071A79_D303.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240225T145330_20240225T145356_052716_0660E7_CF9B.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20241115T082900_20241115T082933_056563_06EF96_904E.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20250331T120014_20250331T120047_058548_073ED0_26EB.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20230530T213602_20230530T213628_048768_05DD71_82DD.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230402T193651_20230402T193721_047921_05C23D_61B9.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20241201T200800_20241201T200831_056803_06F934_C70D.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250123T115521_20250123T115547_057571_071798_6D2C.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240216T000114_20240216T000135_052576_065C24_9E02.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20240811T073122_20240811T073142_055162_06B902_1838.SAFE
-/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240108T063718_20240108T063738_052011_064905_237C.SAFE
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20231004T082954_20231004T083025_050613_0618E5_FF72.SAFE  # SPLIT 0 - REMAINING
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240811T082924_20240811T082957_055163_06B908_203A.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250121T055851_20250121T055922_057538_071645_D00E.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20240617T123134_20240617T123159_054363_069D19_268D.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20250205T002732_20250205T002758_057754_071ECF_31F6.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDV_20250427T014912_20250427T014933_058936_074EA4_CD79.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20241022T213536_20241022T213602_056221_06E1FA_D7C4.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20230729T213606_20230729T213631_049643_05F839_5F2A.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240814T000113_20240814T000133_055201_06BA79_FDDC.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240916T173151_20240916T173206_055693_06CD1D_4649.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20240404T234919_20240404T234945_053291_0675C0_FC08.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230910T073126_20230910T073147_050262_060CE7_E1A5.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20240204T234919_20240204T234944_052416_0656C0_4A34.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20231216T185335_20231216T185406_051683_063DC4_F347.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20250103T185328_20250103T185359_057283_070C2C_51E6.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240904T082949_20240904T083020_055513_06C5FE_DE3B.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250327T082943_20250327T083014_058488_073C4B_2B0A.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230802T115528_20230802T115554_049696_05F9DA_D194.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SSH_20240801T053140_20240801T053206_055015_06B3CF_8EBF.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20231116T121149_20231116T121220_051242_062E79_25F0.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20240324T020728_20240324T020753_053117_066F27_4C68.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDV_20240713T014917_20240713T014938_054736_06AA17_6EC4.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240823T173150_20240823T173205_055343_06BFAE_0659.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20250413T213558_20250413T213623_058743_0746CC_F70B.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230918T152914_20230918T152935_050383_061108_7061.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20240820T201503_20240820T201534_055301_06BE17_9CC3.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20241031T201505_20241031T201535_056351_06E72C_FDE4.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20230911T072356_20230911T072422_050276_060D64_C683.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240803T200735_20240803T200808_055053_06B50F_1085.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20231225T214412_20231225T214442_051816_064264_2F74.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDH_20250227T004049_20250227T004100_058074_072BCB_21CA.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250114T145325_20250114T145350_057441_07126D_8591.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20230625T121145_20230625T121215_049142_05E8CB_9A81.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20241214T123131_20241214T123157_056988_07006E_AFD5.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDV_20240303T014918_20240303T014939_052811_066416_711A.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20250118T115859_20250118T115932_057498_0714B4_A5D7.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240906T094434_20240906T094505_055542_06C732_9A86.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230829T173154_20230829T173209_050093_060728_D4D6.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230326T073118_20230326T073139_047812_05BE91_518D.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20230609T234917_20230609T234942_048916_05E1E7_E177.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20250307T200754_20250307T200825_058203_073115_91DF.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240920T200801_20240920T200832_055753_06CF88_E59E.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20241017T195131_20241017T195152_056147_06DF16_A889.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240725T195129_20240725T195150_054922_06B097_3135.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20231227T082927_20231227T082959_051838_064319_DB81.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SSH_20240801T053115_20240801T053148_055015_06B3CF_A6EC.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20240622T151238_20240622T151254_054437_069FBC_0591.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SSH_20240808T052315_20240808T052341_055117_06B756_684C.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20230419T213531_20230419T213557_048171_05CAA7_B25B.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240912T152910_20240912T152930_055633_06CAC9_CF7F.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20230609T000112_20230609T000133_048901_05E176_B31F.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20250202T225907_20250202T225938_057723_071DA4_B562.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250415T062917_20250415T062937_058763_07479B_6888.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230812T062925_20230812T062946_049838_05FE6E_A5F4.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20230327T185328_20230327T185359_047833_05BF4D_A604.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDH_20250122T004142_20250122T004215_057549_0716C1_0BEE.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20241022T145330_20241022T145356_056216_06E1D1_5B8F.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230712T082901_20230712T082933_049388_05F05F_0BEB.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240115T055858_20240115T055928_052113_064C77_28E7.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20230827T151241_20230827T151257_050062_060626_36CF.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20230616T151237_20230616T151253_049012_05E4DA_4099.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDV_20240701T014917_20240701T014938_054561_06A406_8604.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20231110T153600_20231110T153616_051156_062B84_BE32.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20250331T115654_20250331T115727_058548_073ED0_EBDF.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250228T201457_20250228T201528_058101_072CDE_8F35.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20241005T062923_20241005T062944_055963_06D7D9_F4BB.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240320T063717_20240320T063737_053061_066D03_16B3.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240718T082949_20240718T083020_054813_06ACC5_46DF.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250109T055852_20250109T055923_057363_070F4E_F6C5.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20231016T082929_20231016T083002_050788_061EED_D097.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SSH_20240720T053140_20240720T053206_054840_06ADB4_8F0D.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDV_20231222T014919_20231222T014940_051761_06406C_11B7.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20230619T153555_20230619T153611_049056_05E631_3D48.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240331T105247_20240331T105312_053224_06733D_F769.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20230808T000116_20230808T000137_049776_05FC54_B4E7.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20240216T234919_20240216T234944_052591_065CAA_20BC.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20240715T201503_20240715T201534_054776_06AB7E_6D02.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240324T200801_20240324T200832_053128_066F8E_878B.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20241225T200758_20241225T200828_057153_070716_62C7.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240622T214410_20240622T214441_054441_069FE0_77A7.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250323T004407_20250323T004440_058425_0739D7_22AC.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240806T055856_20240806T055927_055088_06B651_97A7.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20250214T121138_20250214T121209_057892_072461_3586.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20230728T020729_20230728T020754_049617_05F767_FAB1.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDV_20250211T115743_20250211T115816_057848_0722A0_F656.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20230725T153558_20230725T153613_049581_05F645_899E.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230328T171933_20230328T172004_047847_05BFBF_8CB4.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20240329T201505_20240329T201535_053201_06724E_AEDE.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SSH_20240815T051443_20240815T051504_055219_06BB17_590F.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20241204T193654_20241204T193724_056846_06FAE6_9017.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20230526T072350_20230526T072416_048701_05DB70_E5E2.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240613T072353_20240613T072419_054301_069B00_9980.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250207T082919_20250207T082952_057788_072028_BD6D.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230513T082857_20230513T082930_048513_05D5E3_F952.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240308T082900_20240308T082933_052888_0666B6_710A.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20240713T121145_20240713T121215_054742_06AA53_323C.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20230511T151235_20230511T151251_048487_05D521_D409.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230614T152909_20230614T152929_048983_05E3FB_E04D.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240424T105242_20240424T105308_053574_0680FF_07CC.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230707T062923_20230707T062944_049313_05EE0C_D29A.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20230818T185335_20230818T185406_049933_0601B1_BFCB.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250214T195123_20250214T195144_057897_072491_D3C5.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240916T082950_20240916T083021_055688_06CCEE_972F.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20240610T151239_20240610T151254_054262_0699B2_E1CC.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20240211T151238_20240211T151254_052512_0659FF_0095.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20231210T121148_20231210T121219_051592_063A96_2703.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240826T000114_20240826T000134_055376_06C0F4_57A3.SAFE 
+/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240729T105245_20240729T105310_054974_06B272_8095.SAFE 
+/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20241214T213602_20241214T213628_056993_0700A9_D6B1.SAFE 
+/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20240504T201506_20240504T201536_053726_0686F3_D1F9.SAFE 
+/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20231222T193657_20231222T193728_051771_0640D7_89D0.SAFE 
+/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240508T072354_20240508T072420_053776_0688E4_72AB.SAFE 
+/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20231002T214414_20231002T214445_050591_061836_BB80.SAFE 
+/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230905T055258_20230905T055329_050188_060A64_3F37.SAFE 
+/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20250212T164627_20250212T164659_057865_072342_3135.SAFE 
+/Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20241101T151239_20241101T151254_056362_06E7A7_C251.SAFE 
+
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20230501T213532_20230501T213558_048346_05D088_657E.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230403T152906_20230403T152926_047933_05C2A7_F6BD.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240621T052251_20240621T052323_054417_069F07_E1CF.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250303T073116_20250303T073136_058137_072E59_E16B.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230411T183633_20230411T183644_048052_05C6BF_A8ED.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240121T185333_20240121T185404_052208_064FB7_C7DB.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20241228T055251_20241228T055322_057188_070869_B0C3.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20231016T145334_20231016T145400_050791_061F0C_C2A7.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240213T082900_20240213T082933_052538_065AD0_2DF8.SAFE 
+
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20250425T042604_20250425T042637_058908_074D7F_CF87.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20231031T000118_20231031T000139_051001_062637_35FB.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230714T094435_20230714T094446_049417_05F146_C5B6.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20250411T234912_20250411T234938_058716_0745A5_9193.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20240709T234918_20240709T234944_054691_06A889_A89E.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20231101T200740_20231101T200812_051028_062730_1A26.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20230407T063712_20230407T063732_047986_05C472_CFAD.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240108T082951_20240108T083022_052013_064912_7FD8.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20231121T082904_20231121T082936_051313_0630EF_ACB4.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240823T082859_20240823T082932_055338_06BF7B_E148.SAFE 
+
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20230611T123132_20230611T123157_048938_05E288_7EE4.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20250118T115654_20250118T115727_057498_0714B4_DB18.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSV_20240107T105247_20240107T105313_051999_0648AC_ACA2.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20240520T153558_20240520T153613_053956_068F15_48AF.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20240206T213604_20240206T213630_052443_0657A0_ED26.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20241124T201503_20241124T201534_056701_06F523_2DEF.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20241218T201501_20241218T201532_057051_070301_8D1E.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20250329T121621_20250329T121637_058519_073D97_F124.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20241110T195130_20241110T195151_056497_06ECFA_5844.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250219T082853_20250219T082926_057963_072732_1B34.SAFE 
+
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20230905T121149_20230905T121219_050192_060A8F_BBAC.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240215T171938_20240215T172009_052572_065BF9_0473.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230608T171936_20230608T172007_048897_05E153_CCFE.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20240220T193655_20240220T193726_052646_065E85_2D0D.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230522T201502_20230522T201532_048651_05D9FE_8308.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20231204T072356_20231204T072421_051501_063763_2CC2.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20241014T200802_20241014T200832_056103_06DD59_BA48.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230929T055259_20230929T055330_050538_06164B_2BED.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20241202T123132_20241202T123158_056813_06F990_229A.SAFE 
+
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20240704T151238_20240704T151253_054612_06A5D7_2EE0.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20230910T213539_20230910T213605_050271_060D31_CB4C.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240705T105245_20240705T105311_054624_06A649_A2C3.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230721T201505_20230721T201536_049526_05F495_74DB.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20231207T183640_20231207T183651_051552_063935_C98E.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDH_20250305T121351_20250305T121424_058169_072FAC_0208.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250310T195124_20250310T195144_058247_0732CE_38A8.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20241230T115523_20241230T115549_057221_0709BA_6E9A.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20231011T121149_20231011T121220_050717_061C7A_A7FB.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20230525T213533_20230525T213559_048696_05DB45_C0BE.SAFE 
+
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240221T152910_20240221T152931_052658_065EE9_BB6E.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240907T000114_20240907T000134_055551_06C790_151A.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20231224T201506_20231224T201537_051801_0641DE_AA7E.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20240826T234918_20240826T234944_055391_06C17D_2F01.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240915T223238_20240915T223304_055682_06CCB4_65CD.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230712T145331_20230712T145356_049391_05F07B_FF65.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230501T145327_20230501T145352_048341_05D063_BA6D.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20250106T020723_20250106T020748_057317_070D82_4CB9.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20230407T213531_20230407T213557_047996_05C4C2_DE24.SAFE 
+
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240421T152911_20240421T152932_053533_067F5C_471B.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20231011T193659_20231011T193729_050721_061CA3_C816.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250331T183631_20250331T183642_058552_073EF6_9571.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240719T185332_20240719T185402_054833_06AD77_E52C.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250124T214403_20250124T214435_057591_071869_2C8E.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20241228T121142_20241228T121212_057192_070898_90FC.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20230829T213539_20230829T213604_050096_060741_CC2E.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240614T171939_20240614T172009_054322_069BB6_0BAC.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20231030T171942_20231030T172013_050997_06260A_7CD1.SAFE 
+
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20231116T193659_20231116T193730_051246_062EA2_F5F8.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230613T193654_20230613T193725_048971_05E3A0_94B8.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20250303T063709_20250303T063730_058136_072E4D_D038.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250323T004457_20250323T004530_058425_0739D7_5F91.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240108T082926_20240108T082959_052013_064912_D7F0.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20231104T121149_20231104T121220_051067_06286A_F490.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20230719T121146_20230719T121217_049492_05F38B_0C84.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20250401T213558_20250401T213624_058568_073F9D_4DA7.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230807T171940_20230807T172011_049772_05FC2A_5B21.SAFE 
+
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SSH_20240827T051444_20240827T051504_055394_06C19B_6520.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20231227T063718_20231227T063738_051836_06430C_FD90.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240823T063715_20240823T063736_055336_06BF6A_B24C.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240703T115526_20240703T115552_054596_06A549_D424.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20250320T123127_20250320T123152_058388_07385B_5BDF.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDV_20250307T115653_20250307T115726_058198_0730E8_25B0.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20230424T213600_20230424T213626_048243_05CD16_3597.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230702T171938_20230702T172008_049247_05EBF9_CCCA.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20231109T073126_20231109T073147_051137_062AD8_4F17.SAFE 
+
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240202T185333_20240202T185403_052383_0655A7_DE8C.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240408T055858_20240408T055929_053338_0677A8_4BA4.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20230822T123136_20230822T123201_049988_060391_A6F0.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20240706T213535_20240706T213601_054646_06A6FB_5E53.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240822T105240_20240822T105306_055324_06BF00_188F.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20250101T105237_20250101T105303_057249_070AE0_B043.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20231121T073126_20231121T073147_051312_0630EA_F0D5.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250424T115837_20250424T115909_058898_074D24_27FB.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240413T145330_20240413T145356_053416_067AC2_C2AF.SAFE 
+
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230826T115530_20230826T115556_050046_060590_6196.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20230402T121141_20230402T121211_047917_05C215_FAAF.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20230927T123137_20230927T123203_050513_06157B_5857.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240201T173151_20240201T173207_052368_065519_2E52.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20231114T213608_20231114T213634_051218_062DB0_15DE.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20241022T173151_20241022T173207_056218_06E1DD_E98B.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20240320T073123_20240320T073144_053062_066D0E_5AAE.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230728T183639_20230728T183650_049627_05F7B4_97ED.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20230408T185328_20230408T185359_048008_05C535_2262.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230707T195131_20230707T195151_049322_05EE54_D5E4.SAFE 
+
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20241216T121143_20241216T121213_057017_0701A7_BCD3.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20240718T213535_20240718T213600_054821_06AD09_238B.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240727T052249_20240727T052321_054942_06B142_0C0B.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20240101T213605_20240101T213631_051918_0645D9_E9CA.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230805T073125_20230805T073145_049737_05FB13_CF75.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20241104T185333_20241104T185403_056408_06E973_F737.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20231207T200739_20231207T200812_051553_06393E_A80F.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20241228T055853_20241228T055924_057188_07086B_0757.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240715T115526_20240715T115552_054771_06AB57_3BAC.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20240411T151238_20240411T151253_053387_0679A4_65F4.SAFE 
+
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20240225T213536_20240225T213601_052721_06610C_B4CB.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20250209T171932_20250209T172002_057822_072180_DD69.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230906T152914_20230906T152934_050208_060B13_D67F.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230917T062927_20230917T062948_050363_061056_E225.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240226T072352_20240226T072418_052726_066135_0294.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240904T082924_20240904T082957_055513_06C5FE_231C.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240823T145329_20240823T145355_055341_06BFA2_14FF.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20230411T020723_20230411T020749_048042_05C663_7EBB.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20250407T105235_20250407T105306_058649_0742F8_349C.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20231118T201508_20231118T201538_051276_062FB1_9080.SAFE 
+
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240613T185333_20240613T185404_054308_069B3E_61BF.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240519T082902_20240519T082934_053938_068E72_96F5.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230606T082858_20230606T082931_048863_05E04C_3A28.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20230604T151236_20230604T151252_048837_05DF85_AF7E.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20250224T042630_20250224T042645_058033_072A21_77C9.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20250411T000108_20250411T000128_058701_07450F_070C.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20250412T115901_20250412T115934_058723_0745FA_0448.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20240210T201504_20240210T201535_052501_065997_0547.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20250215T004051_20250215T004102_057899_0724AF_E270.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230829T082903_20230829T082936_050088_0606FB_BA3B.SAFE 
+
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20241020T214411_20241020T214441_056191_06E0DB_068D.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20250316T153550_20250316T153605_058331_073621_5EC9.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240627T000114_20240627T000135_054501_06A1F3_008F.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230414T193651_20230414T193722_048096_05C82C_CAFA.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20231121T063720_20231121T063740_051311_0630E2_EEA8.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20241115T145330_20241115T145356_056566_06EFB9_4753.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20240725T121144_20240725T121215_054917_06B06D_F928.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240930T171938_20240930T172009_055897_06D534_2718.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250307T183631_20250307T183651_058202_07310D_C129.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240417T200802_20240417T200833_053478_067D30_AE1B.SAFE 
+
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20231109T082954_20231109T083024_051138_062ADD_5C44.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20240325T123134_20240325T123159_053138_066FEB_02B3.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20250130T115653_20250130T115726_057673_071BA0_56BD.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20250420T173145_20250420T173200_058843_074AD0_8A97.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230926T183642_20230926T183652_050502_06152E_064B.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240127T055857_20240127T055928_052288_06525A_BE57.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250502T082919_20250502T082952_059013_0751B6_23E5.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20250205T002458_20250205T002531_057753_071ECD_6B2C.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20231227T213537_20231227T213603_051846_06435E_C0B3.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20250209T094428_20250209T094439_057817_072155_3C2E.SAFE 
+
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240122T094435_20240122T094456_052217_065000_4ED2.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250106T183633_20250106T183644_057327_070DE8_5663.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250327T073116_20250327T073137_058487_073C45_2194.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20250106T200732_20250106T200804_057328_070DF2_386C.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240821T214409_20240821T214440_055316_06BEB0_1994.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20240206T123133_20240206T123159_052438_065773_35C9.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20240214T153556_20240214T153612_052556_065B70_A852.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20231005T153601_20231005T153616_050631_061986_B82E.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20250209T121504_20250209T121537_057819_072164_AECE.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20230923T185337_20230923T185407_050458_06139C_DC11.SAFE 
+
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20230321T195125_20230321T195146_047747_05BC67_9B34.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20231028T114549_20231028T114600_050965_0624E5_FE04.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20241008T042730_20241008T042806_056006_06D982_0CC6.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250424T120017_20250424T120049_058898_074D24_D754.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240120T063717_20240120T063738_052186_064EF1_DCD6.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20230908T151242_20230908T151257_050237_060C18_1880.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20230521T152908_20230521T152928_048633_05D96E_5438.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20230715T234919_20230715T234945_049441_05F1FD_DEAD.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250406T214404_20250406T214434_058641_07429C_67CE.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250217T214427_20250217T214442_057941_07265C_9850.SAFE 
+
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20250126T114539_20250126T114550_057615_07194F_6D37.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20230911T153600_20230911T153616_050281_060D96_722C.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20250104T171934_20250104T172004_057297_070CB0_9E28.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250424T115657_20250424T115729_058898_074D24_99FC.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250322T055851_20250322T055921_058413_07395C_4027.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250102T082856_20250102T082929_057263_070B5A_E468.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDV_20240523T020728_20240523T020754_053992_069051_3388.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20250418T002609_20250418T002625_058803_07493A_C553.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240730T173150_20240730T173205_054993_06B30C_DF16.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20230913T234922_20230913T234948_050316_060ED1_A9E6.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240103T055858_20240103T055929_051938_064681_34C0.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S2_RAW__0SDH_20250118T115809_20250118T115842_057498_0714B4_4E88.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20231126T213607_20231126T213633_051393_0633B4_24FF.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20250123T201458_20250123T201529_057576_0717C5_70ED.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240624T082925_20240624T082958_054463_06A0A0_66B9.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20230329T234914_20230329T234939_047866_05C06E_341B.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20241029T062924_20241029T062944_056313_06E5B6_BBDD.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240414T072353_20240414T072418_053426_067B24_1AE9.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20231011T055901_20231011T055931_050713_061C52_7541.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S1_RAW__0SDH_20230324T151233_20230324T151249_047787_05BDC5_7E93.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240428T000116_20240428T000136_053626_068302_D24E.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250207T145324_20250207T145349_057791_07204F_7410.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250126T082944_20250126T083015_057613_07193C_C0B3.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20240321T153557_20240321T153612_053081_066DCE_269C.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20240906T171938_20240906T172008_055547_06C759_FC05.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDH_20250128T121350_20250128T121422_057644_071A79_D303.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20240225T145330_20240225T145356_052716_0660E7_CF9B.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20241115T082900_20241115T082933_056563_06EF96_904E.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDV_20250331T120014_20250331T120047_058548_073ED0_26EB.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SDH_20230530T213602_20230530T213628_048768_05DD71_82DD.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20230402T193651_20230402T193721_047921_05C23D_61B9.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20241201T200800_20241201T200831_056803_06F934_C70D.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S6_RAW__0SDV_20250123T115521_20250123T115547_057571_071798_6D2C.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S3_RAW__0SSH_20240216T000114_20240216T000135_052576_065C24_9E02.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S4_RAW__0SDV_20240811T073122_20240811T073142_055162_06B902_1838.SAFE 
+# /Data_large/marine/PythonProjects/SAR/sarpyx/scripts/pipeline/single.sh  S1A_S5_RAW__0SDV_20240108T063718_20240108T063738_052011_064905_237C.SAFE 
