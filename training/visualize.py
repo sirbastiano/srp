@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 from skimage.metrics import peak_signal_noise_ratio
 import json
 from torch.utils.data import DataLoader
-from dataloader.dataloader import SARZarrDataset
+import dataloader
+from dataloader.dataloader import SARZarrDataset, SARDataloader
 from tqdm import tqdm
 from torch import nn
 from typing import Union, Optional, Tuple, Dict
@@ -14,7 +15,87 @@ from pathlib import Path
 from typing import Callable, List
 
 logging.basicConfig(level=logging.INFO)
-
+def display_inference_results(input_data, gt_data, pred_data, figsize=(20, 6), vminmax=(0, 1000), show: bool=True, save: bool=True, save_path: str="./visualizationtest.pngs/"):
+    """
+    Display input, ground truth, and prediction in a 3-column grid.
+    
+    Args:
+        input_data: Input data from the dataset
+        gt_data: Ground truth data
+        pred_data: Model prediction
+        figsize: Figure size
+        vminmax: Value range for visualization
+    """
+    # Convert tensors to numpy if needed
+    if hasattr(input_data, 'numpy'):
+        input_data = input_data.cpu().numpy()
+    if hasattr(gt_data, 'numpy'):
+        gt_data = gt_data.cpu().numpy()
+    if hasattr(pred_data, 'numpy'):
+        pred_data = pred_data.cpu().numpy()
+    
+    # Function to get magnitude visualization (similar to get_sample_visualization)
+    def get_magnitude_vis(data, vminmax):
+        if np.iscomplexobj(data):
+            magnitude = np.abs(data)
+        else:
+            magnitude = data
+        
+        if vminmax == 'auto':
+            vmin, vmax = np.percentile(magnitude, [2, 98])
+        elif isinstance(vminmax, tuple):
+            vmin, vmax = vminmax
+        else:
+            vmin, vmax = np.min(magnitude), np.max(magnitude)
+        
+        return magnitude, vmin, vmax
+    
+    # Prepare visualizations
+    imgs = []
+    
+    # Input data
+    img, vmin, vmax = get_magnitude_vis(input_data, vminmax)
+    imgs.append({'name': 'Input (RCMC)', 'img': img, 'vmin': vmin, 'vmax': vmax})
+    
+    # Ground truth
+    img, vmin, vmax = get_magnitude_vis(gt_data, vminmax)
+    imgs.append({'name': 'Ground Truth (AZ)', 'img': img, 'vmin': vmin, 'vmax': vmax})
+    
+    # Prediction
+    img, vmin, vmax = get_magnitude_vis(pred_data, vminmax)
+    imgs.append({'name': 'Prediction (AZ)', 'img': img, 'vmin': vmin, 'vmax': vmax})
+    
+    # Create the plot
+    fig, axes = plt.subplots(1, 3, figsize=figsize)
+    
+    for i in range(3):
+        im = axes[i].imshow(
+            imgs[i]['img'],
+            aspect='auto',
+            cmap='viridis',
+            vmin=imgs[i]['vmin'],
+            vmax=imgs[i]['vmax']
+        )
+        
+        axes[i].set_title(f"{imgs[i]['name']}")
+        axes[i].set_xlabel('Range')
+        axes[i].set_ylabel('Azimuth')
+        
+        # Add colorbar
+        cbar = plt.colorbar(im, ax=axes[i], fraction=0.046, pad=0.04)
+        cbar.ax.tick_params(labelsize=8)
+        
+        # Set equal aspect ratio
+        axes[i].set_aspect('equal', adjustable='box')
+    
+    plt.tight_layout()
+    if show:
+        plt.show()
+    if save:
+        os.makedirs(save_path, exist_ok=True)
+        plt.savefig(save_path)
+        logging.info(f"Saved inference results to {save_path}")
+        
 def calculate_reconstruction_dimensions(
     coordinates: List[Tuple[int, int]], 
     patch_height: int, 
@@ -22,7 +103,8 @@ def calculate_reconstruction_dimensions(
     stride_height: int = None, 
     stride_width: int = None,
     concatenate_patches: bool = False,
-    concat_axis: int = 0
+    concat_axis: int = 0, 
+    batch_size: int = 16
 ) -> Tuple[int, int, int, int, int, int]:
     """
     Calculate optimal reconstruction dimensions based on actual patch coordinates.
@@ -49,14 +131,15 @@ def calculate_reconstruction_dimensions(
     
     min_y, max_y = min(y_coords), max(y_coords)
     min_x, max_x = min(x_coords), max(x_coords)
-    
+    print(f"Found patch coordinates: (min_x, min_y)=({min_x}, {min_y}), (max_x, max_y)=({max_x}, {max_y})")
+
     # Calculate final dimensions
     if concatenate_patches:
         if concat_axis == 0:
             # Vertical concatenation: patches are stacked as columns
             # Height determined by patch height, width by coordinate spread
             final_height = patch_height
-            final_width = max_x - min_x + patch_width
+            final_width = max_x - min_x + patch_width #max_x - min_x + patch_width
         elif concat_axis == 1:
             # Horizontal concatenation: patches are stacked as rows  
             # Width determined by patch width, height by coordinate spread
@@ -71,11 +154,10 @@ def calculate_reconstruction_dimensions(
     
     return final_height, final_width, min_y, max_y, min_x, max_x
 def get_full_image_and_prediction(
-    dataset: SARZarrDataset,
+    dataloader: SARDataloader,
     zfile: Union[str, int, os.PathLike],
     inference_fn: Callable[[np.ndarray], np.ndarray],
-    max_samples_per_prod: Optional[int] = None,
-    batch_size: int = 16,
+    show_window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]] = None,
     return_input: bool = False,
     vminmax: Union[Tuple[int, int], str] = 'auto', 
     device: Union[str, torch.device] = "cuda"
@@ -96,6 +178,9 @@ def get_full_image_and_prediction(
         (gt_full, pred_full, [input_full]): Tuple of ground truth image, prediction image,
         and optionally the reconstructed input image (all as numpy arrays).
     """
+    
+    dataset = dataloader.dataset
+    batch_size = dataloader.batch_size
     # Resolve zfile from index if needed
     if isinstance(zfile, int):
         zfile = dataset.files[zfile]
@@ -103,25 +188,37 @@ def get_full_image_and_prediction(
         zfile = Path(zfile)
 
     # Ensure patches are calculated
-    dataset.calculate_patches_from_store(zfile, patch_order="row")
+    #dataset.buffer = show_window[0] if show_window is not None else dataset.buffer
+    dataset.calculate_patches_from_store(zfile, patch_order='chunk') #"row")
     coords = dataset._samples_by_file[zfile]
-    if max_samples_per_prod is None:
-        max_samples_per_prod = dataset._samples_per_prod
+    max_samples_per_prod = dataset._samples_per_prod
     coords = coords[:max_samples_per_prod]
 
     # Get patch and image shapes
     ph, pw = dataset.get_patch_size(zfile)
+    sh, sw = dataset.get_whole_sample_shape(zfile)
+    if dataset.concatenate_patches:
+        if dataset.concat_axis == 0:
+            ph = sh
+        elif dataset.concat_axis == 1:
+            pw = sw
+        else:
+            raise ValueError(f"Concatenation axis must be either 0 or 1, but is: {dataset.concat_axis}")
     stride_x, stride_y = dataset.stride
-    h, w, _, _, _, _= calculate_reconstruction_dimensions(
-        coords,
-        patch_height=ph,
-        patch_width=pw,
-        stride_height=stride_y,
-        stride_width=stride_x,
-        concatenate_patches=True,
-        concat_axis=0
-    )
-    print(f"Total patch reconstructed dimensions: ({h}, {w})")
+    if show_window is None:
+        h, w, _, _, _, _= calculate_reconstruction_dimensions(
+            coords,
+            patch_height=ph,
+            patch_width=pw,
+            stride_height=stride_y,
+            stride_width=stride_x,
+            concatenate_patches=True,
+            concat_axis=dataset.concat_axis,
+            batch_size =batch_size
+        )
+    else:
+        h, w = show_window[1][0] - show_window[0][0], show_window[1][1] - show_window[0][1]
+    #print(f"Total patch reconstructed dimensions: ({h}, {w})")
     #dataset.get_whole_sample_shape(zfile)
     
     stride_y, stride_x = dataset.stride
@@ -133,52 +230,83 @@ def get_full_image_and_prediction(
     # count_map = np.zeros((h, w), dtype=np.int32)
 
     # Collect all input patches for inference
-    input_patches = []
-    gt_patches = []
-    positions = []
-    for (y, x) in coords:
-        patch_from, patch_to = dataset[(str(zfile), y, x)]
-        input_patches.append(patch_from)
-        gt_patches.append(patch_to)
-        positions.append((y, x))
-
-    input_patches = np.stack(input_patches, axis=0)  # (N, ph, pw)
-    gt_patches = np.stack(gt_patches, axis=0)        # (N, ph, pw)
-
-    # Run inference in batches
-    preds = []
-    for i in range(0, len(input_patches), batch_size):
-        batch = input_patches[i:i+batch_size]
-        
-        pred = inference_fn(x=batch, device=device)  # Should return (B, ph, pw) or (B, ph, pw, ...)
-        if isinstance(pred, torch.Tensor):
-            pred = pred.detach().cpu().numpy()
-        preds.append(pred)
-    preds = np.concatenate(preds, axis=0)
-    
     gt_full = np.zeros((h, w), dtype=np.complex64)
     pred_full = np.zeros((h, w), dtype=np.complex64)
     input_full = np.zeros((h, w), dtype=np.complex64) if return_input else None
     count_map = np.zeros((h, w), dtype=np.int32)
+    positions = dataloader.get_coords_from_zfile(zfile, window=show_window)
+    
+    print(f"Dataloader dimension: {len(dataloader)}")
+    out_batches = 0
+    with torch.no_grad():
+        removed_positions = 0
+        for batch_idx, (input_batch, output_batch) in enumerate(dataloader):
+            stop = True
+            batch_size = input_batch.shape[0]
+            max_patch_idx = 0
+            for patch_idx in range(batch_size):
+                if batch_idx * batch_size + patch_idx - removed_positions == len(positions):
+                    stop = True
+                    break
+                #print(f"Batch index={batch_idx}, patch index={patch_idx}, removed positions={removed_positions}")
+                x, y = positions[batch_idx * batch_size + patch_idx - removed_positions]
+                x_to = x - show_window[0][0] #dataset.buffer[1]
+                y_to = y - show_window[0][1] #dataset.buffer[0]
+                if x_to >= h or y_to >= w:
+                    # Remove the corresponding patch from the batch by masking out this index
+                    input_batch = torch.cat([input_batch[:patch_idx], input_batch[patch_idx+1:]], dim=0)
+                    output_batch = torch.cat([output_batch[:patch_idx], output_batch[patch_idx+1:]], dim=0)
+                    (x_rem, y_rem) = positions.pop(batch_idx * batch_size + patch_idx - removed_positions)
+                    removed_positions +=1
+                    #print(f"Position ({x}, {y}): Removed position ({x_rem}, {y_rem}) mapped to ({x_to}, {y_to}) -- out of bounds for array of shape {gt_full.shape}")
+                else:
+                    #print(f"Position ({x}, {y}): Keeping position mapped to ({x_to}, {y_to})")
+                    stop = False
+                    max_patch_idx = patch_idx
+                
+            print(f"Processing batch {batch_idx}")
+            
+            pred_batch = inference_fn(x=input_batch, device=device)  # Should return (B, ph, pw) or (B, ph, pw, ...)
+            if isinstance(pred_batch, torch.Tensor):
+                pred_batch = pred_batch.detach().cpu().numpy()
+            
+            batch_size = input_batch.shape[0]
+            for patch_idx in range(max_patch_idx + 1):
+                x, y = positions[batch_idx * batch_size + patch_idx]
+                x_to = x - dataset.buffer[1]
+                y_to = y - dataset.buffer[0]
+                gt_patch = dataset.get_patch_visualization(output_batch[patch_idx], dataset.level_to, vminmax=vminmax, restore_complex=True, remove_positional_encoding=True)
+                #print(f"Ground truth patch with index {idx} has shape: {gt_patch.shape}, while reconstructed ground truth patch has dimension {gt_patch.shape}")
+                pred_patch = dataset.get_patch_visualization(pred_batch[patch_idx], dataset.level_to, vminmax=vminmax, restore_complex=True, remove_positional_encoding=False)
+                #print(f"Prediction with index {idx} has shape: {pred_patch.shape}, while reconstructed prediction patch has dimension {pred_patch.shape}")
+                if return_input:
+                    input_patch = dataset.get_patch_visualization(input_batch[patch_idx], dataset.level_from, vminmax=vminmax, restore_complex=True)
 
+                assert gt_patch.shape == pred_patch.shape, f"Prediction patch has a different size than original patch. Original patch shape: {gt_patch.shape}, prediction patch shape: {pred_patch.shape}"
+                ph, pw = gt_patch.shape
+                # if h - x_to < 0 and w - y_to < 0:
+                #     print(f"Stopping further processing -- patch at (x, y)=({x_to}, {y_to}) is out of bounds for array of shape {gt_full.shape}")
+                #     stop = True
+                #     break
+                actual_ph = min(ph, h- x_to)
+                actual_pw = min(pw, w - y_to)
+                # Place patch in the correct location
+                # print(f"Trying to put sample from (x, y)=({x_to}, {y_to}) with shapes (h, w)=({actual_ph}, {actual_pw}) to array with full shape={gt_full.shape}") 
+                if actual_ph > 0 and actual_pw > 0 and x_to + actual_ph <= gt_full.shape[0] and y_to + actual_pw <= gt_full.shape[1]:
+                    gt_full[x_to:x_to+actual_ph, y_to:y_to+actual_pw] += gt_patch[:actual_ph, :actual_pw]
+                    pred_full[x_to:x_to+actual_ph, y_to:y_to+actual_pw] += pred_patch[:actual_ph, :actual_pw]
+                    if return_input:
+                        input_full[x_to:x_to+actual_ph, y_to:y_to+actual_pw] += input_patch[:actual_ph, :actual_pw]
+                # else:
+                #     print(f"Skipping patch at (x, y)=({x_to}, {y_to}) with shape ({actual_ph}, {actual_pw}) -- out of bounds for array of shape {gt_full.shape}")
+                # gt_full[x_to:x_to+actual_ph, y_to:y_to+actual_pw] = gt_patch[:actual_ph, :actual_pw]
+                # pred_full[x_to:x_to+actual_ph, y_to:y_to+actual_pw] = pred_patch[:actual_ph, :actual_pw]
+                count_map[x_to:x_to+actual_ph, y_to:y_to+actual_pw] += 1
+                
+            if stop:
+                print(f"Stopping further processing -- all remaining patches are out of bounds for array of shape {gt_full.shape}")
+                break
 
-    # Place patches into the full image arrays
-    for idx, (y, x) in enumerate(positions):
-        gt_patch = dataset.get_patch_visualization(gt_patches[idx], dataset.level_to, vminmax=vminmax, restore_complex=True,)
-        print(f"Ground truth patch with index {idx} has shape: {gt_patches[idx].shape}, while reconstructed ground truth patch has dimension {gt_patch.shape}")
-        pred_patch = dataset.get_patch_visualization(preds[idx], dataset.level_to, vminmax=vminmax, restore_complex=True, remove_positional_encoding=False)
-        print(f"Prediction with index {idx} has shape: {preds[idx].shape}, while reconstructed prediction patch has dimension {pred_patch.shape}")
-        if return_input:
-            input_patch = dataset.get_patch_visualization(input_patches[idx], dataset.level_from, vminmax=vminmax, restore_complex=True)
-
-        assert gt_patch.shape == pred_patch.shape, f"Prediction patch has a different size than original patch. Original patch shape: {gt_patch.shape}, prediction patch shape: {pred_patch.shape}"
-        ph, pw = gt_patch.shape
-        # Place patch in the correct location
-        gt_full[y:y+ph, x:x+pw] += gt_patch
-        pred_full[y:y+ph, x:x+pw] += pred_patch
-        if return_input:
-            input_full[y:y+ph, x:x+pw] += input_patch
-        count_map[y:y+ph, x:x+pw] += 1
 
     # Average overlapping regions
     mask = count_map > 0
@@ -197,42 +325,35 @@ def get_full_image_and_prediction(
 
 
 
-def compute_sidelobe_ratio(image: np.ndarray, mainlobe_size: int = 5) -> float:
-    """
-    Estimate the sidelobe ratio: ratio between mainlobe peak and max sidelobe.
-    """
-    peak_idx = np.unravel_index(np.argmax(image), image.shape)
-    peak_value = image[peak_idx]
-    mask = np.ones_like(image, dtype=bool)
-    r, c = peak_idx
-    r_min, r_max = max(0, r - mainlobe_size), min(image.shape[0], r + mainlobe_size + 1)
-    c_min, c_max = max(0, c - mainlobe_size), min(image.shape[1], c + mainlobe_size + 1)
-    mask[r_min:r_max, c_min:c_max] = False
-    sidelobe_max = np.max(image[mask])
-    pslr = 20 * np.log10(peak_value / (sidelobe_max + 1e-12))
-    return pslr
+from sarpyx.utils.metrics import (
+    evaluate_sar_metrics,
+    mse_complex,
+    rmse_complex,
+    psnr_amplitude,
+    ssim_amplitude,
+    amplitude_correlation,
+    phase_error_stats,
+    complex_coherence,
+    phase_coherence,
+    enl,
+    resolution_gain,
+)
 
-
-def compute_metrics(raw_image: np.ndarray, focused_image: np.ndarray, mainlobe_size: int = 5) -> dict:
+def compute_metrics(gt_image: np.ndarray, focused_image: np.ndarray) -> dict:
     """
-    Compute image quality metrics between raw and focused SAR images.
+    Compute comprehensive SAR image quality metrics between raw and focused SAR images.
+    Uses the metrics from sarpyx.utils.metrics.
     """
+    # Evaluate all SAR metrics (amplitude, phase, SAR-specific)
     try:
-        psnr_value = peak_signal_noise_ratio(raw_image, focused_image,
-                                            data_range=focused_image.max() - focused_image.min())
-    except Exception:
-        psnr_value = None
+        sar_metrics = evaluate_sar_metrics(gt_image, focused_image)
+    except Exception as e:
+        print(f"Error computing SAR metrics: {e}")
+        sar_metrics = {}
 
-    try:
-        pslr_value = compute_sidelobe_ratio(focused_image, mainlobe_size=mainlobe_size)
-    except Exception:
-        pslr_value = None
-
-    return {
-        'psnr_raw_vs_focused': psnr_value,
-        'pslr_focused': pslr_value
-    }
-
+    # Combine all metrics
+    metrics = dict(sar_metrics)
+    return metrics
 
 def save_metrics(metrics: dict, save_path: str) -> None:
     """
@@ -241,7 +362,6 @@ def save_metrics(metrics: dict, save_path: str) -> None:
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     with open(save_path, 'w') as f:
         json.dump(metrics, f, indent=4)
-
 
 def save_results_and_metrics(
     test_loader,
@@ -283,48 +403,21 @@ def save_results_and_metrics(
                 fig_path = os.path.join(save_dir, f'sample_{idx:02d}.png')
                 visualize_pair(raw_np, out_np, fig_path)
 
-            # Compute metrics
+            # Compute comprehensive SAR metrics
             m = compute_metrics(raw_np, out_np, mainlobe_size=mainlobe_size)
             aggregated.append(m)
 
-    # Aggregate metrics
-    valid = [m for m in aggregated if m['psnr_raw_vs_focused'] is not None]
-    avg_psnr = float(np.mean([m['psnr_raw_vs_focused'] for m in valid])) if valid else None
-    avg_pslr = float(np.mean([m['pslr_focused'] for m in aggregated if m['pslr_focused'] is not None]))
-    summary = {
-        'avg_psnr_raw_vs_focused': avg_psnr,
-        'avg_pslr_focused': avg_pslr,
-        'num_samples_evaluated': len(aggregated)
-    }
+    # Aggregate metrics (example: average PSNR, PSLR, and others)
+    summary = {}
+    metric_keys = aggregated[0].keys() if aggregated else []
+    for key in metric_keys:
+        values = [m[key] for m in aggregated if m.get(key) is not None]
+        if values:
+            summary[f'avg_{key}'] = float(np.mean(values))
+    summary['num_samples_evaluated'] = len(aggregated)
+
     metrics_path = os.path.join(save_dir, 'aggregated_metrics.json')
     save_metrics(summary, metrics_path)
 
     print(f"Saved {min(num_samples, len(aggregated))} visual samples to {save_dir}")
     print(f"Saved aggregated metrics to {metrics_path}")
-
-
-if __name__ == '__main__':
-    # Example usage
-    import argparse
-    from imageio import imread
-    import torch
-
-    parser = argparse.ArgumentParser(description="Visualize SAR focusing results and compute metrics.")
-    parser.add_argument('--raw_path', type=str, required=True)
-    parser.add_argument('--focused_path', type=str, required=True)
-    parser.add_argument('--output_dir', type=str, default='outputs')
-    parser.add_argument('--mainlobe_size', type=int, default=5)
-    args = parser.parse_args()
-
-    raw = imread(args.raw_path)
-    focused = imread(args.focused_path)
-
-    fig_path = os.path.join(args.output_dir, 'comparison.png')
-    visualize_pair(raw, focused, fig_path)
-
-    metrics = compute_metrics(raw, focused, mainlobe_size=args.mainlobe_size)
-    metrics_path = os.path.join(args.output_dir, 'metrics.json')
-    save_metrics(metrics, metrics_path)
-
-    print(f"Saved comparison figure to: {fig_path}")
-    print(f"Saved metrics to: {metrics_path}")

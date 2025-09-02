@@ -31,9 +31,10 @@ dataloader:
   level_to: "az"
   num_workers: 0
   patch_mode: "rectangular"
-  patch_size: [1000, 1]
-  buffer: [0, 0]
-  stride: [300, 1]
+  patch_size: [1000, 100]
+  buffer: [1000, 1000]
+  stride: [1000, 100]
+  max_base_sample_size: [10000, 5000]
   shuffle_files: false
   complex_valued: false
   save_samples: false

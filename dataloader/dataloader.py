@@ -281,6 +281,7 @@ class SARZarrDataset(Dataset):
         save_samples: bool = True, 
         buffer: Tuple[int, int] = (100, 100), 
         stride: Tuple[int, int] = (50, 50), 
+        max_base_sample_size: Tuple[int, int] = (-1, -1),
         backend: str = "zarr",  # "zarr" or "dask"
         verbose: bool= True, 
         cache_size: int = 1000, 
@@ -315,7 +316,7 @@ class SARZarrDataset(Dataset):
         self._max_products = max_products
         self._samples_per_prod = samples_per_prod
         self.max_stripmap_modes = max_stripmap_modes
-        
+        self._max_base_sample_size = max_base_sample_size
         self.concatenate_patches = concatenate_patches
         self.concat_axis = concat_axis
 
@@ -324,12 +325,12 @@ class SARZarrDataset(Dataset):
             self.level_to: np.array([0])
         }
         # Validate concatenation parameters
-        if self.concatenate_patches:
-            ph, pw = self._patch_size
-            if self.concat_axis == 0 and pw != 1:
-                raise ValueError("For vertical concatenation (axis=0), patch width must be 1")
-            elif self.concat_axis == 1 and ph != 1:
-                raise ValueError("For horizontal concatenation (axis=1), patch height must be 1")
+        # if self.concatenate_patches:
+            # ph, pw = self._patch_size
+            # if self.concat_axis == 0 and pw != 1:
+            #     raise ValueError("For vertical concatenation (axis=0), patch width must be 1")
+            # elif self.concat_axis == 1 and ph != 1:
+            #     raise ValueError("For horizontal concatenation (axis=1), patch height must be 1")
         self._load_chunk = functools.lru_cache(maxsize=cache_size)(
             self._load_chunk_uncached
         )
@@ -338,12 +339,13 @@ class SARZarrDataset(Dataset):
         self._samples_by_file: Dict[os.PathLike, List[Tuple[int,int]]] = {}
         self._y_coords: Dict[os.PathLike, np.ndarray] = {}
         self._x_coords: Dict[os.PathLike, np.ndarray] = {}
-        #self.init_samples()
+        # self._pos_encoding_out: Dict[str, np.ndarray] = {}
+        # self.init_samples()
         self._initialize_stores()
         if self.verbose:
             print(f"Initialized dataloader with config: buffer={buffer}, stride={stride}, patch_size={patch_size}, complex_values={complex_valued}")
 
-    def get_patch_size(self, zfile: os.PathLike) -> Tuple[int, int]:
+    def get_patch_size(self, zfile: Optional[Union[str, os.PathLike]]) -> Tuple[int, int]:
         """
         Retrieve the patch size for a given Zarr file based on its processing level.
         
@@ -353,11 +355,13 @@ class SARZarrDataset(Dataset):
         Returns:
             Tuple[int, int]: Patch size (height, width) for the specified processing level.
         """
-        arr = self.get_store_at_level(zfile, self.level_from)
+        
         ph, pw = self._patch_size
-        if ph > 0 and pw > 0:
+
+        if ph > 0 and pw > 0 or zfile is None:
             return ph, pw
-        else:
+        arr = self.get_store_at_level(Path(zfile), self.level_from)
+        if arr is not None:
             if self.backend == "zarr":
                 y, x = arr.shape 
             elif self.backend == "dask":
@@ -466,7 +470,7 @@ class SARZarrDataset(Dataset):
             df = time.time() - t0
             print(f"Zarr stores initialization took {df:.2f} seconds.")
 
-    def calculate_patches_from_store(self, zfile:os.PathLike, patch_order: str = "row"):
+    def calculate_patches_from_store(self, zfile:os.PathLike, patch_order: str = "row", window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]] = None):
         """
         Compute and store valid patch coordinates for a given Zarr file, according to the patch mode and parameters.
         Downloads metadata if needed (in online mode) and ensures all patches fit within image bounds.
@@ -504,15 +508,23 @@ class SARZarrDataset(Dataset):
                 y_min, y_max = self.buffer[0], h - self.buffer[0]
                 x_min, x_max = self.buffer[1], w - self.buffer[1]
 
+                if window is not None:
+                    #print(f"Applying window: {window} to (({x_min}, {y_min}), ({x_max}, {y_max}))")
+                    y_min, y_max = max(window[0][0], y_min), min(window[1][0], y_max)
+                    x_min, x_max = max(window[0][1], x_min), min(window[1][1], x_max)
+                    #print(f"Saving samples from coordinates ({x_min}, {y_min}) to ({x_max}, {y_max})")
+                    stride_x, stride_y = min(stride_x, x_max - x_min), min(stride_y, y_max - y_min)
                 if self.concatenate_patches:
+                    mph, mpw = self.get_max_base_sample_size(zfile)
+                    mph, mpw = min(mph, x_max-x_min), min(mpw, y_max-y_min)
                     if self.concat_axis == 0:
                         # Vertical concatenation: fix y-coordinate to 0, vary x-coordinates
-                        self._y_coords[zfile] = np.array([y_min]) 
+                        self._y_coords[zfile] = np.arange(y_min, y_max - mph + 1, mph) 
                         self._x_coords[zfile] = np.arange(x_min, x_max - stride_x + 1, stride_x)
                     elif self.concat_axis == 1:
                         # Horizontal concatenation: fix y-coordinate to 0, vary x-coordinates
                         self._y_coords[zfile] = np.arange(y_min, y_max - stride_y + 1, stride_y)
-                        self._x_coords[zfile] = np.array([x_min])  
+                        self._x_coords[zfile] = np.arange(x_min, x_max - mpw + 1, mpw)  
                     else:
                         raise ValueError(f"Invalid concat_axis: {self.concat_axis}. Must be 0 (vertical) or 1 (horizontal).")
                 else:
@@ -683,13 +695,15 @@ class SARZarrDataset(Dataset):
         else:
             ph, pw = self.get_patch_size(zfile)
             sh, sw = self.get_whole_sample_shape(zfile)
+            bsh, bsw = self.get_max_base_sample_size(zfile)
+            sh, sw = min(sh, bsh), min(sw, bsw)
             if self.concatenate_patches:
                 if self.concat_axis == 0:
-                    patch_from = self._get_sample(zfile, self.level_from, self.buffer[1], x, sh, pw)
-                    patch_to = self._get_sample(zfile, self.level_to, self.buffer[1], x, sh, pw)
+                    patch_from = self._get_sample(zfile, self.level_from, y, x, sh, pw)
+                    patch_to = self._get_sample(zfile, self.level_to,y, x, sh, pw)
                 elif self.concat_axis == 1:
-                    patch_from = self._get_sample(zfile, self.level_from, y, self.buffer[0], ph, sw)
-                    patch_to = self._get_sample(zfile, self.level_to, y, self.buffer[0], ph, sw)
+                    patch_from = self._get_sample(zfile, self.level_from, y, x, ph, sw)
+                    patch_to = self._get_sample(zfile, self.level_to, y, x, ph, sw)
             else:
                 patch_from = self._get_sample(zfile, self.level_from, y, x, ph, pw)
                 
@@ -780,8 +794,8 @@ class SARZarrDataset(Dataset):
             t0 = time.time()
             global_column_index = x + stripmap_mode * sample_width
             
-            patch_from = self.add_position_embedding(patch_from, (y, global_column_index), (sample_height, sample_width * self.max_stripmap_modes))
-            patch_to = self.add_position_embedding(patch_to, (y, global_column_index), (sample_height, sample_width * self.max_stripmap_modes))
+            patch_from = self.add_position_embedding(patch_from, (y, global_column_index), (sample_height, sample_width * self.max_stripmap_modes), level=self.level_from)
+            patch_to = self.add_position_embedding(patch_to, (y, global_column_index), (sample_height, sample_width * self.max_stripmap_modes), level=self.level_to)
             if self.verbose:
                 dt = time.time() - t0
                 print(f"Patch positional encoding took {dt:.4f} seconds")
@@ -1140,7 +1154,15 @@ class SARZarrDataset(Dataset):
                 raise ValueError(f"Levels {self.level_from} and {self.level_to} not found in Zarr store {zfile}.")
         self._append_file_to_stores(zfile=Path(zfile))
         return self._stores[Path(zfile)]
-        
+    def get_max_base_sample_size(self, zfile: Union[str, os.PathLike]):
+        # if Path(zfile) not in self._stores:
+        #     raise KeyError(f"Zarr file {zfile} not found in stores.")
+        ph, pw =   self._max_base_sample_size
+        if ph == -1:
+            ph = self.get_store_at_level(Path(zfile), self.level_from).shape[0]
+        if pw == -1:
+            pw = self.get_store_at_level(Path(zfile), self.level_from).shape[1]
+        return ph, pw
     def get_whole_sample_shape(self, zfile: os.PathLike) -> Tuple[int, int]:
         """
         Get the shape of the whole sample (image) at the specified level from the Zarr file.
@@ -1162,14 +1184,14 @@ class SARZarrDataset(Dataset):
         Get concatenated patches by sampling multiple 1D patches and concatenating them.
         
         For concat_axis=0 (vertical concatenation):
-        - patch_size = (1, 1000) - horizontal strips  
+        - patch_size = (n, 1000) - horizontal strips  
         - stride = (1000, 1000)
-        - Concatenate 10 horizontal strips vertically -> result: (10, 1000)
+        - Concatenate 10 horizontal strips vertically -> result: (10*n, 1000)
         
         For concat_axis=1 (horizontal concatenation):
-        - patch_size = (1000, 1) - vertical strips
+        - patch_size = (1000, n) - vertical strips
         - stride = (1000, 1000) 
-        - Concatenate 10 vertical strips horizontally -> result: (1000, 10)
+        - Concatenate 10 vertical strips horizontally -> result: (1000, 10*nm)
         
         Args:
             zfile: Path to Zarr file
@@ -1179,58 +1201,30 @@ class SARZarrDataset(Dataset):
             Tuple of concatenated patches (from_level, to_level)
         """
         ph, pw = self.get_patch_size(zfile)
+        #print(patch.shape)
+        if len(patch.shape) == 2:
+            patch = patch[..., np.newaxis]
+        fph, fpw, c = patch.shape
         stride_y, stride_x = self.stride
         
         if self.concat_axis == 0:
-            # Vertical concatenation: stack multiple (1, pw) patches as rows
-            # num_patches = sh // stride_y if sh > stride_y else 1
-
-            patch = patch.squeeze()
-            #print(f"Patch shape: {patch.shape}")
-            max_start = len(patch) - ph + 1
-
-            # Create start indices for each window
-            start_indices = np.arange(0, max_start, stride_y)
-
-            # Create offset indices within each window
-            offset_indices = np.arange(ph)
-
-            # Use broadcasting to create all indices
-            indices = start_indices[:, np.newaxis] + offset_indices[np.newaxis, :]
-            # Extract windows and transpose
-            # indices = indices.T
-            #print(f"Indices shape: {indices.shape}")
-            #print(indices)
-            #print(f"Patch before concatenation: {patch}")
-            patch = patch[indices].swapaxes(0, 1)
-            #print(f"Patch after concatenation: {patch}")
-            
-            #print(f"Patch shape:{patch.shape}")
-                
+            axis = 1                
         elif self.concat_axis == 1:
-            patch = patch.squeeze()
-
-            max_start = len(patch) - pw + 1
-
-            # Create start indices for each window
-            start_indices = np.arange(0, max_start, stride_x)
-
-            # Create offset indices within each window
-            offset_indices = np.arange(pw)
-
-            # Use broadcasting to create all indices
-            indices = start_indices[:, np.newaxis] + offset_indices[np.newaxis, :]
-            #indices = indices.T
-            # Extract windows
-            patch = patch[indices]
+            axis = 0
         else:
             raise ValueError(f"Invalid concat_axis: {self.concat_axis}")
-            
+
+        x_starts = np.arange(0, fpw - pw + 1, stride_x)
+        y_starts = np.arange(0, fph - ph + 1, stride_y)
+        #print(f"X_starts={x_starts}, Y_starts={y_starts}")
+        blocks = [patch[y:y+ph, x:x+pw, :] for x in x_starts for y in y_starts]
+        patch = np.concatenate(blocks, axis=axis) 
         return patch
     def get_patch_visualization(
         self, 
         patch: np.ndarray, 
         level: str,
+        zfile: Optional[Union[str, os.PathLike]]= None,
         remove_positional_encoding: bool = True,
         restore_complex: bool = None,
         prepare_for_plotting: bool = True,
@@ -1282,14 +1276,14 @@ class SARZarrDataset(Dataset):
         # Step 3: Reverse concatenation operations
         if self.concatenate_patches:
             #print(f"Patch shape before concatenation: {patch.shape}")
-            patch = self._reverse_concatenation(patch)
+            patch = self._reverse_concatenation(patch, zfile=zfile)
         #print(f"Patch shape in the end: {patch.shape}")
         if not self.transform is None:
             patch = self.transform.inverse(patch, level)
         if prepare_for_plotting:
             patch, vmin, vmax = get_sample_visualization(data=patch, plot_type=plot_type, vminmax=vminmax)
         return patch
-    def _reverse_concatenation(self, patch: np.ndarray) -> np.ndarray:
+    def _reverse_concatenation(self, patch: np.ndarray, zfile: Union[str, os.PathLike]) -> np.ndarray:
         """
         Reverse the concatenation operation performed in _get_concatenated_patch.
         
@@ -1308,6 +1302,9 @@ class SARZarrDataset(Dataset):
             np.ndarray: Reconstructed patch in original strip format
         """
         stride_y, stride_x = self.stride
+        original_ph, original_pw = self.get_patch_size(zfile=zfile)
+        mph, mpw = self.get_max_base_sample_size(zfile=zfile)
+        original_ph, original_pw = min(mph, original_ph), min(mpw, original_pw)
         if len(patch.shape) == 3:
             patch = patch.squeeze(axis=2)
         elif len(patch.shape) != 2:
@@ -1323,13 +1320,13 @@ class SARZarrDataset(Dataset):
             pw_total = num_patches * stride_x
             
             # Create output array
-            output = np.zeros((1, pw_total), dtype=patch.dtype)
+            output = np.zeros((original_ph, pw_total), dtype=patch.dtype)
             
             # Place each patch row at its correct position
             for i in range(num_patches):
                 start_y = i * stride_x
                 end_y = start_y + pw  # Each original patch was height 1
-                output[:, start_y:end_y] = patch[i:i+1, :]
+                output[:, start_y:end_y] = patch[i:i+original_ph, :]
             
             return output
             
@@ -1344,15 +1341,18 @@ class SARZarrDataset(Dataset):
             ph_total = (num_patches-1) * stride_y + ph
             
             # Create output array
-            output = np.zeros((ph_total, 1), dtype=patch.dtype)
+            output = np.zeros((num_patches * stride_y // original_pw, original_pw), dtype=patch.dtype)
             
             # Place each patch column at its correct position
-            for i in range(num_patches):
-                start_x = i * stride_y
+            for i in range(0, num_patches, original_pw):
+
+                start_x = i * stride_y // original_pw
                 end_x = start_x + ph  # Each original patch was width 1
                 #print(patch[:, i:i+1][:50])
-                output[start_x:end_x, :] = patch[:, i:i+1]
-                
+                #print(f"Copying patch {i} of coordinates ({0}:{patch.shape[0]}, {i}:{i+original_pw}) of shape {patch[:, i:i+original_pw].shape} to output[{start_x}:{end_x}, :{original_pw}]")
+                output[start_x:end_x, :original_pw] = patch[:, i:i+original_pw]
+
+            #print(f"Reverse concatenated shape: {output.shape}")
             return output
             
         else:
@@ -1517,7 +1517,7 @@ class SARZarrDataset(Dataset):
         
         return patch
     
-    def add_position_embedding(self, inp: np.ndarray, pos: Tuple[int, int], max_length: Tuple[int, int]) -> np.ndarray:
+    def add_position_embedding(self, inp: np.ndarray, pos: Tuple[int, int], max_length: Tuple[int, int], level:str) -> np.ndarray:
         """
         Add both horizontal and vertical position embedding to the input numpy array.
         Uses cached position arrays for better performance.
@@ -1534,22 +1534,27 @@ class SARZarrDataset(Dataset):
         """
         y_offset, x_offset = pos
         max_y, max_x = max_length
-        
-        # Handle input format conversion
-        if inp.ndim == 3 and inp.shape[2] == 2:
-            # Real-valued input (ph, pw, 2)
-            ph, pw, channels = inp.shape
-            inp_flat = inp.reshape(-1, channels)
-        elif inp.ndim == 2:  
-            # Complex-valued input (ph, pw) - convert to real format
-            ph, pw = inp.shape
-            # Convert complex to real format: stack real and imaginary parts
-            #inp_real = np.stack([np.real(inp), np.imag(inp)], axis=-1)
-            #inp_flat = inp_real.reshape(-1, 2)
-            inp_flat = inp.reshape(-1, 1)
-            channels = 1
-        else:
-            raise ValueError("Input shape not recognized for positional embedding.")
+        ph, pw = inp.shape[:2]
+        if inp.ndim == 2:
+            inp = inp.reshape(ph, pw, 1)
+        elif inp.ndim != 3:
+            raise ValueError(f"Expected 2D or 3D input patch for positional encoding. Got patch of shape: {inp.shape}")
+        ph, pw, ch = inp.shape
+        # # Handle input format conversion
+        # if inp.ndim == 3 and inp.shape[2] == 2:
+        #     # Real-valued input (ph, pw, 2)
+        #     ph, pw, channels = inp.shape
+        #     inp_flat = inp.reshape(-1, channels)
+        # elif inp.ndim == 2:  
+        #     # Complex-valued input (ph, pw) - convert to real format
+        #     ph, pw = inp.shape
+        #     # Convert complex to real format: stack real and imaginary parts
+        #     #inp_real = np.stack([np.real(inp), np.imag(inp)], axis=-1)
+        #     #inp_flat = inp_real.reshape(-1, 2)
+        #     inp_flat = inp.reshape(-1, 1)
+        #     channels = 1
+        # else:
+        #     raise ValueError("Input shape not recognized for positional embedding.")
 
         # Check if cached position arrays exist and have correct dimensions
         cache_key = (ph, pw)
@@ -1560,29 +1565,38 @@ class SARZarrDataset(Dataset):
             self._pos_cache_key != cache_key):
             
             # Recompute position arrays
-            self._y_positions = np.repeat(np.arange(ph), pw)  # [0,0,0,...,pw times, 1,1,1,...,pw times, ...]
-            self._x_positions = np.tile(np.arange(pw), ph)    # [0,1,2,...,pw-1, 0,1,2,...,pw-1, ...]
+            self._y_positions = np.repeat(np.arange(ph), pw).reshape(ph, pw, 1)  # [0,0,0,...,pw times, 1,1,1,...,pw times, ...]
+            self._x_positions = np.tile(np.arange(pw), ph).reshape(ph, pw, 1)    # [0,1,2,...,pw-1, 0,1,2,...,pw-1, ...]
             self._pos_cache_key = cache_key
-            
             if hasattr(self, 'verbose') and self.verbose:
                 print(f"Recomputed position arrays for patch size {cache_key}")
+        
+        # if level not in self._pos_encoding_out.keys():
+        #     self._pos_encoding_out[level] = np.zeros((ph, pw, ch + 2), dtype=inp.dtype) 
         
         # Add global offsets to cached arrays
         global_y_positions = y_offset + self._y_positions
         global_x_positions = x_offset + self._x_positions
         
         # Normalize positions to [0, 1] range
-        y_position_embedding = (global_y_positions / max_y).reshape(-1, 1).astype(inp_flat.dtype)
-        x_position_embedding = (global_x_positions / max_x).reshape(-1, 1).astype(inp_flat.dtype)
-
-        # Concatenate original data with both position embeddings
-        out = np.concatenate((inp_flat, y_position_embedding, x_position_embedding), axis=1)
-
-        # Reshape back to patch format with additional channels
-        out = out.reshape(ph, pw, channels + 2)
+        y_position_embedding = (global_y_positions / max_y)
+        x_position_embedding = (global_x_positions / max_x)
         
+        if np.iscomplexobj(inp):
+            # Create a complex positional embedding: real=x, imag=y
+            pos_embedding = x_position_embedding[..., 0] + 1j * y_position_embedding[..., 0]
+            pos_embedding = pos_embedding[..., np.newaxis]  # shape (ph, pw, 1)
+            out = np.concatenate((inp, pos_embedding), axis=-1)
+        else:
+            out = np.concatenate((inp, y_position_embedding, x_position_embedding), axis=-1)
         return out
-
+        # self._pos_encoding_out[level][..., :ch] = inp
+        # self._pos_encoding_out[level][..., ch] = y_position_embedding[..., 0]
+        # self._pos_encoding_out[level][..., ch + 1] = x_position_embedding[..., 0]
+        # Reshape back to patch format with additional channels
+        #out = out.reshape(ph, pw, channels + 2)
+        
+        # return self._pos_encoding_out[level]
 class KPatchSampler(Sampler):
     """
     PyTorch Sampler that yields (file_idx, y, x) tuples for patch sampling.
@@ -1615,6 +1629,7 @@ class KPatchSampler(Sampler):
         self.seed = seed
         #self.files = dataset.files #list(dataset._samples_by_file.keys())
         self.verbose = verbose
+        self.coords: Dict[Path, List[Tuple[int, int]]] = {}
 
     def __iter__(self):
         """
@@ -1630,18 +1645,20 @@ class KPatchSampler(Sampler):
         for f in files:
             # Mark patches as loaded for this file
             self.dataset.calculate_patches_from_store(f, patch_order=self.patch_order)
-            coords = self.dataset._samples_by_file[f].copy()
+            self.coords[Path(f)] = self.get_coords_from_store(f)
             t0 = time.time()
-
-            n = len(coords) if self.samples_per_prod <= 0 else min(self.samples_per_prod, len(coords))
-            for y, x in coords[:n]:
+            for y, x in self.coords[Path(f)]:
                 if self.verbose:
                     print(f"Sampling from file {f}, patch at ({y}, {x})")
                 yield (f, y, x)
             elapsed = time.time() - t0
             if self.verbose:
-                print(f"Sampling {n} patches from file {f} took {elapsed:.2f} seconds.")
-
+                print(f"Sampling {len(self.coords[Path(f)])} patches from file {f} took {elapsed:.2f} seconds.")
+    def get_coords_from_store(self, zfile: Union[str, os.PathLike], window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]] = None):
+        self.dataset.calculate_patches_from_store(Path(zfile), patch_order=self.patch_order, window=window)
+        coords = self.dataset._samples_by_file[Path(zfile)].copy()
+        n = len(coords) if self.samples_per_prod <= 0 else min(self.samples_per_prod, len(coords))
+        return coords[:n]
     def __len__(self):
         """
         Return the total number of samples to be drawn by the sampler.
@@ -1652,10 +1669,11 @@ class KPatchSampler(Sampler):
 
 class SARDataloader(DataLoader):
     dataset: SARZarrDataset
-    def __init__(self, dataset: SARZarrDataset, batch_size: int = 8, num_workers: int = 2, sampler: Optional[Sampler] = None, pin_memory: bool= True, verbose: bool = False):
+    def __init__(self, dataset: SARZarrDataset, batch_size: int, sampler: KPatchSampler,  num_workers: int = 2,  pin_memory: bool= True, verbose: bool = False):
         super().__init__(dataset, batch_size=batch_size, num_workers=num_workers, sampler=sampler, pin_memory=pin_memory)
         self.verbose = verbose
-    
+    def get_coords_from_zfile(self, zfile: Union[str, os.PathLike], window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]] = None) -> List[Tuple[int, int]]:
+        return self.sampler.get_coords_from_store(zfile, window=window)
     
 
 def get_sar_dataloader(
@@ -1672,6 +1690,7 @@ def get_sar_dataloader(
     buffer: Tuple[int, int] = (100, 100),
     stride: Tuple[int, int] = (50, 50),
     positional_encoding: bool = True,
+    max_base_sample_size: Tuple[int, int] = (-1, -1),  # (-1, -1) means full image size
     backend: str = "zarr",  # "zarr" or "dask
     parabola_a: float = 0.001,
     shuffle_files: bool = True,
@@ -1732,6 +1751,7 @@ def get_sar_dataloader(
         save_samples= save_samples, 
         buffer = buffer, 
         stride=stride, 
+        max_base_sample_size = max_base_sample_size,
         backend=backend, 
         verbose=verbose, 
         cache_size=cache_size, 
@@ -1781,7 +1801,8 @@ if __name__ == "__main__":
        complex_valued=False, 
        shuffle_files=False, 
        patch_order="col", 
-       transform=transforms
+       transform=transforms,
+       max_base_sample_size=(-1, -1)
        #patch_mode="parabolic",
        #parabola_a=0.0005,
        #k=10

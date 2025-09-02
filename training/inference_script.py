@@ -210,6 +210,7 @@ def create_dataloader_from_config(data_dir, dataloader_cfg, split_cfg, transform
         'patch_size': tuple(dataloader_cfg.get('patch_size', [1000, 1])),
         'buffer': tuple(dataloader_cfg.get('buffer', [0, 0])),
         'stride': tuple(dataloader_cfg.get('stride', [300, 1])),
+        'max_base_sample_size': dataloader_cfg.get('max_base_sample_size', (50000, 10000)),
         'shuffle_files': dataloader_cfg.get('shuffle_files', False),
         'complex_valued': dataloader_cfg.get('complex_valued', False),
         'save_samples': dataloader_cfg.get('save_samples', False),
@@ -248,12 +249,12 @@ def create_test_dataloader(dataloader_cfg):
     transforms = create_transforms_from_config(transforms_cfg)
     
     # Create test loader with minimal transforms
-    test_cfg = dataloader_cfg.get('test', {})
+    test_cfg = dataloader_cfg.get('test', {}) #'test', {})
     test_loader = create_dataloader_from_config(
         data_dir=data_dir,
         dataloader_cfg=dataloader_cfg,
         split_cfg=test_cfg,
-        transforms=None  # No transforms for visualization
+        transforms=transforms
     )
     
     return test_loader

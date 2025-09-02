@@ -430,9 +430,9 @@ class ComplexTransformer(nn.Module):
         ff_mult: int = 4,
         relu_squared: bool = True,
         complete_complex: bool = False,
-        rotary: bool = True,
+        rotary: bool = False,
         flash_attn: bool = True,
-        use_data_positions: bool = False,
+        use_data_positions: bool = True,
         pos_encoding_type: str = 'concat',
         verbose: bool = False
     ):

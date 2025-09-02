@@ -101,8 +101,8 @@ def random_dplr(N, H=1, scaling='inverse', real_scale=1.0, imag_scale=1.0):
 
 
 class SSKernelDiag(nn.Module):
-    """ Version using (complex) diagonal state matrix. Note that it is slower and less memory efficient than the NPLR kernel because of lack of kernel support.
-
+    """ 
+        Version using (complex) diagonal state matrix. Note that it is slower and less memory efficient than the NPLR kernel because of lack of kernel support.
     """
 
     def __init__(
@@ -204,7 +204,8 @@ class SSKernelDiag(nn.Module):
             setattr(getattr(self, name), "_optim", optim)
 
 class S4DKernel(nn.Module):
-    """Wrapper around SSKernelDiag that generates the diagonal SSM parameters
+    """
+        Wrapper around SSKernelDiag that generates the diagonal SSM parameters
     """
 
     def __init__(

@@ -39,9 +39,10 @@ dataloader:
   level_to: "az"
   num_workers: 0
   patch_mode: "rectangular"
-  patch_size: [1000, 1]  # Vertical patches: height=1000, width=1
+  patch_size: [1000, 100]  # Vertical patches: height=1000, width=1
   buffer: [1000, 1000]
-  stride: [300, 1]  # Stride for vertical patches
+  stride: [1000, 100]  # Stride for vertical patches
+  max_base_sample_size: [5000, 5000]
   shuffle_files: false
   complex_valued: true  # Load as complex values
   save_samples: false
