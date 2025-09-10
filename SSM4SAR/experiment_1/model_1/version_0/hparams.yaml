@@ -8,7 +8,7 @@ level_from: rc
 level_to: az
 max_products: 1
 num_workers: 8
-online: false
+online: true
 patch_mode: rectangular
 patch_order: col
 patch_size: !!python/tuple

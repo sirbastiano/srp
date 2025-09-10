@@ -20,8 +20,8 @@ class SARDataModule(L.LightningDataModule):
     
     def __init__(
         self,
-        train_dir: str = "/home/zeshan/projects/sarSSM/data/maya4_data/training",
-        val_dir: str = "/home/zeshan/projects/sarSSM/data/maya4_data/validation",
+        train_dir: str = "/Data_large/marine/PythonProjects/SAR/sarpyx/SSM4SAR/data/maya4_data/train",
+        val_dir: str = "/Data_large/marine/PythonProjects/SAR/sarpyx/SSM4SAR/data/maya4_data/validation",
         train_batch_size: int = 10,
         val_batch_size: int = 10,
         level_from: str = "rc",

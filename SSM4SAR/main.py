@@ -11,7 +11,10 @@ from sarSSM import sarSSM
 import lightning as pl
 import os
 import torch
-
+torch.set_float32_matmul_precision('medium')
+import warnings 
+import pprint
+warnings.filterwarnings("ignore", category=UserWarning)
 
 def parse_arguments():
     """
@@ -211,7 +214,7 @@ if __name__ == '__main__':
         verbose=False,  # Disable verbose output for faster loading
         samples_per_prod=20000,  
         cache_size=100,
-        online=False,
+        online=True,
         max_products=1
     )
     
@@ -246,7 +249,10 @@ if __name__ == '__main__':
     # Fit the model using the DataModule
     trainer.fit(lightning_model, datamodule=data_module)
     
-    print(trainer.__dict__)
+    # Print trainer attributes for debugging in a more readable format
+    print("\n--- Trainer Attributes (Debug) ---")
+    pprint.pprint(trainer.__dict__, indent=4)
+    print("----------------------------------\n")
     
     # save the script to the same directory as the tensorboard logging
     save_script(exp_dir, model_name)

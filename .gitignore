@@ -64,3 +64,5 @@ S1*
 /logs
 
 *.pth
+*.ckpt
+*events*
