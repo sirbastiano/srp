@@ -40,7 +40,6 @@ dependencies = [
     "kornia>=0.8.1",
     "tensorboard>=2.20.0",
     "tensorboardX>=2.6.4",
-    "wandb>=0.21.3",
 ]
 
 [project.scripts]

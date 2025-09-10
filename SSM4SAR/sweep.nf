@@ -102,7 +102,7 @@ process trainModel {
     mkdir -p results logs
     
     # Set up environment
-    source /Data_large/marine/anaconda3/bin/activate
+    source /Data_large/marine/PythonProjects/SAR/sarpyx/.venv/bin/activate
     cd ${projectDir}
     
     # Run training with parameters

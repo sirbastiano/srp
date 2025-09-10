@@ -8,7 +8,7 @@ set -e  # Exit immediately if a command exits with a non-zero status
 # ==============================================================================
 
 # Environment and paths
-CONDA_ENV_PATH='/Data_large/marine/anaconda3/bin/activate'
+VENV_PATH='/Data_large/marine/PythonProjects/SAR/sarpyx/.venv'
 PROJECT_DIR='/Data_large/marine/PythonProjects/SAR/sarpyx/SSM4SAR'
 SCRIPT_NAME='main.py'
 
@@ -66,6 +66,9 @@ print_config() {
 install_dependencies() {
     echo "Installing/checking dependencies..."
     
+    # Activate virtual environment
+    source "$VENV_PATH/bin/activate"
+    
     # Install nextflow if not present
     if ! command -v nextflow &> /dev/null; then
         echo "Installing Nextflow..."
@@ -78,9 +81,9 @@ install_dependencies() {
         }
     fi
     
-    # Install Python dependencies
+    # Install Python dependencies (if not already installed)
     pip install -q wandb einops opt_einsum kornia pykeops || {
-        echo "Warning: Some dependencies failed to install"
+        echo "Warning: Some dependencies failed to install (may already be installed)"
     }
     
     echo "Dependencies check complete."
@@ -297,7 +300,7 @@ fi
 
 # Activate environment and navigate to project directory
 echo "Activating environment and setting up workspace..."
-source "$CONDA_ENV_PATH"
+source "$VENV_PATH/bin/activate"
 cd "$PROJECT_DIR"
 
 # Set environment variables for optimization

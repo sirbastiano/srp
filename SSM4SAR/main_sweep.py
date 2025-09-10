@@ -270,13 +270,36 @@ def main():
     callbacks = setup_callbacks(args)
     
     # Create trainer
+    # Handle CUDA compatibility issues gracefully
+    try:
+        accelerator = 'gpu' if torch.cuda.is_available() else 'cpu'
+        devices = args['gpu_no'] if torch.cuda.is_available() else 'auto'
+        precision = '16-mixed' if torch.cuda.is_available() else '32'
+        
+        # Test CUDA capability before using
+        if torch.cuda.is_available():
+            try:
+                torch.cuda.get_device_capability(0)
+                print(f"Using GPU acceleration with {args['gpu_no']} device(s)")
+            except RuntimeError as e:
+                print(f"CUDA capability check failed: {e}")
+                print("Falling back to CPU training...")
+                accelerator = 'cpu'
+                devices = 'auto'
+                precision = '32'
+    except Exception as e:
+        print(f"GPU detection failed: {e}")
+        accelerator = 'cpu'
+        devices = 'auto'
+        precision = '32'
+    
     trainer = pl.Trainer(
         max_epochs=args['epochs'],
         logger=loggers,
         callbacks=callbacks,
-        devices=args['gpu_no'],
-        accelerator='gpu' if torch.cuda.is_available() else 'cpu',
-        precision='16-mixed',
+        devices=devices,
+        accelerator=accelerator,
+        precision=precision,
         gradient_clip_val=1.0,
         log_every_n_steps=1,
         check_val_every_n_epoch=1,
