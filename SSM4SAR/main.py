@@ -4,14 +4,18 @@ Main function for sarSSM training - Updated to use DataModule
 
 from trainer import azimuthModelTrainer
 from datamodule import SARDataModule
-from lightning.pytorch.loggers import TensorBoardLogger
+from lightning.pytorch.loggers import TensorBoardLogger, WandbLogger
 from argparse import ArgumentParser
 from sarSSM import sarSSM
 
 import lightning as pl
 import os
 import torch
-
+import wandb
+torch.set_float32_matmul_precision('medium')
+import warnings 
+import pprint
+warnings.filterwarnings("ignore", category=UserWarning)
 
 def parse_arguments():
     """
@@ -146,6 +150,31 @@ def parse_arguments():
                         help='Directory containing the validation data'
     )
 
+    # -- Weights & Biases configuration
+    parser.add_argument('--use_wandb',
+                        action='store_true',
+                        help='Enable Weights & Biases logging'
+    )
+    
+    parser.add_argument('--wandb_project',
+                        type=str,
+                        default='ssm4sar',
+                        help='W&B project name'
+    )
+    
+    parser.add_argument('--wandb_entity',
+                        type=str,
+                        default=None,
+                        help='W&B entity (username or team)'
+    )
+    
+    parser.add_argument('--wandb_tags',
+                        type=str,
+                        nargs='+',
+                        default=['training'],
+                        help='W&B tags for the run'
+    )
+
     arguments = vars(parser.parse_args())
     
     return arguments
@@ -211,7 +240,7 @@ if __name__ == '__main__':
         verbose=False,  # Disable verbose output for faster loading
         samples_per_prod=20000,  
         cache_size=100,
-        online=False,
+        online=True,
         max_products=1
     )
     
@@ -227,13 +256,59 @@ if __name__ == '__main__':
     )
 
     # Create logger
-    logger = TensorBoardLogger(exp_dir, name=model_name)
+    if arguments.get('use_wandb', False):
+        # Setup W&B logger
+        run_name = f"{model_name}_{exp_dir}"
+        logger = WandbLogger(
+            project=arguments.get('wandb_project', 'ssm4sar'),
+            entity=arguments.get('wandb_entity', None),
+            name=run_name,
+            tags=arguments.get('wandb_tags', ['training']),
+            config={
+                'model': {
+                    'num_layers': num_layers,
+                    'hidden_state_size': d_state,
+                    'activation_function': activation_function
+                },
+                'training': {
+                    'epochs': num_epochs,
+                    'batch_size': train_batch,
+                    'valid_batch_size': valid_batch,
+                    'learning_rate': lr,
+                    'weight_decay': weight_decay,
+                    'ssim_proportion': ssim_proportion
+                }
+            }
+        )
+    else:
+        # Use TensorBoard logger
+        logger = TensorBoardLogger(exp_dir, name=model_name)
 
     # Create trainer
+    # Handle CUDA driver compatibility issues
+    try:
+        accelerator = 'gpu' if torch.cuda.is_available() else 'cpu'
+        devices = gpu_no if torch.cuda.is_available() else 'auto'
+        # Test CUDA capability before using
+        if torch.cuda.is_available():
+            try:
+                torch.cuda.get_device_capability(0)
+                print(f"Using GPU acceleration with {gpu_no} device(s)")
+            except RuntimeError as e:
+                print(f"CUDA capability check failed: {e}")
+                print("Falling back to CPU training...")
+                accelerator = 'cpu'
+                devices = 'auto'
+    except Exception as e:
+        print(f"GPU detection failed: {e}")
+        accelerator = 'cpu'
+        devices = 'auto'
+    
     trainer = pl.Trainer(
         max_epochs=num_epochs,
         logger=logger,
-        devices=gpu_no,
+        devices=devices,
+        accelerator=accelerator,
         fast_dev_run=False,
         log_every_n_steps=1,  # Log every step to see all metrics
         check_val_every_n_epoch=1,  # Validate every epoch
@@ -246,7 +321,10 @@ if __name__ == '__main__':
     # Fit the model using the DataModule
     trainer.fit(lightning_model, datamodule=data_module)
     
-    print(trainer.__dict__)
+    # Print trainer attributes for debugging in a more readable format
+    print("\n--- Trainer Attributes (Debug) ---")
+    pprint.pprint(trainer.__dict__, indent=4)
+    print("----------------------------------\n")
     
     # save the script to the same directory as the tensorboard logging
     save_script(exp_dir, model_name)

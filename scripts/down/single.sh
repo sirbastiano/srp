@@ -6,7 +6,7 @@ source /Data_large/marine/PythonProjects/SAR/sarpyx/.venv/bin/activate
 echo "================ Downloading: $1 ====================="
 
 SCRIPT="/Data_large/marine/PythonProjects/SAR/sarpyx/pyscripts/down.py"
-PRD_PATH="/Data_large/marine/PythonProjects/SAR/sarpyx/data/1_downloaded/"
+PRD_PATH="/Data_large/marine/PythonProjects/SAR/sarpyx/data/xview3/L1B"
 
 python "$SCRIPT" --filename "$1" --output_dir $PRD_PATH
 

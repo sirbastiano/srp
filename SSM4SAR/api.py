@@ -40,7 +40,7 @@ def download_file_from_hf(repo_id: str, filename: str, local_dir: Union[str, os.
     Args:
         repo_id (str): Repository ID (e.g., 'sirbastiano94/Maya4').
         filename (str): Path to the file in the repository.
-        local_dir (str): Local directory to save the file.
+        local_dir (str or os.PathLike): Local directory to save the file.
 
     Returns:
         Path: Path to the downloaded file.
@@ -48,23 +48,22 @@ def download_file_from_hf(repo_id: str, filename: str, local_dir: Union[str, os.
     Raises:
         FileNotFoundError: If the file is not found in the repository or after download.
     """
-    print(f'Downloading "{filename}" from "{repo_id}" to "{local_dir}"...')
-    try:
-        downloaded_file = hf_hub_download(
-            repo_id=repo_id,
-            repo_type='dataset',
-            filename=filename,
-            force_download=True,
-            local_dir_use_symlinks=False,
-            local_dir=str(local_dir)
-        )
-        downloaded_path = Path(downloaded_file)
-        assert downloaded_path.exists(), f'File "{downloaded_path}" not found after download.'
-        print(f'Successfully downloaded "{filename}" to "{downloaded_path}".')
-        return downloaded_path
-    except Exception as e:
-        print(f'Download failed: {e}')
-        raise
+    local_dir_path = Path(local_dir)
+    local_dir_path.mkdir(parents=True, exist_ok=True)
+    print(f'Downloading "{filename}" from "{repo_id}" to "{local_dir_path}"...')
+
+    downloaded_file = hf_hub_download(
+        repo_id=repo_id,
+        repo_type='dataset',
+        filename=filename,
+        force_download=True,
+        local_dir_use_symlinks=False,
+        local_dir=str(local_dir_path)
+    )
+    downloaded_path = Path(downloaded_file)
+    assert downloaded_path.exists(), f'File "{downloaded_path}" not found after download.'
+    print(f'Successfully downloaded "{filename}" to "{downloaded_path}".')
+    return downloaded_path
 
 def list_base_files_in_repo(repo_id: str, path_in_repo: str= "", relative_path: bool=False) -> list:
     """
