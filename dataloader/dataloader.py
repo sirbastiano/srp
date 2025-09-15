@@ -216,6 +216,7 @@ class SARTransform(nn.Module):
     def create_minmax_normalized_transform(
         cls,
         normalize: bool = True,
+        adaptive: bool = False,
         rc_min: float = RC_MIN,
         rc_max: float = RC_MAX,
         gt_min: float = GT_MIN,
@@ -227,6 +228,7 @@ class SARTransform(nn.Module):
         
         Args:
             normalize (bool): Whether to apply normalization.
+            adaptive (bool): Whether to use adaptive normalization based on patch min/max.
             rc_min (float): Minimum value for RC data normalization.
             rc_max (float): Maximum value for RC data normalization.
             gt_min (float): Minimum value for ground truth data normalization.
@@ -238,19 +240,23 @@ class SARTransform(nn.Module):
         """
         if not normalize:
             return cls()
-        
-        if complex_valued:
-            raw_transform = ComplexNormalizationModule(rc_min, rc_max, rc_min, rc_max)
-            rc_transform = ComplexNormalizationModule(gt_min, gt_max, gt_min, gt_max)
-            rcmc_transform = ComplexNormalizationModule(gt_min, gt_max, gt_min, gt_max)
-            az_transform = ComplexNormalizationModule(gt_min, gt_max, gt_min, gt_max)
+        if not adaptive:
+            if complex_valued:
+                raw_transform = ComplexNormalizationModule(rc_min, rc_max, rc_min, rc_max)
+                rc_transform = ComplexNormalizationModule(gt_min, gt_max, gt_min, gt_max)
+                rcmc_transform = ComplexNormalizationModule(gt_min, gt_max, gt_min, gt_max)
+                az_transform = ComplexNormalizationModule(gt_min, gt_max, gt_min, gt_max)
+            else:
+                # Use simple normalization for magnitude data
+                raw_transform = NormalizationModule(rc_min, rc_max)
+                rc_transform = NormalizationModule(gt_min, gt_max)
+                rcmc_transform = NormalizationModule(gt_min, gt_max)
+                az_transform = NormalizationModule(gt_min, gt_max)
         else:
-            # Use simple normalization for magnitude data
-            raw_transform = NormalizationModule(rc_min, rc_max)
-            rc_transform = NormalizationModule(gt_min, gt_max)
-            rcmc_transform = NormalizationModule(gt_min, gt_max)
-            az_transform = NormalizationModule(gt_min, gt_max)
-        
+            raw_transform = AdaptiveNormalizationModule()
+            rc_transform = AdaptiveNormalizationModule()
+            rcmc_transform = AdaptiveNormalizationModule()
+            az_transform = AdaptiveNormalizationModule()
         return cls(
             transform_raw=raw_transform,
             transform_rc=rc_transform,
@@ -645,7 +651,6 @@ class SARZarrDataset(Dataset):
             else:
                 raise ValueError(f"Levels {self.level_from} and {self.level_to} not found in Zarr store {zfile}.")
         self._append_file_to_stores(zfile=Path(zfile))
-        print(f"Accessing level '{level}' in Zarr store '{zfile}'")
         return self._files.loc[self._files['full_name'] == Path(zfile), 'store'].values[0][level]
     
     def get_store(self, zfile: Union[os.PathLike, str]) -> zarr.Group:
@@ -1778,6 +1783,7 @@ class KPatchSampler(Sampler):
         self.patch_order = patch_order
         self.seed = seed
         self.verbose = verbose
+        self.beginning = True
         self.coords: Dict[Path, List[Tuple[int, int]]] = {}
 
     def __iter__(self):
@@ -1785,6 +1791,7 @@ class KPatchSampler(Sampler):
         Iterate over the dataset, yielding (file_idx, y, x) tuples for patch sampling.
         Shuffles files and/or patches if enabled.
         """
+        self.beginning = False
         rng = np.random.default_rng(self.seed)
         files = self.dataset.get_files() #files.copy()
         if self.verbose:
@@ -1812,9 +1819,14 @@ class KPatchSampler(Sampler):
         """
         Return the total number of samples to be drawn by the sampler.
         """
-        if self.samples_per_prod > 0:
-            return sum(min(self.samples_per_prod, len(v)) for v in self.dataset._samples_by_file.values())
-        return len(self.dataset)
+        if self.beginning:
+            return len(self.dataset)
+
+        else:
+            if self.samples_per_prod > 0:
+                return sum(min(self.samples_per_prod, len(v)) for v in self.dataset._samples_by_file.values())
+            else:
+                return 0
 
 class SARDataloader(DataLoader):
     dataset: SARZarrDataset

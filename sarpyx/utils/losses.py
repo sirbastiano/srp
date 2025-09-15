@@ -11,7 +11,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Optional, Union, Tuple
 from abc import ABC, abstractmethod
-
+import kornia.losses as losses
+import kornia as K
 
 class BaseLoss(nn.Module, ABC):
     """
@@ -278,7 +279,26 @@ class CombinedComplexLoss(BaseLoss):
         
         return self._reduce(combined_loss)
 
+class EdgeLoss(nn.Module): # Currently not using this
+    def __init__(self):
+        super(EdgeLoss, self).__init__()
+        self.l1_loss = nn.L1Loss()
 
+    def forward(self, pred, target):
+        # Compute gradients (edges) for predictions
+        pred_dx = pred[:, :, :, 1:] - pred[:, :, :, :-1]
+        pred_dy = pred[:, :, 1:, :] - pred[:, :, :-1, :]
+
+        # Compute gradients (edges) for targets
+        target_dx = target[:, :, :, 1:] - target[:, :, :, :-1]
+        target_dy = target[:, :, 1:, :] - target[:, :, :-1, :]
+
+        # Compute L1 loss between gradients
+        loss_x = self.l1_loss(pred_dx, target_dx)
+        loss_y = self.l1_loss(pred_dy, target_dy)
+
+        return loss_x + loss_y
+    
 def get_loss_function(loss_name: str, **kwargs) -> BaseLoss:
     """
     Factory function to get loss function by name.
@@ -301,6 +321,8 @@ def get_loss_function(loss_name: str, **kwargs) -> BaseLoss:
         'complex_mse': ComplexMSELoss,
         'phase': PhaseLoss,
         'combined_complex': CombinedComplexLoss,
+        'ssim': losses.SSIMLoss(window_size=7, reduction='mean'), 
+        'edge': EdgeLoss
     }
     
     if loss_name.lower() not in loss_registry:

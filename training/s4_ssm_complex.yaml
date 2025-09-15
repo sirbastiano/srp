@@ -1,0 +1,100 @@
+# Configuration for S4 SSM Training
+
+# Data directory
+data_dir: "/Data/sar_focusing"
+
+# Model configuration
+model:
+  name: "s4_ssm"
+  dim_head: 2
+  input_dim: 2000
+  model_dim: 2000
+  state_dim: 540
+  output_dim: 1000
+  num_layers: 6
+  dropout: 0.2
+  use_pos_encoding: true
+# Training configuration
+training:
+  patience: 30
+  delta: 0.00005
+  weight_decay: 1e-3
+  epochs: 250
+  lr: 1e-3
+  scheduler_type: "cosine"
+  loss_fn : "complex_mse"
+
+# Base save directory
+base_save_dir: "./results/s4_ssm_results"
+
+# Device configuration
+device: "cuda"
+
+# Dataloader configuration
+dataloader:
+  level_from: "rcmc"
+  level_to: "az"
+  num_workers: 0
+  patch_mode: "rectangular"
+  patch_size: [1000, 10]
+  buffer: [1000, 1000]
+  stride: [1000, 10]
+  max_base_sample_size: [5000, 5000]
+  shuffle_files: false
+  complex_valued: true
+  save_samples: false
+  backend: "zarr"
+  verbose: false
+  cache_size: 1000
+  online: true
+  concatenate_patches: true
+  concat_axis: 0
+  positional_encoding: true
+  train: 
+    batch_size: 16
+    samples_per_prod: 100
+    patch_order: "chunk"
+    max_products: 1
+    filters: {
+      "years": [
+        2023,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
+  validation: 
+    batch_size: 16
+    samples_per_prod: 1000
+    patch_order: "chunk"
+    max_products: 1
+    filters: {
+      "years": [
+        2024,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
+  test: 
+    batch_size: 16
+    samples_per_prod: 5000
+    patch_order: "chunk"
+    max_products: 1
+    filters: {
+      "years": [
+        2023,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
+
+# Transform configuration
+transforms:
+  normalize: true
+  complex_valued: true
+  rc_min: -3000
+  rc_max: 3000
+  gt_min: -12000
+  gt_max: 12000

@@ -1,34 +1,33 @@
 # Configuration for S4 SSM Training
 
 # Data directory
+experiment_name: "s4_ssm_real"
 data_dir: "/Data/sar_focusing"
 
-# Training parameters
-epochs: 250
-batch_size: 16
-lr: 1e-3
-scheduler_type: "cosine"
-mode: "column_wise"
 
 # Model configuration
 model:
   name: "s4_ssm"
   dim_head: 2
-  input_dim: 2000
-  model_dim: 2000
+  input_dim: 3
+  model_dim: 2
   state_dim: 540
-  output_dim: 1000
+  output_dim: 2
   num_layers: 6
   dropout: 0.2
   use_pos_encoding: true
+  preprocess : false
+  complex_valued: false
 # Training configuration
 training:
   patience: 30
   delta: 0.00005
   weight_decay: 1e-3
-
-# Base save directory
-base_save_dir: "./results/s4_ssm_results"
+  save_dir: "./results/s4_ssm_results"
+  loss_fn : "mse"
+  epochs: 250
+  lr: 1e-3
+  scheduler_type: "cosine"
 
 # Device configuration
 device: "cuda"
@@ -39,19 +38,16 @@ dataloader:
   level_to: "az"
   num_workers: 0
   patch_mode: "rectangular"
-  patch_size: [1000, 10]
+  patch_size: [10000, 1]
   buffer: [1000, 1000]
-  stride: [1000, 10]
-  max_base_sample_size: [5000, 5000]
+  stride: [10000, 1]
   shuffle_files: false
-  complex_valued: true
+  complex_valued: false
   save_samples: false
   backend: "zarr"
   verbose: false
   cache_size: 1000
   online: true
-  concatenate_patches: true
-  concat_axis: 0
   positional_encoding: true
   train: 
     batch_size: 16
@@ -95,9 +91,6 @@ dataloader:
 
 # Transform configuration
 transforms:
-  normalize: true
+  normalize: true"
   complex_valued: true
-  rc_min: -3000
-  rc_max: 3000
-  gt_min: -12000
-  gt_max: 12000
+  adaptive_normalization: true

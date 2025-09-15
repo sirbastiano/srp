@@ -355,7 +355,7 @@ class S4D(nn.Module):
         self.bidirectional = bidirectional
         self.channels = channels
         self.transposed = transposed
-
+        self.complex = complex
         self.D = nn.Parameter(torch.randn(channels, self.h))
 
         if self.bidirectional:
@@ -384,7 +384,13 @@ class S4D(nn.Module):
 
 
 # ...existing code...
-    def forward(self, u, **kwargs):
+    def forward(self, u):
+        """
+        u: (B H L) if self.transposed else (B L H)
+        state: (H N) never needed unless you know what you're doing
+
+        Returns: same shape as u
+        """
         if not self.transposed: u = u.transpose(-1, -2)
         L = u.size(-1)
 
@@ -396,20 +402,25 @@ class S4D(nn.Module):
             k0, k1 = rearrange(k, '(s c) h l -> s c h l', s=2)
             k = F.pad(k0, (0, L)) \
                     + F.pad(k1.flip(-1), (L, 0))
+        if self.complex:
+            k_f = torch.fft.fft(k, n=2*L) # (C H 2L)
+            u_f = torch.fft.fft(u, n=2*L) # (B H 2L)
+            y_f = contract('bhl,chl->bchl', u_f, k_f) # (B C H 2L)
+            y = torch.fft.ifft(y_f, n=2*L)[..., :L] # (B C H L)
+        else:
+            k_f = torch.fft.rfft(k, n=2*L) # (C H L)
+            u_f = torch.fft.rfft(u, n=2*L) # (B H L)
+            y_f = contract('bhl,chl->bchl', u_f, k_f) # k_f.unsqueeze(-4) * u_f.unsqueeze(-3) # (B C H L)
+            y = torch.fft.irfft(y_f, n=2*L)[..., :L] # (B C H L)
 
-        k_f = torch.fft.fft(k, n=2*L) # (C H 2L)
-        u_f = torch.fft.fft(u, n=2*L) # (B H 2L)
-        y_f = contract('bhl,chl->bchl', u_f, k_f) # (B C H 2L)
-        y = torch.fft.ifft(y_f, n=2*L)[..., :L] # (B C H L)
-
-        # Ensure output length matches input
-        if y.shape[-1] < L:
-            # Pad at the end
-            pad_size = L - y.shape[-1]
-            y = F.pad(y, (0, pad_size))
-        elif y.shape[-1] > L:
-            # Crop to input length
-            y = y[..., :L]
+        # # Ensure output length matches input
+        # if y.shape[-1] < L:
+        #     # Pad at the end
+        #     pad_size = L - y.shape[-1]
+        #     y = F.pad(y, (0, pad_size))
+        # elif y.shape[-1] > L:
+        #     # Crop to input length
+        #     y = y[..., :L]
 
         # Compute D term in state space equation - essentially a skip connection
         y = y + contract('bhl,ch->bchl', u, self.D)
@@ -473,17 +484,54 @@ class ComplexLinear(nn.Module):
 class sarSSM(nn.Module):
     def __init__(
         self,
-        input_dim,
-        state_dim,
-        output_dim,
-        model_dim,
         num_layers,
+        input_dim=3,
+        state_dim=16,
+        output_dim=2,
+        model_dim=2,
         dropout=0.1,
         use_pos_encoding=True,
         complex_valued=True,
         use_positional_as_token=False,
-        **kwargs
+        preprocess=True,
+        activation_function='gelu',
     ):
+        """
+        sarSSM: Sequence State Model for Synthetic Aperture Radar (SAR) Data
+
+        This model implements a stack of S4D (Structured State Space for Deep Learning) layers
+        designed for processing SAR time-series or sequential data. It supports both real and complex-valued inputs,
+        optional positional encoding, and flexible input/output projections.
+
+        Args:
+            input_dim (int): Number of input features per time step.
+            state_dim (int): Dimension of the internal state in S4D layers.
+            output_dim (int): Number of output features per time step.
+            model_dim (int): Hidden dimension for S4D layers.
+            num_layers (int): Number of stacked S4D layers.
+            dropout (float, optional): Dropout probability. Default is 0.1.
+            use_pos_encoding (bool, optional): If True, adds positional encoding. Default is True.
+            complex_valued (bool, optional): If True, processes complex-valued inputs. Default is True.
+            use_positional_as_token (bool, optional): If True, treats positional encoding as a token. Default is False.
+            preprocess (bool, optional): If True, applies preprocessing to inputs. Default is True.
+            **kwargs: Additional arguments for customization.
+
+        Inputs:
+            x (torch.Tensor): Input tensor of shape (batch_size, input_dim, seq_len, [2] if complex).
+
+        Outputs:
+            out (torch.Tensor): Output tensor of shape (batch_size, output_dim, seq_len, [2] if complex).
+
+        Features:
+            - Flexible support for real and complex-valued data.
+            - Optional positional encoding for sequence modeling.
+            - Modular design for easy extension and integration.
+            - Suitable for SAR and other sequential signal processing tasks.
+
+        Example:
+            model = sarSSM(input_dim=2, state_dim=16, output_dim=2, model_dim=64, num_layers=4)
+            out = model(x)
+        """
         super().__init__()
         self.complex_valued = complex_valued
         self.input_dim = input_dim
@@ -492,6 +540,7 @@ class sarSSM(nn.Module):
         self.num_layers = num_layers
         self.use_positional_as_token = use_positional_as_token
         self.model_dim = model_dim
+        self.preprocess = preprocess
         # Input projection: project input_dim to state_dim
         if complex_valued:
             self.input_proj = ComplexLinear(input_dim, model_dim)
@@ -501,7 +550,7 @@ class sarSSM(nn.Module):
             self.output_proj = nn.Linear(model_dim, output_dim)
 
         self.layers = nn.ModuleList([
-            S4D(state_dim, dropout=dropout)
+            S4D(state_dim, dropout=dropout, transposed=False, activation=activation_function, complex=complex_valued)
             for _ in range(num_layers)
         ])
         if complex_valued:
@@ -513,8 +562,7 @@ class sarSSM(nn.Module):
         else:
             self.dropout = nn.Dropout(dropout)
         self.use_pos_encoding = use_pos_encoding
-
-    def forward(self, x):
+    def _preprocess_input(self, x):
         # x: (B, 1000, seq_len, 2)
         # Optionally concatenate positional embedding as next token
         if self.use_positional_as_token:
@@ -527,6 +575,17 @@ class sarSSM(nn.Module):
         else:
             # Keep as separate channel, flatten last two dims
             x = x.permute(0, 2, 1, 3).reshape(x.shape[0], x.shape[2], -1)  # (B, seq_len, 1000*2)
+        return x
+    def _postprocess_output(self, out):
+        if len(out.shape) == 3:
+            out = out.unsqueeze(-1)
+        return out.permute(0, 2, 1, 3)
+    def forward(self, x):
+        if self.preprocess:
+            x = self._preprocess_input(x)  # (B, L, input_dim)
+        else:
+            # If preprocessing is disabled, remove one before the last dimension (vertical position)
+            x = torch.cat([x[..., :-2], x[..., -1:]], dim=-1)
         # Project to state_dim
         h = self.input_proj(x)  # (B, state_dim, L)
         # Pass through S4D layers
@@ -535,37 +594,40 @@ class sarSSM(nn.Module):
         # Normalize and dropout
         h = self.norm(h)
         h = self.dropout(h)
-        # Output projection
 
         out = self.output_proj(h)  # (B, output_dim, L)
-        #out = out.reshape(out.shape[0], out.shape[1], out.shape[2]//2, 2)
         # Return in (B, L, output_dim) format for consistency
-        out = out.unsqueeze(-1)
-        out = out.permute(0, 2, 1, 3)
-        return out
+        if self.preprocess:
+            return self._postprocess_output(out)
+        else:
+            return out
     
-    def step(self, u, state):
+    def step(self, x, state):
         '''
         this is for reference from the layer below this function:
         step one time step as recurrent model. intended to be used during validation
-        u: (B H)
+        x: (B H)
         state: (B H N)
         Returns: output (B H), state (B H N)
         '''
         
         if state == None:
             # create a list of 0 states for each of the ssm layers
-            state = [np.zeros(self.d_state) for ssim in self.ssm]
-            
+            state = [np.zeros(self.d_state) for _ in self.layers]
         
-        u = self.fc1(u)   
-        
-        for i, ssm in enumerate(self.ssm):
-            u, state[i] = ssm.step(u, state[i])
-            
-        u = self.fc2(u)
-        
-        return u, state
+        x = self._preprocess_input(x)  # (B, L, input_dim)
+        # Project to state_dim
+        h = self.input_proj(x)  # (B, state_dim, L)
+        # Pass through S4D layers
+        for i, layer in enumerate(self.layers):
+            h, _ = layer.step(h, state[i])  # S4D expects (B, state_dim, L)
+        # Normalize and dropout
+        h = self.norm(h)
+        h = self.dropout(h)
+
+        out = self.output_proj(h)  # (B, output_dim, L)
+        # Return in (B, L, output_dim) format for consistency
+        return self._postprocess_output(out), state
 
 
 
@@ -985,44 +1047,6 @@ class EnhancedMambaBlock(nn.Module):
         # Enhanced selective scan with better stability
         return selective_scan_fn(u, delta, self.A_log, B, C, self.D) #self._selective_scan_enhanced(u, delta, self.A_log, B, C, self.D)
 
-    # def _selective_scan_enhanced(self, u, delta, A_log, B, C, D, eps=1e-12):
-    #     """
-    #     Enhanced selective scan with improved numerical stability and skip connection.
-    #     Args:
-    #         u (Tensor): Input tensor of shape (B, L, d_model).
-    #         delta (Tensor): Delta projection tensor.
-    #         A_log (Tensor): Logarithm of A matrix for SSM.
-    #         B, C, D (Tensor): SSM parameters.
-    #         eps (float): Small value for numerical stability.
-    #     Returns:
-    #         output (Tensor): Output tensor of shape (B, L, d_model).
-    #     """
-    #     B_batch, L, d = u.shape
-        
-    #     # Compute discretized A
-    #     A = -torch.exp(A_log).unsqueeze(0).unsqueeze(0)  # (1, 1, d, d_state)
-    #     dA = delta.unsqueeze(-1) * A  # (B, L, d, d_state)
-        
-    #     # More stable cumulative computation
-    #     dA_cumsum = torch.cumsum(dA, dim=1)
-    #     A_bar = torch.exp(-dA_cumsum)
-        
-    #     # Compute input term
-    #     dB_u = delta.unsqueeze(-1) * u.unsqueeze(-1) * B.unsqueeze(2)  # (B, L, d, d_state)
-        
-    #     # Selective scan with better numerical properties
-    #     x = torch.zeros(B_batch, d, self.d_state, device=u.device, dtype=u.dtype)
-    #     outputs = []
-        
-    #     for i in range(L):
-    #         x = x * torch.exp(-dA[:, i]) + dB_u[:, i]
-    #         y = torch.einsum('bdn,bn->bd', x, C[:, i])  # (B, d)
-    #         outputs.append(y)
-        
-    #     y = torch.stack(outputs, dim=1)  # (B, L, d)
-        
-    #     # Add skip connection
-    #     return y + u * D.unsqueeze(0).unsqueeze(0)
 
 # Usage example and model configurations
 class ModelArgs:

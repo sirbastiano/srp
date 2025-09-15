@@ -1,7 +1,7 @@
 import json
 import logging
 import torch
-from torch import nn, optim
+from torch import device, nn, optim
 from torch.utils.data import DataLoader
 from typing import Tuple, Union
 from tqdm import tqdm
@@ -13,31 +13,56 @@ from model.transformers.cv_transformer import ComplexTransformer
 from training.visualize import compute_metrics, save_metrics
 from sarpyx.utils.losses import get_loss_function
 from training.visualize import save_results_and_metrics, get_full_image_and_prediction, compute_metrics, display_inference_results
+import pytorch_lightning as pl
 
 import numpy as np
-
-class TrainerBase():
+class TrainerBase(pl.LightningModule):
     def __init__(
-        self, 
-        base_save_dir:str,
-        model , 
-        mode: str = "parallel",
-        criterion: Callable = nn.MSELoss, 
-        scheduler_type: str = 'cosine'
-    ):
+            self,      
+            base_save_dir:str,
+            model , 
+            train_loader: SARDataloader,
+            val_loader: SARDataloader,
+            test_loader: SARDataloader,
+            mode: str = "parallel",
+            criterion: Callable = nn.MSELoss, 
+            scheduler_type: str = 'cosine', 
+            inference_loader: Optional[SARDataloader] = None,
+            metrics_file_name: str = "test_metrics.json", 
+            lr: int = 1e-4
+        ):
+        super().__init__()
         self.base_save_dir = base_save_dir
         self.model = model 
         self.mode = mode
         self.criterion_fn = criterion
         self.scheduler_type = scheduler_type
+        self.inference_loader = inference_loader
+        self.lr = lr
         
+        self._train_loader = train_loader
+        self._val_loader = val_loader
+        self._test_loader = test_loader
+
+        self.test_metrics = []
+        self.metrics_file_name = metrics_file_name
+
+    def train_dataloader(self):
+        return self._train_loader
+
+    def val_dataloader(self):
+        return self._val_loader
+
+    def test_dataloader(self):
+        return self._test_loader
+
     def compute_loss(self, output: torch.Tensor, target: torch.Tensor):
-        pass
+        return self.criterion_fn(output, target)
     def preprocess_sample(self, x: Union[np.ndarray, torch.Tensor], device: Union[str, torch.device]):                
         if isinstance(x, np.ndarray):
             x = torch.from_numpy(x)
         return x.to(device)
-    def forward_pass(self, x: Union[np.ndarray, torch.Tensor], y: Optional[Union[np.ndarray, torch.Tensor]]=None, device: Union[str, torch.device]="cuda") -> torch.Tensor:
+    def forward(self, x: Union[np.ndarray, torch.Tensor], y: Optional[Union[np.ndarray, torch.Tensor]]=None, device: Union[str, torch.device]="cuda") -> torch.Tensor:
         """
         Forward pass through the model.
         Args:
@@ -51,87 +76,8 @@ class TrainerBase():
             y_preprocessed = None
         else:
             y_preprocessed = self.preprocess_sample(y, device)
-        return self.model(src=x_preprocessed, tgt=y_preprocessed)
-    def train(
-            self, 
-            train_loader, 
-            val_loader, 
-            device:Union[str, torch.device], 
-            epochs:int=50, 
-            patience:int=10, 
-            delta:float=0.001, 
-            lr: float=1e-5, 
-            resume_from: Optional[str|os.PathLike] = None,
-        ):
-        optimizer = optim.Adam(self.model.parameters(), lr=lr)
+        return self.model(x_preprocessed, y_preprocessed)
 
-        if self.scheduler_type == 'cosine':
-            scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
-        else:
-            scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
-        if resume_from:
-            if self.resume_from_checkpoint(str(resume_from), optimizer, None):
-                print(f"Resuming training from epoch {self.start_epoch}")
-            else:
-                print("Failed to resume, starting from scratch")
-                self.start_epoch = 0
-        else:
-            self.val_losses = []
-            self.train_losses = []
-            self.best_val_loss = []
-            self.last_improve_epochs = 0
-
-        # Training loop
-        for epoch in range(epochs):
-            self.model.train()
-            epoch_loss = 0.0
-            train_bar = tqdm(train_loader, unit="batch", desc=f"Training epoch {epoch}/{epochs}", leave=True)
-            for x, y in train_bar:
-
-                optimizer.zero_grad()
-                output = self.forward_pass(x, y, device)  
-                loss = self.compute_loss(output, y, device)
-                loss.backward()
-                optimizer.step()
-                epoch_loss += loss.item()
-                train_bar.set_postfix(train_loss=loss.item())
-                
-            avg_loss = epoch_loss / len(train_loader)
-            self.train_losses.append(avg_loss)
-            print(f"Training epoch {epoch+1}/{epochs} — avg_loss: {avg_loss:.5f}")
-            
-            val_bar = tqdm(val_loader, unit="batch", desc=f"Validation epoch {epoch}/{epochs}", leave=True)
-            val_loss = 0
-            for x, y in val_bar:
-                output = self.forward_pass(x, y, device)
-                loss = self.compute_loss(output, y, device)
-                val_loss += loss.item()
-                val_bar.set_postfix(train_loss=loss.item())
-            avg_val_loss = val_loss / len(val_loader)
-            if self.scheduler_type == 'cosine':
-                scheduler.step()
-            else:
-                scheduler.step(avg_val_loss)
-            self.val_losses.append(avg_val_loss)
-            print(f"Validation epoch {epoch+1}/{epochs} — avg_val_loss: {avg_val_loss:.5f}")
-            if epoch % 2 == 0 :
-                print(f"Saving metrics and inference results respectively to metrics_{epoch}.json and val_{epoch}.png...")
-                self.show_example(val_loader, window=((1000, 1000), (5000, 5000)), vminmax=(4000, 4200), figsize=(20, 6), metrics_save_path=f"metrics_{epoch}.json", img_save_path=f"val_{epoch}.png")
-            if avg_val_loss < self.best_val_loss + delta:
-                self.best_val_loss = avg_val_loss
-                torch.save(self.model.state_dict(), f"{self.base_save_dir}/model_best.pth")
-                self.last_improve_epochs = 0
-            else:
-                self.last_improve_epochs += 1
-                if self.last_improve_epochs >= patience:
-                    print(f"Early stopping triggered: validation loss did not improve for the last {self.last_improve_epochs} epochs")
-                    break
-
-        torch.save(self.model.state_dict(), f"{self.base_save_dir}/model_last.pth")
-        metrics_path = os.path.join(self.base_save_dir, "train_metrics.json")
-        with open(metrics_path, 'w') as f:
-            f.write(str(self.val_losses))
-        print("Training complete and model saved.")  
     def show_example(self, loader: SARDataloader, window: Tuple[Tuple[int, int], Tuple[int, int]] = ((1000, 1000), (5000, 5000)), vminmax=(4000, 4200), figsize=(20, 6), metrics_save_path: str = "metrics.json", img_save_path: str = "test.png"):
         try:
             gt, pred, input = get_full_image_and_prediction(
@@ -161,7 +107,7 @@ class TrainerBase():
         except Exception as e:
             print(f"Visualization failed with error: {str(e)}")
             raise
-    
+
     def save_checkpoint(self, epoch: int, optimizer, scheduler=None, is_best: bool = False, **kwargs):
         """Save training checkpoint with all necessary information."""
         from model.model_utils import save_checkpoint
@@ -197,7 +143,7 @@ class TrainerBase():
         if is_best:
             torch.save(self.model.state_dict(), f"{self.base_save_dir}/sar_transformer_best.pth")
         torch.save(self.model.state_dict(), f"{self.base_save_dir}/sar_transformer_last.pth")
-        
+
     def resume_from_checkpoint(self, checkpoint_path: str, optimizer, scheduler=None):
         """Resume training from a checkpoint."""
         from model.model_utils import load_pretrained_weights
@@ -237,99 +183,101 @@ class TrainerBase():
         except Exception as e:
             print(f"❌ Failed to resume from checkpoint: {str(e)}")
             return False
-    def test(
-        self,
-        test_loader: torch.utils.data.DataLoader,
-        device: Union[str, torch.device] = "cpu",
-        num_visuals: int = 5,
-        mainlobe_size: int = 5
-    ):
-        """
-        Run the model in eval mode on test_loader, save a few example visualizations,
-        and compute+save overall PSNR/PSLR metrics.
-        """
-        os.makedirs(self.base_save_dir, exist_ok=True)
-        self.model.to(device)
-        self.model.eval()
+    def on_train_start(self):
+        self.resume_from_checkpoint(self.resume_from, self.trainer.optimizers[0], None)
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+        output = self.forward(x, y)  
+        loss = self.compute_loss(output, y)
+        self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True)
+        
+        y_np = y.cpu().numpy() #.squeeze()
+        output_np = output.cpu().numpy() #.squeeze()
 
-        all_metrics = []
-        with torch.no_grad():
-            for batch_idx, (raw, target) in enumerate(tqdm(test_loader, desc="Testing")):
-                raw = raw.to(device).float()       # [B, T, 1] or [B, H, W]
-                target = target.to(device).float()
+        m = compute_metrics(y_np, output_np)
+        self.log_dict('train_metrics', m, on_step=False, on_epoch=True, prog_bar=False)
+        return loss
 
-                # for parallel mode: model(src=raw, tgt=target_inp)
-                # here assume parallel and full-target pass
-                output = self.model(src=raw, tgt=target)  
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        output = self.forward(x, y)
+        loss = self.compute_loss(output, y)
+        self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True)
+        
+        y_np = y.cpu().numpy() #.squeeze()
+        output_np = output.cpu().numpy() #.squeeze()
+
+        m = compute_metrics(y_np, output_np)
+        self.log_dict('val_metrics', m, on_step=False, on_epoch=True, prog_bar=False)
+        return loss
+    def on_validation_epoch_end(self):
+        if self.inference_loader is not None:
+            self.show_example(self.inference_loader, window=((1000, 1000), (5000, 5000)), vminmax=(4000, 4200), figsize=(20, 6), metrics_save_path=f"metrics_{self.current_epochs}.json", img_save_path=f"val_{self.current_epoch}.png")
+        self.save_checkpoint(epoch=self.current_epoch, optimizer=self.trainer.optimizers[0], scheduler=None, is_best=(self.trainer.callback_metrics['val_loss'] < self.best_val_loss), val_loss=self.trainer.callback_metrics['val_loss'])
+    
+    def test_step(self, batch, batch_idx):
+        x, y = batch
+        output = self.forward(x, y)
                 
-                raw_np = raw.cpu().numpy() #.squeeze()
-                out_np = output.cpu().numpy() #.squeeze()
-                tgt_np = target.cpu().numpy() #.squeeze()
+        y_np = y.cpu().numpy() #.squeeze()
+        output_np = output.cpu().numpy() #.squeeze()
 
-                # Compute metrics for this sample
-                m = compute_metrics(raw_np, out_np)
-                all_metrics.append(m)
+        m = compute_metrics(y_np, output_np)
+        self.log_dict('test_metrics', m, on_step=False, on_epoch=True, prog_bar=False)
 
-                # Save a few visual examples
-                # if batch_idx < num_visuals:
-                #     fig_path = os.path.join(output_dir, f"sample_{batch_idx}.png")
-                #     visualize_pair(raw_np, out_np, fig_path)
+        self.test_metrics.append(m)
 
-            # Aggregate metrics (e.g., mean PSNR, PSLR)
-            avg_psnr = sum(m['psnr_raw_vs_focused'] or 0 for m in all_metrics) / len(all_metrics)
-            avg_pslr = sum(m['pslr_focused'] or 0 for m in all_metrics) / len(all_metrics)
-            summary = {
-                'avg_psnr_raw_vs_focused': avg_psnr,
-                'avg_pslr_focused': avg_pslr,
-                'num_samples': len(all_metrics),
-                'val_losses': self.val_losses
+        loss = self.criterion(output, y)
+        self.log('test_loss', loss, on_step=False, on_epoch=True, prog_bar=True)
+        return loss
+    def on_test_end(self):
+        avg_psnr = sum(m['psnr_raw_vs_focused'] or 0 for m in self.test_metrics) / len(self.test_metrics)
+        avg_pslr = sum(m['pslr_focused'] or 0 for m in self.test_metrics) / len(self.test_metrics)
+        summary = {
+            'avg_psnr_raw_vs_focused': avg_psnr,
+            'avg_pslr_focused': avg_pslr,
+            'num_samples': len(self.test_metrics),
+            'val_losses': self.val_losses
+        }
+        metrics_path = os.path.join(self.base_save_dir, self.metrics_file_name)
+        save_metrics(summary, metrics_path)
+
+    def configure_optimizers(self):
+        optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
+        if self.scheduler_type == 'cosine':
+            scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50)
+            return [optimizer], [scheduler]
+        else:
+            scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
+            return {
+                'optimizer': optimizer,
+                'lr_scheduler': {
+                    'scheduler': scheduler,
+                    'monitor': 'val_loss'
+                }
             }
-            # Save metrics JSON
-            metrics_path = os.path.join(self.base_save_dir, "test_metrics.json")
-            save_metrics(summary, metrics_path)
-
-        print(f"Test visuals saved to: {self.base_save_dir}")
-        print(f"Test metrics saved to: {metrics_path}")
-            
-    def train_loop(
-            self, 
-            train_loader, 
-            val_loader, 
-            device:Union[str,torch.device], 
-            epochs:int=50, 
-            patience:int=10, 
-            delta:float=0.001, 
-        ):
-        self.model.to(device)
-        self.train(
-            train_loader=train_loader, 
-            val_loader=val_loader, 
-            device=device, 
-            epochs=epochs, 
-            patience=patience, 
-            delta=delta, 
-        )
-
 
 class TrainRVTransformer(TrainerBase):
     def __init__(self, 
                 base_save_dir:str,
                 model , 
+                train_loader: SARDataloader,
+                val_loader: SARDataloader,
+                test_loader: SARDataloader,
                 mode: str = "parallel",
                 criterion: Callable = nn.MSELoss,
             
         ):
+        super().__init__(base_save_dir, model, train_loader, val_loader, test_loader, mode, criterion=criterion)
         assert mode == "parallel" or "autoregressive", "training mode must be either 'parallel' or 'autoregressive'"
 
         self.base_save_dir = base_save_dir
         self.model = model 
         self.mode = mode
-        self.val_losses = []
-        self.train_losses = []
         self.criterion_fn = criterion
         if not os.path.exists(self.base_save_dir):
             os.makedirs(self.base_save_dir)
-    def compute_loss(self, output: torch.Tensor, target: torch.Tensor, device: Union[str, torch.device]) -> torch.Tensor:
+    def compute_loss(self, output: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         """Compute loss for complex-valued output."""
         # For complex output, we can use MSE on both real and imaginary parts
         if output.shape[-1] > 2:
@@ -337,7 +285,7 @@ class TrainRVTransformer(TrainerBase):
         if target.shape[-1] > 2:
             target = target[..., :-2]
 
-        loss = self.criterion_fn(output.to(device), target.to(device))
+        loss = self.criterion_fn(output, target)
         return loss
     def preprocess_sample(self, x: torch.Tensor, device: Union[str, torch.device]):    
         if isinstance(x, np.ndarray):
@@ -352,17 +300,25 @@ class TrainCVTransformer(TrainRVTransformer):
     Extends the existing TrainCVTransformer to handle patch preprocessing.
     """
     
-    def __init__(self, base_save_dir: str, model, mode: str = "parallel",  criterion: Callable = nn.MSELoss):
-        super().__init__(base_save_dir, model, mode, criterion=criterion)
-        self.logger = logging.getLogger(__name__)
+    def __init__(
+            self, 
+            base_save_dir: str, 
+            model, 
+            train_loader: SARDataloader,
+            val_loader: SARDataloader,
+            test_loader: SARDataloader,
+            mode: str = "parallel",  
+            criterion: Callable = nn.MSELoss
+        ):
+        super().__init__(base_save_dir, model, train_loader, val_loader, test_loader, mode, criterion=criterion)
         
-        # Count parameters and log model info
-        if hasattr(model, 'parameters'):
-            total_params = sum(p.numel() for p in model.parameters())
-            trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-            self.logger.info(f"Model created with {total_params:,} total parameters")
-            self.logger.info(f"Trainable parameters: {trainable_params:,}")
-        
+        # # Count parameters and log model info
+        # if hasattr(model, 'parameters'):
+        #     total_params = sum(p.numel() for p in model.parameters())
+        #     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        #     logging.info(f"Model created with {total_params:,} total parameters")
+        #     logging.info(f"Trainable parameters: {trainable_params:,}")
+
     def preprocess_sample(self, x: Union[torch.Tensor, np.ndarray], device: Union[str, torch.device]):   
         if isinstance(x, np.ndarray):
             x = torch.from_numpy(x)              
@@ -394,17 +350,27 @@ class TrainSSM(TrainerBase):
     Handles column-wise processing where each column is treated as a sequence.
     """
     
-    def __init__(self, base_save_dir: str, model, mode: str = "parallel", criterion: Callable = nn.MSELoss, scheduler_type: str = 'cosine'):
-        super().__init__(base_save_dir, model, mode, criterion=criterion, scheduler_type=scheduler_type)
-        self.logger = logging.getLogger(__name__)
+    def __init__(
+            self, 
+            base_save_dir: str, 
+            model, 
+            train_loader: SARDataloader,
+            val_loader: SARDataloader,
+            test_loader: SARDataloader,
+            mode: str = "parallel", 
+            criterion: Callable = nn.MSELoss, 
+            scheduler_type: str = 'cosine'
+        ):
+        super().__init__(base_save_dir, model, train_loader, val_loader, test_loader, mode, criterion=criterion, scheduler_type=scheduler_type)
+        # self.logger = logging.getLogger(__name__)
         
-        # Count parameters and log model info
-        if hasattr(model, 'parameters'):
-            total_params = sum(p.numel() for p in model.parameters())
-            trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-            self.logger.info(f"Model created with {total_params:,} total parameters")
-            self.logger.info(f"Trainable parameters: {trainable_params:,}")
-    def forward_pass(self, x: Union[np.ndarray, torch.Tensor], y: Union[np.ndarray, torch.Tensor], device: Union[str, torch.device]="cuda") -> torch.Tensor:
+        # # Count parameters and log model info
+        # if hasattr(model, 'parameters'):
+        #     total_params = sum(p.numel() for p in model.parameters())
+        #     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        #     self.logger.info(f"Model created with {total_params:,} total parameters")
+        #     self.logger.info(f"Trainable parameters: {trainable_params:,}")
+    def forward(self, x: Union[np.ndarray, torch.Tensor], y: Union[np.ndarray, torch.Tensor], device: Union[str, torch.device]="cuda") -> torch.Tensor:
         """
         Forward pass through the model.
         Args:
@@ -413,17 +379,17 @@ class TrainSSM(TrainerBase):
         Returns:
             Model output tensor
         """
-        x_preprocessed = self.preprocess_sample(x, device)
+        x_preprocessed = self.preprocess_sample(x, device=device)
         return self.model(x_preprocessed)
-    def preprocess_sample(self, x: Union[torch.Tensor, np.ndarray], device: Union[str, torch.device]):   
+    def preprocess_sample(self, x: Union[torch.Tensor, np.ndarray], device: Union[str, torch.device]="cuda"):   
         if isinstance(x, np.ndarray):
             x = torch.from_numpy(x)              
         if torch.is_complex(x):
-            x = x.to(device).to(torch.complex64)
+            x = x.to(torch.complex64)
         else:
-            x = x.to(device).float()
-        return x
-    def compute_loss(self, output: torch.Tensor, target: torch.Tensor, device: Union[str, torch.device]) -> torch.Tensor:
+            x = x.float()
+        return x.to(device)
+    def compute_loss(self, output: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         """
         Compute loss for complex-valued output.
         Converts complex tensors to real-valued with last dimension 2 (real, imag).
@@ -441,38 +407,68 @@ class TrainSSM(TrainerBase):
         # print(f"Output shape: {output.shape}, Target shape: {target.shape}")
         # print(f"Output patch: {output}")
         # print(f"Target patch: {target}")
-        loss = self.criterion_fn(output.to(device), target.to(device))
+        loss = self.criterion_fn(output, target)
         return loss
 
 
 class TrainDUN(TrainerBase):
     pass
 
-def get_training_loop_by_model_name(model_name: str, model: nn.Module, save_dir: Union[str, os.PathLike] = './results', loss_fn_name: str = "mse", mode: str = 'parallel', scheduler_type: str = 'cosine') -> TrainerBase:
+def get_training_loop_by_model_name(
+        model_name: str, 
+        model: nn.Module,  
+        train_loader: SARDataloader,
+        val_loader: SARDataloader,
+        test_loader: SARDataloader,
+        save_dir: Union[str, os.PathLike] = './results', 
+        loss_fn_name: str = "mse", 
+        mode: str = 'parallel', 
+        scheduler_type: str = 'cosine', 
+        num_epochs: int = 250, 
+        logger: Optional[pl.loggers.Logger] = None, 
+        device_no: int= 0
+    ) -> Tuple[TrainerBase, pl.Trainer]:
+
     if model_name == 'cv_transformer':
-        trainer = TrainCVTransformer(
+        lightning_model = TrainCVTransformer(
             base_save_dir=str(save_dir),
             model=model,
+            train_loader=train_loader,
+            val_loader=val_loader,
+            test_loader=test_loader,
             mode=mode,
-            criterion=get_loss_function("complex_mse"),
+            criterion=get_loss_function(loss_fn_name),
             scheduler_type=scheduler_type
         )
     elif 'transformer' in model_name.lower():
-        trainer = TrainRVTransformer(
+        lightning_model = TrainRVTransformer(
             base_save_dir=str(save_dir),
             model=model,
-            criterion=get_loss_function("mse"),
+            train_loader=train_loader,
+            val_loader=val_loader,
+            test_loader=test_loader,
+            criterion=get_loss_function(loss_fn_name),
             mode=mode,
             scheduler_type=scheduler_type
         )
     elif 'ssm' in model_name.lower():
-        trainer = TrainSSM(
+        lightning_model = TrainSSM(
             base_save_dir=str(save_dir),
             model=model,
-            criterion=get_loss_function("complex_mse"),
+            train_loader=train_loader,
+            val_loader=val_loader,
+            test_loader=test_loader,
+            criterion=get_loss_function(loss_fn_name),
             mode=mode,
             scheduler_type=scheduler_type
         )
     else:
         raise ValueError(f"Unsupported model type: {model_name}")
-    return trainer
+    trainer = pl.Trainer(max_epochs=num_epochs,
+                        logger=logger,
+                        devices=[device_no],
+                        fast_dev_run=False,
+                        log_every_n_steps=1,
+                        accelerator="gpu" if torch.cuda.is_available() else "cpu",
+                        )
+    return lightning_model, trainer

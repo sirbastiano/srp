@@ -247,6 +247,7 @@ class SARSSMFactory:
             dropout: float = 0.2,
             use_pos_encoding: bool = True,
             complex_valued: bool = True,
+            preprocess: bool = True,
             **kwargs
         ) -> nn.Module:
         """
@@ -273,6 +274,7 @@ class SARSSMFactory:
             dropout=dropout,
             use_pos_encoding=use_pos_encoding,
             complex_valued=complex_valued,
+            preprocess = preprocess,
             **kwargs
         )
 
@@ -284,7 +286,9 @@ def create_ssm_model(
     output_dim: int = 2,
     num_layers: int = 6,
     dropout: float = 0.1,
-    use_pos_encoding: bool = True
+    use_pos_encoding: bool = True,
+    complex_valued: bool = True,
+    preprocess: bool = True,
 ) -> nn.Module:
     """
     Factory function to create SSM models based on configuration.
@@ -297,6 +301,8 @@ def create_ssm_model(
         num_layers: Number of layers
         dropout: Dropout rate
         use_pos_encoding: Whether to use positional encoding
+        complex_valued: Whether to use complex-valued layers (for S4)
+        preprocess: Whether to apply preprocessing to inputs
         **kwargs: Additional model-specific parameters
         
     Returns:
@@ -314,6 +320,7 @@ def create_ssm_model(
             num_layers=num_layers,
             dropout=dropout,
             use_pos_encoding=use_pos_encoding,
+            preprocess=preprocess
         )
     elif model_type == "mamba":
         return SARSSMFactory.create_mamba_ssm(
@@ -324,6 +331,7 @@ def create_ssm_model(
             num_layers=num_layers,
             dropout=dropout,
             use_pos_encoding=use_pos_encoding,
+            preprocess=preprocess
         )
     elif model_type == "s4":
         return SARSSMFactory.create_s4_ssm(
@@ -334,6 +342,8 @@ def create_ssm_model(
             num_layers=num_layers,
             dropout=dropout,
             use_pos_encoding=use_pos_encoding,
+            complex_valued=complex_valued,
+            preprocess=preprocess
         )
     else:
         raise ValueError(f"Unsupported SSM model type: {model_type}. Supported types: 'simple', 'mamba', 's4'")
@@ -417,6 +427,8 @@ def get_model_from_configs(
         dropout: float = .1, 
         lr: float = 1e-4, 
         mode: str = "parallel",
+        preprocess: bool = True,
+        complex_valued: bool = True,
         **kwargs
     ):
     if name == "cv_transformer":
@@ -475,7 +487,9 @@ def get_model_from_configs(
             model_dim=model_dim,
             num_layers=num_layers,
             dropout=dropout,
-            use_pos_encoding=kwargs.get('use_pos_encoding', True)
+            complex_valued=complex_valued,
+            use_pos_encoding=kwargs.get('use_pos_encoding', True), 
+            preprocess=preprocess
         )
     elif name=="ssm":
         # Legacy support - defaults to simple SSM
@@ -486,7 +500,9 @@ def get_model_from_configs(
             output_dim=kwargs.get('output_dim', 2),
             model_dim=model_dim,
             num_layers=num_layers,
-            dropout=dropout
+            dropout=dropout, 
+            complex_valued=complex_valued,
+            preprocess=preprocess
         )
     else:
         raise ValueError(f"Invalid model name: {name}")

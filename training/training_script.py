@@ -10,23 +10,24 @@ from torch.utils.data import DataLoader
 import logging
 import time
 from typing import Dict, Any
+from pytorch_lightning.loggers import TensorBoardLogger
 
 from dataloader.dataloader import SampleFilter, get_sar_dataloader, SARTransform
 from model.model_utils import get_model_from_configs
 from training.training_loops import get_training_loop_by_model_name
 from training.visualize import save_results_and_metrics
 
-def setup_logging():
-    """Setup logging configuration."""
+def setup_logging(out_file : str = 'training.log', model_name: str = 'model', exp_dir: str = './results'):
+    tb_logger = TensorBoardLogger(save_dir=exp_dir, name=model_name)
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler('training.log'),
-            logging.StreamHandler()
-        ]
-    )
-    return logging.getLogger(__name__)
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            handlers=[
+                logging.FileHandler(os.path.join(exp_dir, out_file)),
+                logging.StreamHandler()
+            ]
+        )
+    return tb_logger, logging.getLogger(__name__)
 
 
 def load_config(config_path: Path, args):
@@ -118,7 +119,7 @@ def load_config(config_path: Path, args):
         'patch_mode': 'rectangular',
         'patch_size': [1000, 1],
         'buffer': [1000, 1000],
-        'stride': [300, 1],
+        'stride': [1000, 1],
         'shuffle_files': False,
         'complex_valued': True,
         'save_samples': False,
@@ -185,10 +186,12 @@ def create_transforms_from_config(transforms_cfg):
             rc_max = transforms_cfg.get('rc_max', RC_MAX)
             gt_min = transforms_cfg.get('gt_min', GT_MIN)
             gt_max = transforms_cfg.get('gt_max', GT_MAX)
+            adaptive = transforms_cfg.get('adaptive', False)
             complex_valued = transforms_cfg.get('complex_valued', True)
             
             transforms = SARTransform.create_minmax_normalized_transform(
                 normalize=True,
+                adaptive=adaptive,
                 rc_min=rc_min,
                 rc_max=rc_max,
                 gt_min=gt_min,
@@ -292,86 +295,80 @@ def main():
     """Main training function with enhanced SAR patch processing support."""
     parser = argparse.ArgumentParser(description='Train models with optional SAR patch preprocessing')
     parser.add_argument('--config', type=str, required=True, help='Path to configuration file')
+    parser.add_argument('--experiment_name', type=str, default='experiment', help='Experiment name to use')
+    parser.add_argument('--model_name', type=str, default='model', help='Model name to use')
     parser.add_argument('--mode', type=str, default=None, help='Training mode override')
     parser.add_argument('--device', type=str, default=None, help='Device override')
     parser.add_argument('--batch_size', type=int, default=None, help='Batch size override')
     parser.add_argument('--learning_rate', type=float, default=None, help='Learning rate override')
     parser.add_argument('--num_epochs', type=int, default=None, help='Number of epochs override')
-    parser.add_argument('--save_dir', type=str, default=None, help='Save directory override')
-    parser.add_argument('--scheduler_type', type=str, default='plateau', choices=['plateau', 'cosine'], help='LR scheduler type')
-    
+    parser.add_argument('--save_dir', type=str, default="./results", help='Save directory override')
+    parser.add_argument('--scheduler_type', type=str, default='cosine', choices=['plateau', 'cosine'], help='LR scheduler type')
     args = parser.parse_args()
-    
-    # Setup logging
-    logger = setup_logging()
-    logger.info(f"Starting training with config: {args.config}")
     
     # Load configuration
     config = load_config(Path(args.config), args)
-    
+        
+    # Setup logging
+    tb_logger, text_logger = setup_logging(model_name=args.experiment_name, exp_dir=args.save_dir)
+    text_logger.info(f"Starting training with config: {args.config}")
+
     # Extract configurations
     model_cfg = config['model']
     dataloader_cfg = config['dataloader']
     training_cfg = config['training']
     
     # Log configuration summary
-    logger.info("Configuration Summary:")
-    logger.info(f"  Model: {model_cfg.get('name', 'Unknown')}")
-    logger.info(f"  Mode: {training_cfg.get('mode', 'parallel')}")
-    logger.info(f"  Device: {training_cfg.get('device', 'cuda')}")
-    logger.info(f"  Batch size: {training_cfg.get('batch_size', 32)}")
-    logger.info(f"  Learning rate: {training_cfg.get('learning_rate', 1e-4)}")
-    logger.info(f"  Epochs: {training_cfg.get('num_epochs', 100)}")
+    text_logger.info("Full Configuration:")
+    for section, section_cfg in config.items():
+        text_logger.info(f"  [{section}]")
+        if isinstance(section_cfg, dict):
+            for key, value in section_cfg.items():
+                text_logger.info(f"    {key}: {value}")
+        else:
+            text_logger.info(f"    {section_cfg}")
+    # text_logger.info("Configuration Summary:")
+    # text_logger.info(f"  Model: {model_cfg.get('name', 'Unknown')}")
+    # text_logger.info(f"  Mode: {training_cfg.get('mode', 'parallel')}")
+    # text_logger.info(f"  Device: {training_cfg.get('device', 'cuda')}")
+    # text_logger.info(f"  Batch size: {training_cfg.get('batch_size', 32)}")
+    # text_logger.info(f"  Learning rate: {training_cfg.get('learning_rate', 1e-4)}")
+    # text_logger.info(f"  Epochs: {training_cfg.get('num_epochs', 100)}")
+    # text_logger.info(f"  Save directory: {training_cfg.get('save_dir', './results')}")
+    # text_logger.info(f"  Scheduler type: {training_cfg.get('scheduler_type', 'cosine')}")
+    # text_logger.info(f"  Patience: {training_cfg.get('patience', 10)}")
+    # ###### TODO: FINISH LOGGING ALL CONFIGS ######
     
     # Check if patch preprocessing is needed
     
     model = get_model_from_configs(**model_cfg)
-    logger.info(f"Created standard model: {model_cfg.get('name', 'Unknown')}")
+    text_logger.info(f"Created standard model: {model_cfg.get('name', 'Unknown')}")
     
     # Create dataloaders
-    logger.info("Creating dataloaders...")
+    text_logger.info("Creating dataloaders...")
     train_loader, val_loader, test_loader = create_dataloaders(dataloader_cfg)
-    logger.info(f"Created dataloaders - Train: {len(train_loader)}, Val: {len(val_loader)}, Test: {len(test_loader)}")
+    text_logger.info(f"Created dataloaders - Train: {len(train_loader)}, Val: {len(val_loader)}, Test: {len(test_loader)}")
     
     # Determine trainer class and create trainer
-    trainer = get_training_loop_by_model_name(
+    lightning_model, trainer = get_training_loop_by_model_name(
         model_cfg.get('name', ''), 
         model=model, 
+        train_loader=train_loader,
+        val_loader=val_loader,
+        test_loader=test_loader,
         save_dir=training_cfg.get('save_dir', './results'), 
         loss_fn_name=training_cfg.get('loss_fn', 'mse'),
         mode=training_cfg.get('mode', 'parallel'),
-        scheduler_type=args.scheduler_type
+        scheduler_type=training_cfg.get('scheduler_type', 'cosine'), 
+        logger=tb_logger,
     )
     # Start training
-    logger.info("Starting training process...")
+    text_logger.info("Starting training process...")
     try:
-        # Use the existing training interface
-        results = trainer.train_loop(
-            train_loader=train_loader,
-            val_loader=val_loader,
-            device=training_cfg.get('device', 'cuda'),
-            epochs=training_cfg.get('num_epochs', 100),
-            patience=training_cfg.get('patience', 10),
-            delta=training_cfg.get('delta', 0.001),
-        )
-        
-        logger.info("Training completed successfully!")
-        logger.info(f"Final results: {results}")
-        
-        # Test the model
-        try:
-            test_results = trainer.test(
-                test_loader=test_loader,
-                device=training_cfg.get('device', 'cuda')
-            )
-            logger.info(f"Test results: {test_results}")
-        except Exception as e:
-            logger.warning(f"Testing failed: {str(e)}")
-        
-        return results
+        trainer.fit(lightning_model)
         
     except Exception as e:
-        logger.error(f"Training failed with error: {str(e)}")
+        text_logger.error(f"Training failed with error: {str(e)}")
         raise
 
 
