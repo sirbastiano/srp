@@ -26,7 +26,7 @@ training:
 
 # Data loader configuration
 dataloader:
-  level_from: "rcmc"
+  level_from: "rc"
   level_to: "az"
   num_workers: 0
   patch_mode: "rectangular"

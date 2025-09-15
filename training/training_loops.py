@@ -22,12 +22,14 @@ class TrainerBase():
         base_save_dir:str,
         model , 
         mode: str = "parallel",
-        criterion: Callable = nn.MSELoss
+        criterion: Callable = nn.MSELoss, 
+        scheduler_type: str = 'cosine'
     ):
         self.base_save_dir = base_save_dir
         self.model = model 
         self.mode = mode
         self.criterion_fn = criterion
+        self.scheduler_type = scheduler_type
         
     def compute_loss(self, output: torch.Tensor, target: torch.Tensor):
         pass
@@ -51,51 +53,6 @@ class TrainerBase():
             y_preprocessed = self.preprocess_sample(y, device)
         return self.model(src=x_preprocessed, tgt=y_preprocessed)
     def train(
-            self,
-            train_loader,
-            val_loader,
-            device:Union[str, torch.device], 
-            epochs:int=50, 
-            patience:int=10, 
-            delta:float=0.001, 
-            lr: float=1e-5, 
-            resume_from: Optional[str|os.PathLike] = None):
-        pass
-
-class TrainRVTransformer(TrainerBase):
-    def __init__(self, 
-                base_save_dir:str,
-                model , 
-                mode: str = "parallel",
-                criterion: Callable = nn.MSELoss,
-            
-        ):
-        assert mode == "parallel" or "autoregressive", "training mode must be either 'parallel' or 'autoregressive'"
-
-        self.base_save_dir = base_save_dir
-        self.model = model 
-        self.mode = mode
-        self.val_losses = []
-        self.train_losses = []
-        self.criterion_fn = criterion
-        if not os.path.exists(self.base_save_dir):
-            os.makedirs(self.base_save_dir)
-    def compute_loss(self, output: torch.Tensor, target: torch.Tensor, device: Union[str, torch.device]) -> torch.Tensor:
-        """Compute loss for complex-valued output."""
-        # For complex output, we can use MSE on both real and imaginary parts
-        if output.shape[-1] > 2:
-            output = output[..., :-2]
-        if target.shape[-1] > 2:
-            target = target[..., :-2]
-
-        loss = self.criterion_fn(output.to(device), target.to(device))
-        return loss
-    def preprocess_sample(self, x: torch.Tensor, device: Union[str, torch.device]):    
-        if isinstance(x, np.ndarray):
-            x = torch.from_numpy(x)
-        return x.float().to(device)
-        
-    def train(
             self, 
             train_loader, 
             val_loader, 
@@ -104,17 +61,25 @@ class TrainRVTransformer(TrainerBase):
             patience:int=10, 
             delta:float=0.001, 
             lr: float=1e-5, 
-            resume_from: Optional[str|os.PathLike] = None
+            resume_from: Optional[str|os.PathLike] = None,
         ):
         optimizer = optim.Adam(self.model.parameters(), lr=lr)
+
+        if self.scheduler_type == 'cosine':
+            scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
+        else:
+            scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
         if resume_from:
             if self.resume_from_checkpoint(str(resume_from), optimizer, None):
                 print(f"Resuming training from epoch {self.start_epoch}")
             else:
                 print("Failed to resume, starting from scratch")
                 self.start_epoch = 0
-        last_improve_epochs = 0
-        min_val_loss = float('inf')
+        else:
+            self.val_losses = []
+            self.train_losses = []
+            self.best_val_loss = []
+            self.last_improve_epochs = 0
 
         # Training loop
         for epoch in range(epochs):
@@ -138,39 +103,31 @@ class TrainRVTransformer(TrainerBase):
             val_bar = tqdm(val_loader, unit="batch", desc=f"Validation epoch {epoch}/{epochs}", leave=True)
             val_loss = 0
             for x, y in val_bar:
-                if torch.is_complex(x):
-                    x = x.to(device).to(torch.complex64)
-                else:
-                    x = x.to(device).float()
-
-                if torch.is_complex(y):
-                    y = y.to(device).to(torch.complex64)
-                else:
-                    y = y.to(device).float()
-                #gt_inp, tgt_real = make_seq_batch(y)
-
-                output = self.model(src=x, tgt=y)  # [B, T-1, 1]
+                output = self.forward_pass(x, y, device)
                 loss = self.compute_loss(output, y, device)
                 val_loss += loss.item()
                 val_bar.set_postfix(train_loss=loss.item())
-            
             avg_val_loss = val_loss / len(val_loader)
+            if self.scheduler_type == 'cosine':
+                scheduler.step()
+            else:
+                scheduler.step(avg_val_loss)
             self.val_losses.append(avg_val_loss)
             print(f"Validation epoch {epoch+1}/{epochs} — avg_val_loss: {avg_val_loss:.5f}")
             if epoch % 2 == 0 :
                 print(f"Saving metrics and inference results respectively to metrics_{epoch}.json and val_{epoch}.png...")
                 self.show_example(val_loader, window=((1000, 1000), (5000, 5000)), vminmax=(4000, 4200), figsize=(20, 6), metrics_save_path=f"metrics_{epoch}.json", img_save_path=f"val_{epoch}.png")
-            if val_loss < min_val_loss + delta:
-                min_val_loss = val_loss
-                torch.save(self.model.state_dict(), f"{self.base_save_dir}/sar_transformer_best.pth")
-                last_improve_epochs = 0
-            else: 
-                last_improve_epochs += 1
-                if last_improve_epochs >= patience:
-                    print(f"Early stopping triggered: validation loss did not improve for the last {last_improve_epochs} epochs")
+            if avg_val_loss < self.best_val_loss + delta:
+                self.best_val_loss = avg_val_loss
+                torch.save(self.model.state_dict(), f"{self.base_save_dir}/model_best.pth")
+                self.last_improve_epochs = 0
+            else:
+                self.last_improve_epochs += 1
+                if self.last_improve_epochs >= patience:
+                    print(f"Early stopping triggered: validation loss did not improve for the last {self.last_improve_epochs} epochs")
                     break
 
-        torch.save(self.model.state_dict(), f"{self.base_save_dir}/sar_transformer_last.pth")
+        torch.save(self.model.state_dict(), f"{self.base_save_dir}/model_last.pth")
         metrics_path = os.path.join(self.base_save_dir, "train_metrics.json")
         with open(metrics_path, 'w') as f:
             f.write(str(self.val_losses))
@@ -269,8 +226,10 @@ class TrainRVTransformer(TrainerBase):
             if 'metrics' in checkpoint:
                 metrics = checkpoint['metrics']
                 self.val_losses = metrics.get('val_losses', [])
+                self.train_losses = metrics.get('train_losses', [])
                 self.best_val_loss = metrics.get('best_val_loss', float('inf'))
-                
+                self.last_improve_epochs = metrics.get('last_improve_epochs', 0)
+
             print(f"✅ Resumed training from epoch {self.start_epoch}")
             print(f"📊 Best validation loss so far: {self.best_val_loss:.6f}")
             return True
@@ -341,7 +300,6 @@ class TrainRVTransformer(TrainerBase):
             patience:int=10, 
             delta:float=0.001, 
         ):
-        
         self.model.to(device)
         self.train(
             train_loader=train_loader, 
@@ -352,6 +310,40 @@ class TrainRVTransformer(TrainerBase):
             delta=delta, 
         )
 
+
+class TrainRVTransformer(TrainerBase):
+    def __init__(self, 
+                base_save_dir:str,
+                model , 
+                mode: str = "parallel",
+                criterion: Callable = nn.MSELoss,
+            
+        ):
+        assert mode == "parallel" or "autoregressive", "training mode must be either 'parallel' or 'autoregressive'"
+
+        self.base_save_dir = base_save_dir
+        self.model = model 
+        self.mode = mode
+        self.val_losses = []
+        self.train_losses = []
+        self.criterion_fn = criterion
+        if not os.path.exists(self.base_save_dir):
+            os.makedirs(self.base_save_dir)
+    def compute_loss(self, output: torch.Tensor, target: torch.Tensor, device: Union[str, torch.device]) -> torch.Tensor:
+        """Compute loss for complex-valued output."""
+        # For complex output, we can use MSE on both real and imaginary parts
+        if output.shape[-1] > 2:
+            output = output[..., :-2]
+        if target.shape[-1] > 2:
+            target = target[..., :-2]
+
+        loss = self.criterion_fn(output.to(device), target.to(device))
+        return loss
+    def preprocess_sample(self, x: torch.Tensor, device: Union[str, torch.device]):    
+        if isinstance(x, np.ndarray):
+            x = torch.from_numpy(x)
+        return x.float().to(device)
+        
         
 
 class TrainCVTransformer(TrainRVTransformer):
@@ -402,8 +394,8 @@ class TrainSSM(TrainerBase):
     Handles column-wise processing where each column is treated as a sequence.
     """
     
-    def __init__(self, base_save_dir: str, model, mode: str = "parallel", criterion: Callable = nn.MSELoss):
-        super().__init__(base_save_dir, model, mode, criterion=criterion)
+    def __init__(self, base_save_dir: str, model, mode: str = "parallel", criterion: Callable = nn.MSELoss, scheduler_type: str = 'cosine'):
+        super().__init__(base_save_dir, model, mode, criterion=criterion, scheduler_type=scheduler_type)
         self.logger = logging.getLogger(__name__)
         
         # Count parameters and log model info
@@ -412,7 +404,17 @@ class TrainSSM(TrainerBase):
             trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
             self.logger.info(f"Model created with {total_params:,} total parameters")
             self.logger.info(f"Trainable parameters: {trainable_params:,}")
-        
+    def forward_pass(self, x: Union[np.ndarray, torch.Tensor], y: Union[np.ndarray, torch.Tensor], device: Union[str, torch.device]="cuda") -> torch.Tensor:
+        """
+        Forward pass through the model.
+        Args:
+            x: Input tensor
+            y: Target tensor
+        Returns:
+            Model output tensor
+        """
+        x_preprocessed = self.preprocess_sample(x, device)
+        return self.model(x_preprocessed)
     def preprocess_sample(self, x: Union[torch.Tensor, np.ndarray], device: Union[str, torch.device]):   
         if isinstance(x, np.ndarray):
             x = torch.from_numpy(x)              
@@ -429,8 +431,12 @@ class TrainSSM(TrainerBase):
         # Remove positional embedding if present
         if output.shape[-1] > 2:
             output = output[..., :-2]
+        elif output.shape[-1] == 2:
+            output = output[..., :-1]
         if target.shape[-1] > 2:
             target = target[..., :-2]
+        elif target.shape[-1] == 2:
+            target = target[..., :-1]
 
         # print(f"Output shape: {output.shape}, Target shape: {target.shape}")
         # print(f"Output patch: {output}")
@@ -442,33 +448,31 @@ class TrainSSM(TrainerBase):
 class TrainDUN(TrainerBase):
     pass
 
-def get_training_loop_by_model_name(model_name: str, model: nn.Module, save_dir: Union[str, os.PathLike] = './results', loss_fn_name: str = "mse", mode: str = 'parallel') -> TrainerBase:
+def get_training_loop_by_model_name(model_name: str, model: nn.Module, save_dir: Union[str, os.PathLike] = './results', loss_fn_name: str = "mse", mode: str = 'parallel', scheduler_type: str = 'cosine') -> TrainerBase:
     if model_name == 'cv_transformer':
-        # Use enhanced trainer for complex transformers
         trainer = TrainCVTransformer(
             base_save_dir=str(save_dir),
             model=model,
             mode=mode,
-            criterion = get_loss_function("complex_mse")
+            criterion=get_loss_function("complex_mse"),
+            scheduler_type=scheduler_type
         )
-        
-        #logger.info("Created Complex transformer")
     elif 'transformer' in model_name.lower():
         trainer = TrainRVTransformer(
             base_save_dir=str(save_dir),
             model=model,
-            criterion = get_loss_function("mse"),
-            mode=mode
+            criterion=get_loss_function("mse"),
+            mode=mode,
+            scheduler_type=scheduler_type
         )
-        #logger.info("Created TrainRVTransformer")
-    # elif 'ssm' in model_name.lower():
-    #     trainer = TrainSSM(
-    #         base_save_dir=str(save_dir),
-    #         model=model,
-    #         criterion = get_loss_function("mse"),
-    #         mode=mode
-    #     )
-        #logger.info("Created TrainSSM")
+    elif 'ssm' in model_name.lower():
+        trainer = TrainSSM(
+            base_save_dir=str(save_dir),
+            model=model,
+            criterion=get_loss_function("complex_mse"),
+            mode=mode,
+            scheduler_type=scheduler_type
+        )
     else:
         raise ValueError(f"Unsupported model type: {model_name}")
     return trainer

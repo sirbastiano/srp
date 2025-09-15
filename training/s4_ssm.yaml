@@ -7,18 +7,20 @@ data_dir: "/Data/sar_focusing"
 epochs: 250
 batch_size: 16
 lr: 1e-3
+scheduler_type: "cosine"
 mode: "column_wise"
 
 # Model configuration
 model:
   name: "s4_ssm"
-  input_dim: 4
-  state_dim: 512
-  output_dim: 2
-  num_layers: 12
+  dim_head: 2
+  input_dim: 2000
+  model_dim: 2000
+  state_dim: 540
+  output_dim: 1000
+  num_layers: 6
   dropout: 0.2
   use_pos_encoding: true
-
 # Training configuration
 training:
   patience: 30
@@ -35,49 +37,66 @@ device: "cuda"
 dataloader:
   level_from: "rcmc"
   level_to: "az"
-  num_workers: 6
+  num_workers: 0
   patch_mode: "rectangular"
-  patch_size: [2000, 1]  # Longer columns for S4's long-range capabilities
+  patch_size: [1000, 10]
   buffer: [1000, 1000]
-  stride: [1000, 1]  # Non-overlapping with longer sequences
-  shuffle_files: true
-  complex_valued: false
+  stride: [1000, 10]
+  max_base_sample_size: [5000, 5000]
+  shuffle_files: false
+  complex_valued: true
   save_samples: false
   backend: "zarr"
-  verbose: true
-  cache_size: 800
-  online: false
-  concatenate_patches: false
+  verbose: false
+  cache_size: 1000
+  online: true
+  concatenate_patches: true
+  concat_axis: 0
   positional_encoding: true
-  
-  # Training split
-  train:
+  train: 
     batch_size: 16
-    samples_per_prod: 2500
-    patch_order: "col"
-    max_products: 4
-    pattern: "*052337*.zarr"
-    
-  # Validation split  
-  validation:
+    samples_per_prod: 100
+    patch_order: "chunk"
+    max_products: 1
+    filters: {
+      "years": [
+        2023,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
+  validation: 
     batch_size: 16
-    samples_per_prod: 800
-    patch_order: "col"
+    samples_per_prod: 1000
+    patch_order: "chunk"
     max_products: 1
-    pattern: "*048442*.zarr"
-    
-  # Test split
-  test:
-    batch_size: 8
-    samples_per_prod: 400
-    patch_order: "col"
+    filters: {
+      "years": [
+        2024,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
+  test: 
+    batch_size: 16
+    samples_per_prod: 5000
+    patch_order: "chunk"
     max_products: 1
-    pattern: "*049667*.zarr"
+    filters: {
+      "years": [
+        2023,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
 
 # Transform configuration
 transforms:
   normalize: true
-  complex_valued: false
+  complex_valued: true
   rc_min: -3000
   rc_max: 3000
   gt_min: -12000

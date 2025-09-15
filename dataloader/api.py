@@ -87,7 +87,21 @@ def list_base_files_in_repo(repo_id: str, path_in_repo: str= "", relative_path: 
     if relative_path:
         names = [os.path.basename(name) for name in names]
     return names
+def list_repos_by_author(author: str) -> list:
+    """
+    List all dataset repositories by a specific author on Hugging Face Hub.
 
+    Args:
+        author (str): Author's username.
+
+    Returns:
+        list: List of repository names (str).
+    """
+    from huggingface_hub import HfApi
+    api = HfApi()
+    repos = api.list_datasets(author=author)
+    repo_names = [repo.id for repo in repos]
+    return repo_names
 def list_files_in_repo(repo_id: str, path_in_repo: str, filters: list) -> list:
     """
     List all files in a Hugging Face Hub repository.

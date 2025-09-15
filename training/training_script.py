@@ -11,7 +11,7 @@ import logging
 import time
 from typing import Dict, Any
 
-from dataloader.dataloader import get_sar_dataloader, SARTransform
+from dataloader.dataloader import SampleFilter, get_sar_dataloader, SARTransform
 from model.model_utils import get_model_from_configs
 from training.training_loops import get_training_loop_by_model_name
 from training.visualize import save_results_and_metrics
@@ -141,21 +141,21 @@ def load_config(config_path: Path, args):
             'samples_per_prod': 1000,
             'patch_order': 'row',
             'max_products': 1,
-            'pattern': '*2023*.zarr'
+            'filters': {"years": [2023]}
         },
         'validation': {
             'batch_size': config['training'].get('batch_size', 16),
             'samples_per_prod': 500,
             'patch_order': 'row',
             'max_products': 1,
-            'pattern': '*2024*.zarr'
+            'filters': {"years": [2024]}
         },
         'test': {
             'batch_size': max(1, config['training'].get('batch_size', 16) // 2),
             'samples_per_prod': 200,
             'patch_order': 'row',
             'max_products': 1,
-            'pattern': '*2025*.zarr'
+            'filters': {"years": [2025]}
         }
     }
     
@@ -235,7 +235,7 @@ def create_dataloader_from_config(data_dir, dataloader_cfg, split_cfg, transform
         'samples_per_prod': split_cfg.get('samples_per_prod', 1000),
         'patch_order': split_cfg.get('patch_order', 'row'),
         'max_products': split_cfg.get('max_products', 1),
-        'file_pattern': split_cfg.get('pattern', '*.zarr')
+        'filters': split_cfg.get('filters', {})
     }
     
     # Merge configurations
@@ -248,13 +248,14 @@ def create_dataloaders(dataloader_cfg):
     """Create train, validation, and test dataloaders from configuration."""
     # Get data directory from dataloader config or use default
     data_dir = dataloader_cfg.get('data_dir', '/Data/sar_focusing')
-    
     # Create transforms
     transforms_cfg = dataloader_cfg.get('transforms', {})
     transforms = create_transforms_from_config(transforms_cfg)
     
     # Create train loader
     train_cfg = dataloader_cfg.get('train', {})
+    train_filters = train_cfg.get('filters', {})
+    train_cfg['filters'] = SampleFilter(**train_filters) if train_filters else None
     train_loader = create_dataloader_from_config(
         data_dir=data_dir,
         dataloader_cfg=dataloader_cfg,
@@ -264,6 +265,8 @@ def create_dataloaders(dataloader_cfg):
     
     # Create validation loader
     val_cfg = dataloader_cfg.get('validation', {})
+    val_filters = val_cfg.get('filters', {})
+    val_cfg['filters'] = SampleFilter(**val_filters) if val_filters else None
     val_loader = create_dataloader_from_config(
         data_dir=data_dir,
         dataloader_cfg=dataloader_cfg,
@@ -273,11 +276,13 @@ def create_dataloaders(dataloader_cfg):
     
     # Create test loader (no transforms for test as in original code)
     test_cfg = dataloader_cfg.get('test', {})
+    test_filters = test_cfg.get('filters', {})
+    test_cfg['filters'] = SampleFilter(**test_filters) if test_filters else None
     test_loader = create_dataloader_from_config(
         data_dir=data_dir,
         dataloader_cfg=dataloader_cfg,
         split_cfg=test_cfg,
-        transforms=None
+        transforms=transforms
     )
     
     return train_loader, val_loader, test_loader
@@ -293,6 +298,7 @@ def main():
     parser.add_argument('--learning_rate', type=float, default=None, help='Learning rate override')
     parser.add_argument('--num_epochs', type=int, default=None, help='Number of epochs override')
     parser.add_argument('--save_dir', type=str, default=None, help='Save directory override')
+    parser.add_argument('--scheduler_type', type=str, default='plateau', choices=['plateau', 'cosine'], help='LR scheduler type')
     
     args = parser.parse_args()
     
@@ -333,7 +339,8 @@ def main():
         model=model, 
         save_dir=training_cfg.get('save_dir', './results'), 
         loss_fn_name=training_cfg.get('loss_fn', 'mse'),
-        mode=training_cfg.get('mode', 'parallel')
+        mode=training_cfg.get('mode', 'parallel'),
+        scheduler_type=args.scheduler_type
     )
     # Start training
     logger.info("Starting training process...")

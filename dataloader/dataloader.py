@@ -11,14 +11,15 @@ import zarr
 
 from typing import List, Tuple, Dict, Optional, Union, Callable
 import json
+import pandas as pd
 import dask.array as da
 import time 
 import os
 import functools
 import math
 
-from utils import get_chunk_name_from_coords, get_sample_visualization, get_zarr_version
-from api import list_base_files_in_repo
+from utils import get_chunk_name_from_coords, get_part_from_filename, get_sample_visualization, get_zarr_version, parse_product_filename
+from api import list_base_files_in_repo, list_repos_by_author
 from utils import minmax_normalize, minmax_inverse, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN
 from api import fetch_chunk_from_hf_zarr, download_metadata_from_product
 import matplotlib.pyplot as plt
@@ -107,6 +108,42 @@ class ComplexNormalizationModule(BaseTransformModule):
             # Assume magnitude data
             return minmax_inverse(x, self.real_min, self.real_max)
 
+class AdaptiveNormalizationModule(BaseTransformModule):
+    """Complex-valued normalization module for SAR data."""
+    
+    def __init__(self):
+        super(AdaptiveNormalizationModule, self).__init__()
+
+    
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        """Normalize complex array separately for real and imaginary parts."""
+        if np.iscomplexobj(x):
+            # Normalize real and imaginary parts separately
+            # Use numpy functions to extract real and imaginary parts
+            re = np.real(x)
+            im = np.imag(x)
+            real_part = minmax_normalize(re, np.min(re), np.max(re))
+            imag_part = minmax_normalize(im, np.min(im), np.max(im))
+
+            #real_part = np.clip(real_part, 0, 1)
+            #imag_part = np.clip(imag_part, 0, 1)
+            
+            normalized = real_part + 1j * imag_part
+        else:
+            # Assume magnitude data
+            normalized = minmax_normalize(x, self.real_min, self.real_max)
+
+        return normalized
+    def inverse(self, x: np.ndarray) -> np.ndarray:
+        """Inverse normalization."""
+        if np.iscomplexobj(x):
+            # Inverse normalize real and imaginary parts separately
+            real_part = minmax_inverse(np.real(x), self.real_min, self.real_max)
+            imag_part = minmax_inverse(np.imag(x), self.imag_min, self.imag_max)
+            return real_part + 1j * imag_part
+        else:
+            # Assume magnitude data
+            return minmax_inverse(x, self.real_min, self.real_max)
 
 class SARTransform(nn.Module):
     """
@@ -221,6 +258,82 @@ class SARTransform(nn.Module):
             transform_az=az_transform
         )
 
+class SampleFilter:
+    def __init__(self, parts: List[str]=None, years: List[int] = None, months: List[int] = None, polarizations: List[str] = None, stripmap_modes: List[int] = None):
+        """
+        Initialize the SampleFilter with optional filtering criteria.
+
+        Args:
+            years (List[int], optional): List of years to filter.
+            months (List[int], optional): List of months to filter.
+            polarizations (List[str], optional): List of polarizations to filter.
+            stripmap_modes (List[str], optional): List of stripmap modes to filter.
+        """
+        self.parts = parts if parts is not None else []
+        self.years = years if years is not None else []
+        self.months = months if months is not None else []
+        self.polarizations = polarizations if polarizations is not None else []
+        self.stripmap_modes = stripmap_modes if stripmap_modes is not None else []
+    def get_filter_dict(self) -> Dict[str, List[Union[int, str]]]:
+        """
+        Get the filter criteria as a dictionary.
+
+        Returns:
+            Dict[str, List[Union[int, str]]]: Dictionary with filter criteria.
+        """
+        filter_dict = {}
+        if self.parts:
+            filter_dict['part'] = self.parts
+        if self.years:
+            filter_dict['year'] = self.years
+        if self.months:
+            filter_dict['month'] = self.months
+        if self.polarizations:
+            filter_dict['polarization'] = self.polarizations
+        if self.stripmap_modes:
+            filter_dict['stripmap_mode'] = self.stripmap_modes
+        return filter_dict
+    def matches(self, record: dict) -> bool:
+        """
+        Check if a given record matches the filter criteria.
+
+        Args:
+            record (dict): Dictionary containing product metadata.
+        Returns:
+            bool: True if the record matches all specified criteria, False otherwise.
+        """
+        if self.years and record.get('year') not in self.years:
+            return False
+        if self.months and record.get('month') not in self.months:
+            return False
+        if self.polarizations and record.get('polarization') not in self.polarizations:
+            return False
+        if self.stripmap_modes and str(record.get('stripmap_mode')) not in self.stripmap_modes:
+            return False
+        if self.parts and record.get('part') not in self.parts:
+            return False
+        return True
+    def _filter_products(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply filtering criteria to a DataFrame of product metadata.
+        Args:
+            df (pd.DataFrame): DataFrame containing product metadata.
+        Returns:
+            pd.DataFrame: Filtered DataFrame.
+        """
+        mask = pd.Series([True] * len(df))
+        if len(self.years) > 0:
+            mask &= df["acquisition_date"].dt.year.isin(self.years)
+        if len(self.months) > 0:
+            mask &= df["acquisition_date"].dt.month.isin(self.months)
+        if len(self.stripmap_modes) > 0:
+            mask &= df["stripmap_mode"].isin(self.stripmap_modes)
+        if len(self.polarizations) > 0:
+            mask &= df["polarization"].isin(self.polarizations)
+        if len(self.parts) > 0:
+            mask &= df["part"].isin(self.parts)
+        return df[mask]
+
 class SARZarrDataset(Dataset):
     """
     PyTorch Dataset for loading SAR (Synthetic Aperture Radar) data patches from Zarr format archives.
@@ -242,9 +355,11 @@ class SARZarrDataset(Dataset):
         repo_id (str, optional): Hugging Face repo ID for remote access. Defaults to 'sirbastiano94/Maya4'.
         online (bool, optional): If True, enables remote Hugging Face access. Defaults to False.
         return_whole_image (bool, optional): If True, returns the whole image as a single patch. Defaults to False.
+            use_positional_as_token: bool = False,
         transform (callable, optional): Optional transform to apply to both input and target patches.
         patch_size (Tuple[int, int], optional): Size of the patch (height, width). Defaults to (256, 256). If the patch width or height is set to a negative value, it will be computed based on the image dimensions minus the buffer.
         complex_valued (bool, optional): If True, returns complex-valued tensors. If False, returns real and imaginary parts stacked. Defaults to False.
+            self.use_positional_as_token = use_positional_as_token
         level_from (str, optional): Key for the input SAR processing level. Defaults to "rcmc".
         level_to (str, optional): Key for the target SAR processing level. Defaults to "az".
         patch_mode (str, optional): Patch extraction mode: "rectangular", or "parabolic". Defaults to "rectangular".
@@ -267,8 +382,8 @@ class SARZarrDataset(Dataset):
     def __init__(
         self,
         data_dir: str,
-        file_pattern: str = "*.zarr",
-        repo_id: str = 'sirbastiano94/Maya4',
+        filters: Optional[SampleFilter] = None,
+        author: str = 'Maya4',
         online: bool = False,
         return_whole_image: bool = False,
         transform: Optional[SARTransform] = None,
@@ -291,11 +406,12 @@ class SARZarrDataset(Dataset):
         samples_per_prod: int = 1000, 
         concatenate_patches: bool = False,  # wether to concatenate 1D patches into 2D patches (useful for transformers from rcmc to az)
         concat_axis: int = 1,               # Axis on which patches have to be concatenated: 0=vertical, 1=horizontal
-        max_stripmap_modes: int = 6
+        max_stripmap_modes: int = 6,
+        use_positional_as_token: bool = False
     ):
         self.data_dir = Path(data_dir)
-        self.file_pattern = file_pattern
-        self.repo_id = repo_id
+        self.filters = filters if filters is not None else SampleFilter()
+        self.author = author
         self.return_whole_image = return_whole_image
         self.transform = transform
         self._patch_size = patch_size
@@ -319,7 +435,8 @@ class SARZarrDataset(Dataset):
         self._max_base_sample_size = max_base_sample_size
         self.concatenate_patches = concatenate_patches
         self.concat_axis = concat_axis
-
+        self.use_positional_as_token = use_positional_as_token
+        
         self._patch: Dict[str, np.ndarray] = {
             self.level_from: np.array([0]),
             self.level_to: np.array([0])
@@ -335,7 +452,6 @@ class SARZarrDataset(Dataset):
             self._load_chunk_uncached
         )
 
-        self._stores: Dict[os.PathLike, zarr.Group] = {}
         self._samples_by_file: Dict[os.PathLike, List[Tuple[int,int]]] = {}
         self._y_coords: Dict[os.PathLike, np.ndarray] = {}
         self._x_coords: Dict[os.PathLike, np.ndarray] = {}
@@ -344,7 +460,6 @@ class SARZarrDataset(Dataset):
         self._initialize_stores()
         if self.verbose:
             print(f"Initialized dataloader with config: buffer={buffer}, stride={stride}, patch_size={patch_size}, complex_values={complex_valued}")
-
     def get_patch_size(self, zfile: Optional[Union[str, os.PathLike]]) -> Tuple[int, int]:
         """
         Retrieve the patch size for a given Zarr file based on its processing level.
@@ -399,32 +514,40 @@ class SARZarrDataset(Dataset):
         else:
             ephemeris = None
         return metadata, ephemeris
-    
 
-    def _get_file_list(self):
+
+    def _build_file_list(self):
         """
         Retrieve the list of Zarr files to use, either from the local directory or from a remote Hugging Face repository.
         Filters files using the provided glob pattern and limits to max_products.
         """
         if self.online:
-            import fnmatch
-            self.remote_files = list_base_files_in_repo(
-                repo_id=self.repo_id,
-            )
-            # Convert glob pattern to regex for matching
-            regex_pattern = fnmatch.translate(self.file_pattern)
-            filename_regex = re.compile(regex_pattern)
+            repos = list_repos_by_author(self.author)
             if self.verbose:
-                print(f"Found {len(self.remote_files)} files in the remote repository: '{self.remote_files}'")
-            matched_files = [Path(self.data_dir).joinpath(f) for f in self.remote_files if filename_regex.match(f)]
-            self.files = sorted(matched_files)[:min(self._max_products, len(matched_files))]
+                print(f"Found {len(repos)} repositories by author '{self.author}': {repos}")
+            self.remote_files = {}
+            for repo in repos:
+                repo_files = list_base_files_in_repo(
+                    repo_id=repo,
+                )
+                # Convert glob pattern to regex for matching
+                if self.verbose:
+                    print(f"Found {len(repo_files)} files in the remote repository: '{repo}'")
+                repo_name = repo.split('/')[-1]
+                self.remote_files[repo_name] = repo_files
+            records = [r for r in (parse_product_filename(os.path.join(self.data_dir, part, f)) for part, files in self.remote_files.items() for f in files) if r is not None]
+            print(f"Total files found in remote repository: {len(records)}")
+            self._files = self.filters._filter_products(pd.DataFrame(records))
         else:
-            self.files = sorted(self.data_dir.glob(self.file_pattern))
-            self.files = self.files[:min(self._max_products, len(self.files))]
+            print(f"Files in local directory {self.data_dir}: {[f.name for f in sorted(self.data_dir.glob('*'))]}")
+            records = [r for r in (parse_product_filename(f) for f in sorted(self.data_dir.glob("*"))) if r is not None]
+            self._files = self.filters._filter_products(pd.DataFrame(records))
+        self._files.sort_values(by=['full_name'], inplace=True)
+        self._files = self._files.iloc[:self._max_products]
         if self.verbose:
-            print(f"Selected only files:  {self.files}")
+            print(f"Selected only files:  {self._files}")
 
-    def _append_file_to_stores(self, zfile: os.PathLike):
+    def _append_file_to_stores(self, zfile: Union[str, os.PathLike]):
         """
         Appends a Zarr file to the stores dictionary, opening it in read-only mode.
         This method is used to initialize the dataset with a specific Zarr file.
@@ -434,16 +557,25 @@ class SARZarrDataset(Dataset):
         """
         if not Path(zfile).exists():
             return
-        if zfile in self._stores:
-            return
+        # Only return if the entry does not exist at all
+        if not os.path.exists(get_part_from_filename(zfile)):
+            os.makedirs(os.path.join(self.data_dir, get_part_from_filename(zfile)), exist_ok=True)
+        idx = self._files.index[self._files['full_name'] == Path(zfile)]
+        if len(idx) > 0 and self._files.at[idx[0], 'store'] is not None:
+            return  # Do not return, just continue
         if self.backend == "zarr":
-            store = LocalStore(str(zfile))
-            self._stores[zfile] = zarr.open(store, mode='r')
+            idx = self._files.index[self._files['full_name'] == Path(zfile)]
+            if len(idx) > 0:
+                print(f"Opening Zarr store for file {zfile} at index {idx[0]}")
+                self._files.at[idx[0], 'store'] = self.open_archive(zfile)
         elif self.backend == "dask":
-            self._stores[zfile] = {}
+            self._files.loc[self._files['full_name'] == Path(zfile), 'store'] = {}
             for level in (self.level_from, self.level_to):
                 complete_path = os.path.join(zfile, level) 
-                self._stores[zfile][level] = da.from_zarr(complete_path) #.rechunk(self.patch_size)  
+                idx = self._files.index[self._files['full_name'] == Path(zfile)]
+                if len(idx) > 0:
+                    self._files.at[idx[0], 'store'] = {}
+                    self._files.at[idx[0], 'store'][level] = self.open_archive(complete_path) 
         else:
             raise ValueError(f"Unknown backend {self.backend}")
 
@@ -451,25 +583,106 @@ class SARZarrDataset(Dataset):
         """
         Initializes data stores based on the selected backend.
 
-        For the "zarr" backend, opens each file as a Zarr store in read-only mode and stores it in `self._stores`.
+        For the "zarr" backend, opens each file as a Zarr store in read-only mode and stores it in `self._files` in the 'stores' attribute.
         For the "dask" backend, creates a dictionary for each file, loading data for each specified level using Dask arrays
         with the given patch size for rechunking.
         Raises:
             ValueError: If an unknown backend is specified.
         """
         t0 = time.time()
-        self._get_file_list()
+        self._build_file_list()
         if self.verbose:
             dt = time.time() - t0
             print(f"Files list calculation took {dt:.2f} seconds.")
             
         t0 = time.time()
-        for zfile in self.files:
-            self._append_file_to_stores(zfile)
+        for zfile in self.get_files():
+            self._append_file_to_stores(Path(zfile))
         if self.verbose:
-            df = time.time() - t0
-            print(f"Zarr stores initialization took {df:.2f} seconds.")
+            dt = time.time() - t0
+            print(f"Zarr stores initialization took {dt:.2f} seconds.")
 
+    def get_files(self) -> List[os.PathLike]:
+        """
+        Returns the list of Zarr files used in the dataset.
+
+        Returns:
+            List[os.PathLike]: List of Zarr file paths.
+        """
+
+        return self._files['full_name'].tolist()
+
+    def open_archive(self, zfile: os.PathLike) -> (zarr.Group | zarr.Array):
+        """
+        Open a Zarr archive and return the root group or array, depending on backend.
+
+        Args:
+            zfile (os.PathLike): Path to the Zarr file.
+
+        Returns:
+            zarr.Group or zarr.Array: The root group or array of the Zarr archive.
+        """
+        if self.backend == "dask":
+            return da.from_zarr(zfile)
+        elif self.backend == "zarr":
+            return zarr.open(zfile, mode='r')
+        else: 
+            raise ValueError(f"Unknown backend {self.backend}")
+        
+    def get_store_at_level(self, zfile: Union[os.PathLike, str], level: str) -> zarr.Array:
+        level_dir = Path(zfile) / level
+        if not Path(zfile).exists() or not level_dir.exists() or not level_dir.exists():
+            if self.online:
+                zfile_name = os.path.basename(zfile)
+                part = get_part_from_filename(zfile)
+                repo_id = self.author + '/' + part
+                download_metadata_from_product(
+                    zfile_name=str(zfile_name),
+                    local_dir=os.path.join(self.data_dir, part),
+                    levels=[level, self.level_from, self.level_to],
+                    repo_id=repo_id
+                )
+            else:
+                raise ValueError(f"Levels {self.level_from} and {self.level_to} not found in Zarr store {zfile}.")
+        self._append_file_to_stores(zfile=Path(zfile))
+        print(f"Accessing level '{level}' in Zarr store '{zfile}'")
+        return self._files.loc[self._files['full_name'] == Path(zfile), 'store'].values[0][level]
+    
+    def get_store(self, zfile: Union[os.PathLike, str]) -> zarr.Group:
+        if not Path(zfile).exists():
+            if self.online:
+                zfile_name = os.path.basename(zfile)
+                part = get_part_from_filename(zfile)
+                repo_id = self.author + '/' + part
+                download_metadata_from_product(
+                    zfile_name=str(zfile_name),
+                    local_dir=os.path.join(self.data_dir, part),
+                    levels=[self.level_from, self.level_to], 
+                    repo_id=repo_id
+                )
+            else:
+                raise ValueError(f"Levels {self.level_from} and {self.level_to} not found in Zarr store {zfile}.")
+        self._append_file_to_stores(zfile=Path(zfile))
+        return self._files.loc[self._files['full_name'] == str(zfile), 'store'].values[0]
+    def get_max_base_sample_size(self, zfile: Union[str, os.PathLike]):
+        ph, pw =   self._max_base_sample_size
+        if ph == -1:
+            ph = self.get_store_at_level(Path(zfile), self.level_from).shape[0]
+        if pw == -1:
+            pw = self.get_store_at_level(Path(zfile), self.level_from).shape[1]
+        return ph, pw
+    def get_whole_sample_shape(self, zfile: os.PathLike) -> Tuple[int, int]:
+        """
+        Get the shape of the whole sample (image) at the specified level from the Zarr file.
+
+        Args:
+            zfile (os.PathLike): Path to the Zarr file.
+
+        Returns:
+            Tuple[int, int]: Shape of the whole sample (height, width).
+        """
+        ph, pw = self.get_store_at_level(zfile, self.level_from).shape
+        return (ph - self.buffer[0] * 2, pw - self.buffer[1] * 2)
     def calculate_patches_from_store(self, zfile:os.PathLike, patch_order: str = "row", window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]] = None):
         """
         Compute and store valid patch coordinates for a given Zarr file, according to the patch mode and parameters.
@@ -484,19 +697,21 @@ class SARZarrDataset(Dataset):
         if not Path(zfile).exists() or not level_from_dir.exists() or not level_t_dir.exists():
             if self.online:
                 zfile_name = os.path.basename(zfile)
+                part = get_part_from_filename(zfile)
+                repo_id = self.author + '/' + part
                 download_metadata_from_product(
                     zfile_name=str(zfile_name),
-                    local_dir=self.data_dir, 
+                    local_dir=os.path.join(self.data_dir, part),
                     levels=[self.level_from, self.level_to], 
-                    repo_id=self.repo_id
+                    repo_id=repo_id
                 )
             else:
                 raise ValueError(f"Levels {self.level_from} and {self.level_to} not found in Zarr store {zfile}.")
         
-        self._append_file_to_stores(zfile)
+        self._append_file_to_stores(Path(zfile))
         # Print the directories (groups/arrays) inside the Zarr store
 
-        h, w = self.get_whole_sample_shape(zfile) #self._stores[zfile][self.level_from].shape
+        h, w = self.get_whole_sample_shape(zfile) 
         coords: List[Tuple[int,int]] = []
         if self.return_whole_image:
             coords = [(0, 0)]
@@ -613,12 +828,12 @@ class SARZarrDataset(Dataset):
 
         Notes:
             - The chunk sizes are inferred from the Zarr store at the specified processing level (`self.level_from`).
-            - The method assumes that `self._stores`, `self._y_coords`, and `self._x_coords` are properly initialized and populated.
+            - The method assumes that the attribute 'store' in `self._files`, `self._y_coords`, and `self._x_coords` are properly initialized and populated.
             - The returned coordinate order is optimized for sequential chunk access, which can reduce I/O overhead and improve cache utilization.
         """
 
         # Get chunk size and patch size
-        sample = self._stores[zfile][self.level_from]
+        sample = self.get_store_at_level(zfile=Path(zfile), level=self.level_from)
         ch, cw = sample.chunks
         
         # Create coordinate grids
@@ -708,22 +923,22 @@ class SARZarrDataset(Dataset):
                 patch_from = self._get_sample(zfile, self.level_from, y, x, ph, pw)
                 
                 # if pw == 1:
-                #     original_patch = self._stores[zfile][self.level_from][y:y+ph, x]
+                #     original_patch = self.get_store_at_level(zfile, self.level_from)[y:y+ph, x]
                 # elif ph == 1:
-                #     original_patch = self._stores[zfile][self.level_from][y, x:x+pw]
+                #     original_patch = self.get_store_at_level(zfile, self.level_from)[y, x:x+pw]
                 # else:
-                #     original_patch = self._stores[zfile][self.level_from][y:y+ph,x:x+pw]
+                #     original_patch = self.get_store_at_level(zfile, self.level_from)[y:y+ph,x:x+pw]
                 # #print(f"Original patch shape")
                 # assert (patch_from.squeeze() ==original_patch).all(), f"Patch data mismatch! Patch: {patch_from.squeeze()}, original patch: {original_patch}"
                 # print(f"Comparison is ok between the patches: {patch_from.squeeze()[:50]} and {original_patch[:50]}")
                 
                 patch_to = self._get_sample(zfile, self.level_to, y, x, ph, pw)
                 # if pw == 1:
-                #     original_patch = self._stores[zfile][self.level_to][y:y+ph, x]
+                #     original_patch = self.get_store_at_level(zfile, self.level_to)[y:y+ph, x]
                 # elif ph == 1:
-                #     original_patch = self._stores[zfile][self.level_to][y, x:x+pw]
+                #     original_patch = self.get_store_at_level(zfile, self.level_to)[y, x:x+pw]
                 # else:
-                #     original_patch = self._stores[zfile][self.level_to][y:y+ph,x:x+pw]
+                #     original_patch = self.get_store_at_level(zfile, self.level_to)[y:y+ph,x:x+pw]
                 # #print(f"Original patch shape")
                 # assert (patch_to.squeeze() ==original_patch).all(), f"Patch data mismatch! Patch: {patch_to.squeeze()}, original patch: {original_patch}"
                 # print(f"Comparison is ok between the patches: {patch_from.squeeze()[:50]} and {original_patch[:50]}")
@@ -762,7 +977,7 @@ class SARZarrDataset(Dataset):
         t0 = time.time()
 
         # Retrieve the horizontal size (width) from the store for self.level_from
-        sample_height, sample_width = self.get_whole_sample_shape(zfile) #self._stores[zfile][self.level_from].shape[1]
+        sample_height, sample_width = self.get_whole_sample_shape(zfile) 
         if self.verbose:
             dt = time.time() - t0
             print(f"Sample shape for {zfile} at level {self.level_from}: {sample_height}x{sample_width} took {dt:.4f} seconds")
@@ -788,7 +1003,7 @@ class SARZarrDataset(Dataset):
             patch_to = np.stack((np.real(patch_to), np.imag(patch_to)), axis=-1).astype(np.float32)
             if self.verbose:
                 dt = time.time() - t0
-                print(f"Patch stacking took {dt:.4f} seconds")
+                print(f"Complex to real conversion took {dt:.4f} seconds")
         #print(f"Shape before positional encoding: {patch_from.shape}")
         if self.positional_encoding:
             t0 = time.time()
@@ -810,6 +1025,12 @@ class SARZarrDataset(Dataset):
             if self.verbose:
                 dt = time.time() - t0
                 print(f"Concatenated patch shapes: from={patch_from.shape}, to={patch_to.shape} took {dt:.4f} seconds")
+        # Optionally concatenate positional embedding as next token
+        if self.use_positional_as_token:
+            # patch_from shape: (1000, seq_len, 2)
+            backscatter = patch_from[..., 0]
+            pos_embed = patch_from[..., 1]
+            patch_from = np.concatenate([backscatter, pos_embed[:, :, :1]], axis=-1)  # (1000, seq_len+1)
         x_tensor = torch.from_numpy(patch_from)
         y_tensor = torch.from_numpy(patch_to)
         if self.verbose:
@@ -831,13 +1052,15 @@ class SARZarrDataset(Dataset):
             Path: Path to the downloaded chunk file.
         """
         zfile_name = os.path.basename(zfile)
+        part = get_part_from_filename(zfile)
+        repo_id = self.author + '/' + part
         if not zfile.exists():
             if self.online:
                 meta_file = download_metadata_from_product(
                     zfile_name=str(zfile_name),
-                    local_dir=self.data_dir, 
+                    local_dir=os.path.join(self.data_dir, part),
                     levels=[self.level_from, self.level_to], 
-                    repo_id=self.repo_id
+                    repo_id=repo_id
                 )
                 with open(meta_file) as f:
                     zarr_meta = json.load(f)
@@ -845,15 +1068,14 @@ class SARZarrDataset(Dataset):
                 self.calculate_patches_from_store(zfile)
             else:
                 raise FileNotFoundError(f"Zarr file {zfile} does not exist.")
-        
-        chunk_name = get_chunk_name_from_coords(y, x, zarr_file_name=zfile_name, level=level, chunks=self._stores[zfile][level].chunks, version=get_zarr_version(zfile))
+
+        chunk_name = get_chunk_name_from_coords(y, x, zarr_file_name=zfile_name, level=level, chunks=self.get_store_at_level(zfile, level).chunks, version=get_zarr_version(zfile))
         chunk_path = self.data_dir / chunk_name
         
         if not chunk_path.exists():
             if self.verbose:
                 print(f"Chunk {chunk_name} not found locally. Downloading from Hugging Face Zarr archive...")
-            zfile_name = os.path.basename(zfile)
-            fetch_chunk_from_hf_zarr(level=level, y=y, x=x, zarr_archive=zfile_name, local_dir=self.data_dir, repo_id=self.repo_id)
+            fetch_chunk_from_hf_zarr(level=level, y=y, x=x, zarr_archive=zfile_name, local_dir=self.data_dir, repo_id=repo_id)
         return chunk_path
 
 
@@ -871,7 +1093,7 @@ class SARZarrDataset(Dataset):
         Returns:
             np.ndarray: Single chunk data.
         """
-        arr = self._stores[zfile][level]
+        arr = self.get_store_at_level(zfile, level)
         ch, cw = arr.chunks
         
         # Calculate actual array coordinates for this chunk
@@ -893,7 +1115,7 @@ class SARZarrDataset(Dataset):
         """
         Optimized version that dispatches to specialized methods based on patch geometry.
         """
-        arr = self._stores[zfile][level]
+        arr = self.get_store_at_level(zfile, level)
         ch, cw = arr.chunks
         
         # Dispatch to optimized methods based on patch type
@@ -1036,7 +1258,7 @@ class SARZarrDataset(Dataset):
         """
         Highly optimized version with fast single-chunk path.
         """
-        arr = self._stores[zfile][level]
+        arr = self.get_store_at_level(zfile, level)
         ch, cw = arr.chunks
         
         # Pre-calculate chunk coordinates
@@ -1080,7 +1302,7 @@ class SARZarrDataset(Dataset):
         """
         t0 = time.time()
         if self.backend == "dask":
-            sample = self._stores[zfile][level]
+            sample = self.get_store_at_level(zfile, level)
             if ph == 0 and pw == 0: 
                 arr = sample[y, x].compute() 
             elif ph == 0:   
@@ -1096,88 +1318,16 @@ class SARZarrDataset(Dataset):
         elif self.backend == "zarr":
             patch = self._get_sample_from_cached_chunks(zfile, level, y, x, ph, pw)
             # if pw == 1:
-            #     original_patch = self._stores[zfile][level][y:y+ph, x]
+            #     original_patch = self.get_store_at_level(zfile, level)[y:y+ph, x]
             # elif ph == 1:
-            #     original_patch = self._stores[zfile][level][y, x:x+pw]
+            #     original_patch = self.get_store_at_level(zfile, level)[y, x:x+pw]
             # else:
-            #     original_patch = self._stores[zfile][level][y:y+ph,x:x+pw]
+            #     original_patch = self.get_store_at_level(zfile, level)[y:y+ph,x:x+pw]
             # #print(f"Original patch shape")
             # assert (patch.squeeze() ==original_patch).all(), f"Patch data mismatch! Patch: {patch.squeeze()}, original patch: {original_patch}"
             return patch
         else:
             raise ValueError(f"Unknown backend {self.backend}")
-        
-    def open_archive(self, zfile: os.PathLike) -> (zarr.Group | zarr.Array):
-        """
-        Open a Zarr archive and return the root group or array, depending on backend.
-
-        Args:
-            zfile (os.PathLike): Path to the Zarr file.
-
-        Returns:
-            zarr.Group or zarr.Array: The root group or array of the Zarr archive.
-        """
-        if self.backend == "dask":
-            return da.from_zarr(zfile)
-        elif self.backend == "zarr":
-            return zarr.open(zfile, mode='r')
-        else: 
-            raise ValueError(f"Unknown backend {self.backend}")
-        
-    def get_store_at_level(self, zfile: Union[os.PathLike, str], level: str) -> zarr.Array:
-        level_dir = Path(zfile) / level
-        if not Path(zfile).exists() or not level_dir.exists() or not level_dir.exists():
-            if self.online:
-                zfile_name = os.path.basename(zfile)
-                download_metadata_from_product(
-                    zfile_name=str(zfile_name),
-                    local_dir=self.data_dir, 
-                    levels=[level, self.level_from, self.level_to], 
-                    repo_id=self.repo_id
-                )
-            else:
-                raise ValueError(f"Levels {self.level_from} and {self.level_to} not found in Zarr store {zfile}.")
-        self._append_file_to_stores(zfile=Path(zfile))
-        return self._stores[Path(zfile)][level]
-    
-    def get_store(self, zfile: Union[os.PathLike, str]) -> zarr.Group:
-        if not Path(zfile).exists():
-            if self.online:
-                zfile_name = os.path.basename(zfile)
-                download_metadata_from_product(
-                    zfile_name=str(zfile_name),
-                    local_dir=self.data_dir, 
-                    levels=[self.level_from, self.level_to], 
-                    repo_id=self.repo_id
-                )
-            else:
-                raise ValueError(f"Levels {self.level_from} and {self.level_to} not found in Zarr store {zfile}.")
-        self._append_file_to_stores(zfile=Path(zfile))
-        return self._stores[Path(zfile)]
-    def get_max_base_sample_size(self, zfile: Union[str, os.PathLike]):
-        # if Path(zfile) not in self._stores:
-        #     raise KeyError(f"Zarr file {zfile} not found in stores.")
-        ph, pw =   self._max_base_sample_size
-        if ph == -1:
-            ph = self.get_store_at_level(Path(zfile), self.level_from).shape[0]
-        if pw == -1:
-            pw = self.get_store_at_level(Path(zfile), self.level_from).shape[1]
-        return ph, pw
-    def get_whole_sample_shape(self, zfile: os.PathLike) -> Tuple[int, int]:
-        """
-        Get the shape of the whole sample (image) at the specified level from the Zarr file.
-
-        Args:
-            zfile (os.PathLike): Path to the Zarr file.
-
-        Returns:
-            Tuple[int, int]: Shape of the whole sample (height, width).
-        """
-        if zfile not in self._stores:
-            raise KeyError(f"Zarr file {zfile} not found in stores.")
-        
-        ph, pw = self.get_store_at_level(zfile, self.level_from).shape #self._stores[zfile][self.level_from].shape
-        return (ph - self.buffer[0] * 2, pw - self.buffer[1] * 2)
     
     def _get_concatenated_patch(self, patch: np.ndarray, zfile: os.PathLike) -> np.ndarray:
         """
@@ -1441,7 +1591,7 @@ class SARZarrDataset(Dataset):
             y_coords = y_start + np.arange(ph)
             
             # Determine which chunks we need for the center column
-            sample = self._stores[zfile][level]
+            sample = self.get_store_at_level(zfile, level)
             if self.backend == "zarr":
                 ch, cw = sample.chunks
                 
@@ -1488,7 +1638,7 @@ class SARZarrDataset(Dataset):
             
             if self.backend == "zarr":
                 # Group coordinates by chunks for efficient cache utilization
-                sample = self._stores[zfile][level]
+                sample = self.get_store_at_level(zfile, level)
                 ch, cw = sample.chunks
                 
                 chunk_groups = {}
@@ -1627,7 +1777,6 @@ class KPatchSampler(Sampler):
         self.shuffle_files = shuffle_files
         self.patch_order = patch_order
         self.seed = seed
-        #self.files = dataset.files #list(dataset._samples_by_file.keys())
         self.verbose = verbose
         self.coords: Dict[Path, List[Tuple[int, int]]] = {}
 
@@ -1637,7 +1786,7 @@ class KPatchSampler(Sampler):
         Shuffles files and/or patches if enabled.
         """
         rng = np.random.default_rng(self.seed)
-        files = self.dataset.files.copy() #files.copy()
+        files = self.dataset.get_files() #files.copy()
         if self.verbose:
             print(files)
         if self.shuffle_files:
@@ -1678,7 +1827,7 @@ class SARDataloader(DataLoader):
 
 def get_sar_dataloader(
     data_dir: str,
-    file_pattern: str = "*.zarr",
+    filters: Optional[SampleFilter] = None,
     batch_size: int = 8,
     num_workers: int = 2,
     return_whole_image: bool = False,
@@ -1739,7 +1888,7 @@ def get_sar_dataloader(
     """
     dataset = SARZarrDataset(
         data_dir=data_dir,
-        file_pattern=file_pattern,
+        filters=filters,
         return_whole_image=return_whole_image,
         transform=transform,
         patch_size=patch_size,

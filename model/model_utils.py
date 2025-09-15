@@ -239,17 +239,19 @@ class SARSSMFactory:
     
     @staticmethod
     def create_s4_ssm(
-        input_dim: int = 4,
-        state_dim: int = 512,
-        output_dim: int = 2,
-        num_layers: int = 12,
-        dropout: float = 0.2,
-        use_pos_encoding: bool = True,
-        **kwargs
-    ) -> nn.Module:
+            input_dim: int = 4,
+            state_dim: int = 512,
+            output_dim: int = 2,
+            model_dim: int = 1000,
+            num_layers: int = 12,
+            dropout: float = 0.2,
+            use_pos_encoding: bool = True,
+            complex_valued: bool = True,
+            **kwargs
+        ) -> nn.Module:
         """
-        Create an S4D-based SSM model for long-range sequence modeling.
-        
+        Create a sarSSM model (S4D-based) for long-range sequence modeling.
+
         Args:
             input_dim: Input feature dimension
             state_dim: Hidden state dimension (N in S4D terminology)
@@ -257,75 +259,32 @@ class SARSSMFactory:
             num_layers: Number of S4D layers
             dropout: Dropout rate
             use_pos_encoding: Whether to use positional encoding
-            
+            complex_valued: Whether to use complex-valued layers
+
         Returns:
-            Configured S4D-based model
+            Configured sarSSM model
         """
-        class S4SSMWrapper(nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.use_pos_encoding = use_pos_encoding
-                
-                # Model dimensions
-                proj_input_dim = input_dim if use_pos_encoding else input_dim - 2
-                d_model = kwargs.get('d_model', 64)
-                
-                # Input projection
-                self.input_proj = nn.Linear(proj_input_dim, d_model)
-                
-                # S4D layers
-                self.s4_layers = nn.ModuleList([
-                    S4D(
-                        d_model=d_model,
-                        d_state=state_dim,
-                        channels=kwargs.get('channels', 1),
-                        bidirectional=kwargs.get('bidirectional', False),
-                        activation=kwargs.get('activation', 'gelu'),
-                        dropout=dropout,
-                        transposed=False,  # Use (B, L, H) format
-                        **{k: v for k, v in kwargs.items() if k.startswith('kernel_')}
-                    )
-                    for _ in range(num_layers)
-                ])
-                
-                # Layer normalization for each S4D layer
-                self.layer_norms = nn.ModuleList([
-                    nn.LayerNorm(d_model) for _ in range(num_layers)
-                ])
-                
-                # Output projection
-                self.output_proj = nn.Linear(d_model, output_dim)
-                self.final_dropout = nn.Dropout(dropout)
-                
-            def forward(self, x):
-                # Input projection
-                if self.use_pos_encoding:
-                    h = self.input_proj(x)  # (B, T, d_model)
-                else:
-                    h = self.input_proj(x[..., :-2])  # (B, T, d_model)
-                
-                # Apply S4D layers with residual connections
-                for s4_layer, norm in zip(self.s4_layers, self.layer_norms):
-                    # Pre-norm residual connection
-                    h_norm = norm(h)
-                    h_out, _ = s4_layer(h_norm)
-                    h = h + h_out  # Residual connection
-                    h = self.final_dropout(h)
-                
-                # Output projection
-                return self.output_proj(h)  # (B, T, output_dim)
-        
-        return S4SSMWrapper()
+        return sarSSM(
+            input_dim=input_dim,
+            state_dim=state_dim,
+            output_dim=output_dim,
+            model_dim = model_dim,
+            num_layers=num_layers,
+            dropout=dropout,
+            use_pos_encoding=use_pos_encoding,
+            complex_valued=complex_valued,
+            **kwargs
+        )
 
 def create_ssm_model(
     model_type: str,
     input_dim: int = 4,
     state_dim: int = 64,
+    model_dim: int = 1000,
     output_dim: int = 2,
     num_layers: int = 6,
     dropout: float = 0.1,
-    use_pos_encoding: bool = True,
-    **kwargs
+    use_pos_encoding: bool = True
 ) -> nn.Module:
     """
     Factory function to create SSM models based on configuration.
@@ -351,30 +310,30 @@ def create_ssm_model(
             input_dim=input_dim,
             state_dim=state_dim,
             output_dim=output_dim,
+            model_dim=model_dim,
             num_layers=num_layers,
             dropout=dropout,
             use_pos_encoding=use_pos_encoding,
-            **kwargs
         )
     elif model_type == "mamba":
         return SARSSMFactory.create_mamba_ssm(
             input_dim=input_dim,
             state_dim=state_dim,
             output_dim=output_dim,
+            model_dim=model_dim,
             num_layers=num_layers,
             dropout=dropout,
             use_pos_encoding=use_pos_encoding,
-            **kwargs
         )
     elif model_type == "s4":
         return SARSSMFactory.create_s4_ssm(
             input_dim=input_dim,
             state_dim=state_dim,
             output_dim=output_dim,
+            model_dim=model_dim,
             num_layers=num_layers,
             dropout=dropout,
             use_pos_encoding=use_pos_encoding,
-            **kwargs
         )
     else:
         raise ValueError(f"Unsupported SSM model type: {model_type}. Supported types: 'simple', 'mamba', 's4'")
@@ -450,6 +409,7 @@ def get_model_from_configs(
         dim_head: int,
         seq_len: int = 256,
         input_dim: int = 1, 
+        state_dim: int= 512,
         model_dim: int = 64, 
         num_layers: int = 4, 
         num_heads: int = 4, 
@@ -510,20 +470,21 @@ def get_model_from_configs(
         model = create_ssm_model(
             model_type=ssm_type,
             input_dim=input_dim,
-            state_dim=model_dim,
+            state_dim=state_dim,
             output_dim=kwargs.get('output_dim', 2),
+            model_dim=model_dim,
             num_layers=num_layers,
             dropout=dropout,
-            use_pos_encoding=kwargs.get('use_pos_encoding', True),
-            **kwargs
+            use_pos_encoding=kwargs.get('use_pos_encoding', True)
         )
     elif name=="ssm":
         # Legacy support - defaults to simple SSM
         model = create_ssm_model(
             model_type="simple",
             input_dim=input_dim,
-            state_dim=model_dim,
+            state_dim=state_dim,
             output_dim=kwargs.get('output_dim', 2),
+            model_dim=model_dim,
             num_layers=num_layers,
             dropout=dropout
         )

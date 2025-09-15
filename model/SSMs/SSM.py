@@ -12,6 +12,7 @@ import torch.nn.functional as F
 from pytorch_lightning.utilities import rank_zero_only
 from einops import rearrange, repeat
 import opt_einsum as oe
+from mamba_ssm.ops.selective_scan_interface import selective_scan_fn
 
 contract = oe.contract
 contract_expression = oe.contract_expression
@@ -27,48 +28,103 @@ else:
 
 
 """ simple nn.Module components """
+class ComplexActivation(nn.Module):
+    def __init__(self, activation: nn.Module):
+        super().__init__()
+        self.activation = activation
 
-def Activation(activation=None, dim=-1):
+    def forward(self, x):
+        if torch.is_complex(x):
+            return torch.complex(self.activation(x.real), self.activation(x.imag))
+        else:
+            return self.activation(x)
+class ComplexDropout(nn.Module):
+    def __init__(self, p=0.5):
+        super().__init__()
+        self.p = p
+        self.dropout = nn.Dropout(p)
+
+    def forward(self, x):
+        if torch.is_complex(x):
+            return torch.complex(self.dropout(x.real), self.dropout(x.imag))
+        else:
+            return self.dropout(x)
+        
+class ComplexLayerNorm(nn.Module):
+    def __init__(self, normalized_shape, eps=1e-5, elementwise_affine=True):
+        super().__init__()
+        self.real_norm = nn.LayerNorm(normalized_shape, eps, elementwise_affine)
+        self.imag_norm = nn.LayerNorm(normalized_shape, eps, elementwise_affine)
+
+    def forward(self, x):
+        if torch.is_complex(x):
+            return torch.complex(self.real_norm(x.real), self.imag_norm(x.imag))
+        else:
+            return self.real_norm(x)
+def Activation(activation=None, dim=-1, complex:bool=False):
     if activation in [ None, 'id', 'identity', 'linear' ]:
-        return nn.Identity()
+        act = nn.Identity()
     elif activation == 'tanh':
-        return nn.Tanh()
+        act = nn.Tanh()
     elif activation == 'relu':
-        return nn.ReLU()
+        act = nn.ReLU()
     elif activation == 'gelu':
-        return nn.GELU()
+        act = nn.GELU()
     elif activation in ['swish', 'silu']:
-        return nn.SiLU()
+        act = nn.SiLU()
     elif activation == 'glu':
-        return nn.GLU(dim=dim)
+        act = nn.GLU(dim=dim)
     elif activation == 'sigmoid':
-        return nn.Sigmoid()
+        act = nn.Sigmoid()
     elif activation == 'leakyrelu':
-        return nn.LeakyReLU(negative_slope=0.125)
+        act = nn.LeakyReLU(negative_slope=0.125)
     elif activation == 'hardswish':
-        return nn.Hardswish()
+        act = nn.Hardswish()
     else:
         raise NotImplementedError("hidden activation '{}' is not implemented".format(activation))
+    if complex:
+        return ComplexActivation(act)
+    else:
+        return act
+
+
+class ComplexConv1d(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size=1, bias=True, **kwargs):
+        super().__init__()
+        self.real = nn.Conv1d(in_channels, out_channels, kernel_size, bias=bias, **kwargs)
+        self.imag = nn.Conv1d(in_channels, out_channels, kernel_size, bias=bias, **kwargs)
+
+    def forward(self, x):
+        # x: (B, in_channels, L)
+        return torch.complex(self.real(x.real), self.imag(x.imag))
 
 def LinearActivation(
         d_input, d_output, bias=True,
         transposed=False,
         activation=None,
         activate=False, # Apply activation as part of this module
+        complex=False,
         **kwargs,
     ):
     """ Returns a linear nn.Module with control over axes order, initialization, and activation """
 
-    # Construct core module
-    linear_cls = partial(nn.Conv1d, kernel_size=1) if transposed else nn.Linear
+    # Use ComplexConv1d if complex and transposed, else standard
+    if complex and transposed:
+        linear_cls = partial(ComplexConv1d, kernel_size=1)
+    elif transposed:
+        linear_cls = partial(nn.Conv1d, kernel_size=1)
+    elif complex:
+        linear_cls = ComplexLinear
+    else:
+        linear_cls = nn.Linear
+
     if activation == 'glu': d_output *= 2
     linear = linear_cls(d_input, d_output, bias=bias, **kwargs)
 
     if activate and activation is not None:
-        activation = Activation(activation, dim=-2 if transposed else -1)
+        activation = Activation(activation, dim=-2 if transposed else -1, complex=complex)
         linear = nn.Sequential(linear, activation)
     return linear
-
 
 """ HiPPO utilities """
 
@@ -119,9 +175,7 @@ class SSKernelDiag(nn.Module):
         self.N = w.size(-1)
         assert self.H % w.size(0) == 0
         self.copies = self.H // w.size(0)
-        
-        print(f"H is: \n{self.H}")
-        print(f"N is: \n{self.N}") 
+
 
         # Broadcast everything to correct shapes
         C = C.expand(torch.broadcast_shapes(C.shape, (1, self.H, self.N))) # (H, C, N)
@@ -248,8 +302,8 @@ class S4DKernel(nn.Module):
         C = C * repeat(B, 't n -> (v t) n', v=H//self.n_ssm)
         self.kernel = SSKernelDiag(
             w, C, log_dt,
-            lr=lr,
-            **kernel_args,
+            lr=lr
+            #,**kernel_args,
         )
 
     def forward(self, L=None):
@@ -280,6 +334,7 @@ class S4D(nn.Module):
             postact=None, # activation after FF
             dropout=0.0,
             transposed=True, # axis ordering (B, L, D) or (B, D, L)
+            complex:bool=True,
             # SSM Kernel arguments
             **kernel_args,
         ):
@@ -310,9 +365,12 @@ class S4D(nn.Module):
         self.kernel = S4DKernel(self.h, N=self.n, channels=channels, **kernel_args)
 
         # Pointwise
-        self.activation = Activation(activation)
-        dropout_fn = nn.Dropout2d if self.transposed else nn.Dropout
-        self.dropout = dropout_fn(dropout) if dropout > 0.0 else nn.Identity()
+        self.activation = Activation(activation, complex=complex)
+        if complex:
+            self.dropout = ComplexDropout(dropout) if dropout > 0.0 else nn.Identity()
+        else:
+            dropout_fn = nn.Dropout2d if self.transposed else nn.Dropout
+            self.dropout = dropout_fn(dropout) if dropout > 0.0 else nn.Identity()
 
         # position-wise output transform to mix features
         self.output_linear = LinearActivation(
@@ -321,36 +379,40 @@ class S4D(nn.Module):
             transposed=self.transposed,
             activation=postact,
             activate=True,
+            complex=complex
         )
 
 
-    def forward(self, u, **kwargs): # absorbs return_output and transformer src mask
-        """
-        u: (B H L) if self.transposed else (B L H)
-        state: (H N) never needed unless you know what you're doing
-
-        Returns: same shape as u
-        """
+# ...existing code...
+    def forward(self, u, **kwargs):
         if not self.transposed: u = u.transpose(-1, -2)
         L = u.size(-1)
 
         # Compute SS Kernel
-        k = self.kernel(L=L) # (C H L) (B C H L)
+        k = self.kernel(L=L) # (C H L)
 
         # Convolution
         if self.bidirectional:
             k0, k1 = rearrange(k, '(s c) h l -> s c h l', s=2)
             k = F.pad(k0, (0, L)) \
-                    + F.pad(k1.flip(-1), (L, 0)) \
+                    + F.pad(k1.flip(-1), (L, 0))
 
-        k_f = torch.fft.rfft(k, n=2*L) # (C H L)
-        u_f = torch.fft.rfft(u, n=2*L) # (B H L)
-        y_f = contract('bhl,chl->bchl', u_f, k_f) # k_f.unsqueeze(-4) * u_f.unsqueeze(-3) # (B C H L)
-        y = torch.fft.irfft(y_f, n=2*L)[..., :L] # (B C H L)
+        k_f = torch.fft.fft(k, n=2*L) # (C H 2L)
+        u_f = torch.fft.fft(u, n=2*L) # (B H 2L)
+        y_f = contract('bhl,chl->bchl', u_f, k_f) # (B C H 2L)
+        y = torch.fft.ifft(y_f, n=2*L)[..., :L] # (B C H L)
 
+        # Ensure output length matches input
+        if y.shape[-1] < L:
+            # Pad at the end
+            pad_size = L - y.shape[-1]
+            y = F.pad(y, (0, pad_size))
+        elif y.shape[-1] > L:
+            # Crop to input length
+            y = y[..., :L]
 
         # Compute D term in state space equation - essentially a skip connection
-        y = y + contract('bhl,ch->bchl', u, self.D) # u.unsqueeze(-3) * self.D.unsqueeze(-1)
+        y = y + contract('bhl,ch->bchl', u, self.D)
 
         # Reshape to flatten channels
         y = rearrange(y, '... c h l -> ... (c h) l')
@@ -361,7 +423,7 @@ class S4D(nn.Module):
 
         y = self.output_linear(y)
 
-        return y, None # Return a None to satisfy this repo's interface, but this can be modified
+        return y, None
 
     def setup_step(self):
         self.kernel.setup_step()
@@ -399,50 +461,88 @@ class S4D(nn.Module):
     @property
     def state_to_tensor(self):
         return lambda state: rearrange('... h n -> ... (h n)', state)
+class ComplexLinear(nn.Module):
+    """A simple complex linear layer using two real-valued linear layers."""
+    def __init__(self, in_features, out_features, bias=True):
+        super().__init__()
+        self.real = nn.Linear(in_features, out_features, bias=bias)
+        self.imag = nn.Linear(in_features, out_features, bias=bias)
+    def forward(self, x):
+        return torch.complex(self.real(x.real), self.imag(x.imag))
 
-
-# -- Model Definition -- #
 class sarSSM(nn.Module):
-    def __init__(self,
-                num_layers: int,
-                d_state: int = 16,
-                activation_function: str = 'gelu',
-                ):
-        super(sarSSM, self).__init__()
+    def __init__(
+        self,
+        input_dim,
+        state_dim,
+        output_dim,
+        model_dim,
+        num_layers,
+        dropout=0.1,
+        use_pos_encoding=True,
+        complex_valued=True,
+        use_positional_as_token=False,
+        **kwargs
+    ):
+        super().__init__()
+        self.complex_valued = complex_valued
+        self.input_dim = input_dim
+        self.state_dim = state_dim
+        self.output_dim = output_dim
         self.num_layers = num_layers
-        self.ssm = nn.ModuleList()
-        self.d_state = d_state
-        
+        self.use_positional_as_token = use_positional_as_token
+        self.model_dim = model_dim
+        # Input projection: project input_dim to state_dim
+        if complex_valued:
+            self.input_proj = ComplexLinear(input_dim, model_dim)
+            self.output_proj = ComplexLinear(model_dim, output_dim)
+        else:
+            self.input_proj = nn.Linear(input_dim, model_dim)
+            self.output_proj = nn.Linear(model_dim, output_dim)
 
-        # position embedding mixing
-        self.fc1 = nn.Linear(3, 2)
-        
-        # ssm layers
-        for _ in range(num_layers):
-            self.ssm.append(
-                S4D(d_model=2, d_state=d_state, transposed=False, activation=activation_function),                
-            )
+        self.layers = nn.ModuleList([
+            S4D(state_dim, dropout=dropout)
+            for _ in range(num_layers)
+        ])
+        if complex_valued:
+            self.norm = ComplexLayerNorm(model_dim)
+        else:
+            self.norm = nn.LayerNorm(model_dim)
+        if complex_valued:
+            self.dropout = ComplexDropout(dropout)
+        else:
+            self.dropout = nn.Dropout(dropout)
+        self.use_pos_encoding = use_pos_encoding
 
-        self.fc2 = nn.Linear(2, 2)
-            
-    def forward(self, x):    
-  
-        # position embedding
-        print(f"shape of x before input into first layer is: {x.shape}")
-        x = self.fc1(x)
+    def forward(self, x):
+        # x: (B, 1000, seq_len, 2)
+        # Optionally concatenate positional embedding as next token
+        if self.use_positional_as_token:
+            # x[..., 0] is backscatter, x[..., 1] is positional embedding
+            backscatter = x[..., 0]  # (B, 1000, seq_len)
+            pos_embed = x[..., 1]    # (B, 1000, seq_len)
+            # Concatenate positional embedding as next token along seq_len
+            x = torch.cat([backscatter, pos_embed[:, :, :1]], dim=-1)  # (B, 1000, seq_len+1)
+            x = x.permute(0, 2, 1)  # (B, seq_len+1, 1000)
+        else:
+            # Keep as separate channel, flatten last two dims
+            x = x.permute(0, 2, 1, 3).reshape(x.shape[0], x.shape[2], -1)  # (B, seq_len, 1000*2)
+        # Project to state_dim
+        h = self.input_proj(x)  # (B, state_dim, L)
+        # Pass through S4D layers
+        for i, layer in enumerate(self.layers):
+            h, _ = layer(h)  # S4D expects (B, state_dim, L)
+        # Normalize and dropout
+        h = self.norm(h)
+        h = self.dropout(h)
+        # Output projection
 
-        for ssm in self.ssm:
-            x, _ = ssm(x)
-        
-        print(f"shape of x before input into last layer is: {x.shape}")
-        
-        x = self.fc2(x)
-        
-        return x
-    
-    def setup_step(self):
-        for ssm in self.ssm:
-            ssm.setup_step()
+        out = self.output_proj(h)  # (B, output_dim, L)
+        #out = out.reshape(out.shape[0], out.shape[1], out.shape[2]//2, 2)
+        # Return in (B, L, output_dim) format for consistency
+        out = out.unsqueeze(-1)
+        out = out.permute(0, 2, 1, 3)
+        return out
     
     def step(self, u, state):
         '''
@@ -699,7 +799,7 @@ class MambaModel(nn.Module):
                  dropout: float = 0.1,
                  dt_min: float = 0.001,
                  dt_max: float = 0.1,
-                 lr: float = None):
+                 bidirectional: bool = False):
         """
         Initialize the EnhancedMambaModel module.
 
@@ -711,7 +811,7 @@ class MambaModel(nn.Module):
             dropout (float): Dropout rate.
             dt_min (float): Minimum timestep for initialization.
             dt_max (float): Maximum timestep for initialization.
-            lr (float, optional): Custom learning rate for SSM parameters.
+            bidirectional (bool): Whether to use bidirectional processing.
         """
         super().__init__()
         
@@ -719,7 +819,8 @@ class MambaModel(nn.Module):
         self.state_dim = state_dim
         self.delta_rank = delta_rank
         self.num_layers = num_layers
-        
+        self.bidirectional = bidirectional
+
         # Input/output projections
         self.input_proj = nn.Linear(1, input_dim)
         self.output_proj = nn.Linear(input_dim, 1)
@@ -728,7 +829,7 @@ class MambaModel(nn.Module):
         self.layers = nn.ModuleList([
             nn.Sequential(
                 nn.LayerNorm(input_dim),
-                EnhancedMambaBlock(input_dim, state_dim, delta_rank, dt_min, dt_max, lr),
+                EnhancedMambaBlock(input_dim, state_dim, delta_rank, dt_min, dt_max),
                 nn.Dropout(dropout)
             ) for _ in range(num_layers)
         ])
@@ -748,14 +849,20 @@ class MambaModel(nn.Module):
         for r in range(R):
             seq = x[:, r, :].unsqueeze(-1)  # (B, T, 1)
             h = self.input_proj(seq)  # (B, T, input_dim)
-            
-            for block in self.layers:
-                h = block(h) + h  # Residual connection
-                
-            out_r = self.output_proj(h).squeeze(-1)  # (B, T)
+            if self.bidirectional:
+                h_fwd = h
+                h_bwd = torch.flip(h, dims=[1])
+                for block in self.layers:
+                    h_fwd = block(h_fwd) + h_fwd
+                    h_bwd = block(h_bwd) + h_bwd
+                h_bwd = torch.flip(h_bwd, dims=[1])
+                h = h_fwd + h_bwd  # or torch.cat([h_fwd, h_bwd], dim=-1)
+            else:
+                for block in self.layers:
+                    h = block(h) + h
+            out_r = self.output_proj(h).squeeze(-1)
             out.append(out_r)
-            
-        return torch.stack(out, dim=1)  # (B, R, T)
+        return torch.stack(out, dim=1)
 
 class EnhancedMambaBlock(nn.Module):
     """
@@ -876,46 +983,46 @@ class EnhancedMambaBlock(nn.Module):
         delta = F.softplus(self.delta_proj(delta))  # (B, L, d_model)
         
         # Enhanced selective scan with better stability
-        return self._selective_scan_enhanced(u, delta, self.A_log, B, C, self.D)
+        return selective_scan_fn(u, delta, self.A_log, B, C, self.D) #self._selective_scan_enhanced(u, delta, self.A_log, B, C, self.D)
 
-    def _selective_scan_enhanced(self, u, delta, A_log, B, C, D, eps=1e-12):
-        """
-        Enhanced selective scan with improved numerical stability and skip connection.
-        Args:
-            u (Tensor): Input tensor of shape (B, L, d_model).
-            delta (Tensor): Delta projection tensor.
-            A_log (Tensor): Logarithm of A matrix for SSM.
-            B, C, D (Tensor): SSM parameters.
-            eps (float): Small value for numerical stability.
-        Returns:
-            output (Tensor): Output tensor of shape (B, L, d_model).
-        """
-        B_batch, L, d = u.shape
+    # def _selective_scan_enhanced(self, u, delta, A_log, B, C, D, eps=1e-12):
+    #     """
+    #     Enhanced selective scan with improved numerical stability and skip connection.
+    #     Args:
+    #         u (Tensor): Input tensor of shape (B, L, d_model).
+    #         delta (Tensor): Delta projection tensor.
+    #         A_log (Tensor): Logarithm of A matrix for SSM.
+    #         B, C, D (Tensor): SSM parameters.
+    #         eps (float): Small value for numerical stability.
+    #     Returns:
+    #         output (Tensor): Output tensor of shape (B, L, d_model).
+    #     """
+    #     B_batch, L, d = u.shape
         
-        # Compute discretized A
-        A = -torch.exp(A_log).unsqueeze(0).unsqueeze(0)  # (1, 1, d, d_state)
-        dA = delta.unsqueeze(-1) * A  # (B, L, d, d_state)
+    #     # Compute discretized A
+    #     A = -torch.exp(A_log).unsqueeze(0).unsqueeze(0)  # (1, 1, d, d_state)
+    #     dA = delta.unsqueeze(-1) * A  # (B, L, d, d_state)
         
-        # More stable cumulative computation
-        dA_cumsum = torch.cumsum(dA, dim=1)
-        A_bar = torch.exp(-dA_cumsum)
+    #     # More stable cumulative computation
+    #     dA_cumsum = torch.cumsum(dA, dim=1)
+    #     A_bar = torch.exp(-dA_cumsum)
         
-        # Compute input term
-        dB_u = delta.unsqueeze(-1) * u.unsqueeze(-1) * B.unsqueeze(2)  # (B, L, d, d_state)
+    #     # Compute input term
+    #     dB_u = delta.unsqueeze(-1) * u.unsqueeze(-1) * B.unsqueeze(2)  # (B, L, d, d_state)
         
-        # Selective scan with better numerical properties
-        x = torch.zeros(B_batch, d, self.d_state, device=u.device, dtype=u.dtype)
-        outputs = []
+    #     # Selective scan with better numerical properties
+    #     x = torch.zeros(B_batch, d, self.d_state, device=u.device, dtype=u.dtype)
+    #     outputs = []
         
-        for i in range(L):
-            x = x * torch.exp(-dA[:, i]) + dB_u[:, i]
-            y = torch.einsum('bdn,bn->bd', x, C[:, i])  # (B, d)
-            outputs.append(y)
+    #     for i in range(L):
+    #         x = x * torch.exp(-dA[:, i]) + dB_u[:, i]
+    #         y = torch.einsum('bdn,bn->bd', x, C[:, i])  # (B, d)
+    #         outputs.append(y)
         
-        y = torch.stack(outputs, dim=1)  # (B, L, d)
+    #     y = torch.stack(outputs, dim=1)  # (B, L, d)
         
-        # Add skip connection
-        return y + u * D.unsqueeze(0).unsqueeze(0)
+    #     # Add skip connection
+    #     return y + u * D.unsqueeze(0).unsqueeze(0)
 
 # Usage example and model configurations
 class ModelArgs:
