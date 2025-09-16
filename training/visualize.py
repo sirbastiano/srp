@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Callable, List
 
 logging.basicConfig(level=logging.INFO)
-def display_inference_results(input_data, gt_data, pred_data, figsize=(20, 6), vminmax=(0, 1000), show: bool=True, save: bool=True, save_path: str="./visualizationtest.pngs/"):
+def display_inference_results(input_data, gt_data, pred_data, figsize=(20, 6), vminmax=(0, 1000), show: bool=True, save: bool=True, save_path: str="./visualizations/"):
     """
     Display input, ground truth, and prediction in a 3-column grid.
     
@@ -92,7 +92,7 @@ def display_inference_results(input_data, gt_data, pred_data, figsize=(20, 6), v
     if show:
         plt.show()
     if save:
-        os.makedirs(save_path, exist_ok=True)
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
         plt.savefig(save_path)
         logging.info(f"Saved inference results to {save_path}")
         
@@ -237,7 +237,7 @@ def get_full_image_and_prediction(
     count_map = np.zeros((h, w), dtype=np.int32)
     #positions = dataloader.get_coords_from_zfile(zfile, window=show_window)
     
-    print(f"Dataloader dimension: {len(dataloader)}")
+    #print(f"Dataloader dimension: {len(dataloader)}")
     out_batches = 0
     with torch.no_grad():
         removed_positions = 0
@@ -278,6 +278,7 @@ def get_full_image_and_prediction(
                 y_to = y - dataset.buffer[0]
                 gt_patch = dataset.get_patch_visualization(output_batch[patch_idx], dataset.level_to, vminmax=vminmax, restore_complex=True, remove_positional_encoding=True)
                 #print(f"Ground truth patch with index {idx} has shape: {gt_patch.shape}, while reconstructed ground truth patch has dimension {gt_patch.shape}")
+
                 pred_patch = dataset.get_patch_visualization(pred_batch[patch_idx], dataset.level_to, vminmax=vminmax, restore_complex=True, remove_positional_encoding=False)
                 #print(f"Prediction with index {idx} has shape: {pred_patch.shape}, while reconstructed prediction patch has dimension {pred_patch.shape}")
                 if return_input:

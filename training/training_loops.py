@@ -34,6 +34,7 @@ class TrainerBase(pl.LightningModule):
         ):
         super().__init__()
         self.base_save_dir = base_save_dir
+        print(f"BASE SAVE DIR: {self.base_save_dir}")
         self.model = model 
         self.mode = mode
         self.criterion_fn = criterion
@@ -81,6 +82,8 @@ class TrainerBase(pl.LightningModule):
         Returns:
             Model output tensor
         """
+        if device is None:
+            device = self.device
         x_preprocessed = self.preprocess_sample(x, device)
         if y is None:
             y_preprocessed = None
@@ -107,12 +110,12 @@ class TrainerBase(pl.LightningModule):
                 figsize=figsize,
                 vminmax=vminmax,  
                 show=True, 
-                save=False,
+                save=True,
                 save_path=os.path.join(self.base_save_dir, img_save_path)
             )
             gt, pred = self.preprocess_output_and_prediction_before_comparison(gt, pred)
             metrics = compute_metrics(gt, pred)
-            with open(metrics_save_path, 'w') as f:
+            with open(os.path.join(self.base_save_dir, metrics_save_path), 'w') as f:
                 json.dump(metrics, f)
                 
         except Exception as e:
@@ -152,8 +155,8 @@ class TrainerBase(pl.LightningModule):
         
         # Also save legacy format for compatibility
         if is_best:
-            torch.save(self.model.state_dict(), f"{self.base_save_dir}/sar_transformer_best.pth")
-        torch.save(self.model.state_dict(), f"{self.base_save_dir}/sar_transformer_last.pth")
+            torch.save(self.model.state_dict(), f"{self.base_save_dir}/model_best.pth")
+        torch.save(self.model.state_dict(), f"{self.base_save_dir}/model_last.pth")
 
     def resume_from_checkpoint(self, checkpoint_path: Optional[Union[str, os.PathLike]], optimizer, scheduler=None):
         """Resume training from a checkpoint."""
@@ -214,6 +217,8 @@ class TrainerBase(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, y = batch
         output = self.forward(x, y)  
+        #print(f"Output from model: {output}")
+        #print(f"Ground truth: {y}")
         loss = self.compute_loss(output, y)
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True)
         
@@ -270,6 +275,9 @@ class TrainerBase(pl.LightningModule):
     
     def test_step(self, batch, batch_idx):
         x, y = batch
+        print(f"Test batch {batch_idx}: ")
+        print(f"x={x}, ")
+        print(f"y={y}")
         output = self.forward(x, y)
                 
         y_np = y.cpu().numpy() #.squeeze()
@@ -332,12 +340,6 @@ class TrainRVTransformer(TrainerBase):
         super().__init__(base_save_dir, model, train_loader, val_loader, test_loader, inference_loader, mode, criterion=criterion, scheduler_type=scheduler_type)
         assert mode == "parallel" or "autoregressive", "training mode must be either 'parallel' or 'autoregressive'"
 
-        self.base_save_dir = base_save_dir
-        self.model = model 
-        self.mode = mode
-        self.criterion_fn = criterion
-        if not os.path.exists(self.base_save_dir):
-            os.makedirs(self.base_save_dir)
     def preprocess_output_and_prediction_before_comparison(self, target: torch.Tensor, output: torch.Tensor) -> Tuple[np.ndarray, np.ndarray]:
         if output.shape[-1] > 2:
             output = output[..., :-2]
@@ -346,6 +348,8 @@ class TrainRVTransformer(TrainerBase):
         return target, output
 
     def preprocess_sample(self, x: torch.Tensor, device: Union[str, torch.device]):    
+        if device is None:
+            device = self.device
         if isinstance(x, np.ndarray):
             x = torch.from_numpy(x)
         return x.float().to(device)
@@ -380,6 +384,8 @@ class TrainCVTransformer(TrainRVTransformer):
         #     logging.info(f"Trainable parameters: {trainable_params:,}")
 
     def preprocess_sample(self, x: Union[torch.Tensor, np.ndarray], device: Union[str, torch.device]):   
+        if device is None:
+            device = self.device
         if isinstance(x, np.ndarray):
             x = torch.from_numpy(x)              
         if torch.is_complex(x):
@@ -440,12 +446,16 @@ class TrainSSM(TrainerBase):
         Returns:
             Model output tensor
         """
+        if device is None:
+            device = self.device
         x_preprocessed = self.preprocess_sample(x, device=device)
         if y is not None and self.mode == 'autoregressive':
             y_preprocessed = self.preprocess_sample(y, device=device)
-            return self.model(x_preprocessed, y_preprocessed)
+            out = self.model(x_preprocessed, y_preprocessed)
         else:
-            return self.model(x_preprocessed)
+            out = self.model(x_preprocessed)
+
+        return out
     def preprocess_output_and_prediction_before_comparison(self, target: torch.Tensor, output: torch.Tensor) -> Tuple[np.ndarray, np.ndarray]:
         if output.shape[-1] > 2:
             output = output[..., :-2]
@@ -456,7 +466,9 @@ class TrainSSM(TrainerBase):
         elif target.shape[-1] == 2 and np.iscomplex(target.dtype):
             target = target[..., :-1]
         return target, output
-    def preprocess_sample(self, x: Union[torch.Tensor, np.ndarray], device: Union[str, torch.device]="cuda"):   
+    def preprocess_sample(self, x: Union[torch.Tensor, np.ndarray], device: Union[str, torch.device]=None):   
+        if device is None:
+            device = self.device
         if isinstance(x, np.ndarray):
             x = torch.from_numpy(x)              
         if torch.is_complex(x):

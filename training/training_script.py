@@ -50,42 +50,11 @@ def load_config(config_path: Path, args):
     if 'transforms' in config and 'dataloader' in config:
         config['dataloader']['transforms'] = config['transforms']
     
-    # Apply command line overrides
-    if args.mode:
-        config.setdefault('training', {})['mode'] = args.mode
-    if args.device:
-        config.setdefault('training', {})['device'] = args.device
-    if args.batch_size:
-        config.setdefault('training', {})['batch_size'] = args.batch_size
-        # Also update dataloader batch sizes
-        for split in ['train', 'validation', 'test']:
-            if 'dataloader' in config and split in config['dataloader']:
-                config['dataloader'][split]['batch_size'] = args.batch_size
-    if args.learning_rate:
-        config.setdefault('training', {})['learning_rate'] = args.learning_rate
-    if args.num_epochs:
-        config.setdefault('training', {})['num_epochs'] = args.num_epochs
-    if args.save_dir:
-        config.setdefault('training', {})['save_dir'] = args.save_dir
-    
+
     # Ensure required sections exist
     config.setdefault('model', {})
     config.setdefault('training', {})
     config.setdefault('dataloader', {})
-    
-    # Handle legacy configuration structure - map top-level to training section
-    legacy_mappings = {
-        'epochs': 'num_epochs',
-        'lr': 'learning_rate', 
-        'mode': 'mode',
-        'device': 'device',
-        'base_save_dir': 'save_dir',
-        'batch_size': 'batch_size'
-    }
-    
-    for old_key, new_key in legacy_mappings.items():
-        if old_key in config:
-            config['training'].setdefault(new_key, config[old_key])
     
     # Map model configuration properly
     model_mappings = {
@@ -312,7 +281,6 @@ def main():
     """Main training function with enhanced SAR patch processing support."""
     parser = argparse.ArgumentParser(description='Train models with optional SAR patch preprocessing')
     parser.add_argument('--config', type=str, required=True, help='Path to configuration file')
-    parser.add_argument('--experiment_name', type=str, default='experiment', help='Experiment name to use')
     parser.add_argument('--model_name', type=str, default='model', help='Model name to use')
     parser.add_argument('--mode', type=str, default=None, help='Training mode override')
     parser.add_argument('--device', type=str, default=None, help='Device override')
@@ -325,15 +293,15 @@ def main():
     
     # Load configuration
     config = load_config(Path(args.config), args)
-        
-    # Setup logging
-    tb_logger, text_logger = setup_logging(model_name=args.experiment_name, exp_dir=args.save_dir)
-    text_logger.info(f"Starting training with config: {args.config}")
 
     # Extract configurations
     model_cfg = config['model']
     dataloader_cfg = config['dataloader']
     training_cfg = config['training']
+            
+    # Setup logging
+    tb_logger, text_logger = setup_logging(model_name=training_cfg['save_dir'], exp_dir=args.save_dir)
+    text_logger.info(f"Starting training with config: {args.config}")
     
     # Log configuration summary
     text_logger.info("Full Configuration:")
@@ -374,10 +342,10 @@ def main():
         val_loader=val_loader,
         test_loader=test_loader,
         inference_loader=inference_loader,
-        save_dir=training_cfg.get('save_dir', './results'), 
-        loss_fn_name=training_cfg.get('loss_fn', 'mse'),
-        mode=training_cfg.get('mode', 'parallel'),
-        scheduler_type=training_cfg.get('scheduler_type', 'cosine'), 
+        save_dir=training_cfg['save_dir'], 
+        loss_fn_name=training_cfg['loss_fn'],
+        mode=training_cfg['mode'],
+        scheduler_type=training_cfg['scheduler_type'], 
         logger=tb_logger,
     )
     # Start training

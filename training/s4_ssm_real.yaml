@@ -3,15 +3,13 @@
 # Data directory
 experiment_name: "s4_ssm_real"
 data_dir: "/Data/sar_focusing"
-
-
 # Model configuration
 model:
   name: "s4_ssm"
   dim_head: 2
   input_dim: 3
   model_dim: 2
-  state_dim: 16
+  state_dim: 8
   output_dim: 2
   num_layers: 6
   dropout: 0.2
@@ -26,8 +24,9 @@ training:
   save_dir: "./results/s4_ssm_results"
   loss_fn : "mse"
   epochs: 250
-  lr: 1e-3
+  lr: 1e-2
   scheduler_type: "cosine"
+  mode: "parallel"
 
 # Device configuration
 device: "cuda"
@@ -51,10 +50,10 @@ dataloader:
   positional_encoding: true
   concatenate_patches: false
   train: 
-    batch_size: 16
+    batch_size: 32
     samples_per_prod: 100
     patch_order: "row"
-    max_products: 1
+    max_products: 10
     filters: {
       "years": [
         2023,
@@ -64,10 +63,10 @@ dataloader:
       ]
     }
   validation: 
-    batch_size: 16
+    batch_size: 32
     samples_per_prod: 1000
     patch_order: "row"
-    max_products: 1
+    max_products: 2
     filters: {
       "years": [
         2024,
@@ -77,10 +76,10 @@ dataloader:
       ]
     }
   test: 
-    batch_size: 16
+    batch_size: 32
     samples_per_prod: 5000
     patch_order: "row"
-    max_products: 1
+    max_products: 10
     filters: {
       "years": [
         2025,
@@ -96,7 +95,7 @@ dataloader:
     max_products: 5
     filters: {
       "years": [
-        2024,
+        2023,
       ],
       "polarizations": [
         "vv",
