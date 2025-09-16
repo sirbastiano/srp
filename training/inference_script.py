@@ -229,8 +229,7 @@ def create_dataloader_from_config(data_dir, dataloader_cfg, split_cfg, transform
         'batch_size': split_cfg.get('batch_size', 16),
         'samples_per_prod': split_cfg.get('samples_per_prod', 100),
         'patch_order': split_cfg.get('patch_order', 'row'),
-        'max_products': split_cfg.get('max_products', 1),
-        'file_pattern': split_cfg.get('pattern', '*.zarr')
+        'max_products': split_cfg.get('max_products', 1)
     }
     
     # Merge configurations

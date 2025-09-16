@@ -11,7 +11,7 @@ model:
   dim_head: 2
   input_dim: 3
   model_dim: 2
-  state_dim: 540
+  state_dim: 16
   output_dim: 2
   num_layers: 6
   dropout: 0.2
@@ -49,10 +49,11 @@ dataloader:
   cache_size: 1000
   online: true
   positional_encoding: true
+  concatenate_patches: false
   train: 
     batch_size: 16
     samples_per_prod: 100
-    patch_order: "chunk"
+    patch_order: "row"
     max_products: 1
     filters: {
       "years": [
@@ -65,7 +66,7 @@ dataloader:
   validation: 
     batch_size: 16
     samples_per_prod: 1000
-    patch_order: "chunk"
+    patch_order: "row"
     max_products: 1
     filters: {
       "years": [
@@ -78,11 +79,24 @@ dataloader:
   test: 
     batch_size: 16
     samples_per_prod: 5000
-    patch_order: "chunk"
+    patch_order: "row"
     max_products: 1
     filters: {
       "years": [
-        2023,
+        2025,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
+  inference: 
+    batch_size: 16
+    samples_per_prod: 2000
+    patch_order: "chunk"
+    max_products: 5
+    filters: {
+      "years": [
+        2024,
       ],
       "polarizations": [
         "vv",

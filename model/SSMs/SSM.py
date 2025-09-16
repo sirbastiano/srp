@@ -410,6 +410,7 @@ class S4D(nn.Module):
         else:
             k_f = torch.fft.rfft(k, n=2*L) # (C H L)
             u_f = torch.fft.rfft(u, n=2*L) # (B H L)
+            # print(f"u_f: {u_f.shape}, k_f: {k_f.shape}")
             y_f = contract('bhl,chl->bchl', u_f, k_f) # k_f.unsqueeze(-4) * u_f.unsqueeze(-3) # (B C H L)
             y = torch.fft.irfft(y_f, n=2*L)[..., :L] # (B C H L)
 
@@ -550,7 +551,7 @@ class sarSSM(nn.Module):
             self.output_proj = nn.Linear(model_dim, output_dim)
 
         self.layers = nn.ModuleList([
-            S4D(state_dim, dropout=dropout, transposed=False, activation=activation_function, complex=complex_valued)
+            S4D(d_model=model_dim, d_state=state_dim, dropout=dropout, transposed=False, activation=activation_function, complex=complex_valued)
             for _ in range(num_layers)
         ])
         if complex_valued:
@@ -586,8 +587,17 @@ class sarSSM(nn.Module):
         else:
             # If preprocessing is disabled, remove one before the last dimension (vertical position)
             x = torch.cat([x[..., :-2], x[..., -1:]], dim=-1)
+            if x.shape[1] == 1:
+                squeeze_dim = 1
+            elif x.shape[2] == 1:
+                squeeze_dim = 2
+            else:
+                squeeze_dim= None
+            x = x.squeeze()
         # Project to state_dim
+        # print(f"[SSM] Input shape after preprocessing: {x.shape}")
         h = self.input_proj(x)  # (B, state_dim, L)
+        # print(f"[SSM] Input shape after input projection: {h.shape}")
         # Pass through S4D layers
         for i, layer in enumerate(self.layers):
             h, _ = layer(h)  # S4D expects (B, state_dim, L)
@@ -600,6 +610,8 @@ class sarSSM(nn.Module):
         if self.preprocess:
             return self._postprocess_output(out)
         else:
+            if squeeze_dim is not None:
+                out = out.unsqueeze(squeeze_dim)
             return out
     
     def step(self, x, state):

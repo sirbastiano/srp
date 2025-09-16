@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 import logging
 import time
 from typing import Dict, Any
+import os
 from pytorch_lightning.loggers import TensorBoardLogger
 
 from dataloader.dataloader import SampleFilter, get_sar_dataloader, SARTransform
@@ -19,11 +20,15 @@ from training.visualize import save_results_and_metrics
 
 def setup_logging(out_file : str = 'training.log', model_name: str = 'model', exp_dir: str = './results'):
     tb_logger = TensorBoardLogger(save_dir=exp_dir, name=model_name)
+    log_file = os.path.join(exp_dir, out_file)
+    log_dir = os.path.dirname(log_file)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir, exist_ok=True)
     logging.basicConfig(
-        level=logging.INFO,
+            level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s',
             handlers=[
-                logging.FileHandler(os.path.join(exp_dir, out_file)),
+                logging.FileHandler(log_file),
                 logging.StreamHandler()
             ]
         )
@@ -250,7 +255,7 @@ def create_dataloader_from_config(data_dir, dataloader_cfg, split_cfg, transform
 def create_dataloaders(dataloader_cfg):
     """Create train, validation, and test dataloaders from configuration."""
     # Get data directory from dataloader config or use default
-    data_dir = dataloader_cfg.get('data_dir', '/Data/sar_focusing')
+    data_dir = dataloader_cfg.get('data_dir', '/Data/sar_focusing_new')
     # Create transforms
     transforms_cfg = dataloader_cfg.get('transforms', {})
     transforms = create_transforms_from_config(transforms_cfg)
@@ -288,7 +293,20 @@ def create_dataloaders(dataloader_cfg):
         transforms=transforms
     )
     
-    return train_loader, val_loader, test_loader
+    if 'inference' not in dataloader_cfg:
+        return train_loader, val_loader, test_loader, None
+    else: 
+        inference_cfg = dataloader_cfg.get('inference', {})
+        inference_filters = inference_cfg.get('filters', {})
+        inference_cfg['filters'] = SampleFilter(**inference_filters) if inference_filters else None
+        inference_loader = create_dataloader_from_config(
+            data_dir=data_dir,
+            dataloader_cfg=dataloader_cfg,
+            split_cfg=inference_cfg,
+            transforms=transforms
+        )
+        return train_loader, val_loader, test_loader, inference_loader
+
 
 
 def main():
@@ -346,9 +364,9 @@ def main():
     
     # Create dataloaders
     text_logger.info("Creating dataloaders...")
-    train_loader, val_loader, test_loader = create_dataloaders(dataloader_cfg)
-    text_logger.info(f"Created dataloaders - Train: {len(train_loader)}, Val: {len(val_loader)}, Test: {len(test_loader)}")
-    
+    train_loader, val_loader, test_loader, inference_loader = create_dataloaders(dataloader_cfg)
+    text_logger.info(f"Created dataloaders - Train: {len(train_loader)}, Val: {len(val_loader)}, Test: {len(test_loader)}, Inference: {len(inference_loader)}")
+
     # Determine trainer class and create trainer
     lightning_model, trainer = get_training_loop_by_model_name(
         model_cfg.get('name', ''), 
@@ -356,6 +374,7 @@ def main():
         train_loader=train_loader,
         val_loader=val_loader,
         test_loader=test_loader,
+        inference_loader=inference_loader,
         save_dir=training_cfg.get('save_dir', './results'), 
         loss_fn_name=training_cfg.get('loss_fn', 'mse'),
         mode=training_cfg.get('mode', 'parallel'),

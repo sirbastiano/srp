@@ -183,16 +183,17 @@ def get_full_image_and_prediction(
     batch_size = dataloader.batch_size
     # Resolve zfile from index if needed
     if isinstance(zfile, int):
-        zfile = dataset.files[zfile]
+        zfile = dataset.get_files()[zfile]
     else:
         zfile = Path(zfile)
 
     # Ensure patches are calculated
     #dataset.buffer = show_window[0] if show_window is not None else dataset.buffer
-    dataset.calculate_patches_from_store(zfile, patch_order='chunk') #"row")
-    coords = dataset._samples_by_file[zfile]
-    max_samples_per_prod = dataset._samples_per_prod
-    coords = coords[:max_samples_per_prod]
+    # dataset.calculate_patches_from_store(zfile, patch_order='chunk') #"row")
+    # coords = dataset.get_samples_by_file(zfile) #_samples_by_file[zfile]
+    # max_samples_per_prod = dataset._samples_per_prod
+    # coords = coords[:max_samples_per_prod]
+    coords = dataloader.get_coords_from_zfile(zfile, window=show_window)
 
     # Get patch and image shapes
     ph, pw = dataset.get_patch_size(zfile)
@@ -234,7 +235,7 @@ def get_full_image_and_prediction(
     pred_full = np.zeros((h, w), dtype=np.complex64)
     input_full = np.zeros((h, w), dtype=np.complex64) if return_input else None
     count_map = np.zeros((h, w), dtype=np.int32)
-    positions = dataloader.get_coords_from_zfile(zfile, window=show_window)
+    #positions = dataloader.get_coords_from_zfile(zfile, window=show_window)
     
     print(f"Dataloader dimension: {len(dataloader)}")
     out_batches = 0
@@ -245,18 +246,18 @@ def get_full_image_and_prediction(
             batch_size = input_batch.shape[0]
             max_patch_idx = 0
             for patch_idx in range(batch_size):
-                if batch_idx * batch_size + patch_idx - removed_positions == len(positions):
+                if batch_idx * batch_size + patch_idx - removed_positions == len(coords):
                     stop = True
                     break
                 #print(f"Batch index={batch_idx}, patch index={patch_idx}, removed positions={removed_positions}")
-                x, y = positions[batch_idx * batch_size + patch_idx - removed_positions]
+                x, y = coords[batch_idx * batch_size + patch_idx - removed_positions]
                 x_to = x - show_window[0][0] #dataset.buffer[1]
                 y_to = y - show_window[0][1] #dataset.buffer[0]
                 if x_to >= h or y_to >= w:
                     # Remove the corresponding patch from the batch by masking out this index
                     input_batch = torch.cat([input_batch[:patch_idx], input_batch[patch_idx+1:]], dim=0)
                     output_batch = torch.cat([output_batch[:patch_idx], output_batch[patch_idx+1:]], dim=0)
-                    (x_rem, y_rem) = positions.pop(batch_idx * batch_size + patch_idx - removed_positions)
+                    (x_rem, y_rem) = coords.pop(batch_idx * batch_size + patch_idx - removed_positions)
                     removed_positions +=1
                     #print(f"Position ({x}, {y}): Removed position ({x_rem}, {y_rem}) mapped to ({x_to}, {y_to}) -- out of bounds for array of shape {gt_full.shape}")
                 else:
@@ -271,8 +272,8 @@ def get_full_image_and_prediction(
                 pred_batch = pred_batch.detach().cpu().numpy()
             
             batch_size = input_batch.shape[0]
-            for patch_idx in range(max_patch_idx + 1):
-                x, y = positions[batch_idx * batch_size + patch_idx]
+            for patch_idx in range(max_patch_idx):
+                x, y = coords[batch_idx * batch_size + patch_idx]
                 x_to = x - dataset.buffer[1]
                 y_to = y - dataset.buffer[0]
                 gt_patch = dataset.get_patch_visualization(output_batch[patch_idx], dataset.level_to, vminmax=vminmax, restore_complex=True, remove_positional_encoding=True)

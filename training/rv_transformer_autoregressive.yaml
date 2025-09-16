@@ -26,14 +26,14 @@ training:
 
 # Data loader configuration
 dataloader:
-  level_from: "rc"
+  level_from: "rcmc"
   level_to: "az"
   num_workers: 0
   patch_mode: "rectangular"
-  patch_size: [1000, 100]
+  patch_size: [1000, 1]
   buffer: [1000, 1000]
-  stride: [1000, 100]
-  max_base_sample_size: [5000, 5000]
+  stride: [1000, 1]
+  max_base_sample_size: [10000, 10000]
   shuffle_files: false
   complex_valued: false
   save_samples: false
@@ -41,35 +41,68 @@ dataloader:
   verbose: false
   cache_size: 1000
   online: true
+  positional_encoding: true
   concatenate_patches: true
   concat_axis: 0
-  positional_encoding: true
   train: 
-    batch_size: 1
-    samples_per_prod: 5000
-    patch_order: "col"
+    batch_size: 16
+    samples_per_prod: 100
+    patch_order: "row"
     max_products: 1
-    pattern: "*2023*.zarr"
+    filters: {
+      "years": [
+        2023,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
   validation: 
-    batch_size: 32
+    batch_size: 16
     samples_per_prod: 1000
-    patch_order: "col"
+    patch_order: "row"
     max_products: 1
-    pattern: "*2024*.zarr"
+    filters: {
+      "years": [
+        2024,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
   test: 
-    batch_size: 32
+    batch_size: 16
     samples_per_prod: 5000
     patch_order: "row"
     max_products: 1
-    pattern: "*2025*.zarr"
-
-# Transform configuration
+    filters: {
+      "years": [
+        2025,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
+  inference: 
+    batch_size: 16
+    samples_per_prod: 2000
+    patch_order: "chunk"
+    max_products: 5
+    filters: {
+      "years": [
+        2024,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
 transforms:
   normalize: true
+  complex_valued: false
   rc_min: -3000.0    
   rc_max: 3000.0     
   gt_min: -12000.0   
-  gt_max: 12000.0     
+  gt_max: 12000.0    
 
 # Device configurationcentral
 device: "cuda"  # or "cpu"

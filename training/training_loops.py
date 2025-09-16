@@ -24,10 +24,10 @@ class TrainerBase(pl.LightningModule):
             train_loader: SARDataloader,
             val_loader: SARDataloader,
             test_loader: SARDataloader,
+            inference_loader: Optional[SARDataloader] = None,
             mode: str = "parallel",
             criterion: Callable = nn.MSELoss, 
             scheduler_type: str = 'cosine', 
-            inference_loader: Optional[SARDataloader] = None,
             metrics_file_name: str = "test_metrics.json", 
             lr: int = 1e-4
         ):
@@ -84,7 +84,7 @@ class TrainerBase(pl.LightningModule):
                 dataloader=loader,
                 show_window=window,
                 zfile=0,
-                inference_fn= self.forward_pass,
+                inference_fn= self.forward,
                 return_input=True, 
                 device="cuda", 
                 vminmax=vminmax
@@ -185,6 +185,9 @@ class TrainerBase(pl.LightningModule):
             return False
     def on_train_start(self):
         self.resume_from_checkpoint(self.resume_from, self.trainer.optimizers[0], None)
+    def log_metrics(self, metrics:dict, prefix: str, on_step: bool=False, on_epoch: bool=True, prog_bar: bool=False):
+        for key, value in metrics.items():
+            self.log(f"{prefix}_{key}", value, on_step=on_step, on_epoch=on_epoch, prog_bar=prog_bar)
     def training_step(self, batch, batch_idx):
         x, y = batch
         output = self.forward(x, y)  
@@ -195,7 +198,7 @@ class TrainerBase(pl.LightningModule):
         output_np = output.cpu().numpy() #.squeeze()
 
         m = compute_metrics(y_np, output_np)
-        self.log_dict('train_metrics', m, on_step=False, on_epoch=True, prog_bar=False)
+        self.log_metrics(m, 'train_metrics', on_step=False, on_epoch=True, prog_bar=False)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -208,11 +211,11 @@ class TrainerBase(pl.LightningModule):
         output_np = output.cpu().numpy() #.squeeze()
 
         m = compute_metrics(y_np, output_np)
-        self.log_dict('val_metrics', m, on_step=False, on_epoch=True, prog_bar=False)
+        self.log_metrics(m, 'val_metrics', on_step=False, on_epoch=True, prog_bar=False)
         return loss
     def on_validation_epoch_end(self):
         if self.inference_loader is not None:
-            self.show_example(self.inference_loader, window=((1000, 1000), (5000, 5000)), vminmax=(4000, 4200), figsize=(20, 6), metrics_save_path=f"metrics_{self.current_epochs}.json", img_save_path=f"val_{self.current_epoch}.png")
+            self.show_example(self.inference_loader, window=((1000, 1000), (5000, 5000)), vminmax=(4000, 4200), figsize=(20, 6), metrics_save_path=f"metrics_{self.current_epoch}.json", img_save_path=f"val_{self.current_epoch}.png")
         self.save_checkpoint(epoch=self.current_epoch, optimizer=self.trainer.optimizers[0], scheduler=None, is_best=(self.trainer.callback_metrics['val_loss'] < self.best_val_loss), val_loss=self.trainer.callback_metrics['val_loss'])
     
     def test_step(self, batch, batch_idx):
@@ -223,7 +226,7 @@ class TrainerBase(pl.LightningModule):
         output_np = output.cpu().numpy() #.squeeze()
 
         m = compute_metrics(y_np, output_np)
-        self.log_dict('test_metrics', m, on_step=False, on_epoch=True, prog_bar=False)
+        self.log_metrics(m, 'test_metrics', on_step=False, on_epoch=True, prog_bar=False)
 
         self.test_metrics.append(m)
 
@@ -264,11 +267,13 @@ class TrainRVTransformer(TrainerBase):
                 train_loader: SARDataloader,
                 val_loader: SARDataloader,
                 test_loader: SARDataloader,
+                inference_loader: Optional[SARDataloader] = None,
                 mode: str = "parallel",
                 criterion: Callable = nn.MSELoss,
+                scheduler_type: str = 'cosine'
             
         ):
-        super().__init__(base_save_dir, model, train_loader, val_loader, test_loader, mode, criterion=criterion)
+        super().__init__(base_save_dir, model, train_loader, val_loader, test_loader, inference_loader, mode, criterion=criterion, scheduler_type=scheduler_type)
         assert mode == "parallel" or "autoregressive", "training mode must be either 'parallel' or 'autoregressive'"
 
         self.base_save_dir = base_save_dir
@@ -307,11 +312,13 @@ class TrainCVTransformer(TrainRVTransformer):
             train_loader: SARDataloader,
             val_loader: SARDataloader,
             test_loader: SARDataloader,
+            inference_loader: Optional[SARDataloader] = None,
             mode: str = "parallel",  
-            criterion: Callable = nn.MSELoss
+            criterion: Callable = nn.MSELoss, 
+            scheduler_type: str = 'cosine'
         ):
-        super().__init__(base_save_dir, model, train_loader, val_loader, test_loader, mode, criterion=criterion)
-        
+        super().__init__(base_save_dir, model, train_loader, val_loader, test_loader, inference_loader, mode, criterion=criterion, scheduler_type=scheduler_type)
+
         # # Count parameters and log model info
         # if hasattr(model, 'parameters'):
         #     total_params = sum(p.numel() for p in model.parameters())
@@ -357,11 +364,22 @@ class TrainSSM(TrainerBase):
             train_loader: SARDataloader,
             val_loader: SARDataloader,
             test_loader: SARDataloader,
-            mode: str = "parallel", 
+            inference_loader: Optional[SARDataloader] = None,
             criterion: Callable = nn.MSELoss, 
+            mode: str = "parallel",
             scheduler_type: str = 'cosine'
         ):
-        super().__init__(base_save_dir, model, train_loader, val_loader, test_loader, mode, criterion=criterion, scheduler_type=scheduler_type)
+        super().__init__(
+            base_save_dir=base_save_dir, 
+            model=model, 
+            train_loader=train_loader, 
+            val_loader=val_loader, 
+            test_loader=test_loader, 
+            inference_loader=inference_loader, 
+            criterion=criterion, 
+            mode=mode,
+            scheduler_type=scheduler_type
+        )
         # self.logger = logging.getLogger(__name__)
         
         # # Count parameters and log model info
@@ -370,7 +388,7 @@ class TrainSSM(TrainerBase):
         #     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
         #     self.logger.info(f"Model created with {total_params:,} total parameters")
         #     self.logger.info(f"Trainable parameters: {trainable_params:,}")
-    def forward(self, x: Union[np.ndarray, torch.Tensor], y: Union[np.ndarray, torch.Tensor], device: Union[str, torch.device]="cuda") -> torch.Tensor:
+    def forward(self, x: Union[np.ndarray, torch.Tensor], y: Optional[Union[np.ndarray, torch.Tensor]] = None, device: Union[str, torch.device]="cuda") -> torch.Tensor:
         """
         Forward pass through the model.
         Args:
@@ -380,7 +398,11 @@ class TrainSSM(TrainerBase):
             Model output tensor
         """
         x_preprocessed = self.preprocess_sample(x, device=device)
-        return self.model(x_preprocessed)
+        if y is not None and self.mode == 'autoregressive':
+            y_preprocessed = self.preprocess_sample(y, device=device)
+            return self.model(x_preprocessed, y_preprocessed)
+        else:
+            return self.model(x_preprocessed)
     def preprocess_sample(self, x: Union[torch.Tensor, np.ndarray], device: Union[str, torch.device]="cuda"):   
         if isinstance(x, np.ndarray):
             x = torch.from_numpy(x)              
@@ -397,14 +419,13 @@ class TrainSSM(TrainerBase):
         # Remove positional embedding if present
         if output.shape[-1] > 2:
             output = output[..., :-2]
-        elif output.shape[-1] == 2:
+        elif output.shape[-1] == 2 and np.iscomplex(output.dtype):
             output = output[..., :-1]
         if target.shape[-1] > 2:
             target = target[..., :-2]
-        elif target.shape[-1] == 2:
+        elif target.shape[-1] == 2 and np.iscomplex(target.dtype):
             target = target[..., :-1]
 
-        # print(f"Output shape: {output.shape}, Target shape: {target.shape}")
         # print(f"Output patch: {output}")
         # print(f"Target patch: {target}")
         loss = self.criterion_fn(output, target)
@@ -420,6 +441,7 @@ def get_training_loop_by_model_name(
         train_loader: SARDataloader,
         val_loader: SARDataloader,
         test_loader: SARDataloader,
+        inference_loader: Optional[SARDataloader] = None,
         save_dir: Union[str, os.PathLike] = './results', 
         loss_fn_name: str = "mse", 
         mode: str = 'parallel', 
@@ -436,6 +458,7 @@ def get_training_loop_by_model_name(
             train_loader=train_loader,
             val_loader=val_loader,
             test_loader=test_loader,
+            inference_loader=inference_loader,
             mode=mode,
             criterion=get_loss_function(loss_fn_name),
             scheduler_type=scheduler_type
@@ -447,6 +470,7 @@ def get_training_loop_by_model_name(
             train_loader=train_loader,
             val_loader=val_loader,
             test_loader=test_loader,
+            inference_loader=inference_loader,
             criterion=get_loss_function(loss_fn_name),
             mode=mode,
             scheduler_type=scheduler_type
@@ -458,6 +482,7 @@ def get_training_loop_by_model_name(
             train_loader=train_loader,
             val_loader=val_loader,
             test_loader=test_loader,
+            inference_loader=inference_loader,
             criterion=get_loss_function(loss_fn_name),
             mode=mode,
             scheduler_type=scheduler_type
@@ -470,5 +495,6 @@ def get_training_loop_by_model_name(
                         fast_dev_run=False,
                         log_every_n_steps=1,
                         accelerator="gpu" if torch.cuda.is_available() else "cpu",
+                        enable_progress_bar=True
                         )
     return lightning_model, trainer

@@ -8,6 +8,7 @@ ENV/
 env.bak/
 venv.bak/
 
+hparams.yaml
 
 # Dataset
 SSM4SAR/maya4_data/

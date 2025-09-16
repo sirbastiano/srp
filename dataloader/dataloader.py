@@ -131,19 +131,19 @@ class AdaptiveNormalizationModule(BaseTransformModule):
             normalized = real_part + 1j * imag_part
         else:
             # Assume magnitude data
-            normalized = minmax_normalize(x, self.real_min, self.real_max)
+            normalized = minmax_normalize(x, np.min(x), np.max(x))
 
         return normalized
     def inverse(self, x: np.ndarray) -> np.ndarray:
         """Inverse normalization."""
         if np.iscomplexobj(x):
             # Inverse normalize real and imaginary parts separately
-            real_part = minmax_inverse(np.real(x), self.real_min, self.real_max)
-            imag_part = minmax_inverse(np.imag(x), self.imag_min, self.imag_max)
+            real_part = minmax_inverse(np.real(x), np.min(x), np.max(x))
+            imag_part = minmax_inverse(np.imag(x), np.min(x), np.max(x))
             return real_part + 1j * imag_part
         else:
             # Assume magnitude data
-            return minmax_inverse(x, self.real_min, self.real_max)
+            return minmax_inverse(x, np.min(x), np.max(x))
 
 class SARTransform(nn.Module):
     """
@@ -458,7 +458,7 @@ class SARZarrDataset(Dataset):
             self._load_chunk_uncached
         )
 
-        self._samples_by_file: Dict[os.PathLike, List[Tuple[int,int]]] = {}
+        # self._samples_by_file: Dict[os.PathLike, List[Tuple[int,int]]] = {}
         self._y_coords: Dict[os.PathLike, np.ndarray] = {}
         self._x_coords: Dict[os.PathLike, np.ndarray] = {}
         # self._pos_encoding_out: Dict[str, np.ndarray] = {}
@@ -521,7 +521,27 @@ class SARZarrDataset(Dataset):
             ephemeris = None
         return metadata, ephemeris
 
+    def get_samples_by_file(self, zfile: Union[str, os.PathLike]) -> List[Tuple[int,int]]:
+        """
+        Get the list of patch coordinates for a given Zarr file.
 
+        Args:
+            zfile (os.PathLike): Path to the Zarr file.
+        Returns:
+            List[Tuple[int, int]]: List of (y, x) coordinates for patches in the specified Zarr file.
+        """
+        return self._files.loc[self._files['full_name'] == Path(zfile)]['samples'].values[0]
+    def _set_samples_for_file(self, zfile: Union[str, os.PathLike], samples: List[Tuple[int,int]]):
+        """
+        Set the list of patch coordinates for a given Zarr file.
+
+        Args:
+            zfile (os.PathLike): Path to the Zarr file.
+            samples (List[Tuple[int, int]]): List of (y, x) coordinates for patches in the specified Zarr file.
+        """
+        idx = self._files.index[self._files['full_name'] == Path(zfile)]
+        if len(idx) > 0:
+            self._files.at[idx[0], 'samples'] = samples
     def _build_file_list(self):
         """
         Retrieve the list of Zarr files to use, either from the local directory or from a remote Hugging Face repository.
@@ -772,7 +792,7 @@ class SARZarrDataset(Dataset):
             else:
                 raise ValueError(f"Unknown patch_mode {self.patch_mode}")
         coords = self.reorder_samples(zfile, patch_order=patch_order)
-        self._samples_by_file[zfile] = coords
+        self._set_samples_for_file(zfile, coords) #_samples_by_file[zfile] = coords
             
     def reorder_samples(
         self, zfile: os.PathLike, patch_order: str = "row"
@@ -977,6 +997,7 @@ class SARZarrDataset(Dataset):
         # Extract stride number from filename if present
         stripmap_mode = extract_stripmap_mode_from_filename(os.path.basename(zfile))
         zfile = Path(zfile)
+        # print(f"Opening zfile: {zfile}, y: {y}, x: {x}, stripmap_mode: {stripmap_mode}")
         start_time = time.time()
 
         t0 = time.time()
@@ -1075,12 +1096,12 @@ class SARZarrDataset(Dataset):
                 raise FileNotFoundError(f"Zarr file {zfile} does not exist.")
 
         chunk_name = get_chunk_name_from_coords(y, x, zarr_file_name=zfile_name, level=level, chunks=self.get_store_at_level(zfile, level).chunks, version=get_zarr_version(zfile))
-        chunk_path = self.data_dir / chunk_name
+        chunk_path = self.data_dir / part / chunk_name
         
         if not chunk_path.exists():
             if self.verbose:
                 print(f"Chunk {chunk_name} not found locally. Downloading from Hugging Face Zarr archive...")
-            fetch_chunk_from_hf_zarr(level=level, y=y, x=x, zarr_archive=zfile_name, local_dir=self.data_dir, repo_id=repo_id)
+            fetch_chunk_from_hf_zarr(level=level, y=y, x=x, zarr_archive=zfile_name, local_dir=os.path.join(self.data_dir, part), repo_id=repo_id)
         return chunk_path
 
 
@@ -1280,7 +1301,7 @@ class SARZarrDataset(Dataset):
                 return chunk[dy:dy+ph, dx:dx+pw].copy()  # Direct slice
             else:
                 # Handle boundary case
-                #print("HEYYYYYYYYY")
+                # print("HEYYYYYYYYY")
                 patch = np.zeros((ph, pw), dtype=np.complex128)
                 max_h = min(ph, chunk.shape[0] - dy)
                 max_w = min(pw, chunk.shape[1] - dx)
@@ -1322,6 +1343,7 @@ class SARZarrDataset(Dataset):
             return arr.astype(np.complex128)
         elif self.backend == "zarr":
             patch = self._get_sample_from_cached_chunks(zfile, level, y, x, ph, pw)
+            # print(f"Original patch: {patch}")
             # if pw == 1:
             #     original_patch = self.get_store_at_level(zfile, level)[y:y+ph, x]
             # elif ph == 1:
@@ -1812,7 +1834,7 @@ class KPatchSampler(Sampler):
                 print(f"Sampling {len(self.coords[Path(f)])} patches from file {f} took {elapsed:.2f} seconds.")
     def get_coords_from_store(self, zfile: Union[str, os.PathLike], window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]] = None):
         self.dataset.calculate_patches_from_store(Path(zfile), patch_order=self.patch_order, window=window)
-        coords = self.dataset._samples_by_file[Path(zfile)].copy()
+        coords = self.dataset.get_samples_by_file(zfile)  #self.dataset._samples_by_file[Path(zfile)].copy()
         n = len(coords) if self.samples_per_prod <= 0 else min(self.samples_per_prod, len(coords))
         return coords[:n]
     def __len__(self):
@@ -1824,7 +1846,7 @@ class KPatchSampler(Sampler):
 
         else:
             if self.samples_per_prod > 0:
-                return sum(min(self.samples_per_prod, len(v)) for v in self.dataset._samples_by_file.values())
+                return sum(min(self.samples_per_prod, len(v)) for zfile in self.dataset.get_files() for v in [self.dataset.get_samples_by_file(zfile)])  # ._samples_by_file.values())
             else:
                 return 0
 
