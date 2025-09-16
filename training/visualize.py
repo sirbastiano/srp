@@ -265,7 +265,7 @@ def get_full_image_and_prediction(
                     stop = False
                     max_patch_idx = patch_idx
                 
-            print(f"Processing batch {batch_idx}")
+            # print(f"Processing batch {batch_idx}")
             
             pred_batch = inference_fn(x=input_batch, device=device)  # Should return (B, ph, pw) or (B, ph, pw, ...)
             if isinstance(pred_batch, torch.Tensor):
@@ -305,7 +305,7 @@ def get_full_image_and_prediction(
                 count_map[x_to:x_to+actual_ph, y_to:y_to+actual_pw] += 1
                 
             if stop:
-                print(f"Stopping further processing -- all remaining patches are out of bounds for array of shape {gt_full.shape}")
+                #print(f"Stopping further processing -- all remaining patches are out of bounds for array of shape {gt_full.shape}")
                 break
 
 
@@ -339,7 +339,28 @@ from sarpyx.utils.metrics import (
     enl,
     resolution_gain,
 )
+def average_metrics(metrics: List[Dict[str, float]]) -> Dict[str, float]:
+    """
+    Average a list of metric dictionaries.
 
+    Args:
+        metrics (List[Dict[str, float]]): List of metric dictionaries.
+
+    Returns:
+        Dict[str, float]: Dictionary with averaged metrics.
+    """
+    if not metrics:
+        return {}
+    
+    avg_metrics = {}
+    keys = metrics[0].keys()
+    
+    for key in keys:
+        values = [m[key] for m in metrics if key in m]
+        if values:
+            avg_metrics[key] = float(np.mean(values))
+    
+    return avg_metrics
 def compute_metrics(gt_image: np.ndarray, focused_image: np.ndarray) -> dict:
     """
     Compute comprehensive SAR image quality metrics between raw and focused SAR images.
@@ -364,61 +385,3 @@ def save_metrics(metrics: dict, save_path: str) -> None:
     with open(save_path, 'w') as f:
         json.dump(metrics, f, indent=4)
 
-def save_results_and_metrics(
-    test_loader,
-    model,
-    device: str,
-    save_dir: str = '.',
-    num_samples: int = 10,
-    mainlobe_size: int = 5
-) -> None:
-    """
-    Run model on test_loader, save side-by-side visualizations and aggregate metrics.
-
-    Args:
-        test_loader: DataLoader yielding (raw, focused) pairs or (raw, target) inputs.
-        model: Trained SAR focusing model with signature model(src, tgt).
-        device: Compute device, e.g. 'cpu' or 'cuda'.
-        save_dir: Directory to save outputs.
-        num_samples: Number of samples to visualize.
-        mainlobe_size: Half-size parameter for sidelobe ratio.
-    """
-    os.makedirs(save_dir, exist_ok=True)
-    model.to(device)
-    model.eval()
-
-    aggregated = []
-    with torch.no_grad():
-        for idx, (raw, target) in enumerate(test_loader):
-            raw = raw.to(device).float()
-            target = target.to(device).float()
-
-            # Prediction: for parallel mode assume full-target pass
-            output = model(src=raw, tgt=target)
-
-            raw_np = raw.cpu().numpy().squeeze()
-            out_np = output.cpu().numpy().squeeze()
-
-            # Visualize first num_samples
-            if idx < num_samples:
-                fig_path = os.path.join(save_dir, f'sample_{idx:02d}.png')
-                visualize_pair(raw_np, out_np, fig_path)
-
-            # Compute comprehensive SAR metrics
-            m = compute_metrics(raw_np, out_np, mainlobe_size=mainlobe_size)
-            aggregated.append(m)
-
-    # Aggregate metrics (example: average PSNR, PSLR, and others)
-    summary = {}
-    metric_keys = aggregated[0].keys() if aggregated else []
-    for key in metric_keys:
-        values = [m[key] for m in aggregated if m.get(key) is not None]
-        if values:
-            summary[f'avg_{key}'] = float(np.mean(values))
-    summary['num_samples_evaluated'] = len(aggregated)
-
-    metrics_path = os.path.join(save_dir, 'aggregated_metrics.json')
-    save_metrics(summary, metrics_path)
-
-    print(f"Saved {min(num_samples, len(aggregated))} visual samples to {save_dir}")
-    print(f"Saved aggregated metrics to {metrics_path}")

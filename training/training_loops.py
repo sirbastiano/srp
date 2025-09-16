@@ -10,9 +10,9 @@ from typing import Optional, Callable, Union
 from dataloader.dataloader import SARZarrDataset, get_sar_dataloader, SARDataloader
 from model.transformers.rv_transformer import RealValuedTransformer  
 from model.transformers.cv_transformer import ComplexTransformer
-from training.visualize import compute_metrics, save_metrics
+from training.visualize import compute_metrics, save_metrics, average_metrics
 from sarpyx.utils.losses import get_loss_function
-from training.visualize import save_results_and_metrics, get_full_image_and_prediction, compute_metrics, display_inference_results
+from training.visualize import get_full_image_and_prediction, compute_metrics, display_inference_results
 import pytorch_lightning as pl
 
 import numpy as np
@@ -29,7 +29,8 @@ class TrainerBase(pl.LightningModule):
             criterion: Callable = nn.MSELoss, 
             scheduler_type: str = 'cosine', 
             metrics_file_name: str = "test_metrics.json", 
-            lr: int = 1e-4
+            lr: int = 1e-4, 
+            resume_from: Optional[str] = None
         ):
         super().__init__()
         self.base_save_dir = base_save_dir
@@ -46,6 +47,14 @@ class TrainerBase(pl.LightningModule):
 
         self.test_metrics = []
         self.metrics_file_name = metrics_file_name
+        self.best_val_loss = float('inf')
+        self.val_losses = []
+        self.train_losses = []
+        self.start_epoch = 0
+        self.last_improve_epochs = 0
+        self.resume_from = resume_from
+        self.validation_metrics = []
+        self.train_metrics = []
 
     def train_dataloader(self):
         return self._train_loader
@@ -56,7 +65,8 @@ class TrainerBase(pl.LightningModule):
     def test_dataloader(self):
         return self._test_loader
 
-    def compute_loss(self, output: torch.Tensor, target: torch.Tensor):
+    def compute_loss(self, target: torch.Tensor, output: torch.Tensor):
+        target, output = self.preprocess_output_and_prediction_before_comparison(target, output)
         return self.criterion_fn(output, target)
     def preprocess_sample(self, x: Union[np.ndarray, torch.Tensor], device: Union[str, torch.device]):                
         if isinstance(x, np.ndarray):
@@ -100,6 +110,7 @@ class TrainerBase(pl.LightningModule):
                 save=False,
                 save_path=os.path.join(self.base_save_dir, img_save_path)
             )
+            gt, pred = self.preprocess_output_and_prediction_before_comparison(gt, pred)
             metrics = compute_metrics(gt, pred)
             with open(metrics_save_path, 'w') as f:
                 json.dump(metrics, f)
@@ -144,10 +155,12 @@ class TrainerBase(pl.LightningModule):
             torch.save(self.model.state_dict(), f"{self.base_save_dir}/sar_transformer_best.pth")
         torch.save(self.model.state_dict(), f"{self.base_save_dir}/sar_transformer_last.pth")
 
-    def resume_from_checkpoint(self, checkpoint_path: str, optimizer, scheduler=None):
+    def resume_from_checkpoint(self, checkpoint_path: Optional[Union[str, os.PathLike]], optimizer, scheduler=None):
         """Resume training from a checkpoint."""
         from model.model_utils import load_pretrained_weights
-        
+        if not self.resume_from:
+            print("No resume checkpoint specified.")
+            return False
         if not os.path.exists(checkpoint_path):
             print(f"Checkpoint not found: {checkpoint_path}")
             return False
@@ -188,35 +201,72 @@ class TrainerBase(pl.LightningModule):
     def log_metrics(self, metrics:dict, prefix: str, on_step: bool=False, on_epoch: bool=True, prog_bar: bool=False):
         for key, value in metrics.items():
             self.log(f"{prefix}_{key}", value, on_step=on_step, on_epoch=on_epoch, prog_bar=prog_bar)
+    def preprocess_output_and_prediction_before_comparison(self, target: torch.Tensor, output: torch.Tensor) -> Tuple[np.ndarray, np.ndarray]:
+        if output.shape[-1] > 2:
+            output = output[..., :-2]
+        elif output.shape[-1] == 2 and np.iscomplex(output.dtype):
+            output = output[..., :-1]
+        if target.shape[-1] > 2:
+            target = target[..., :-2]
+        elif target.shape[-1] == 2 and np.iscomplex(target.dtype):
+            target = target[..., :-1]
+        return target, output
     def training_step(self, batch, batch_idx):
         x, y = batch
         output = self.forward(x, y)  
         loss = self.compute_loss(output, y)
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True)
         
-        y_np = y.cpu().numpy() #.squeeze()
-        output_np = output.cpu().numpy() #.squeeze()
-
-        m = compute_metrics(y_np, output_np)
-        self.log_metrics(m, 'train_metrics', on_step=False, on_epoch=True, prog_bar=False)
+        y_np = y.detach().cpu().numpy() #.squeeze()
+        output_np = output.detach().cpu().numpy() #.squeeze()
+        y_np, output_np = self.preprocess_output_and_prediction_before_comparison(y_np, output_np)
+        for i in range(y_np.shape[0]):
+            gt_patch = self.train_dataloader().dataset.get_patch_visualization(y_np[i], self.train_dataloader().dataset.level_to, vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False)
+            #print(f"Ground truth patch with index {idx} has shape: {gt_patch.shape}, while reconstructed ground truth patch has dimension {gt_patch.shape}")
+            pred_patch = self.train_dataloader().dataset.get_patch_visualization(output_np[i], self.train_dataloader().dataset.level_to, vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False)
+            m = compute_metrics(gt_patch, pred_patch)
+            # self.log_metrics(m, 'train_metrics', on_step=False, on_epoch=True, prog_bar=False)
+            self.train_metrics.append(m)
         return loss
-
+    def on_train_epoch_end(self):
+        super().on_train_epoch_end()
+        avg_metrics = average_metrics(self.train_metrics)
+        self.train_metrics = []
+        self.log_metrics(avg_metrics, 'train_metrics', on_step=False, on_epoch=True, prog_bar=False)
+        
     def validation_step(self, batch, batch_idx):
         x, y = batch
         output = self.forward(x, y)
         loss = self.compute_loss(output, y)
+        self.val_losses.append(loss.item())
         self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True)
         
         y_np = y.cpu().numpy() #.squeeze()
         output_np = output.cpu().numpy() #.squeeze()
+        
+        y_np, output_np = self.preprocess_output_and_prediction_before_comparison(y_np, output_np)
+        for i in range(y_np.shape[0]):
+            gt_patch = self.val_dataloader().dataset.get_patch_visualization(y_np[i], self.train_dataloader().dataset.level_to, vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False)
+            #print(f"Ground truth patch with index {idx} has shape: {gt_patch.shape}, while reconstructed ground truth patch has dimension {gt_patch.shape}")
+            pred_patch = self.val_dataloader().dataset.get_patch_visualization(output_np[i], self.train_dataloader().dataset.level_to, vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False)
+            m = compute_metrics(gt_patch, pred_patch)
+            self.validation_metrics.append(m)
 
-        m = compute_metrics(y_np, output_np)
-        self.log_metrics(m, 'val_metrics', on_step=False, on_epoch=True, prog_bar=False)
         return loss
     def on_validation_epoch_end(self):
+        avg_metrics = average_metrics(self.validation_metrics)
+        self.validation_metrics = []
+        self.log_metrics(avg_metrics, 'val_metrics', on_step=False, on_epoch=True, prog_bar=False)
+
         if self.inference_loader is not None:
-            self.show_example(self.inference_loader, window=((1000, 1000), (5000, 5000)), vminmax=(4000, 4200), figsize=(20, 6), metrics_save_path=f"metrics_{self.current_epoch}.json", img_save_path=f"val_{self.current_epoch}.png")
+            self.show_example(self.inference_loader, window=((1000, 1000), (2000, 2000)), vminmax=(4000, 4200), figsize=(20, 6), metrics_save_path=f"metrics_{self.current_epoch}.json", img_save_path=f"val_{self.current_epoch}.png")
         self.save_checkpoint(epoch=self.current_epoch, optimizer=self.trainer.optimizers[0], scheduler=None, is_best=(self.trainer.callback_metrics['val_loss'] < self.best_val_loss), val_loss=self.trainer.callback_metrics['val_loss'])
+        if self.trainer.callback_metrics['val_loss'] < self.best_val_loss:
+            self.best_val_loss = self.trainer.callback_metrics['val_loss']
+            self.last_improve_epochs = 0
+        else:
+            self.last_improve_epochs += 1
+        super().on_validation_epoch_end()
     
     def test_step(self, batch, batch_idx):
         x, y = batch
@@ -224,16 +274,22 @@ class TrainerBase(pl.LightningModule):
                 
         y_np = y.cpu().numpy() #.squeeze()
         output_np = output.cpu().numpy() #.squeeze()
-
-        m = compute_metrics(y_np, output_np)
-        self.log_metrics(m, 'test_metrics', on_step=False, on_epoch=True, prog_bar=False)
-
-        self.test_metrics.append(m)
+        y_np, output_np = self.preprocess_output_and_prediction_before_comparison(y_np, output_np)
+        for i in range(y_np.shape[0]):
+            gt_patch = self.test_dataloader().dataset.get_patch_visualization(y_np[i], self.train_dataloader().dataset.level_to, vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=True)
+            #print(f"Ground truth patch with index {idx} has shape: {gt_patch.shape}, while reconstructed ground truth patch has dimension {gt_patch.shape}")
+            pred_patch = self.test_dataloader().dataset.get_patch_visualization(output_np[i], self.train_dataloader().dataset.level_to, vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=True)
+            m = compute_metrics(gt_patch, pred_patch)
+            self.test_metrics.append(m)
 
         loss = self.criterion(output, y)
         self.log('test_loss', loss, on_step=False, on_epoch=True, prog_bar=True)
         return loss
     def on_test_end(self):
+        avg_metrics = average_metrics(self.test_metrics)
+        self.test_metrics = []
+        self.log_metrics(avg_metrics, 'test_metrics', on_step=False, on_epoch=True, prog_bar=False)
+
         avg_psnr = sum(m['psnr_raw_vs_focused'] or 0 for m in self.test_metrics) / len(self.test_metrics)
         avg_pslr = sum(m['pslr_focused'] or 0 for m in self.test_metrics) / len(self.test_metrics)
         summary = {
@@ -282,16 +338,13 @@ class TrainRVTransformer(TrainerBase):
         self.criterion_fn = criterion
         if not os.path.exists(self.base_save_dir):
             os.makedirs(self.base_save_dir)
-    def compute_loss(self, output: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-        """Compute loss for complex-valued output."""
-        # For complex output, we can use MSE on both real and imaginary parts
+    def preprocess_output_and_prediction_before_comparison(self, target: torch.Tensor, output: torch.Tensor) -> Tuple[np.ndarray, np.ndarray]:
         if output.shape[-1] > 2:
             output = output[..., :-2]
         if target.shape[-1] > 2:
             target = target[..., :-2]
+        return target, output
 
-        loss = self.criterion_fn(output, target)
-        return loss
     def preprocess_sample(self, x: torch.Tensor, device: Union[str, torch.device]):    
         if isinstance(x, np.ndarray):
             x = torch.from_numpy(x)
@@ -334,22 +387,12 @@ class TrainCVTransformer(TrainRVTransformer):
         else:
             x = x.to(device).float()
         return x
-    def compute_loss(self, output: torch.Tensor, target: torch.Tensor, device: Union[str, torch.device]) -> torch.Tensor:
-        """
-        Compute loss for complex-valued output.
-        Converts complex tensors to real-valued with last dimension 2 (real, imag).
-        """
-        # Remove positional embedding if present
+    def preprocess_output_and_prediction_before_comparison(self, target, output):
         if output.shape[-1] > 2:
             output = output[..., :-2]
         if target.shape[-1] > 2:
             target = target[..., :-2]
-
-        # print(f"Output shape: {output.shape}, Target shape: {target.shape}")
-        # print(f"Output patch: {output}")
-        # print(f"Target patch: {target}")
-        loss = self.criterion_fn(output.to(device), target.to(device))
-        return loss
+        return target, output
 
 class TrainSSM(TrainerBase):
     """
@@ -403,20 +446,7 @@ class TrainSSM(TrainerBase):
             return self.model(x_preprocessed, y_preprocessed)
         else:
             return self.model(x_preprocessed)
-    def preprocess_sample(self, x: Union[torch.Tensor, np.ndarray], device: Union[str, torch.device]="cuda"):   
-        if isinstance(x, np.ndarray):
-            x = torch.from_numpy(x)              
-        if torch.is_complex(x):
-            x = x.to(torch.complex64)
-        else:
-            x = x.float()
-        return x.to(device)
-    def compute_loss(self, output: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-        """
-        Compute loss for complex-valued output.
-        Converts complex tensors to real-valued with last dimension 2 (real, imag).
-        """
-        # Remove positional embedding if present
+    def preprocess_output_and_prediction_before_comparison(self, target: torch.Tensor, output: torch.Tensor) -> Tuple[np.ndarray, np.ndarray]:
         if output.shape[-1] > 2:
             output = output[..., :-2]
         elif output.shape[-1] == 2 and np.iscomplex(output.dtype):
@@ -425,11 +455,15 @@ class TrainSSM(TrainerBase):
             target = target[..., :-2]
         elif target.shape[-1] == 2 and np.iscomplex(target.dtype):
             target = target[..., :-1]
-
-        # print(f"Output patch: {output}")
-        # print(f"Target patch: {target}")
-        loss = self.criterion_fn(output, target)
-        return loss
+        return target, output
+    def preprocess_sample(self, x: Union[torch.Tensor, np.ndarray], device: Union[str, torch.device]="cuda"):   
+        if isinstance(x, np.ndarray):
+            x = torch.from_numpy(x)              
+        if torch.is_complex(x):
+            x = x.to(torch.complex64)
+        else:
+            x = x.float()
+        return x.to(device)
 
 
 class TrainDUN(TrainerBase):

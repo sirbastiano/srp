@@ -267,6 +267,16 @@ class SARTransform(nn.Module):
 class SampleFilter:
     def __init__(self, parts: List[str]=None, years: List[int] = None, months: List[int] = None, polarizations: List[str] = None, stripmap_modes: List[int] = None):
         """
+        Initialize a filter for SAR dataset samples.
+
+        Args:
+            parts (List[str], optional): List of part names to include.
+            years (List[int], optional): List of years to include.
+            months (List[int], optional): List of months to include.
+            polarizations (List[str], optional): List of polarizations to include.
+            stripmap_modes (List[int], optional): List of stripmap modes to include.
+        """
+        """
         Initialize the SampleFilter with optional filtering criteria.
 
         Args:
@@ -281,6 +291,12 @@ class SampleFilter:
         self.polarizations = polarizations if polarizations is not None else []
         self.stripmap_modes = stripmap_modes if stripmap_modes is not None else []
     def get_filter_dict(self) -> Dict[str, List[Union[int, str]]]:
+        """
+        Return the filter as a dictionary for use in dataset selection.
+
+        Returns:
+            dict: Dictionary of filter criteria.
+        """
         """
         Get the filter criteria as a dictionary.
 
@@ -300,6 +316,15 @@ class SampleFilter:
             filter_dict['stripmap_mode'] = self.stripmap_modes
         return filter_dict
     def matches(self, record: dict) -> bool:
+        """
+        Check if a record matches the filter criteria.
+
+        Args:
+            record (dict): Metadata record to check.
+
+        Returns:
+            bool: True if record matches, False otherwise.
+        """
         """
         Check if a given record matches the filter criteria.
 
@@ -344,7 +369,7 @@ class SARZarrDataset(Dataset):
     """
     PyTorch Dataset for loading SAR (Synthetic Aperture Radar) data patches from Zarr format archives.
 
-    Supports efficient patch sampling from multiple Zarr files, with rectangular, or parabolic patch extraction. Handles both local and remote (Hugging Face) Zarr stores, with on-demand patch downloading and LRU chunk caching.
+    This class supports efficient patch sampling from multiple Zarr files, with both rectangular and parabolic patch extraction. It handles both local and remote (Hugging Face) Zarr stores, with on-demand patch downloading and LRU chunk caching for performance.
 
     Features:
         - Loads SAR data patches from Zarr stores (local or remote), supporting real and complex-valued data.
@@ -354,18 +379,18 @@ class SARZarrDataset(Dataset):
         - Handles both input and target SAR processing levels (e.g., "rcmc" and "az").
         - Supports saving/loading patch indices to avoid recomputation.
         - Implements chunk-level LRU caching for efficient repeated access.
+        - Flexible filtering by part, year, month, polarization, and stripmap mode via SampleFilter.
+        - Supports positional encoding and concatenation of patches.
 
     Args:
         data_dir (str): Directory containing Zarr files.
-        file_pattern (str, optional): Glob pattern for Zarr files. Defaults to "*.zarr".
-        repo_id (str, optional): Hugging Face repo ID for remote access. Defaults to 'sirbastiano94/Maya4'.
+        filters (SampleFilter, optional): Filter for selecting data by part, year, etc.
+        author (str, optional): Author or dataset identifier. Defaults to 'Maya4'.
         online (bool, optional): If True, enables remote Hugging Face access. Defaults to False.
         return_whole_image (bool, optional): If True, returns the whole image as a single patch. Defaults to False.
-            use_positional_as_token: bool = False,
         transform (callable, optional): Optional transform to apply to both input and target patches.
         patch_size (Tuple[int, int], optional): Size of the patch (height, width). Defaults to (256, 256). If the patch width or height is set to a negative value, it will be computed based on the image dimensions minus the buffer.
         complex_valued (bool, optional): If True, returns complex-valued tensors. If False, returns real and imaginary parts stacked. Defaults to False.
-            self.use_positional_as_token = use_positional_as_token
         level_from (str, optional): Key for the input SAR processing level. Defaults to "rcmc".
         level_to (str, optional): Key for the target SAR processing level. Defaults to "az".
         patch_mode (str, optional): Patch extraction mode: "rectangular", or "parabolic". Defaults to "rectangular".
@@ -373,12 +398,31 @@ class SARZarrDataset(Dataset):
         save_samples (bool, optional): If True, saves computed patch indices to disk. Defaults to True.
         buffer (Tuple[int, int], optional): Buffer (margin) to avoid sampling near image edges. Defaults to (100, 100).
         stride (Tuple[int, int], optional): Stride for patch extraction. Defaults to (50, 50).
+        max_base_sample_size (Tuple[int, int], optional): Maximum base sample size. Defaults to (-1, -1).
         backend (str, optional): Backend for loading Zarr data, either "zarr" or "dask". Defaults to "zarr".
+        verbose (bool, optional): If True, prints verbose output. Defaults to True.
         cache_size (int, optional): Maximum number of chunks to cache in memory.
         positional_encoding (bool, optional): If True, adds positional encoding to input patches. Defaults to True.
         dataset_length (int, optional): Optional override for dataset length.
         max_products (int, optional): Maximum number of Zarr products to use. Defaults to 10.
         samples_per_prod (int, optional): Number of patches to sample per product. Defaults to 1000.
+        concatenate_patches (bool, optional): If True, concatenates patches along the specified axis.
+        concat_axis (int, optional): Axis along which to concatenate patches.
+        max_stripmap_modes (int, optional): Maximum number of stripmap modes.
+        use_positional_as_token (bool, optional): If True, uses positional encoding as a token.
+
+    Attributes:
+        data_dir (str): Directory containing Zarr files.
+        patch_size (Tuple[int, int]): Patch size (height, width).
+        level_from (str): Input SAR processing level.
+        level_to (str): Target SAR processing level.
+        patch_mode (str): Patch extraction mode.
+        buffer (Tuple[int, int]): Buffer for patch extraction.
+        stride (Tuple[int, int]): Stride for patch extraction.
+        cache_size (int): LRU cache size for chunk loading.
+        positional_encoding (bool): Whether to add positional encoding.
+        dataset_length (int): Optional override for dataset length.
+        ... (see code for additional attributes)
 
     Example:
         >>> dataset = SARZarrDataset("/path/to/zarrs", patch_size=(128, 128), cache_size=1000)
@@ -1857,6 +1901,7 @@ class SARDataloader(DataLoader):
         self.verbose = verbose
     def get_coords_from_zfile(self, zfile: Union[str, os.PathLike], window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]] = None) -> List[Tuple[int, int]]:
         return self.sampler.get_coords_from_store(zfile, window=window)
+
     
 
 def get_sar_dataloader(

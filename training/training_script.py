@@ -16,7 +16,6 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from dataloader.dataloader import SampleFilter, get_sar_dataloader, SARTransform
 from model.model_utils import get_model_from_configs
 from training.training_loops import get_training_loop_by_model_name
-from training.visualize import save_results_and_metrics
 
 def setup_logging(out_file : str = 'training.log', model_name: str = 'model', exp_dir: str = './results'):
     tb_logger = TensorBoardLogger(save_dir=exp_dir, name=model_name)

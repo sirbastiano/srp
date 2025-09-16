@@ -1,3 +1,19 @@
+# =============================
+# SARPyX Model Utilities
+# =============================
+#
+# This module provides utility functions for model instantiation and loading.
+#
+# Functions:
+#   - get_model_from_configs(config): Instantiate a model from a configuration dictionary.
+#   - create_model_with_pretrained(config, pretrained_path, device): Load a model with pretrained weights.
+#
+# The configuration dictionary should match the structure described in the main README and the YAML config files.
+#
+# Example usage:
+#   model = get_model_from_configs(config['model'])
+#   model = create_model_with_pretrained(config['model'], pretrained_path, device)
+
 from model.transformers.rv_transformer import RealValuedTransformer  # your import
 from model.transformers.cv_transformer import ComplexTransformer
 from model.SSMs.SSM import MambaModel, SimpleSSM, sarSSM, S4D
