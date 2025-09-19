@@ -264,6 +264,7 @@ class SARSSMFactory:
             use_pos_encoding: bool = True,
             complex_valued: bool = True,
             preprocess: bool = True,
+            mode: str = "sequential",
             **kwargs
         ) -> nn.Module:
         """
@@ -291,6 +292,7 @@ class SARSSMFactory:
             use_pos_encoding=use_pos_encoding,
             complex_valued=complex_valued,
             preprocess = preprocess,
+            mode=mode,
             **kwargs
         )
 
@@ -304,6 +306,7 @@ def create_ssm_model(
     dropout: float = 0.1,
     use_pos_encoding: bool = True,
     complex_valued: bool = True,
+    mode: str = "sequential",
     preprocess: bool = True,
 ) -> nn.Module:
     """
@@ -359,6 +362,7 @@ def create_ssm_model(
             dropout=dropout,
             use_pos_encoding=use_pos_encoding,
             complex_valued=complex_valued,
+            mode=mode,
             preprocess=preprocess
         )
     else:
@@ -505,6 +509,7 @@ def get_model_from_configs(
             dropout=dropout,
             complex_valued=complex_valued,
             use_pos_encoding=kwargs.get('use_pos_encoding', True), 
+            mode = mode,
             preprocess=preprocess
         )
     elif name=="ssm":
@@ -518,6 +523,7 @@ def get_model_from_configs(
             num_layers=num_layers,
             dropout=dropout, 
             complex_valued=complex_valued,
+            mode = mode,
             preprocess=preprocess
         )
     else:

@@ -5,9 +5,9 @@ This module wraps the existing SAR dataloader functionality.
 
 import functools
 import lightning as L
-from dataloader import get_sar_dataloader, SARTransform
+from dataloader import get_sar_dataloader, SARTransform, EnhancedSARTransform
 from utils import minmax_normalize, RC_MIN, RC_MAX, GT_MIN, GT_MAX
-from typing import Optional
+from typing import Optional, Dict
 
 
 class SARDataModule(L.LightningDataModule):
@@ -29,19 +29,23 @@ class SARDataModule(L.LightningDataModule):
         num_workers: int = 16,
         patch_mode: str = "rectangular",
         patch_size: tuple = (10000, 1),
-        buffer: tuple = (1000, 1000),
-        stride: tuple = (1, 300),
+        buffer: tuple = (1, 1),
+        stride: tuple = (1, 1),
         shuffle_files: bool = False,
-        patch_order: str = "col",
+        patch_order: str = "row",
         complex_valued: bool = True,
         positional_encoding: bool = True,
         save_samples: bool = False,
         backend: str = "zarr",
         verbose: bool = True,
-        samples_per_prod: int = 10000,
+        samples_per_prod: int = 10_000,
         cache_size: int = 100,
-        online: bool = False,
+        online: bool = True,
         max_products: int = 1,
+        normalization_scheme: str = 'minmax',
+        input_norm_scheme: Optional[str] = None,
+        output_norm_scheme: Optional[str] = None,
+        normalization_kwargs: Optional[Dict] = None,
         transform: Optional[SARTransform] = None
     ):
         """
@@ -70,10 +74,21 @@ class SARDataModule(L.LightningDataModule):
             cache_size: Size of the cache
             online: Whether to use online data loading
             max_products: Maximum number of products to use
-            transform: Optional SARTransform to apply
+            normalization_scheme: Default normalization scheme ('minmax', 'standard', 'adaptive', 'log')
+            input_norm_scheme: Specific scheme for input levels (overrides default)
+            output_norm_scheme: Specific scheme for output level (overrides default)
+            normalization_kwargs: Additional arguments for normalization schemes
+            transform: Optional custom transform (overrides normalization schemes)
         """
         super().__init__()
         self.save_hyperparameters()
+        
+        # Store normalization parameters
+        self.normalization_scheme = normalization_scheme
+        self.input_norm_scheme = input_norm_scheme or normalization_scheme
+        self.output_norm_scheme = output_norm_scheme or normalization_scheme
+        self.normalization_kwargs = normalization_kwargs or {}
+        
         
         # Store all parameters
         self.train_dir = train_dir
@@ -99,13 +114,28 @@ class SARDataModule(L.LightningDataModule):
         self.online = online
         self.max_products = max_products
         
-        # Create or use provided transform
+        
+        # DEBUG: Using the new EnhancedSARTransform
+        # Uncomment below to use the original SARTransform with fixed min-max normalization
+        # # Create or use provided transform
+        # if transform is None:
+        #     self.transform = SARTransform(
+        #         transform_raw=functools.partial(minmax_normalize, array_min=RC_MIN, array_max=RC_MAX),
+        #         transform_rc=functools.partial(minmax_normalize, array_min=RC_MIN, array_max=RC_MAX),
+        #         transform_rcmc=functools.partial(minmax_normalize, array_min=RC_MIN, array_max=RC_MAX),
+        #         transform_az=functools.partial(minmax_normalize, array_min=GT_MIN, array_max=GT_MAX)
+        #     )
+        # else:
+        #     self.transform = transform
+        
+        
+        # Create transform with specified normalization
         if transform is None:
-            self.transform = SARTransform(
-                transform_raw=functools.partial(minmax_normalize, array_min=RC_MIN, array_max=RC_MAX),
-                transform_rc=functools.partial(minmax_normalize, array_min=RC_MIN, array_max=RC_MAX),
-                transform_rcmc=functools.partial(minmax_normalize, array_min=RC_MIN, array_max=RC_MAX),
-                transform_az=functools.partial(minmax_normalize, array_min=GT_MIN, array_max=GT_MAX)
+            self.transform = EnhancedSARTransform.create_from_config(
+                input_scheme=self.input_norm_scheme,
+                output_scheme=self.output_norm_scheme,
+                complex_valued=self.complex_valued,
+                **self.normalization_kwargs
             )
         else:
             self.transform = transform

@@ -4,13 +4,77 @@ from typing import Union, Optional, Tuple
 from pathlib import Path
 import numpy as np
 import torch
+import re
 import zarr
+from datetime import datetime
+
 
 RC_MIN = -3000
 RC_MAX = 3000
 
 GT_MIN = -12000
 GT_MAX = 12000
+
+def load_model_safely(model_dir: str, device: str = 'cpu'):
+    """
+    Load a model safely, handling cases where full model pickle failed due to W&B hooks.
+    
+    Args:
+        model_dir (str): Directory containing model files
+        device (str): Device to load the model on ('cpu', 'cuda', etc.)
+        
+    Returns:
+        torch.nn.Module: Loaded model
+        
+    Raises:
+        ValueError: If model cannot be loaded from any available format
+    """
+    model_path = os.path.join(model_dir, "model")
+    weights_path = os.path.join(model_dir, "model_weights")
+    info_path = os.path.join(model_dir, "model_info")
+    
+    # Try loading full model first
+    if os.path.exists(model_path):
+        try:
+            model = torch.load(model_path, map_location=device)
+            print("✓ Loaded full model successfully")
+            return model
+        except Exception as e:
+            print(f"⚠ Could not load full model: {e}")
+    
+    # Try loading from model_info and weights
+    if os.path.exists(info_path) and os.path.exists(weights_path):
+        try:
+            # Load model info
+            model_info = torch.load(info_path, map_location=device)
+            model_class = model_info['model_class']
+            model_params = model_info['model_params']
+            
+            # Import the model class (assumes it's in sarSSM module)
+            if model_class == 'sarSSM':
+                from sarSSM import sarSSM
+                model = sarSSM(**model_params)
+            else:
+                raise ValueError(f"Unknown model class: {model_class}")
+            
+            # Load weights
+            state_dict = torch.load(weights_path, map_location=device)
+            model.load_state_dict(state_dict)
+            
+            print("✓ Loaded model from info and weights successfully")
+            return model
+            
+        except Exception as e:
+            print(f"⚠ Could not load model from info: {e}")
+    
+    # Try loading just from weights (requires manual model creation)
+    if os.path.exists(weights_path):
+        print("⚠ Only weights available - you'll need to create the model manually and load weights")
+        print(f"   Use: model.load_state_dict(torch.load('{weights_path}'))")
+        raise ValueError("Only weights available - manual model creation required")
+    
+    raise ValueError(f"No loadable model files found in {model_dir}")
+
 
 def minmax_normalize(array, array_min, array_max):
     """
@@ -146,3 +210,59 @@ def extract_stripmap_mode_from_filename(filename: Union[os.PathLike, str]) -> Op
     if match:
         return int(match.group(2))
     return None
+def get_part_from_filename(filename: Union[os.PathLike, str]) -> Optional[str]:
+    """
+    Extract the part (e.g., PT1, PT2) from a filename formatted as .../{part}/s1a-s{number}-raw-s-{polarization}-...zarr.
+
+    Args:
+        filename (str): The filename to parse.
+
+    Returns:
+        Optional[str]: The part if found, else None.
+    """
+    try:
+        part = str(filename).split(os.path.sep)[-2]
+    except IndexError:
+        print(f"Warning: could not extract part from filename '{filename}', using PT1 as part.")
+        part = "PT1"
+    return part
+
+def parse_product_filename(filename: Union[str, os.PathLike]) -> dict:
+    """
+    Parse the product filename to extract metadata.
+    
+    Args:
+        filename (str): The product filename.
+    Returns:
+        dict: A dictionary with extracted metadata.
+    """
+    # Example: s1a-s6-raw-s-vv-20210614t121147-20210614t121217-051942-0646ac.zarr
+    sep = re.escape(os.sep)
+    pattern = (
+        rf"(?P<part>[a-zA-Z0-9]+){sep}s1a-s(?P<stripmap_mode>[a-zA-Z0-9]+)-raw-s-(?P<polarization>[a-zA-Z0-9]+)-"
+        r"(?P<start_date>\d{8})t\d+-\d{8}t\d+-\d+-[a-zA-Z0-9]+\.zarr"
+    )
+    f_name = str(os.path.join(str(filename).split(os.path.sep)[-2], str(filename).split(os.path.sep)[-1]))
+    match = re.match(pattern, f_name)
+    if not match:
+        return None
+    stripmap_mode = match.group("stripmap_mode")
+    polarization = match.group("polarization")
+    start_date = match.group("start_date")
+    part = match.group("part")
+    # Remove -s{stripmap_mode} and -{polarization} from product name
+    product_name = re.sub(r"-s\d+-raw-s-\w+-", "-", str(os.path.basename(filename)))
+    product_name = product_name.split(".zarr")[0]
+    acquisition_date = datetime.strptime(start_date, "%Y%m%d")
+    return {
+        "product_name": product_name,
+        "stripmap_mode": int(stripmap_mode),
+        "polarization": polarization,
+        "acquisition_date": acquisition_date,
+        "full_name": Path(filename), 
+        "part": part,
+        "store": None,
+        "lat": None, 
+        "lon": None, 
+        "samples": []
+    }

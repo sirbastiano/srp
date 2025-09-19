@@ -7,6 +7,12 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+*.log
+*.yaml
+
+wandb
+deimos
+
 
 hparams.yaml
 metrics_*.json
@@ -14,6 +20,7 @@ results/
 # Dataset
 SSM4SAR/maya4_data/
 SSM4SAR/src/
+SSM4SAR
 
 data/
 decoded_data/
@@ -27,6 +34,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+
 
 # Distribution / packaging
 dist/

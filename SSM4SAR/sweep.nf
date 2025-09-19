@@ -10,7 +10,7 @@
 nextflow.enable.dsl = 2
 
 // Define parameter space for sweep
-params.learning_rates = [0.001, 0.005, 0.01, 0.02]
+params.learning_rates = [0.001]
 params.batch_sizes = [8, 16, 32]
 params.num_layers = [2, 4, 6, 8]
 params.hidden_sizes = [8, 16, 32, 64]
@@ -60,7 +60,7 @@ process generateParams {
         'batch_size': ${params.batch_sizes},
         'num_layers': ${params.num_layers},
         'hidden_state_size': ${params.hidden_sizes},
-        'act_fun': ${params.activation_functions},
+        'act_fun': ${params.activation_functions.collect { "'$it'" }},
         'ssim': ${params.ssim_proportions},
         'weight_decay': ${params.weight_decays}
     }
@@ -94,8 +94,8 @@ process trainModel {
     val params_set
     
     output:
-    path "results/*"
-    path "logs/*"
+    path "results/*", emit: results
+    path "logs/*", emit: logs
     
     script:
     """
@@ -123,7 +123,7 @@ process trainModel {
         --outdir \$PWD/results \\
         --use_wandb true \\
         --wandb_project ssm4sar_sweep \\
-        2>&1 | tee logs/training.log
+        2>&1 | tee training.log
     """
 }
 
@@ -134,7 +134,7 @@ process aggregateResults {
     publishDir params.outdir, mode: 'copy'
     
     input:
-    path 'exp_*/results/*'
+    path 'results_*'
     
     output:
     path 'sweep_summary.csv'
@@ -151,14 +151,14 @@ process aggregateResults {
     # Collect all results
     results = []
     
-    for exp_dir in glob.glob('exp_*'):
-        if os.path.isdir(exp_dir):
+    for results_dir in glob.glob('results_*'):
+        if os.path.isdir(results_dir):
             # Try to load metrics
-            metrics_file = os.path.join(exp_dir, 'results', 'final_metrics.json')
+            metrics_file = os.path.join(results_dir, 'final_metrics.json')
             if os.path.exists(metrics_file):
                 with open(metrics_file, 'r') as f:
                     metrics = json.load(f)
-                    metrics['experiment_id'] = exp_dir
+                    metrics['experiment_id'] = results_dir
                     results.append(metrics)
     
     if results:
@@ -192,23 +192,22 @@ workflow {
     // Generate parameter combinations
     param_file = generateParams()
     
-    // Parse parameter combinations
+    // Parse parameter combinations and create channels
     param_sets = param_file
-        | splitText() { it.trim() }
-        | map { line -> 
-            if (line.startsWith('[') || line.startsWith('{')) {
-                return new groovy.json.JsonSlurper().parseText(line)
-            }
-            return null
+        | map { file ->
+            def json = new groovy.json.JsonSlurper().parse(file)
+            return json
         }
-        | filter { it != null }
         | flatten()
     
     // Train models in parallel
-    train_results = trainModel(param_sets)
+    trainModel(param_sets)
+    
+    // Collect all training results for aggregation
+    all_results = trainModel.out.results.collect()
     
     // Aggregate results
-    aggregateResults(train_results.collect())
+    aggregateResults(all_results)
 }
 
 workflow.onComplete {

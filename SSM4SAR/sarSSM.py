@@ -120,8 +120,8 @@ class SSKernelDiag(nn.Module):
         assert self.H % w.size(0) == 0
         self.copies = self.H // w.size(0)
         
-        print(f"H is: \n{self.H}")
-        print(f"N is: \n{self.N}") 
+        # print(f"H is: \n{self.H}")
+        # print(f"N is: \n{self.N}") 
 
         # Broadcast everything to correct shapes
         C = C.expand(torch.broadcast_shapes(C.shape, (1, self.H, self.N))) # (H, C, N)
@@ -425,19 +425,25 @@ class sarSSM(nn.Module):
         self.fc2 = nn.Linear(2, 2)
             
     def forward(self, x):    
-  
-        # position embedding
-        #print(f"shape of x before input into first layer is: {x.shape}")
-        x = self.fc1(x)
+        outputs = []
+        
+        print(f"shape of x at the start of forward is: {x.shape}")
+        for i in range(x.shape[0]):
+            # position embedding
+            #print(f"shape of x before input into first layer is: {x.shape}")
+            pixel = x[i].unsqueeze(0)  # shape: (1, channels)
 
-        for ssm in self.ssm:
-            x, _ = ssm(x)
-        
-        #print(f"shape of x before input into last layer is: {x.shape}")
-        
-        x = self.fc2(x)
-        
-        return x
+            pixel = self.fc1(pixel)
+
+            for ssm in self.ssm:
+                pixel, _ = ssm(pixel)
+
+            #print(f"shape of x before input into last layer is: {x.shape}")
+
+            pixel = self.fc2(pixel)
+            outputs.append(pixel)
+        # Stack outputs to (batch_size*seq_len, output_dim, ...)
+        return torch.cat(outputs, dim=0)
     
     def setup_step(self, batch_size):
         states = []

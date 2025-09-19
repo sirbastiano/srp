@@ -274,7 +274,8 @@ def main():
     try:
         accelerator = 'gpu' if torch.cuda.is_available() else 'cpu'
         devices = args['gpu_no'] if torch.cuda.is_available() else 'auto'
-        precision = '16-mixed' if torch.cuda.is_available() else '32'
+        # Use 32-bit precision to avoid cuFFT issues with non-power-of-2 signal sizes
+        precision = '32'
         
         # Test CUDA capability before using
         if torch.cuda.is_available():

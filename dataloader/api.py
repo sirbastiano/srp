@@ -54,9 +54,10 @@ def download_file_from_hf(repo_id: str, filename: str, local_dir: Union[str, os.
             repo_id=repo_id,
             repo_type='dataset',
             filename=filename,
-            force_download=True,
+            force_download=False,
             local_dir_use_symlinks=False,
-            local_dir=str(local_dir)
+            local_dir=str(local_dir), 
+            resume_download=True
         )
         downloaded_path = Path(downloaded_file)
         assert downloaded_path.exists(), f'File "{downloaded_path}" not found after download.'

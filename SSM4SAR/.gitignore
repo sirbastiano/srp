@@ -155,3 +155,10 @@ Thumbs.db
 
 # MY FILES
 *experiment*
+my_project
+maya4_data
+*.0
+src
+wandb
+.nextflow
+ssm4sar

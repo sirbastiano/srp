@@ -11,19 +11,66 @@ import zarr
 
 from typing import List, Tuple, Dict, Optional, Union, Callable
 import json
+import pandas as pd
 import dask.array as da
 import time 
 import os
 import functools
 import math
 
-from utils import get_chunk_name_from_coords, get_sample_visualization, get_zarr_version
-from api import list_base_files_in_repo
+from utils import get_chunk_name_from_coords, get_part_from_filename, get_sample_visualization, get_zarr_version, parse_product_filename
+from api import list_base_files_in_repo, list_repos_by_author
 from utils import minmax_normalize, minmax_inverse, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN
 from api import fetch_chunk_from_hf_zarr, download_metadata_from_product
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
-
+from normalization import NormalizationScheme, NormalizationFactory
+class EnhancedSARTransform(nn.Module):
+    """
+    Enhanced SAR transform with support for different normalization schemes.
+    """
+    
+    def __init__(self, normalization_schemes: Dict[str, NormalizationScheme]):
+        super().__init__()
+        self.normalization_schemes = normalization_schemes
+    
+    def forward(self, x: np.ndarray, level: str) -> np.ndarray:
+        """Apply normalization for the specified level."""
+        assert level in self.normalization_schemes, f"No normalization scheme for level '{level}'"
+        return self.normalization_schemes[level].normalize(x, level=level)
+    
+    def inverse(self, x: np.ndarray, level: str) -> np.ndarray:
+        """Apply inverse normalization for the specified level."""
+        assert level in self.normalization_schemes, f"No normalization scheme for level '{level}'"
+        return self.normalization_schemes[level].denormalize(x, level=level)
+    
+    @classmethod
+    def create_from_config(
+        cls,
+        input_scheme: str = 'minmax',
+        output_scheme: str = 'minmax',
+        complex_valued: bool = True,
+        **kwargs
+    ) -> 'EnhancedSARTransform':
+        """Create transform from configuration.
+        
+        Args:
+            input_scheme: Normalization scheme for input levels ('minmax', 'standard', 'robust', 'log', 'adaptive')
+            output_scheme: Normalization scheme for output level ('minmax', 'standard', 'robust', 'log', 'adaptive')  
+            complex_valued: Whether data is complex-valued
+            **kwargs: Additional arguments for normalization schemes
+            
+        Returns:
+            EnhancedSARTransform: Configured transform instance
+        """
+        schemes = NormalizationFactory.create_sar_schemes(
+            input_scheme=input_scheme,
+            output_scheme=output_scheme,
+            complex_valued=complex_valued,
+            **kwargs
+        )
+        
+        return cls(schemes)
 
 class BaseTransformModule(nn.Module):
     """Base class for SAR data transformations."""
@@ -109,6 +156,42 @@ class ComplexNormalizationModule(BaseTransformModule):
             # Assume magnitude data
             return minmax_inverse(x, self.real_min, self.real_max)
 
+class AdaptiveNormalizationModule(BaseTransformModule):
+    """Complex-valued normalization module for SAR data."""
+    
+    def __init__(self):
+        super(AdaptiveNormalizationModule, self).__init__()
+
+    
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        """Normalize complex array separately for real and imaginary parts."""
+        if np.iscomplexobj(x):
+            # Normalize real and imaginary parts separately
+            # Use numpy functions to extract real and imaginary parts
+            re = np.real(x)
+            im = np.imag(x)
+            real_part = minmax_normalize(re, np.min(re), np.max(re))
+            imag_part = minmax_normalize(im, np.min(im), np.max(im))
+
+            #real_part = np.clip(real_part, 0, 1)
+            #imag_part = np.clip(imag_part, 0, 1)
+            
+            normalized = real_part + 1j * imag_part
+        else:
+            # Assume magnitude data
+            normalized = minmax_normalize(x, np.min(x), np.max(x))
+
+        return normalized
+    def inverse(self, x: np.ndarray) -> np.ndarray:
+        """Inverse normalization."""
+        if np.iscomplexobj(x):
+            # Inverse normalize real and imaginary parts separately
+            real_part = minmax_inverse(np.real(x), np.min(x), np.max(x))
+            imag_part = minmax_inverse(np.imag(x), np.min(x), np.max(x))
+            return real_part + 1j * imag_part
+        else:
+            # Assume magnitude data
+            return minmax_inverse(x, np.min(x), np.max(x))
 
 class SARTransform(nn.Module):
     """
@@ -181,6 +264,7 @@ class SARTransform(nn.Module):
     def create_minmax_normalized_transform(
         cls,
         normalize: bool = True,
+        adaptive: bool = False,
         rc_min: float = RC_MIN,
         rc_max: float = RC_MAX,
         gt_min: float = GT_MIN,
@@ -192,6 +276,7 @@ class SARTransform(nn.Module):
         
         Args:
             normalize (bool): Whether to apply normalization.
+            adaptive (bool): Whether to use adaptive normalization based on patch min/max.
             rc_min (float): Minimum value for RC data normalization.
             rc_max (float): Maximum value for RC data normalization.
             gt_min (float): Minimum value for ground truth data normalization.
@@ -203,19 +288,23 @@ class SARTransform(nn.Module):
         """
         if not normalize:
             return cls()
-        
-        if complex_valued:
-            raw_transform = ComplexNormalizationModule(rc_min, rc_max, rc_min, rc_max)
-            rc_transform = ComplexNormalizationModule(gt_min, gt_max, gt_min, gt_max)
-            rcmc_transform = ComplexNormalizationModule(gt_min, gt_max, gt_min, gt_max)
-            az_transform = ComplexNormalizationModule(gt_min, gt_max, gt_min, gt_max)
+        if not adaptive:
+            if complex_valued:
+                raw_transform = ComplexNormalizationModule(rc_min, rc_max, rc_min, rc_max)
+                rc_transform = ComplexNormalizationModule(gt_min, gt_max, gt_min, gt_max)
+                rcmc_transform = ComplexNormalizationModule(gt_min, gt_max, gt_min, gt_max)
+                az_transform = ComplexNormalizationModule(gt_min, gt_max, gt_min, gt_max)
+            else:
+                # Use simple normalization for magnitude data
+                raw_transform = NormalizationModule(rc_min, rc_max)
+                rc_transform = NormalizationModule(gt_min, gt_max)
+                rcmc_transform = NormalizationModule(gt_min, gt_max)
+                az_transform = NormalizationModule(gt_min, gt_max)
         else:
-            # Use simple normalization for magnitude data
-            raw_transform = NormalizationModule(rc_min, rc_max)
-            rc_transform = NormalizationModule(gt_min, gt_max)
-            rcmc_transform = NormalizationModule(gt_min, gt_max)
-            az_transform = NormalizationModule(gt_min, gt_max)
-        
+            raw_transform = AdaptiveNormalizationModule()
+            rc_transform = AdaptiveNormalizationModule()
+            rcmc_transform = AdaptiveNormalizationModule()
+            az_transform = AdaptiveNormalizationModule()
         return cls(
             transform_raw=raw_transform,
             transform_rc=rc_transform,
@@ -223,11 +312,112 @@ class SARTransform(nn.Module):
             transform_az=az_transform
         )
 
+class SampleFilter:
+    def __init__(self, parts: List[str]=None, years: List[int] = None, months: List[int] = None, polarizations: List[str] = None, stripmap_modes: List[int] = None):
+        """
+        Initialize a filter for SAR dataset samples.
+
+        Args:
+            parts (List[str], optional): List of part names to include.
+            years (List[int], optional): List of years to include.
+            months (List[int], optional): List of months to include.
+            polarizations (List[str], optional): List of polarizations to include.
+            stripmap_modes (List[int], optional): List of stripmap modes to include.
+        """
+        """
+        Initialize the SampleFilter with optional filtering criteria.
+
+        Args:
+            years (List[int], optional): List of years to filter.
+            months (List[int], optional): List of months to filter.
+            polarizations (List[str], optional): List of polarizations to filter.
+            stripmap_modes (List[str], optional): List of stripmap modes to filter.
+        """
+        self.parts = parts if parts is not None else []
+        self.years = years if years is not None else []
+        self.months = months if months is not None else []
+        self.polarizations = polarizations if polarizations is not None else []
+        self.stripmap_modes = stripmap_modes if stripmap_modes is not None else []
+    def get_filter_dict(self) -> Dict[str, List[Union[int, str]]]:
+        """
+        Return the filter as a dictionary for use in dataset selection.
+
+        Returns:
+            dict: Dictionary of filter criteria.
+        """
+        """
+        Get the filter criteria as a dictionary.
+
+        Returns:
+            Dict[str, List[Union[int, str]]]: Dictionary with filter criteria.
+        """
+        filter_dict = {}
+        if self.parts:
+            filter_dict['part'] = self.parts
+        if self.years:
+            filter_dict['year'] = self.years
+        if self.months:
+            filter_dict['month'] = self.months
+        if self.polarizations:
+            filter_dict['polarization'] = self.polarizations
+        if self.stripmap_modes:
+            filter_dict['stripmap_mode'] = self.stripmap_modes
+        return filter_dict
+    def matches(self, record: dict) -> bool:
+        """
+        Check if a record matches the filter criteria.
+
+        Args:
+            record (dict): Metadata record to check.
+
+        Returns:
+            bool: True if record matches, False otherwise.
+        """
+        """
+        Check if a given record matches the filter criteria.
+
+        Args:
+            record (dict): Dictionary containing product metadata.
+        Returns:
+            bool: True if the record matches all specified criteria, False otherwise.
+        """
+        if self.years and record.get('year') not in self.years:
+            return False
+        if self.months and record.get('month') not in self.months:
+            return False
+        if self.polarizations and record.get('polarization') not in self.polarizations:
+            return False
+        if self.stripmap_modes and str(record.get('stripmap_mode')) not in self.stripmap_modes:
+            return False
+        if self.parts and record.get('part') not in self.parts:
+            return False
+        return True
+    def _filter_products(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply filtering criteria to a DataFrame of product metadata.
+        Args:
+            df (pd.DataFrame): DataFrame containing product metadata.
+        Returns:
+            pd.DataFrame: Filtered DataFrame.
+        """
+        mask = pd.Series([True] * len(df))
+        if len(self.years) > 0:
+            mask &= df["acquisition_date"].dt.year.isin(self.years)
+        if len(self.months) > 0:
+            mask &= df["acquisition_date"].dt.month.isin(self.months)
+        if len(self.stripmap_modes) > 0:
+            mask &= df["stripmap_mode"].isin(self.stripmap_modes)
+        if len(self.polarizations) > 0:
+            mask &= df["polarization"].isin(self.polarizations)
+        if len(self.parts) > 0:
+            mask &= df["part"].isin(self.parts)
+        return df[mask]
+
 class SARZarrDataset(Dataset):
     """
     PyTorch Dataset for loading SAR (Synthetic Aperture Radar) data patches from Zarr format archives.
 
-    Supports efficient patch sampling from multiple Zarr files, with rectangular, or parabolic patch extraction. Handles both local and remote (Hugging Face) Zarr stores, with on-demand patch downloading and LRU chunk caching.
+    This class supports efficient patch sampling from multiple Zarr files, with both rectangular and parabolic patch extraction. It handles both local and remote (Hugging Face) Zarr stores, with on-demand patch downloading and LRU chunk caching for performance.
 
     Features:
         - Loads SAR data patches from Zarr stores (local or remote), supporting real and complex-valued data.
@@ -237,11 +427,13 @@ class SARZarrDataset(Dataset):
         - Handles both input and target SAR processing levels (e.g., "rcmc" and "az").
         - Supports saving/loading patch indices to avoid recomputation.
         - Implements chunk-level LRU caching for efficient repeated access.
+        - Flexible filtering by part, year, month, polarization, and stripmap mode via SampleFilter.
+        - Supports positional encoding and concatenation of patches.
 
     Args:
         data_dir (str): Directory containing Zarr files.
-        file_pattern (str, optional): Glob pattern for Zarr files. Defaults to "*.zarr".
-        repo_id (str, optional): Hugging Face repo ID for remote access. Defaults to 'sirbastiano94/Maya4'.
+        filters (SampleFilter, optional): Filter for selecting data by part, year, etc.
+        author (str, optional): Author or dataset identifier. Defaults to 'Maya4'.
         online (bool, optional): If True, enables remote Hugging Face access. Defaults to False.
         return_whole_image (bool, optional): If True, returns the whole image as a single patch. Defaults to False.
         transform (callable, optional): Optional transform to apply to both input and target patches.
@@ -254,12 +446,31 @@ class SARZarrDataset(Dataset):
         save_samples (bool, optional): If True, saves computed patch indices to disk. Defaults to True.
         buffer (Tuple[int, int], optional): Buffer (margin) to avoid sampling near image edges. Defaults to (100, 100).
         stride (Tuple[int, int], optional): Stride for patch extraction. Defaults to (50, 50).
+        max_base_sample_size (Tuple[int, int], optional): Maximum base sample size. Defaults to (-1, -1).
         backend (str, optional): Backend for loading Zarr data, either "zarr" or "dask". Defaults to "zarr".
+        verbose (bool, optional): If True, prints verbose output. Defaults to True.
         cache_size (int, optional): Maximum number of chunks to cache in memory.
         positional_encoding (bool, optional): If True, adds positional encoding to input patches. Defaults to True.
         dataset_length (int, optional): Optional override for dataset length.
         max_products (int, optional): Maximum number of Zarr products to use. Defaults to 10.
         samples_per_prod (int, optional): Number of patches to sample per product. Defaults to 1000.
+        concatenate_patches (bool, optional): If True, concatenates patches along the specified axis.
+        concat_axis (int, optional): Axis along which to concatenate patches.
+        max_stripmap_modes (int, optional): Maximum number of stripmap modes.
+        use_positional_as_token (bool, optional): If True, uses positional encoding as a token.
+
+    Attributes:
+        data_dir (str): Directory containing Zarr files.
+        patch_size (Tuple[int, int]): Patch size (height, width).
+        level_from (str): Input SAR processing level.
+        level_to (str): Target SAR processing level.
+        patch_mode (str): Patch extraction mode.
+        buffer (Tuple[int, int]): Buffer for patch extraction.
+        stride (Tuple[int, int]): Stride for patch extraction.
+        cache_size (int): LRU cache size for chunk loading.
+        positional_encoding (bool): Whether to add positional encoding.
+        dataset_length (int): Optional override for dataset length.
+        ... (see code for additional attributes)
 
     Example:
         >>> dataset = SARZarrDataset("/path/to/zarrs", patch_size=(128, 128), cache_size=1000)
@@ -269,8 +480,8 @@ class SARZarrDataset(Dataset):
     def __init__(
         self,
         data_dir: str,
-        file_pattern: str = "*.zarr",
-        repo_id: str = 'Maya4/PT1',
+        filters: Optional[SampleFilter] = None,
+        author: str = 'Maya4',
         online: bool = False,
         return_whole_image: bool = False,
         transform: Optional[SARTransform] = None,
@@ -283,6 +494,7 @@ class SARZarrDataset(Dataset):
         save_samples: bool = True, 
         buffer: Tuple[int, int] = (100, 100), 
         stride: Tuple[int, int] = (50, 50), 
+        max_base_sample_size: Tuple[int, int] = (-1, -1),
         backend: str = "zarr",  # "zarr" or "dask"
         verbose: bool= True, 
         cache_size: int = 1000, 
@@ -292,11 +504,12 @@ class SARZarrDataset(Dataset):
         samples_per_prod: int = 1000, 
         concatenate_patches: bool = False,  # wether to concatenate 1D patches into 2D patches (useful for transformers from rcmc to az)
         concat_axis: int = 1,               # Axis on which patches have to be concatenated: 0=vertical, 1=horizontal
-        max_stripmap_modes: int = 6
+        max_stripmap_modes: int = 6,
+        use_positional_as_token: bool = False
     ):
         self.data_dir = Path(data_dir)
-        self.file_pattern = file_pattern
-        self.repo_id = repo_id
+        self.filters = filters if filters is not None else SampleFilter()
+        self.author = author
         self.return_whole_image = return_whole_image
         self.transform = transform
         self._patch_size = patch_size
@@ -317,35 +530,35 @@ class SARZarrDataset(Dataset):
         self._max_products = max_products
         self._samples_per_prod = samples_per_prod
         self.max_stripmap_modes = max_stripmap_modes
-        
+        self._max_base_sample_size = max_base_sample_size
         self.concatenate_patches = concatenate_patches
         self.concat_axis = concat_axis
-
+        self.use_positional_as_token = use_positional_as_token
+        
         self._patch: Dict[str, np.ndarray] = {
             self.level_from: np.array([0]),
             self.level_to: np.array([0])
         }
         # Validate concatenation parameters
-        if self.concatenate_patches:
-            ph, pw = self._patch_size
-            if self.concat_axis == 0 and pw != 1:
-                raise ValueError("For vertical concatenation (axis=0), patch width must be 1")
-            elif self.concat_axis == 1 and ph != 1:
-                raise ValueError("For horizontal concatenation (axis=1), patch height must be 1")
+        # if self.concatenate_patches:
+            # ph, pw = self._patch_size
+            # if self.concat_axis == 0 and pw != 1:
+            #     raise ValueError("For vertical concatenation (axis=0), patch width must be 1")
+            # elif self.concat_axis == 1 and ph != 1:
+            #     raise ValueError("For horizontal concatenation (axis=1), patch height must be 1")
         self._load_chunk = functools.lru_cache(maxsize=cache_size)(
             self._load_chunk_uncached
         )
 
-        self._stores: Dict[os.PathLike, zarr.Group] = {}
-        self._samples_by_file: Dict[os.PathLike, List[Tuple[int,int]]] = {}
+        # self._samples_by_file: Dict[os.PathLike, List[Tuple[int,int]]] = {}
         self._y_coords: Dict[os.PathLike, np.ndarray] = {}
         self._x_coords: Dict[os.PathLike, np.ndarray] = {}
-        #self.init_samples()
+        # self._pos_encoding_out: Dict[str, np.ndarray] = {}
+        # self.init_samples()
         self._initialize_stores()
         if self.verbose:
             print(f"Initialized dataloader with config: buffer={buffer}, stride={stride}, patch_size={patch_size}, complex_values={complex_valued}")
-
-    def get_patch_size(self, zfile: os.PathLike) -> Tuple[int, int]:
+    def get_patch_size(self, zfile: Optional[Union[str, os.PathLike]]) -> Tuple[int, int]:
         """
         Retrieve the patch size for a given Zarr file based on its processing level.
         
@@ -355,11 +568,13 @@ class SARZarrDataset(Dataset):
         Returns:
             Tuple[int, int]: Patch size (height, width) for the specified processing level.
         """
-        arr = self.get_store_at_level(zfile, self.level_from)
+        
         ph, pw = self._patch_size
-        if ph > 0 and pw > 0:
+
+        if ph > 0 and pw > 0 or zfile is None:
             return ph, pw
-        else:
+        arr = self.get_store_at_level(Path(zfile), self.level_from)
+        if arr is not None:
             if self.backend == "zarr":
                 y, x = arr.shape 
             elif self.backend == "dask":
@@ -397,32 +612,60 @@ class SARZarrDataset(Dataset):
         else:
             ephemeris = None
         return metadata, ephemeris
-    
 
-    def _get_file_list(self):
+    def get_samples_by_file(self, zfile: Union[str, os.PathLike]) -> List[Tuple[int,int]]:
+        """
+        Get the list of patch coordinates for a given Zarr file.
+
+        Args:
+            zfile (os.PathLike): Path to the Zarr file.
+        Returns:
+            List[Tuple[int, int]]: List of (y, x) coordinates for patches in the specified Zarr file.
+        """
+        return self._files.loc[self._files['full_name'] == Path(zfile)]['samples'].values[0]
+    def _set_samples_for_file(self, zfile: Union[str, os.PathLike], samples: List[Tuple[int,int]]):
+        """
+        Set the list of patch coordinates for a given Zarr file.
+
+        Args:
+            zfile (os.PathLike): Path to the Zarr file.
+            samples (List[Tuple[int, int]]): List of (y, x) coordinates for patches in the specified Zarr file.
+        """
+        idx = self._files.index[self._files['full_name'] == Path(zfile)]
+        if len(idx) > 0:
+            self._files.at[idx[0], 'samples'] = samples
+    def _build_file_list(self):
         """
         Retrieve the list of Zarr files to use, either from the local directory or from a remote Hugging Face repository.
         Filters files using the provided glob pattern and limits to max_products.
         """
         if self.online:
-            import fnmatch
-            self.remote_files = list_base_files_in_repo(
-                repo_id=self.repo_id,
-            )
-            # Convert glob pattern to regex for matching
-            regex_pattern = fnmatch.translate(self.file_pattern)
-            filename_regex = re.compile(regex_pattern)
+            repos = list_repos_by_author(self.author)
             if self.verbose:
-                print(f"Found {len(self.remote_files)} files in the remote repository: '{self.remote_files}'")
-            matched_files = [Path(self.data_dir).joinpath(f) for f in self.remote_files if filename_regex.match(f)]
-            self.files = sorted(matched_files)[:min(self._max_products, len(matched_files))]
+                print(f"Found {len(repos)} repositories by author '{self.author}': {repos}")
+            self.remote_files = {}
+            for repo in repos:
+                repo_files = list_base_files_in_repo(
+                    repo_id=repo,
+                )
+                # Convert glob pattern to regex for matching
+                if self.verbose:
+                    print(f"Found {len(repo_files)} files in the remote repository: '{repo}'")
+                repo_name = repo.split('/')[-1]
+                self.remote_files[repo_name] = repo_files
+            records = [r for r in (parse_product_filename(os.path.join(self.data_dir, part, f)) for part, files in self.remote_files.items() for f in files) if r is not None]
+            print(f"Total files found in remote repository: {len(records)}")
+            self._files = self.filters._filter_products(pd.DataFrame(records))
         else:
-            self.files = sorted(self.data_dir.glob(self.file_pattern))
-            self.files = self.files[:min(self._max_products, len(self.files))]
+            print(f"Files in local directory {self.data_dir}: {[f.name for f in sorted(self.data_dir.glob('*'))]}")
+            records = [r for r in (parse_product_filename(f) for f in sorted(self.data_dir.glob("*"))) if r is not None]
+            self._files = self.filters._filter_products(pd.DataFrame(records))
+        self._files.sort_values(by=['full_name'], inplace=True)
+        self._files = self._files.iloc[:self._max_products]
         if self.verbose:
-            print(f"Selected only files:  {self.files}")
+            print(f"Selected only files:  {self._files}")
 
-    def _append_file_to_stores(self, zfile: os.PathLike):
+    def _append_file_to_stores(self, zfile: Union[str, os.PathLike]):
         """
         Appends a Zarr file to the stores dictionary, opening it in read-only mode.
         This method is used to initialize the dataset with a specific Zarr file.
@@ -432,16 +675,25 @@ class SARZarrDataset(Dataset):
         """
         if not Path(zfile).exists():
             return
-        if zfile in self._stores:
-            return
+        # Only return if the entry does not exist at all
+        if not os.path.exists(get_part_from_filename(zfile)):
+            os.makedirs(os.path.join(self.data_dir, get_part_from_filename(zfile)), exist_ok=True)
+        idx = self._files.index[self._files['full_name'] == Path(zfile)]
+        if len(idx) > 0 and self._files.at[idx[0], 'store'] is not None:
+            return  # Do not return, just continue
         if self.backend == "zarr":
-            store = LocalStore(str(zfile))
-            self._stores[zfile] = zarr.open(store, mode='r')
+            idx = self._files.index[self._files['full_name'] == Path(zfile)]
+            if len(idx) > 0:
+                print(f"Opening Zarr store for file {zfile} at index {idx[0]}")
+                self._files.at[idx[0], 'store'] = self.open_archive(zfile)
         elif self.backend == "dask":
-            self._stores[zfile] = {}
+            self._files.loc[self._files['full_name'] == Path(zfile), 'store'] = {}
             for level in (self.level_from, self.level_to):
                 complete_path = os.path.join(zfile, level) 
-                self._stores[zfile][level] = da.from_zarr(complete_path) #.rechunk(self.patch_size)  
+                idx = self._files.index[self._files['full_name'] == Path(zfile)]
+                if len(idx) > 0:
+                    self._files.at[idx[0], 'store'] = {}
+                    self._files.at[idx[0], 'store'][level] = self.open_archive(complete_path) 
         else:
             raise ValueError(f"Unknown backend {self.backend}")
 
@@ -449,26 +701,106 @@ class SARZarrDataset(Dataset):
         """
         Initializes data stores based on the selected backend.
 
-        For the "zarr" backend, opens each file as a Zarr store in read-only mode and stores it in `self._stores`.
+        For the "zarr" backend, opens each file as a Zarr store in read-only mode and stores it in `self._files` in the 'stores' attribute.
         For the "dask" backend, creates a dictionary for each file, loading data for each specified level using Dask arrays
         with the given patch size for rechunking.
         Raises:
             ValueError: If an unknown backend is specified.
         """
         t0 = time.time()
-        self._get_file_list()
+        self._build_file_list()
         if self.verbose:
             dt = time.time() - t0
             print(f"Files list calculation took {dt:.2f} seconds.")
             
         t0 = time.time()
-        for zfile in self.files:
-            self._append_file_to_stores(zfile)
+        for zfile in self.get_files():
+            self._append_file_to_stores(Path(zfile))
         if self.verbose:
-            df = time.time() - t0
-            print(f"Zarr stores initialization took {df:.2f} seconds.")
+            dt = time.time() - t0
+            print(f"Zarr stores initialization took {dt:.2f} seconds.")
 
-    def calculate_patches_from_store(self, zfile:os.PathLike, patch_order: str = "row"):
+    def get_files(self) -> List[os.PathLike]:
+        """
+        Returns the list of Zarr files used in the dataset.
+
+        Returns:
+            List[os.PathLike]: List of Zarr file paths.
+        """
+
+        return self._files['full_name'].tolist()
+
+    def open_archive(self, zfile: os.PathLike) -> (zarr.Group | zarr.Array):
+        """
+        Open a Zarr archive and return the root group or array, depending on backend.
+
+        Args:
+            zfile (os.PathLike): Path to the Zarr file.
+
+        Returns:
+            zarr.Group or zarr.Array: The root group or array of the Zarr archive.
+        """
+        if self.backend == "dask":
+            return da.from_zarr(zfile)
+        elif self.backend == "zarr":
+            return zarr.open(zfile, mode='r')
+        else: 
+            raise ValueError(f"Unknown backend {self.backend}")
+        
+    def get_store_at_level(self, zfile: Union[os.PathLike, str], level: str) -> zarr.Array:
+        level_dir = Path(zfile) / level
+        if not Path(zfile).exists() or not level_dir.exists() or not level_dir.exists():
+            if self.online:
+                zfile_name = os.path.basename(zfile)
+                part = get_part_from_filename(zfile)
+                repo_id = self.author + '/' + part
+                download_metadata_from_product(
+                    zfile_name=str(zfile_name),
+                    local_dir=os.path.join(self.data_dir, part),
+                    levels=[level, self.level_from, self.level_to],
+                    repo_id=repo_id
+                )
+            else:
+                raise ValueError(f"Levels {self.level_from} and {self.level_to} not found in Zarr store {zfile}.")
+        self._append_file_to_stores(zfile=Path(zfile))
+        return self._files.loc[self._files['full_name'] == Path(zfile), 'store'].values[0][level]
+    
+    def get_store(self, zfile: Union[os.PathLike, str]) -> zarr.Group:
+        if not Path(zfile).exists():
+            if self.online:
+                zfile_name = os.path.basename(zfile)
+                part = get_part_from_filename(zfile)
+                repo_id = self.author + '/' + part
+                download_metadata_from_product(
+                    zfile_name=str(zfile_name),
+                    local_dir=os.path.join(self.data_dir, part),
+                    levels=[self.level_from, self.level_to], 
+                    repo_id=repo_id
+                )
+            else:
+                raise ValueError(f"Levels {self.level_from} and {self.level_to} not found in Zarr store {zfile}.")
+        self._append_file_to_stores(zfile=Path(zfile))
+        return self._files.loc[self._files['full_name'] == str(zfile), 'store'].values[0]
+    def get_max_base_sample_size(self, zfile: Union[str, os.PathLike]):
+        ph, pw =   self._max_base_sample_size
+        if ph == -1:
+            ph = self.get_store_at_level(Path(zfile), self.level_from).shape[0]
+        if pw == -1:
+            pw = self.get_store_at_level(Path(zfile), self.level_from).shape[1]
+        return ph, pw
+    def get_whole_sample_shape(self, zfile: os.PathLike) -> Tuple[int, int]:
+        """
+        Get the shape of the whole sample (image) at the specified level from the Zarr file.
+
+        Args:
+            zfile (os.PathLike): Path to the Zarr file.
+
+        Returns:
+            Tuple[int, int]: Shape of the whole sample (height, width).
+        """
+        ph, pw = self.get_store_at_level(zfile, self.level_from).shape
+        return (ph - self.buffer[0] * 2, pw - self.buffer[1] * 2)
+    def calculate_patches_from_store(self, zfile:os.PathLike, patch_order: str = "row", window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]] = None):
         """
         Compute and store valid patch coordinates for a given Zarr file, according to the patch mode and parameters.
         Downloads metadata if needed (in online mode) and ensures all patches fit within image bounds.
@@ -482,19 +814,21 @@ class SARZarrDataset(Dataset):
         if not Path(zfile).exists() or not level_from_dir.exists() or not level_t_dir.exists():
             if self.online:
                 zfile_name = os.path.basename(zfile)
+                part = get_part_from_filename(zfile)
+                repo_id = self.author + '/' + part
                 download_metadata_from_product(
                     zfile_name=str(zfile_name),
-                    local_dir=self.data_dir, 
+                    local_dir=os.path.join(self.data_dir, part),
                     levels=[self.level_from, self.level_to], 
-                    repo_id=self.repo_id
+                    repo_id=repo_id
                 )
             else:
                 raise ValueError(f"Levels {self.level_from} and {self.level_to} not found in Zarr store {zfile}.")
         
-        self._append_file_to_stores(zfile)
+        self._append_file_to_stores(Path(zfile))
         # Print the directories (groups/arrays) inside the Zarr store
 
-        h, w = self.get_whole_sample_shape(zfile) #self._stores[zfile][self.level_from].shape
+        h, w = self.get_whole_sample_shape(zfile) 
         coords: List[Tuple[int,int]] = []
         if self.return_whole_image:
             coords = [(0, 0)]
@@ -506,15 +840,23 @@ class SARZarrDataset(Dataset):
                 y_min, y_max = self.buffer[0], h - self.buffer[0]
                 x_min, x_max = self.buffer[1], w - self.buffer[1]
 
+                if window is not None:
+                    #print(f"Applying window: {window} to (({x_min}, {y_min}), ({x_max}, {y_max}))")
+                    y_min, y_max = max(window[0][0], y_min), min(window[1][0], y_max)
+                    x_min, x_max = max(window[0][1], x_min), min(window[1][1], x_max)
+                    #print(f"Saving samples from coordinates ({x_min}, {y_min}) to ({x_max}, {y_max})")
+                    stride_x, stride_y = min(stride_x, x_max - x_min), min(stride_y, y_max - y_min)
                 if self.concatenate_patches:
+                    mph, mpw = self.get_max_base_sample_size(zfile)
+                    mph, mpw = min(mph, x_max-x_min), min(mpw, y_max-y_min)
                     if self.concat_axis == 0:
                         # Vertical concatenation: fix y-coordinate to 0, vary x-coordinates
-                        self._y_coords[zfile] = np.array([y_min]) 
+                        self._y_coords[zfile] = np.arange(y_min, y_max - mph + 1, mph) 
                         self._x_coords[zfile] = np.arange(x_min, x_max - stride_x + 1, stride_x)
                     elif self.concat_axis == 1:
                         # Horizontal concatenation: fix y-coordinate to 0, vary x-coordinates
                         self._y_coords[zfile] = np.arange(y_min, y_max - stride_y + 1, stride_y)
-                        self._x_coords[zfile] = np.array([x_min])  
+                        self._x_coords[zfile] = np.arange(x_min, x_max - mpw + 1, mpw)  
                     else:
                         raise ValueError(f"Invalid concat_axis: {self.concat_axis}. Must be 0 (vertical) or 1 (horizontal).")
                 else:
@@ -542,7 +884,7 @@ class SARZarrDataset(Dataset):
             else:
                 raise ValueError(f"Unknown patch_mode {self.patch_mode}")
         coords = self.reorder_samples(zfile, patch_order=patch_order)
-        self._samples_by_file[zfile] = coords
+        self._set_samples_for_file(zfile, coords) #_samples_by_file[zfile] = coords
             
     def reorder_samples(
         self, zfile: os.PathLike, patch_order: str = "row"
@@ -603,12 +945,12 @@ class SARZarrDataset(Dataset):
 
         Notes:
             - The chunk sizes are inferred from the Zarr store at the specified processing level (`self.level_from`).
-            - The method assumes that `self._stores`, `self._y_coords`, and `self._x_coords` are properly initialized and populated.
+            - The method assumes that the attribute 'store' in `self._files`, `self._y_coords`, and `self._x_coords` are properly initialized and populated.
             - The returned coordinate order is optimized for sequential chunk access, which can reduce I/O overhead and improve cache utilization.
         """
 
         # Get chunk size and patch size
-        sample = self._stores[zfile][self.level_from]
+        sample = self.get_store_at_level(zfile=Path(zfile), level=self.level_from)
         ch, cw = sample.chunks
         
         # Create coordinate grids
@@ -685,33 +1027,35 @@ class SARZarrDataset(Dataset):
         else:
             ph, pw = self.get_patch_size(zfile)
             sh, sw = self.get_whole_sample_shape(zfile)
+            bsh, bsw = self.get_max_base_sample_size(zfile)
+            sh, sw = min(sh, bsh), min(sw, bsw)
             if self.concatenate_patches:
                 if self.concat_axis == 0:
-                    patch_from = self._get_sample(zfile, self.level_from, self.buffer[1], x, sh, pw)
-                    patch_to = self._get_sample(zfile, self.level_to, self.buffer[1], x, sh, pw)
+                    patch_from = self._get_sample(zfile, self.level_from, y, x, sh, pw)
+                    patch_to = self._get_sample(zfile, self.level_to,y, x, sh, pw)
                 elif self.concat_axis == 1:
-                    patch_from = self._get_sample(zfile, self.level_from, y, self.buffer[0], ph, sw)
-                    patch_to = self._get_sample(zfile, self.level_to, y, self.buffer[0], ph, sw)
+                    patch_from = self._get_sample(zfile, self.level_from, y, x, ph, sw)
+                    patch_to = self._get_sample(zfile, self.level_to, y, x, ph, sw)
             else:
                 patch_from = self._get_sample(zfile, self.level_from, y, x, ph, pw)
                 
                 # if pw == 1:
-                #     original_patch = self._stores[zfile][self.level_from][y:y+ph, x]
+                #     original_patch = self.get_store_at_level(zfile, self.level_from)[y:y+ph, x]
                 # elif ph == 1:
-                #     original_patch = self._stores[zfile][self.level_from][y, x:x+pw]
+                #     original_patch = self.get_store_at_level(zfile, self.level_from)[y, x:x+pw]
                 # else:
-                #     original_patch = self._stores[zfile][self.level_from][y:y+ph,x:x+pw]
+                #     original_patch = self.get_store_at_level(zfile, self.level_from)[y:y+ph,x:x+pw]
                 # #print(f"Original patch shape")
                 # assert (patch_from.squeeze() ==original_patch).all(), f"Patch data mismatch! Patch: {patch_from.squeeze()}, original patch: {original_patch}"
                 # print(f"Comparison is ok between the patches: {patch_from.squeeze()[:50]} and {original_patch[:50]}")
                 
                 patch_to = self._get_sample(zfile, self.level_to, y, x, ph, pw)
                 # if pw == 1:
-                #     original_patch = self._stores[zfile][self.level_to][y:y+ph, x]
+                #     original_patch = self.get_store_at_level(zfile, self.level_to)[y:y+ph, x]
                 # elif ph == 1:
-                #     original_patch = self._stores[zfile][self.level_to][y, x:x+pw]
+                #     original_patch = self.get_store_at_level(zfile, self.level_to)[y, x:x+pw]
                 # else:
-                #     original_patch = self._stores[zfile][self.level_to][y:y+ph,x:x+pw]
+                #     original_patch = self.get_store_at_level(zfile, self.level_to)[y:y+ph,x:x+pw]
                 # #print(f"Original patch shape")
                 # assert (patch_to.squeeze() ==original_patch).all(), f"Patch data mismatch! Patch: {patch_to.squeeze()}, original patch: {original_patch}"
                 # print(f"Comparison is ok between the patches: {patch_from.squeeze()[:50]} and {original_patch[:50]}")
@@ -745,12 +1089,13 @@ class SARZarrDataset(Dataset):
         # Extract stride number from filename if present
         stripmap_mode = extract_stripmap_mode_from_filename(os.path.basename(zfile))
         zfile = Path(zfile)
+        # print(f"Opening zfile: {zfile}, y: {y}, x: {x}, stripmap_mode: {stripmap_mode}")
         start_time = time.time()
 
         t0 = time.time()
 
         # Retrieve the horizontal size (width) from the store for self.level_from
-        sample_height, sample_width = self.get_whole_sample_shape(zfile) #self._stores[zfile][self.level_from].shape[1]
+        sample_height, sample_width = self.get_whole_sample_shape(zfile) 
         if self.verbose:
             dt = time.time() - t0
             print(f"Sample shape for {zfile} at level {self.level_from}: {sample_height}x{sample_width} took {dt:.4f} seconds")
@@ -776,14 +1121,14 @@ class SARZarrDataset(Dataset):
             patch_to = np.stack((np.real(patch_to), np.imag(patch_to)), axis=-1).astype(np.float32)
             if self.verbose:
                 dt = time.time() - t0
-                print(f"Patch stacking took {dt:.4f} seconds")
+                print(f"Complex to real conversion took {dt:.4f} seconds")
         #print(f"Shape before positional encoding: {patch_from.shape}")
         if self.positional_encoding:
             t0 = time.time()
             global_column_index = x + stripmap_mode * sample_width
             
-            patch_from = self.add_position_embedding(patch_from, (y, global_column_index), (sample_height, sample_width * self.max_stripmap_modes))
-            patch_to = self.add_position_embedding(patch_to, (y, global_column_index), (sample_height, sample_width * self.max_stripmap_modes))
+            patch_from = self.add_position_embedding(patch_from, (y, global_column_index), (sample_height, sample_width * self.max_stripmap_modes), level=self.level_from)
+            patch_to = self.add_position_embedding(patch_to, (y, global_column_index), (sample_height, sample_width * self.max_stripmap_modes), level=self.level_to)
             if self.verbose:
                 dt = time.time() - t0
                 print(f"Patch positional encoding took {dt:.4f} seconds")
@@ -798,6 +1143,12 @@ class SARZarrDataset(Dataset):
             if self.verbose:
                 dt = time.time() - t0
                 print(f"Concatenated patch shapes: from={patch_from.shape}, to={patch_to.shape} took {dt:.4f} seconds")
+        # Optionally concatenate positional embedding as next token
+        if self.use_positional_as_token:
+            # patch_from shape: (1000, seq_len, 2)
+            backscatter = patch_from[..., 0]
+            pos_embed = patch_from[..., 1]
+            patch_from = np.concatenate([backscatter, pos_embed[:, :, :1]], axis=-1)  # (1000, seq_len+1)
         x_tensor = torch.from_numpy(patch_from)
         y_tensor = torch.from_numpy(patch_to)
         if self.verbose:
@@ -819,13 +1170,15 @@ class SARZarrDataset(Dataset):
             Path: Path to the downloaded chunk file.
         """
         zfile_name = os.path.basename(zfile)
+        part = get_part_from_filename(zfile)
+        repo_id = self.author + '/' + part
         if not zfile.exists():
             if self.online:
                 meta_file = download_metadata_from_product(
                     zfile_name=str(zfile_name),
-                    local_dir=self.data_dir, 
+                    local_dir=os.path.join(self.data_dir, part),
                     levels=[self.level_from, self.level_to], 
-                    repo_id=self.repo_id
+                    repo_id=repo_id
                 )
                 with open(meta_file) as f:
                     zarr_meta = json.load(f)
@@ -833,15 +1186,14 @@ class SARZarrDataset(Dataset):
                 self.calculate_patches_from_store(zfile)
             else:
                 raise FileNotFoundError(f"Zarr file {zfile} does not exist.")
-        
-        chunk_name = get_chunk_name_from_coords(y, x, zarr_file_name=zfile_name, level=level, chunks=self._stores[zfile][level].chunks, version=get_zarr_version(zfile))
-        chunk_path = self.data_dir / chunk_name
+
+        chunk_name = get_chunk_name_from_coords(y, x, zarr_file_name=zfile_name, level=level, chunks=self.get_store_at_level(zfile, level).chunks, version=get_zarr_version(zfile))
+        chunk_path = self.data_dir / part / chunk_name
         
         if not chunk_path.exists():
             if self.verbose:
                 print(f"Chunk {chunk_name} not found locally. Downloading from Hugging Face Zarr archive...")
-            zfile_name = os.path.basename(zfile)
-            fetch_chunk_from_hf_zarr(level=level, y=y, x=x, zarr_archive=zfile_name, local_dir=self.data_dir, repo_id=self.repo_id)
+            fetch_chunk_from_hf_zarr(level=level, y=y, x=x, zarr_archive=zfile_name, local_dir=os.path.join(self.data_dir, part), repo_id=repo_id)
         return chunk_path
 
 
@@ -859,7 +1211,7 @@ class SARZarrDataset(Dataset):
         Returns:
             np.ndarray: Single chunk data.
         """
-        arr = self._stores[zfile][level]
+        arr = self.get_store_at_level(zfile, level)
         ch, cw = arr.chunks
         
         # Calculate actual array coordinates for this chunk
@@ -881,7 +1233,7 @@ class SARZarrDataset(Dataset):
         """
         Optimized version that dispatches to specialized methods based on patch geometry.
         """
-        arr = self._stores[zfile][level]
+        arr = self.get_store_at_level(zfile, level)
         ch, cw = arr.chunks
         
         # Dispatch to optimized methods based on patch type
@@ -1024,7 +1376,7 @@ class SARZarrDataset(Dataset):
         """
         Highly optimized version with fast single-chunk path.
         """
-        arr = self._stores[zfile][level]
+        arr = self.get_store_at_level(zfile, level)
         ch, cw = arr.chunks
         
         # Pre-calculate chunk coordinates
@@ -1041,7 +1393,7 @@ class SARZarrDataset(Dataset):
                 return chunk[dy:dy+ph, dx:dx+pw].copy()  # Direct slice
             else:
                 # Handle boundary case
-                #print("HEYYYYYYYYY")
+                # print("HEYYYYYYYYY")
                 patch = np.zeros((ph, pw), dtype=np.complex128)
                 max_h = min(ph, chunk.shape[0] - dy)
                 max_w = min(pw, chunk.shape[1] - dx)
@@ -1068,7 +1420,7 @@ class SARZarrDataset(Dataset):
         """
         t0 = time.time()
         if self.backend == "dask":
-            sample = self._stores[zfile][level]
+            sample = self.get_store_at_level(zfile, level)
             if ph == 0 and pw == 0: 
                 arr = sample[y, x].compute() 
             elif ph == 0:   
@@ -1083,95 +1435,32 @@ class SARZarrDataset(Dataset):
             return arr.astype(np.complex128)
         elif self.backend == "zarr":
             patch = self._get_sample_from_cached_chunks(zfile, level, y, x, ph, pw)
+            # print(f"Original patch: {patch}")
             # if pw == 1:
-            #     original_patch = self._stores[zfile][level][y:y+ph, x]
+            #     original_patch = self.get_store_at_level(zfile, level)[y:y+ph, x]
             # elif ph == 1:
-            #     original_patch = self._stores[zfile][level][y, x:x+pw]
+            #     original_patch = self.get_store_at_level(zfile, level)[y, x:x+pw]
             # else:
-            #     original_patch = self._stores[zfile][level][y:y+ph,x:x+pw]
+            #     original_patch = self.get_store_at_level(zfile, level)[y:y+ph,x:x+pw]
             # #print(f"Original patch shape")
             # assert (patch.squeeze() ==original_patch).all(), f"Patch data mismatch! Patch: {patch.squeeze()}, original patch: {original_patch}"
             return patch
         else:
             raise ValueError(f"Unknown backend {self.backend}")
-        
-    def open_archive(self, zfile: os.PathLike) -> (zarr.Group | zarr.Array):
-        """
-        Open a Zarr archive and return the root group or array, depending on backend.
-
-        Args:
-            zfile (os.PathLike): Path to the Zarr file.
-
-        Returns:
-            zarr.Group or zarr.Array: The root group or array of the Zarr archive.
-        """
-        if self.backend == "dask":
-            return da.from_zarr(zfile)
-        elif self.backend == "zarr":
-            return zarr.open(zfile, mode='r')
-        else: 
-            raise ValueError(f"Unknown backend {self.backend}")
-        
-    def get_store_at_level(self, zfile: Union[os.PathLike, str], level: str) -> zarr.Array:
-        level_dir = Path(zfile) / level
-        if not Path(zfile).exists() or not level_dir.exists() or not level_dir.exists():
-            if self.online:
-                zfile_name = os.path.basename(zfile)
-                download_metadata_from_product(
-                    zfile_name=str(zfile_name),
-                    local_dir=self.data_dir, 
-                    levels=[level, self.level_from, self.level_to], 
-                    repo_id=self.repo_id
-                )
-            else:
-                raise ValueError(f"Levels {self.level_from} and {self.level_to} not found in Zarr store {zfile}.")
-        self._append_file_to_stores(zfile=Path(zfile))
-        return self._stores[Path(zfile)][level]
-    
-    def get_store(self, zfile: Union[os.PathLike, str]) -> zarr.Group:
-        if not Path(zfile).exists():
-            if self.online:
-                zfile_name = os.path.basename(zfile)
-                download_metadata_from_product(
-                    zfile_name=str(zfile_name),
-                    local_dir=self.data_dir, 
-                    levels=[self.level_from, self.level_to], 
-                    repo_id=self.repo_id
-                )
-            else:
-                raise ValueError(f"Levels {self.level_from} and {self.level_to} not found in Zarr store {zfile}.")
-        self._append_file_to_stores(zfile=Path(zfile))
-        return self._stores[Path(zfile)]
-        
-    def get_whole_sample_shape(self, zfile: os.PathLike) -> Tuple[int, int]:
-        """
-        Get the shape of the whole sample (image) at the specified level from the Zarr file.
-
-        Args:
-            zfile (os.PathLike): Path to the Zarr file.
-
-        Returns:
-            Tuple[int, int]: Shape of the whole sample (height, width).
-        """
-        if zfile not in self._stores:
-            raise KeyError(f"Zarr file {zfile} not found in stores.")
-        
-        ph, pw = self.get_store_at_level(zfile, self.level_from).shape #self._stores[zfile][self.level_from].shape
-        return (ph - self.buffer[0] * 2, pw - self.buffer[1] * 2)
     
     def _get_concatenated_patch(self, patch: np.ndarray, zfile: os.PathLike) -> np.ndarray:
         """
         Get concatenated patches by sampling multiple 1D patches and concatenating them.
         
         For concat_axis=0 (vertical concatenation):
-        - patch_size = (1, 1000) - horizontal strips  
+        - patch_size = (n, 1000) - horizontal strips  
         - stride = (1000, 1000)
-        - Concatenate 10 horizontal strips vertically -> result: (10, 1000)
+        - Concatenate 10 horizontal strips vertically -> result: (10*n, 1000)
         
         For concat_axis=1 (horizontal concatenation):
-        - patch_size = (1000, 1) - vertical strips
+        - patch_size = (1000, n) - vertical strips
         - stride = (1000, 1000) 
-        - Concatenate 10 vertical strips horizontally -> result: (1000, 10)
+        - Concatenate 10 vertical strips horizontally -> result: (1000, 10*nm)
         
         Args:
             zfile: Path to Zarr file
@@ -1181,58 +1470,30 @@ class SARZarrDataset(Dataset):
             Tuple of concatenated patches (from_level, to_level)
         """
         ph, pw = self.get_patch_size(zfile)
+        #print(patch.shape)
+        if len(patch.shape) == 2:
+            patch = patch[..., np.newaxis]
+        fph, fpw, c = patch.shape
         stride_y, stride_x = self.stride
         
         if self.concat_axis == 0:
-            # Vertical concatenation: stack multiple (1, pw) patches as rows
-            # num_patches = sh // stride_y if sh > stride_y else 1
-
-            patch = patch.squeeze()
-            #print(f"Patch shape: {patch.shape}")
-            max_start = len(patch) - ph + 1
-
-            # Create start indices for each window
-            start_indices = np.arange(0, max_start, stride_y)
-
-            # Create offset indices within each window
-            offset_indices = np.arange(ph)
-
-            # Use broadcasting to create all indices
-            indices = start_indices[:, np.newaxis] + offset_indices[np.newaxis, :]
-            # Extract windows and transpose
-            # indices = indices.T
-            #print(f"Indices shape: {indices.shape}")
-            #print(indices)
-            #print(f"Patch before concatenation: {patch}")
-            patch = patch[indices].swapaxes(0, 1)
-            #print(f"Patch after concatenation: {patch}")
-            
-            #print(f"Patch shape:{patch.shape}")
-                
+            axis = 1                
         elif self.concat_axis == 1:
-            patch = patch.squeeze()
-
-            max_start = len(patch) - pw + 1
-
-            # Create start indices for each window
-            start_indices = np.arange(0, max_start, stride_x)
-
-            # Create offset indices within each window
-            offset_indices = np.arange(pw)
-
-            # Use broadcasting to create all indices
-            indices = start_indices[:, np.newaxis] + offset_indices[np.newaxis, :]
-            #indices = indices.T
-            # Extract windows
-            patch = patch[indices]
+            axis = 0
         else:
             raise ValueError(f"Invalid concat_axis: {self.concat_axis}")
-            
+
+        x_starts = np.arange(0, fpw - pw + 1, stride_x)
+        y_starts = np.arange(0, fph - ph + 1, stride_y)
+        #print(f"X_starts={x_starts}, Y_starts={y_starts}")
+        blocks = [patch[y:y+ph, x:x+pw, :] for x in x_starts for y in y_starts]
+        patch = np.concatenate(blocks, axis=axis) 
         return patch
     def get_patch_visualization(
         self, 
         patch: np.ndarray, 
         level: str,
+        zfile: Optional[Union[str, os.PathLike]]= None,
         remove_positional_encoding: bool = True,
         restore_complex: bool = None,
         prepare_for_plotting: bool = True,
@@ -1269,9 +1530,11 @@ class SARZarrDataset(Dataset):
                 # Remove last 2 channels (positional encoding)
                 if patch.shape[-1] >= 2:
                     patch = patch[..., :-2]
-            elif patch.ndim == 2:
+            elif patch.ndim == 2 and np.iscomplexobj(patch):
                 #The positional encoding is concatenated along one single dimension as complex number
                 patch = patch[...: :-1]
+            elif patch.ndim == 4:
+                patch = patch[..., :-2]
         #print(f"Patch shape after positional encoding removal: {patch.shape}")
         # Step 2: Restore complex format if needed
         if not restore_complex and patch.shape[-1] == 2:
@@ -1284,14 +1547,14 @@ class SARZarrDataset(Dataset):
         # Step 3: Reverse concatenation operations
         if self.concatenate_patches:
             #print(f"Patch shape before concatenation: {patch.shape}")
-            patch = self._reverse_concatenation(patch)
+            patch = self._reverse_concatenation(patch, zfile=zfile)
         #print(f"Patch shape in the end: {patch.shape}")
         if not self.transform is None:
             patch = self.transform.inverse(patch, level)
         if prepare_for_plotting:
             patch, vmin, vmax = get_sample_visualization(data=patch, plot_type=plot_type, vminmax=vminmax)
         return patch
-    def _reverse_concatenation(self, patch: np.ndarray) -> np.ndarray:
+    def _reverse_concatenation(self, patch: np.ndarray, zfile: Union[str, os.PathLike]) -> np.ndarray:
         """
         Reverse the concatenation operation performed in _get_concatenated_patch.
         
@@ -1310,6 +1573,9 @@ class SARZarrDataset(Dataset):
             np.ndarray: Reconstructed patch in original strip format
         """
         stride_y, stride_x = self.stride
+        original_ph, original_pw = self.get_patch_size(zfile=zfile)
+        mph, mpw = self.get_max_base_sample_size(zfile=zfile)
+        original_ph, original_pw = min(mph, original_ph), min(mpw, original_pw)
         if len(patch.shape) == 3:
             patch = patch.squeeze(axis=2)
         elif len(patch.shape) != 2:
@@ -1325,13 +1591,13 @@ class SARZarrDataset(Dataset):
             pw_total = num_patches * stride_x
             
             # Create output array
-            output = np.zeros((1, pw_total), dtype=patch.dtype)
+            output = np.zeros((original_ph, pw_total), dtype=patch.dtype)
             
             # Place each patch row at its correct position
             for i in range(num_patches):
                 start_y = i * stride_x
                 end_y = start_y + pw  # Each original patch was height 1
-                output[:, start_y:end_y] = patch[i:i+1, :]
+                output[:, start_y:end_y] = patch[i:i+original_ph, :]
             
             return output
             
@@ -1346,15 +1612,18 @@ class SARZarrDataset(Dataset):
             ph_total = (num_patches-1) * stride_y + ph
             
             # Create output array
-            output = np.zeros((ph_total, 1), dtype=patch.dtype)
+            output = np.zeros((num_patches * stride_y // original_pw, original_pw), dtype=patch.dtype)
             
             # Place each patch column at its correct position
-            for i in range(num_patches):
-                start_x = i * stride_y
+            for i in range(0, num_patches, original_pw):
+
+                start_x = i * stride_y // original_pw
                 end_x = start_x + ph  # Each original patch was width 1
                 #print(patch[:, i:i+1][:50])
-                output[start_x:end_x, :] = patch[:, i:i+1]
-                
+                #print(f"Copying patch {i} of coordinates ({0}:{patch.shape[0]}, {i}:{i+original_pw}) of shape {patch[:, i:i+original_pw].shape} to output[{start_x}:{end_x}, :{original_pw}]")
+                output[start_x:end_x, :original_pw] = patch[:, i:i+original_pw]
+
+            #print(f"Reverse concatenated shape: {output.shape}")
             return output
             
         else:
@@ -1443,7 +1712,7 @@ class SARZarrDataset(Dataset):
             y_coords = y_start + np.arange(ph)
             
             # Determine which chunks we need for the center column
-            sample = self._stores[zfile][level]
+            sample = self.get_store_at_level(zfile, level)
             if self.backend == "zarr":
                 ch, cw = sample.chunks
                 
@@ -1490,7 +1759,7 @@ class SARZarrDataset(Dataset):
             
             if self.backend == "zarr":
                 # Group coordinates by chunks for efficient cache utilization
-                sample = self._stores[zfile][level]
+                sample = self.get_store_at_level(zfile, level)
                 ch, cw = sample.chunks
                 
                 chunk_groups = {}
@@ -1519,7 +1788,7 @@ class SARZarrDataset(Dataset):
         
         return patch
     
-    def add_position_embedding(self, inp: np.ndarray, pos: Tuple[int, int], max_length: Tuple[int, int]) -> np.ndarray:
+    def add_position_embedding(self, inp: np.ndarray, pos: Tuple[int, int], max_length: Tuple[int, int], level:str) -> np.ndarray:
         """
         Add both horizontal and vertical position embedding to the input numpy array.
         Uses cached position arrays for better performance.
@@ -1536,22 +1805,27 @@ class SARZarrDataset(Dataset):
         """
         y_offset, x_offset = pos
         max_y, max_x = max_length
-        
-        # Handle input format conversion
-        if inp.ndim == 3 and inp.shape[2] == 2:
-            # Real-valued input (ph, pw, 2)
-            ph, pw, channels = inp.shape
-            inp_flat = inp.reshape(-1, channels)
-        elif inp.ndim == 2:  
-            # Complex-valued input (ph, pw) - convert to real format
-            ph, pw = inp.shape
-            # Convert complex to real format: stack real and imaginary parts
-            #inp_real = np.stack([np.real(inp), np.imag(inp)], axis=-1)
-            #inp_flat = inp_real.reshape(-1, 2)
-            inp_flat = inp.reshape(-1, 1)
-            channels = 1
-        else:
-            raise ValueError("Input shape not recognized for positional embedding.")
+        ph, pw = inp.shape[:2]
+        if inp.ndim == 2:
+            inp = inp.reshape(ph, pw, 1)
+        elif inp.ndim != 3:
+            raise ValueError(f"Expected 2D or 3D input patch for positional encoding. Got patch of shape: {inp.shape}")
+        ph, pw, ch = inp.shape
+        # # Handle input format conversion
+        # if inp.ndim == 3 and inp.shape[2] == 2:
+        #     # Real-valued input (ph, pw, 2)
+        #     ph, pw, channels = inp.shape
+        #     inp_flat = inp.reshape(-1, channels)
+        # elif inp.ndim == 2:  
+        #     # Complex-valued input (ph, pw) - convert to real format
+        #     ph, pw = inp.shape
+        #     # Convert complex to real format: stack real and imaginary parts
+        #     #inp_real = np.stack([np.real(inp), np.imag(inp)], axis=-1)
+        #     #inp_flat = inp_real.reshape(-1, 2)
+        #     inp_flat = inp.reshape(-1, 1)
+        #     channels = 1
+        # else:
+        #     raise ValueError("Input shape not recognized for positional embedding.")
 
         # Check if cached position arrays exist and have correct dimensions
         cache_key = (ph, pw)
@@ -1562,29 +1836,38 @@ class SARZarrDataset(Dataset):
             self._pos_cache_key != cache_key):
             
             # Recompute position arrays
-            self._y_positions = np.repeat(np.arange(ph), pw)  # [0,0,0,...,pw times, 1,1,1,...,pw times, ...]
-            self._x_positions = np.tile(np.arange(pw), ph)    # [0,1,2,...,pw-1, 0,1,2,...,pw-1, ...]
+            self._y_positions = np.repeat(np.arange(ph), pw).reshape(ph, pw, 1)  # [0,0,0,...,pw times, 1,1,1,...,pw times, ...]
+            self._x_positions = np.tile(np.arange(pw), ph).reshape(ph, pw, 1)    # [0,1,2,...,pw-1, 0,1,2,...,pw-1, ...]
             self._pos_cache_key = cache_key
-            
             if hasattr(self, 'verbose') and self.verbose:
                 print(f"Recomputed position arrays for patch size {cache_key}")
+        
+        # if level not in self._pos_encoding_out.keys():
+        #     self._pos_encoding_out[level] = np.zeros((ph, pw, ch + 2), dtype=inp.dtype) 
         
         # Add global offsets to cached arrays
         global_y_positions = y_offset + self._y_positions
         global_x_positions = x_offset + self._x_positions
         
         # Normalize positions to [0, 1] range
-        y_position_embedding = (global_y_positions / max_y).reshape(-1, 1).astype(inp_flat.dtype)
-        x_position_embedding = (global_x_positions / max_x).reshape(-1, 1).astype(inp_flat.dtype)
-
-        # Concatenate original data with both position embeddings
-        out = np.concatenate((inp_flat, y_position_embedding, x_position_embedding), axis=1)
-
-        # Reshape back to patch format with additional channels
-        out = out.reshape(ph, pw, channels + 2)
+        y_position_embedding = (global_y_positions / max_y)
+        x_position_embedding = (global_x_positions / max_x)
         
+        if np.iscomplexobj(inp):
+            # Create a complex positional embedding: real=x, imag=y
+            pos_embedding = x_position_embedding[..., 0] + 1j * y_position_embedding[..., 0]
+            pos_embedding = pos_embedding[..., np.newaxis]  # shape (ph, pw, 1)
+            out = np.concatenate((inp, pos_embedding), axis=-1)
+        else:
+            out = np.concatenate((inp, y_position_embedding, x_position_embedding), axis=-1)
         return out
-
+        # self._pos_encoding_out[level][..., :ch] = inp
+        # self._pos_encoding_out[level][..., ch] = y_position_embedding[..., 0]
+        # self._pos_encoding_out[level][..., ch + 1] = x_position_embedding[..., 0]
+        # Reshape back to patch format with additional channels
+        #out = out.reshape(ph, pw, channels + 2)
+        
+        # return self._pos_encoding_out[level]
 class KPatchSampler(Sampler):
     """
     PyTorch Sampler that yields (file_idx, y, x) tuples for patch sampling.
@@ -1615,16 +1898,18 @@ class KPatchSampler(Sampler):
         self.shuffle_files = shuffle_files
         self.patch_order = patch_order
         self.seed = seed
-        #self.files = dataset.files #list(dataset._samples_by_file.keys())
         self.verbose = verbose
+        self.beginning = True
+        self.coords: Dict[Path, List[Tuple[int, int]]] = {}
 
     def __iter__(self):
         """
         Iterate over the dataset, yielding (file_idx, y, x) tuples for patch sampling.
         Shuffles files and/or patches if enabled.
         """
+        self.beginning = False
         rng = np.random.default_rng(self.seed)
-        files = self.dataset.files.copy() #files.copy()
+        files = self.dataset.get_files() #files.copy()
         if self.verbose:
             print(files)
         if self.shuffle_files:
@@ -1632,37 +1917,46 @@ class KPatchSampler(Sampler):
         for f in files:
             # Mark patches as loaded for this file
             self.dataset.calculate_patches_from_store(f, patch_order=self.patch_order)
-            coords = self.dataset._samples_by_file[f].copy()
+            self.coords[Path(f)] = self.get_coords_from_store(f)
             t0 = time.time()
-
-            n = len(coords) if self.samples_per_prod <= 0 else min(self.samples_per_prod, len(coords))
-            for y, x in coords[:n]:
+            for y, x in self.coords[Path(f)]:
                 if self.verbose:
                     print(f"Sampling from file {f}, patch at ({y}, {x})")
                 yield (f, y, x)
             elapsed = time.time() - t0
             if self.verbose:
-                print(f"Sampling {n} patches from file {f} took {elapsed:.2f} seconds.")
-
+                print(f"Sampling {len(self.coords[Path(f)])} patches from file {f} took {elapsed:.2f} seconds.")
+    def get_coords_from_store(self, zfile: Union[str, os.PathLike], window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]] = None):
+        self.dataset.calculate_patches_from_store(Path(zfile), patch_order=self.patch_order, window=window)
+        coords = self.dataset.get_samples_by_file(zfile)  #self.dataset._samples_by_file[Path(zfile)].copy()
+        n = len(coords) if self.samples_per_prod <= 0 else min(self.samples_per_prod, len(coords))
+        return coords[:n]
     def __len__(self):
         """
         Return the total number of samples to be drawn by the sampler.
         """
-        if self.samples_per_prod > 0:
-            return sum(min(self.samples_per_prod, len(v)) for v in self.dataset._samples_by_file.values())
-        return len(self.dataset)
+        if self.beginning:
+            return len(self.dataset)
+
+        else:
+            if self.samples_per_prod > 0:
+                return sum(min(self.samples_per_prod, len(v)) for zfile in self.dataset.get_files() for v in [self.dataset.get_samples_by_file(zfile)])  # ._samples_by_file.values())
+            else:
+                return 0
 
 class SARDataloader(DataLoader):
     dataset: SARZarrDataset
-    def __init__(self, dataset: SARZarrDataset, batch_size: int = 8, num_workers: int = 2, sampler: Optional[Sampler] = None, pin_memory: bool= True, verbose: bool = False):
+    def __init__(self, dataset: SARZarrDataset, batch_size: int, sampler: KPatchSampler,  num_workers: int = 2,  pin_memory: bool= True, verbose: bool = False):
         super().__init__(dataset, batch_size=batch_size, num_workers=num_workers, sampler=sampler, pin_memory=pin_memory)
         self.verbose = verbose
-    
+    def get_coords_from_zfile(self, zfile: Union[str, os.PathLike], window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]] = None) -> List[Tuple[int, int]]:
+        return self.sampler.get_coords_from_store(zfile, window=window)
+
     
 
 def get_sar_dataloader(
     data_dir: str,
-    file_pattern: str = "*.zarr",
+    filters: Optional[SampleFilter] = None,
     batch_size: int = 8,
     num_workers: int = 2,
     return_whole_image: bool = False,
@@ -1674,6 +1968,7 @@ def get_sar_dataloader(
     buffer: Tuple[int, int] = (100, 100),
     stride: Tuple[int, int] = (50, 50),
     positional_encoding: bool = True,
+    max_base_sample_size: Tuple[int, int] = (-1, -1),  # (-1, -1) means full image size
     backend: str = "zarr",  # "zarr" or "dask
     parabola_a: float = 0.001,
     shuffle_files: bool = True,
@@ -1722,7 +2017,7 @@ def get_sar_dataloader(
     """
     dataset = SARZarrDataset(
         data_dir=data_dir,
-        file_pattern=file_pattern,
+        filters=filters,
         return_whole_image=return_whole_image,
         transform=transform,
         patch_size=patch_size,
@@ -1734,6 +2029,7 @@ def get_sar_dataloader(
         save_samples= save_samples, 
         buffer = buffer, 
         stride=stride, 
+        max_base_sample_size = max_base_sample_size,
         backend=backend, 
         verbose=verbose, 
         cache_size=cache_size, 
@@ -1783,7 +2079,8 @@ if __name__ == "__main__":
        complex_valued=False, 
        shuffle_files=False, 
        patch_order="col", 
-       transform=transforms
+       transform=transforms,
+       max_base_sample_size=(-1, -1)
        #patch_mode="parabolic",
        #parabola_a=0.0005,
        #k=10

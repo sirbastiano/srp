@@ -1,5 +1,12 @@
 '''
 Azimuth model trainer - Updated to work with DataModule
+
+Key improvements for SAR image processing:
+1. SSIM calculation now works on H×W dimensions (H=seq_len=10000, W=batch_size)
+2. All losses (MAE, MSE, Huber, SSIM, Edge) now use magnitude of complex SAR data
+3. Positional encoding channels are excluded from loss calculations
+4. Edge loss operates on 2D magnitude structure for proper edge detection
+5. Consistent magnitude extraction across all loss functions
 '''
 
 # import utilities
@@ -46,14 +53,111 @@ class azimuthModelTrainer(pl.LightningModule):
     
     def forward(self, x):
         return self.model(x)
+    
+    def extract_magnitude_for_ssim(self, data):
+        """
+        Extract magnitude from complex SAR data for loss calculations.
+        
+        Args:
+            data: Tensor of shape [batch_size, seq_len, channels] where channels = [real, imag, pos_enc_y, pos_enc_x]
+                  Can be complex or real tensor
+        
+        Returns:
+            magnitude: Tensor of shape [seq_len, batch_size] containing magnitude values for H×W structure
+        """
+        # Handle complex tensors by converting to real first
+        if torch.is_complex(data):
+            # If data is complex, extract real and imaginary parts
+            real_part = data.real[:, :, 0]  # [batch_size, seq_len]
+            imag_part = data.imag[:, :, 0] if data.shape[2] > 0 else torch.zeros_like(real_part)  # [batch_size, seq_len]
+        else:
+            # If data is real, extract real and imaginary parts from channels
+            real_part = data[:, :, 0]  # [batch_size, seq_len]
+            imag_part = data[:, :, 1] if data.shape[2] > 1 else torch.zeros_like(real_part)  # [batch_size, seq_len]
+        
+        # Ensure tensors are float
+        real_part = real_part.float()
+        imag_part = imag_part.float()
+        
+        # Calculate magnitude: sqrt(real^2 + imag^2)
+        magnitude = torch.sqrt(real_part**2 + imag_part**2)  # [batch_size, seq_len]
+        
+        # Transpose to get [seq_len, batch_size] for H×W where H=seq_len, W=batch_size
+        magnitude = magnitude.transpose(0, 1)  # [seq_len, batch_size]
+        
+        return magnitude
 
-    def compute_loss(self, outputs, targets):
-        # compute individual losses
-        loss_mae = self.mae_loss(outputs, targets)
-        loss_mse = self.mse_loss(outputs, targets)
-        loss_huber = self.huber_loss(outputs, targets)
-        loss_ssim = self.ssim_loss(outputs.unsqueeze(0).unsqueeze(0), targets.unsqueeze(0).unsqueeze(0))
-        loss_edge = self.edge_loss(outputs.unsqueeze(0).unsqueeze(0), targets.unsqueeze(0).unsqueeze(0))
+    def compute_loss(self, outputs_orig, targets_orig):
+        """
+        Compute all loss functions using magnitude data from complex SAR images.
+        
+        Args:
+            outputs_orig: Original outputs with shape [batch_size, seq_len, channels] 
+            targets_orig: Original targets with shape [batch_size, seq_len, channels]
+                         channels = [real, imag, pos_enc_y, pos_enc_x]
+        
+        Returns:
+            Tuple of all computed losses
+        """
+        # Handle complex tensors properly
+        if torch.is_complex(outputs_orig):
+            # Convert complex to real representation [batch, seq, channels]
+            outputs_real = torch.stack([outputs_orig.real, outputs_orig.imag], dim=-1)
+            if outputs_orig.dim() == 2:  # [batch, seq] -> [batch, seq, 2]
+                outputs_orig = outputs_real
+            else:  # [batch, seq, complex_channels] -> [batch, seq, 2*complex_channels]
+                outputs_orig = outputs_real.view(*outputs_orig.shape[:-1], -1)
+        
+        if torch.is_complex(targets_orig):
+            # Convert complex to real representation [batch, seq, channels]
+            targets_real = torch.stack([targets_orig.real, targets_orig.imag], dim=-1)
+            if targets_orig.dim() == 2:  # [batch, seq] -> [batch, seq, 2]
+                targets_orig = targets_real
+            else:  # [batch, seq, complex_channels] -> [batch, seq, 2*complex_channels]
+                targets_orig = targets_real.view(*targets_orig.shape[:-1], -1)
+        
+        # Ensure data is float
+        outputs_orig = outputs_orig.float()
+        targets_orig = targets_orig.float()
+        
+        # Extract magnitude for all loss calculations (excludes positional encoding)
+        outputs_magnitude = self.extract_magnitude_for_ssim(outputs_orig)  # [seq_len, batch_size]
+        targets_magnitude = self.extract_magnitude_for_ssim(targets_orig)  # [seq_len, batch_size]
+        
+        # Ensure magnitude tensors are float
+        outputs_magnitude = outputs_magnitude.float()
+        targets_magnitude = targets_magnitude.float()
+        
+        # For pixel-wise losses (MAE, MSE, Huber), we can use the magnitude directly
+        loss_mae = self.mae_loss(outputs_magnitude, targets_magnitude)
+        loss_mse = self.mse_loss(outputs_magnitude, targets_magnitude)
+        loss_huber = self.huber_loss(outputs_magnitude, targets_magnitude)
+        
+        # For SSIM loss, use kornia with proper reshaping
+        # Reshape to [batch=1, channel=1, H, W] for kornia
+        outputs_ssim = outputs_magnitude.unsqueeze(0).unsqueeze(0)  # [1, 1, seq_len, batch_size]
+        targets_ssim = targets_magnitude.unsqueeze(0).unsqueeze(0)  # [1, 1, seq_len, batch_size]
+        loss_ssim = self.ssim_loss(outputs_ssim, targets_ssim)
+        
+        # For Edge loss, we need 4D tensors [batch, channel, H, W]
+        # The EdgeLoss expects [N, C, H, W] format
+        outputs_edge = outputs_magnitude.unsqueeze(0).unsqueeze(0)  # [1, 1, seq_len, batch_size]
+        targets_edge = targets_magnitude.unsqueeze(0).unsqueeze(0)  # [1, 1, seq_len, batch_size]
+        loss_edge = self.edge_loss(outputs_edge, targets_edge)
+        
+        # Ensure all losses are real scalars and handle any remaining complex values
+        loss_mae = loss_mae.real if torch.is_complex(loss_mae) else loss_mae
+        loss_mse = loss_mse.real if torch.is_complex(loss_mse) else loss_mse
+        loss_huber = loss_huber.real if torch.is_complex(loss_huber) else loss_huber
+        loss_ssim = loss_ssim.real if torch.is_complex(loss_ssim) else loss_ssim
+        loss_edge = loss_edge.real if torch.is_complex(loss_edge) else loss_edge
+        
+        # Replace any NaN or infinite losses with zeros
+        loss_mae = torch.where(torch.isfinite(loss_mae), loss_mae, torch.tensor(0.0, device=loss_mae.device))
+        loss_mse = torch.where(torch.isfinite(loss_mse), loss_mse, torch.tensor(0.0, device=loss_mse.device))
+        loss_huber = torch.where(torch.isfinite(loss_huber), loss_huber, torch.tensor(0.0, device=loss_huber.device))
+        loss_ssim = torch.where(torch.isfinite(loss_ssim), loss_ssim, torch.tensor(0.0, device=loss_ssim.device))
+        loss_edge = torch.where(torch.isfinite(loss_edge), loss_edge, torch.tensor(0.0, device=loss_edge.device))
         
         return loss_mae, loss_mse, loss_huber, loss_ssim, loss_edge
         
@@ -109,6 +213,9 @@ class azimuthModelTrainer(pl.LightningModule):
         raw = raw.squeeze(2)
         gt = gt.squeeze(2)
         
+        # Store original data for SSIM calculation
+        gt_orig = gt.clone()
+        
         # Convert complex to real if needed
         if torch.is_complex(raw):
             raw = torch.abs(raw).float()
@@ -117,39 +224,37 @@ class azimuthModelTrainer(pl.LightningModule):
             
         outputs = self.model(raw).squeeze()
         
-        # you need to flatten gt and outputs so that you can calculate loss on them
-        # Dynamically handle shapes
-        batch_size, seq_len, channels = gt.shape
-        gt_flat = gt.permute(1, 0, 2)  # [seq_len, batch_size, channels]
-        gt_flat = gt_flat.reshape(seq_len, batch_size * channels)
+        # Store original outputs for SSIM calculation (ensure it has same structure as gt_orig)
+        if outputs.dim() == 2:
+            # If outputs is [batch, seq], we need to add channels dimension
+            # Assume outputs represents the complex magnitude (single channel)
+            outputs_orig = outputs.unsqueeze(-1).repeat(1, 1, 2)  # [batch, seq, 2] for real/imag
+            # Set imaginary part to zero since we only have magnitude
+            outputs_orig[:, :, 1] = 0
+        elif outputs.dim() == 3:
+            outputs_orig = outputs.clone()
+        else:
+            raise ValueError(f"Unexpected outputs dimension: {outputs.dim()}")
         
-        outputs_flat = outputs.permute(1, 0, 2) if outputs.dim() == 3 else outputs
-        if outputs_flat.shape != gt_flat.shape:
-            # Handle shape mismatch - outputs might have different channels
-            outputs_flat = outputs_flat.reshape(seq_len, -1)
-            if outputs_flat.shape[1] != gt_flat.shape[1]:
-                # Pad or truncate to match gt shape
-                min_channels = min(outputs_flat.shape[1], gt_flat.shape[1])
-                outputs_flat = outputs_flat[:, :min_channels]
-                gt_flat = gt_flat[:, :min_channels]
+        # compute combined loss with original data for all losses (now using magnitude)
+        loss_mae, loss_mse, loss_huber, loss_ssim, loss_edge = self.compute_loss(outputs_orig, gt_orig)
         
-        # compute combined loss
-        loss_mae, loss_mse, loss_huber, loss_ssim, loss_edge = self.compute_loss(outputs_flat, gt_flat)
-        
-        # get ssim of output and gt
-        train_ssim = self.calculate_ssim(outputs_flat.unsqueeze(0).unsqueeze(0), gt_flat.unsqueeze(0).unsqueeze(0))
+        # get ssim of output and gt using corrected magnitude calculation
+        outputs_magnitude = self.extract_magnitude_for_ssim(outputs_orig)
+        targets_magnitude = self.extract_magnitude_for_ssim(gt_orig)
+        train_ssim = self.calculate_ssim(outputs_magnitude, targets_magnitude)
         
         # update training loss metric
         self.train_loss_metric.update(loss_mae)
         
         # Log losses - show in progress bar and log every step
-        self.log("train_loss", loss_mae, on_step=True, on_epoch=True, prog_bar=True)
-        self.log("train_ssim", train_ssim, on_step=True, on_epoch=True, prog_bar=True)
-        self.log("train_mae", loss_mae, on_step=True, on_epoch=True)
-        self.log("train_mse", loss_mse, on_step=True, on_epoch=True)
-        self.log("train_huber", loss_huber, on_step=False, on_epoch=True)
-        self.log("train_ssim_loss", loss_ssim, on_step=False, on_epoch=True)
-        self.log("train_edge", loss_edge, on_step=False, on_epoch=True)
+        self.log("train_loss", loss_mae, on_step=True, on_epoch=False, prog_bar=True)
+        self.log("train_ssim", train_ssim, on_step=True, on_epoch=False, prog_bar=True)
+        self.log("train_mae", loss_mae, on_step=True, on_epoch=False)
+        self.log("train_mse", loss_mse, on_step=True, on_epoch=False)
+        self.log("train_huber", loss_huber, on_step=True, on_epoch=False)
+        self.log("train_ssim_loss", loss_ssim, on_step=True, on_epoch=False)
+        self.log("train_edge", loss_edge, on_step=True, on_epoch=False)
         
         return loss_mae*(1-self.delta) + loss_ssim*(self.delta)
     
@@ -162,6 +267,9 @@ class azimuthModelTrainer(pl.LightningModule):
         raw = raw.squeeze(2)
         gt = gt.squeeze(2)
         
+        # Store original data for SSIM calculation
+        gt_orig = gt.clone()
+        
         # Convert complex to real if needed
         if torch.is_complex(raw):
             raw = torch.abs(raw).float()
@@ -170,33 +278,29 @@ class azimuthModelTrainer(pl.LightningModule):
         
         outputs = self.model(raw).squeeze()
         
-        # you need to flatten gt and outputs so that you can calculate loss on them
-        # Dynamically handle shapes
-        batch_size, seq_len, channels = gt.shape
-        gt_flat = gt.permute(1, 0, 2)  # [seq_len, batch_size, channels]
-        gt_flat = gt_flat.reshape(seq_len, batch_size * channels)
+        # Store original outputs for SSIM calculation (ensure it has same structure as gt_orig)
+        if outputs.dim() == 2:
+            # If outputs is [batch, seq], we need to add channels dimension
+            # Assume outputs represents the complex magnitude (single channel)
+            outputs_orig = outputs.unsqueeze(-1).repeat(1, 1, 2)  # [batch, seq, 2] for real/imag
+            # Set imaginary part to zero since we only have magnitude
+            outputs_orig[:, :, 1] = 0
+        elif outputs.dim() == 3:
+            outputs_orig = outputs.clone()
+        else:
+            raise ValueError(f"Unexpected outputs dimension: {outputs.dim()}")
         
-        outputs_flat = outputs.permute(1, 0, 2) if outputs.dim() == 3 else outputs
-        if outputs_flat.shape != gt_flat.shape:
-            # Handle shape mismatch - outputs might have different channels
-            outputs_flat = outputs_flat.reshape(seq_len, -1)
-            if outputs_flat.shape[1] != gt_flat.shape[1]:
-                # Pad or truncate to match gt shape
-                min_channels = min(outputs_flat.shape[1], gt_flat.shape[1])
-                outputs_flat = outputs_flat[:, :min_channels]
-                gt_flat = gt_flat[:, :min_channels]
-        
-        # compute combined loss
-        loss_mae, loss_mse, loss_huber, loss_ssim, loss_edge = self.compute_loss(outputs_flat, gt_flat)
+        # compute combined loss with original data for all losses (now using magnitude)
+        loss_mae, loss_mse, loss_huber, loss_ssim, loss_edge = self.compute_loss(outputs_orig, gt_orig)
         
         # update validation loss metric
         self.val_loss_metric.update(loss_mae)
         
-        # compute PSNR and SSIM for logging 
-        # psnr_value = self.calculate_psnr(outputs_flat, gt_flat)
-        ssim_value = self.calculate_ssim(outputs_flat.unsqueeze(0).unsqueeze(0), gt_flat.unsqueeze(0).unsqueeze(0))
+        # compute SSIM for logging using corrected magnitude calculation
+        outputs_magnitude = self.extract_magnitude_for_ssim(outputs_orig)
+        targets_magnitude = self.extract_magnitude_for_ssim(gt_orig)
+        ssim_value = self.calculate_ssim(outputs_magnitude, targets_magnitude)
         self.val_ssim_metric.update(ssim_value)
-        
         
         # Log metrics
         self.log("val_loss", loss_mae, on_step=False, on_epoch=True, prog_bar=True)
@@ -240,38 +344,37 @@ class azimuthModelTrainer(pl.LightningModule):
         psnr = 20 * torch.log10(max_pixel / torch.sqrt(mse))
         return psnr
     
-    def calculate_ssim(self, outputs, targets):
-        """Calculates SSIMbetween outputs and targets."""
-        outputs = outputs.detach().cpu().numpy()
-        targets = targets.detach().cpu().numpy()
+    def calculate_ssim(self, outputs_magnitude, targets_magnitude):
+        """
+        Calculate SSIM between magnitude outputs and targets with proper H×W dimensions.
         
-        # Squeeze the channel dimension if it's 1
-        if outputs.shape[1] == 1:
-            outputs = outputs.squeeze(1)
-            targets = targets.squeeze(1)
-            channel_axis = None
-        else:
-            outputs = np.moveaxis(outputs, 1, -1)
-            targets = np.moveaxis(targets, 1, -1)
-            channel_axis = -1
-            
-        ssim_values = []
-        for i in range(outputs.shape[0]): # iterate over the batch
-            output = outputs[i]
-            target = targets[i]
-            
-            # Dynamically set win_size based on smallest dimension
-            height, width = output.shape[:2]
-            win_size = min(7, height, width)
-            if win_size % 2 == 0:
-                win_size -=1
-                
-            ssim_value = ssim(
-                output, target,
-                data_range=output.max() - output.min(),
-                win_size=win_size,
-                channel_axis=channel_axis # None for grayscale, -1 for multichannel
-            )
-            ssim_values.append(ssim_value)
-            
-        return torch.tensor(np.mean(ssim_values))
+        Args:
+            outputs_magnitude: Tensor of shape [seq_len, batch_size] (H×W where H=seq_len, W=batch_size)
+            targets_magnitude: Tensor of shape [seq_len, batch_size] (H×W where H=seq_len, W=batch_size)
+        
+        Returns:
+            ssim_value: Scalar tensor containing SSIM value
+        """
+        # Convert to numpy for skimage SSIM calculation
+        outputs = outputs_magnitude.detach().cpu().numpy()
+        targets = targets_magnitude.detach().cpu().numpy()
+        
+        # outputs and targets are now [seq_len, batch_size] which is [H, W]
+        height, width = outputs.shape
+        
+        # Dynamically set win_size based on smallest dimension
+        win_size = min(7, height, width)
+        if win_size % 2 == 0:
+            win_size -= 1
+        
+        # Make sure win_size is at least 3
+        win_size = max(3, win_size)
+        
+        # Calculate SSIM on the 2D image where H=seq_len and W=batch_size
+        ssim_value = ssim(
+            targets, outputs,  # Note: targets first for consistency
+            data_range=targets.max() - targets.min(),
+            win_size=win_size
+        )
+        
+        return torch.tensor(ssim_value, dtype=torch.float32)

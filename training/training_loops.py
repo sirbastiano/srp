@@ -541,6 +541,7 @@ def get_training_loop_by_model_name(
                         fast_dev_run=False,
                         log_every_n_steps=1,
                         accelerator="gpu" if torch.cuda.is_available() else "cpu",
-                        enable_progress_bar=True
+                        enable_progress_bar=True, 
+                        enable_model_summary=True,
                         )
     return lightning_model, trainer

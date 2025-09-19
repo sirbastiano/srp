@@ -12,7 +12,6 @@ import torch.nn.functional as F
 from pytorch_lightning.utilities import rank_zero_only
 from einops import rearrange, repeat
 import opt_einsum as oe
-from mamba_ssm.ops.selective_scan_interface import selective_scan_fn
 
 contract = oe.contract
 contract_expression = oe.contract_expression
@@ -496,6 +495,7 @@ class sarSSM(nn.Module):
         use_positional_as_token=False,
         preprocess=True,
         activation_function='gelu',
+        mode="sequential"
     ):
         """
         sarSSM: Sequence State Model for Synthetic Aperture Radar (SAR) Data
@@ -515,6 +515,7 @@ class sarSSM(nn.Module):
             complex_valued (bool, optional): If True, processes complex-valued inputs. Default is True.
             use_positional_as_token (bool, optional): If True, treats positional encoding as a token. Default is False.
             preprocess (bool, optional): If True, applies preprocessing to inputs. Default is True.
+            mode (str, optional): Mode to invoke the SSM. Can be either "sequential" or "parallel". Default it "sequential"
             **kwargs: Additional arguments for customization.
 
         Inputs:
@@ -541,6 +542,7 @@ class sarSSM(nn.Module):
         self.num_layers = num_layers
         self.use_positional_as_token = use_positional_as_token
         self.model_dim = model_dim
+        self.mode = mode
         self.preprocess = preprocess
         # Input projection: project input_dim to state_dim
         if complex_valued:
@@ -577,10 +579,25 @@ class sarSSM(nn.Module):
             # Keep as separate channel, flatten last two dims
             x = x.permute(0, 2, 1, 3).reshape(x.shape[0], x.shape[2], -1)  # (B, seq_len, 1000*2)
         return x
+    
     def _postprocess_output(self, out):
         if len(out.shape) == 3:
             out = out.unsqueeze(-1)
         return out.permute(0, 2, 1, 3)
+    
+    def _forward_batch(self, x):
+        # Project to state_dim
+        # print(f"[SSM] Input shape after preprocessing: {x.shape}")
+        h = self.input_proj(x)  # (B, state_dim, L)
+        # print(f"[SSM] Input shape after input projection: {h.shape}")
+        # Pass through S4D layers
+        for i, layer in enumerate(self.layers):
+            h, _ = layer(h)  # S4D expects (B, state_dim, L)
+        # Normalize and dropout
+        h = self.norm(h)
+        h = self.dropout(h)
+        return self.output_proj(h)  # (B, output_dim, L)
+    
     def forward(self, x):
         if self.preprocess:
             x = self._preprocess_input(x)  # (B, L, input_dim)
@@ -594,18 +611,17 @@ class sarSSM(nn.Module):
             else:
                 squeeze_dim= None
             x = x.squeeze()
-        # Project to state_dim
-        # print(f"[SSM] Input shape after preprocessing: {x.shape}")
-        h = self.input_proj(x)  # (B, state_dim, L)
-        # print(f"[SSM] Input shape after input projection: {h.shape}")
-        # Pass through S4D layers
-        for i, layer in enumerate(self.layers):
-            h, _ = layer(h)  # S4D expects (B, state_dim, L)
-        # Normalize and dropout
-        h = self.norm(h)
-        h = self.dropout(h)
+        if self.mode == "sequential":
+            outputs = []
+            for i in range(x.shape[0]):
+                pixel = x[i].unsqueeze(0)  # shape: (1, channels)
+                out = self._forward_batch(x)  # or self.step(pixel, state) if you want to keep state
+                outputs.append(out)
+            # Stack outputs to (batch_size*seq_len, output_dim, ...)
+            out = torch.cat(outputs, dim=0)
+        else:
+            out = self._forward_batch(x)
 
-        out = self.output_proj(h)  # (B, output_dim, L)
         # Return in (B, L, output_dim) format for consistency
         if self.preprocess:
             return self._postprocess_output(out)
@@ -972,6 +988,8 @@ class EnhancedMambaBlock(nn.Module):
             dt_max (float): Maximum timestep for initialization.
             lr (float, optional): Custom learning rate for SSM parameters.
         """
+        from mamba_ssm.ops.selective_scan_interface import selective_scan_fn
+
         super().__init__()
         
         self.d_model = d_model

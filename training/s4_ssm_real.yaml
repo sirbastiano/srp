@@ -26,14 +26,15 @@ training:
   epochs: 250
   lr: 1e-2
   scheduler_type: "cosine"
-  mode: "parallel"
+  mode: "sequential"
 
 # Device configuration
 device: "cuda"
 
 # Dataloader configuration
 dataloader:
-  level_from: "rcmc"
+  data_dir: "/Data_large/marine/PythonProjects/SAR/sarpyx/data"
+  level_from: "rc"
   level_to: "az"
   num_workers: 0
   patch_mode: "rectangular"
@@ -104,6 +105,9 @@ dataloader:
 
 # Transform configuration
 transforms:
-  normalize: true"
+  normalize: true
   complex_valued: true
-  adaptive_normalization: true
+  rc_min: -4000
+  rc_max: 4000
+  gt_min: -12000
+  gt_max: 12000
