@@ -42,7 +42,7 @@
 
 # Configuration for Real-Valued Transformer training on SAR data
 # Dataset
-data_dir: "/Data/sar_focusing"
+data_dir: "/Data_large/marine/PythonProjects/SAR/sarpyx/data"
 
 # Training parameters
 epochs: 200
@@ -68,6 +68,7 @@ training:
 
 # Data loader configuration
 dataloader:
+  data_dir: "/Data_large/marine/PythonProjects/SAR/sarpyx/data"
   level_from: "rcmc"
   level_to: "az"
   num_workers: 0

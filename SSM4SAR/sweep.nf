@@ -21,7 +21,7 @@ params.weight_decays = [0.001, 0.01, 0.1]
 // Fixed parameters
 params.epochs = 15
 params.val_batch_size = 10
-params.gpu_no = 1
+params.gpu_no = 0
 
 // Directories
 params.train_dir = '/Data_large/marine/PythonProjects/SAR/sarpyx/SSM4SAR/maya4_data/training'

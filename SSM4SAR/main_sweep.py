@@ -36,7 +36,7 @@ def parse_arguments():
                         help='Model name for logging')
     
     # Hardware configuration
-    parser.add_argument('-gpu', '--gpu_no', type=int, default=1,
+    parser.add_argument('-gpu', '--gpu_no', type=int, default=0,
                         help='Number of GPUs to use')
     
     # Model architecture
@@ -270,26 +270,35 @@ def main():
     callbacks = setup_callbacks(args)
     
     # Create trainer
-    # Handle CUDA compatibility issues gracefully
-    try:
-        accelerator = 'gpu' if torch.cuda.is_available() else 'cpu'
-        devices = args['gpu_no'] if torch.cuda.is_available() else 'auto'
-        # Use 32-bit precision to avoid cuFFT issues with non-power-of-2 signal sizes
-        precision = '32'
+    # GPU validation and device configuration
+    if torch.cuda.is_available():
+        available_gpus = torch.cuda.device_count()
+        print(f"CUDA available: {available_gpus} GPU(s) detected")
+        
+        # Validate requested GPU
+        gpu_no = args['gpu_no']
+        if gpu_no >= available_gpus:
+            print(f"⚠ Requested GPU {gpu_no} not available. Machine has GPUs: {list(range(available_gpus))}")
+            print(f"Falling back to GPU 0")
+            gpu_no = 0
+        
+        accelerator = 'gpu'
+        devices = [gpu_no]
+        precision = '32'  # Use 32-bit precision to avoid cuFFT issues with non-power-of-2 signal sizes
+        print(f"✓ Using GPU {gpu_no} for training")
         
         # Test CUDA capability before using
-        if torch.cuda.is_available():
-            try:
-                torch.cuda.get_device_capability(0)
-                print(f"Using GPU acceleration with {args['gpu_no']} device(s)")
-            except RuntimeError as e:
-                print(f"CUDA capability check failed: {e}")
-                print("Falling back to CPU training...")
-                accelerator = 'cpu'
-                devices = 'auto'
-                precision = '32'
-    except Exception as e:
-        print(f"GPU detection failed: {e}")
+        try:
+            torch.cuda.get_device_capability(gpu_no)
+            print(f"✓ GPU {gpu_no} capability check passed")
+        except RuntimeError as e:
+            print(f"⚠ CUDA capability check failed: {e}")
+            print("Falling back to CPU training...")
+            accelerator = 'cpu'
+            devices = 'auto'
+            precision = '32'
+    else:
+        print("⚠ CUDA not available, using CPU training")
         accelerator = 'cpu'
         devices = 'auto'
         precision = '32'

@@ -38,9 +38,9 @@ dataloader:
   level_to: "az"
   num_workers: 0
   patch_mode: "rectangular"
-  patch_size: [10000, 1]
+  patch_size: [1, 1]
   buffer: [1000, 1000]
-  stride: [10000, 1]
+  stride: [1, 1]
   shuffle_files: false
   complex_valued: false
   save_samples: false
@@ -52,7 +52,7 @@ dataloader:
   concatenate_patches: false
   train: 
     batch_size: 32
-    samples_per_prod: 100
+    samples_per_prod: 1000000
     patch_order: "row"
     max_products: 10
     filters: {
@@ -65,7 +65,8 @@ dataloader:
     }
   validation: 
     batch_size: 32
-    samples_per_prod: 1000
+    samples_per_prod: 1000000
+    block_pattern: [32, -1]
     patch_order: "row"
     max_products: 2
     filters: {
@@ -78,7 +79,8 @@ dataloader:
     }
   test: 
     batch_size: 32
-    samples_per_prod: 5000
+    block_pattern: [32, -1]
+    samples_per_prod: 25000000
     patch_order: "row"
     max_products: 10
     filters: {
@@ -91,10 +93,11 @@ dataloader:
     }
   inference: 
     batch_size: 16
-    samples_per_prod: 2000
+    block_pattern: [16, -1]
+    samples_per_prod: 1000
     patch_order: "chunk"
     max_products: 5
-    filters: {
+    filters: { 
       "years": [
         2023,
       ],
@@ -107,7 +110,7 @@ dataloader:
 transforms:
   normalize: true
   complex_valued: true
-  rc_min: -4000
-  rc_max: 4000
-  gt_min: -12000
-  gt_max: 12000
+  rc_min: -40000
+  rc_max: 40000
+  gt_min: -10000
+  gt_max: 10000

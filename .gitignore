@@ -9,7 +9,7 @@ env.bak/
 venv.bak/
 *.log
 *.yaml
-
+SSM4SAR
 wandb
 deimos
 

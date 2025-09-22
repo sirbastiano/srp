@@ -8,16 +8,16 @@ set -e  # Exit immediately if a command exits with a non-zero status
 # ==============================================================================
 
 # Environment and paths
-VENV_PATH='/Data_large/marine/PythonProjects/SAR/sarpyx/.venv'
+VENV_PATH='/Data_large/marine/PythonProjects/SAR/sarpyx/SSM4SAR/.venv'
 PROJECT_DIR='/Data_large/marine/PythonProjects/SAR/sarpyx/SSM4SAR'
-SCRIPT_NAME='main.py'
+SCRIPT_NAME='main_updated.py'
 
 # Default training parameters
 EPOCHS=500
 MAX_STEPS=''  # If set, overrides epochs for iteration-based training
 VAL_CHECK_INTERVAL=50  # Validate every N steps
 MAX_STEPS_VALIDATION=''  # If set, limits validation to N steps
-BATCH_SIZE=2000
+BATCH_SIZE=64
 LEARNING_RATE=0.0001
 NUM_LAYERS=4
 HIDDEN_SIZE=8
@@ -54,7 +54,7 @@ USE_WANDB=true
 WANDB_PROJECT="ssm4sar"
 
 # GPU configuration
-GPU_COUNT=1
+GPU_COUNT=0
 
 # ==============================================================================
 # Functions
@@ -168,6 +168,8 @@ run_training() {
     
     # Build command arguments
     local cmd_args=(
+        "--model_type" "sequential" 
+        "--sequential_mode"
         "--epochs" "$EPOCHS"
         "--batch_size" "$BATCH_SIZE"
         "--valid_batch_size" "$BATCH_SIZE"

@@ -364,6 +364,8 @@ def main():
         val_loader=val_loader,
         test_loader=test_loader,
         inference_loader=inference_loader,
+        num_epochs=training_cfg.get('epochs_num', None),
+        max_iterations=training_cfg.get('max_steps', None),
         save_dir=training_cfg['save_dir'], 
         loss_fn_name=training_cfg['loss_fn'],
         mode=training_cfg['mode'],

@@ -15,7 +15,6 @@ import matplotlib.pyplot as plt
 from dataloader.dataloader import get_sar_dataloader, SARTransform
 from model.model_utils import get_model_from_configs
 from training.training_loops import TrainRVTransformer, TrainCVTransformer, TrainSSM
-from training.visualize import save_results_and_metrics
 from sarpyx.utils.losses import get_loss_function
 import numpy as np
 def setup_logging():

@@ -606,21 +606,14 @@ class sarSSM(nn.Module):
             x = torch.cat([x[..., :-2], x[..., -1:]], dim=-1)
             if x.shape[1] == 1:
                 squeeze_dim = 1
+                
             elif x.shape[2] == 1:
                 squeeze_dim = 2
             else:
                 squeeze_dim= None
-            x = x.squeeze()
-        if self.mode == "sequential":
-            outputs = []
-            for i in range(x.shape[0]):
-                pixel = x[i].unsqueeze(0)  # shape: (1, channels)
-                out = self._forward_batch(x)  # or self.step(pixel, state) if you want to keep state
-                outputs.append(out)
-            # Stack outputs to (batch_size*seq_len, output_dim, ...)
-            out = torch.cat(outputs, dim=0)
-        else:
-            out = self._forward_batch(x)
+            x = x.squeeze(squeeze_dim)
+        # print(f"[SSM] Input shape after preprocessing: {x.shape}")
+        out = self._forward_batch(x)
 
         # Return in (B, L, output_dim) format for consistency
         if self.preprocess:

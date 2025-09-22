@@ -6,6 +6,7 @@ from typing import Union, Optional, Tuple
 from pathlib import Path
 import numpy as np
 from datetime import datetime
+from typing import List
 
 import torch
 import zarr
@@ -182,7 +183,7 @@ def parse_product_filename(filename: Union[str, os.PathLike]) -> dict:
         rf"(?P<part>[a-zA-Z0-9]+){sep}s1a-s(?P<stripmap_mode>[a-zA-Z0-9]+)-raw-s-(?P<polarization>[a-zA-Z0-9]+)-"
         r"(?P<start_date>\d{8})t\d+-\d{8}t\d+-\d+-[a-zA-Z0-9]+\.zarr"
     )
-    f_name = str(os.path.join(filename.split(os.path.sep)[-2], filename.split(os.path.sep)[-1]))
+    f_name = str(os.path.join(str(filename).split(os.path.sep)[-2], str(filename).split(os.path.sep)[-1]))
     match = re.match(pattern, f_name)
     if not match:
         return None

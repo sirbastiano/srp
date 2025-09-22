@@ -8,14 +8,16 @@ import dataloader
 from dataloader.dataloader import SARZarrDataset, SARDataloader
 from tqdm import tqdm
 from torch import nn
-from typing import Union, Optional, Tuple, Dict
+from typing import Union, Optional, Tuple, Dict, Callable, List
 import torch
 import logging
 from pathlib import Path
-from typing import Callable, List
+import wandb
+import io
+from PIL import Image
 
 logging.basicConfig(level=logging.INFO)
-def display_inference_results(input_data, gt_data, pred_data, figsize=(20, 6), vminmax=(0, 1000), show: bool=True, save: bool=True, save_path: str="./visualizations/"):
+def display_inference_results(input_data, gt_data, pred_data, figsize=(20, 6), vminmax=(0, 1000), show: bool=True, save: bool=True, save_path: str="./visualizations/", return_figure:bool=True):
     """
     Display input, ground truth, and prediction in a 3-column grid.
     
@@ -25,6 +27,13 @@ def display_inference_results(input_data, gt_data, pred_data, figsize=(20, 6), v
         pred_data: Model prediction
         figsize: Figure size
         vminmax: Value range for visualization
+        show: Whether to show the plot
+        save: Whether to save to file
+        save_path: Path to save the figure
+        return_figure: Whether to return the matplotlib figure for W&B logging
+        
+    Returns:
+        fig (optional): matplotlib figure if return_figure=True
     """
     # Convert tensors to numpy if needed
     if hasattr(input_data, 'numpy'):
@@ -89,12 +98,62 @@ def display_inference_results(input_data, gt_data, pred_data, figsize=(20, 6), v
         axes[i].set_aspect('equal', adjustable='box')
     
     plt.tight_layout()
+    
     if show:
         plt.show()
     if save:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        plt.savefig(save_path)
+        plt.savefig(save_path, dpi=150, bbox_inches='tight')
         logging.info(f"Saved inference results to {save_path}")
+    
+    if return_figure:
+        return fig
+    else:
+        plt.close(fig)  # Close to free memory if not returning
+        
+def log_inference_to_wandb(input_data, gt_data, pred_data, logger, step_or_epoch, figsize=(20, 6), vminmax=(0, 1000), save_path: str="./visualizations/inference.png"):
+    """
+    Create inference visualization and log it to W&B.
+    
+    Args:
+        input_data: Input data from the dataset
+        gt_data: Ground truth data  
+        pred_data: Model prediction
+        logger: W&B logger from PyTorch Lightning
+        step_or_epoch: Current step or epoch for captioning
+        figsize: Figure size
+        vminmax: Value range for visualization
+    """
+    # Create the visualization figure
+    fig = display_inference_results(
+        input_data=input_data,
+        gt_data=gt_data, 
+        pred_data=pred_data,
+        figsize=figsize,
+        vminmax=vminmax,
+        show=False,  # Don't show in notebook
+        save=True,  # Don't save to file  
+        return_figure=True,  # Return the figure for W&B
+        save_path=save_path
+    )
+    
+    # Convert matplotlib figure to W&B Image
+    # Method 1: Save to buffer and convert
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', dpi=150, bbox_inches='tight')
+    buf.seek(0)
+    img = Image.open(buf)
+    
+    # Log to W&B
+    if hasattr(logger, 'experiment'):  # WandbLogger
+        logger.experiment.log({
+            "inference_comparison": wandb.Image(img, caption=f"Inference at step {step_or_epoch}"),
+            "global_step": step_or_epoch
+        })
+    
+    # Clean up
+    plt.close(fig)
+    buf.close()
         
 def calculate_reconstruction_dimensions(
     coordinates: List[Tuple[int, int]], 

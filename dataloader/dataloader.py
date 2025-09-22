@@ -24,6 +24,176 @@ from utils import minmax_normalize, minmax_inverse, extract_stripmap_mode_from_f
 from api import fetch_chunk_from_hf_zarr, download_metadata_from_product
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
+
+class LazyCoordinateRange:
+    """
+    Lazy replacement for np.arange that doesn't materialize the array.
+    """
+    def __init__(self, start: int, stop: int, step: int = 1):
+        self.start = start
+        self.stop = stop
+        self.step = step
+        self._length = max(0, (stop - start + step - 1) // step)
+    
+    def __len__(self):
+        return self._length
+    
+    def __getitem__(self, index):
+        if index < 0:
+            index += len(self)
+        if index >= len(self) or index < 0:
+            raise IndexError("Index out of range")
+        return self.start + index * self.step
+    
+    def __iter__(self):
+        current = self.start
+        while current < self.stop:
+            yield current
+            current += self.step
+
+class LazyCoordinateGenerator:
+    """
+    Lazy generator for coordinate tuples that generates coordinates on-demand.
+    Supports different ordering patterns (row, col, chunk) and block patterns.
+    """
+    
+    def __init__(self, y_range: LazyCoordinateRange, x_range: LazyCoordinateRange, 
+                 patch_order: str = "row", block_pattern: Optional[Tuple[int, int]] = None,
+                 zfile: Optional[os.PathLike] = None, dataset: Optional['SARZarrDataset'] = None):
+        self.y_range = y_range
+        self.x_range = x_range
+        self.patch_order = patch_order
+        self.block_pattern = block_pattern
+        self.zfile = zfile
+        self.dataset = dataset
+        
+        # Pre-calculate total length without materializing arrays
+        self._length = len(y_range) * len(x_range)
+    
+    def __iter__(self):
+        """Generate coordinates lazily based on the specified order and block pattern."""
+        if self.patch_order == "row":
+            yield from self._generate_row_order()
+        elif self.patch_order == "col":
+            yield from self._generate_col_order()
+        elif self.patch_order == "chunk":
+            yield from self._generate_chunk_order()
+        else:
+            raise ValueError(f"Unknown patch_order: {self.patch_order}")
+    
+    def _generate_row_order(self):
+        """Generate coordinates in row-major order with optional block pattern."""
+        if self.block_pattern is not None:
+            yield from self._generate_block_pattern_row()
+        else:
+            for y in self.y_range:
+                for x in self.x_range:
+                    yield (y, x)
+    
+    def _generate_col_order(self):
+        """Generate coordinates in column-major order with optional block pattern."""
+        if self.block_pattern is not None:
+            yield from self._generate_block_pattern_col()
+        else:
+            for x in self.x_range:
+                for y in self.y_range:
+                    yield (y, x)
+    
+    def _generate_chunk_order(self):
+        """Generate coordinates in chunk-aware order for optimal cache performance."""
+        if self.dataset is None or self.zfile is None:
+            yield from self._generate_row_order()
+            return
+        
+        try:
+            # Get chunk information
+            sample = self.dataset.get_store_at_level(self.zfile, self.dataset.level_from)
+            ch, cw = sample.chunks
+            
+            # Group coordinates by chunks without materializing all coordinates
+            chunk_coords = {}
+            for y in self.y_range:
+                for x in self.x_range:
+                    cy, cx = y // ch, x // cw
+                    chunk_key = (cy, cx)
+                    if chunk_key not in chunk_coords:
+                        chunk_coords[chunk_key] = []
+                    chunk_coords[chunk_key].append((y, x))
+            
+            # Sort chunk keys and yield coordinates chunk by chunk
+            sorted_chunks = sorted(chunk_coords.keys())
+            for chunk_key in sorted_chunks:
+                coords = chunk_coords[chunk_key]
+                # Sort coordinates within chunk (x first, then y for cache locality)
+                coords.sort(key=lambda coord: (coord[1], coord[0]))
+                for coord in coords:
+                    yield coord
+                    
+        except Exception:
+            yield from self._generate_row_order()
+    
+    def _generate_block_pattern_row(self):
+        """Generate coordinates with block pattern in row-major order."""
+        if self.block_pattern is None:
+            raise ValueError("block_pattern must be set for block pattern generation.")
+        block_size, _ = self.block_pattern
+        
+        for y in self.y_range:
+            # Process x coordinates in blocks
+            x_start = 0
+            while x_start < len(self.x_range):
+                x_end = min(x_start + block_size, len(self.x_range))
+                for x_idx in range(x_start, x_end):
+                    x = self.x_range[x_idx]  # Get actual x coordinate
+                    yield (y, x)
+                x_start = x_end
+    
+    def _generate_block_pattern_col(self):
+        """Generate coordinates with block pattern in column-major order."""
+        if self.block_pattern is None:
+            raise ValueError("block_pattern must be set for block pattern generation.")
+        block_size, _ = self.block_pattern
+        
+        for x in self.x_range:
+            # Process y coordinates in blocks
+            y_start = 0
+            while y_start < len(self.y_range):
+                y_end = min(y_start + block_size, len(self.y_range))
+                for y_idx in range(y_start, y_end):
+                    y = self.y_range[y_idx]  # Get actual y coordinate
+                    yield (y, x)
+                y_start = y_end
+    
+    def __len__(self):
+        """Return total number of coordinates."""
+        return self._length
+    
+    def __getitem__(self, index: int) -> Tuple[int, int]:
+        """
+        Support indexing for compatibility with existing code.
+        Note: This is less efficient than iteration for large datasets.
+        """
+        if index < 0:
+            index += len(self)
+        if index >= len(self) or index < 0:
+            raise IndexError("Index out of range")
+        
+        # Calculate coordinates without materializing arrays
+        if self.patch_order == "row":
+            y_idx = index // len(self.x_range)
+            x_idx = index % len(self.x_range)
+            return (self.y_range[y_idx], self.x_range[x_idx])
+        elif self.patch_order == "col":
+            x_idx = index // len(self.y_range)
+            y_idx = index % len(self.y_range)
+            return (self.y_range[y_idx], self.x_range[x_idx])
+        else:
+            # For chunk order, fall back to list conversion (less efficient)
+            coords = list(self)
+            return coords[index]
+    
+
+        
 class BaseTransformModule(nn.Module):
     """Base class for SAR data transformations."""
     
@@ -446,6 +616,7 @@ class SARZarrDataset(Dataset):
         save_samples: bool = True, 
         buffer: Tuple[int, int] = (100, 100), 
         stride: Tuple[int, int] = (50, 50), 
+        block_pattern: Optional[Tuple[int, int]] = None,
         max_base_sample_size: Tuple[int, int] = (-1, -1),
         backend: str = "zarr",  # "zarr" or "dask"
         verbose: bool= True, 
@@ -473,6 +644,7 @@ class SARZarrDataset(Dataset):
         self.complex_valued = complex_valued
         self.buffer = buffer
         self.stride = stride
+        self.block_pattern = block_pattern
         self.backend = backend
         self.verbose = verbose
         self.save_samples = save_samples
@@ -486,6 +658,7 @@ class SARZarrDataset(Dataset):
         self.concatenate_patches = concatenate_patches
         self.concat_axis = concat_axis
         self.use_positional_as_token = use_positional_as_token
+        
         
         self._patch: Dict[str, np.ndarray] = {
             self.level_from: np.array([0]),
@@ -636,7 +809,7 @@ class SARZarrDataset(Dataset):
         if self.backend == "zarr":
             idx = self._files.index[self._files['full_name'] == Path(zfile)]
             if len(idx) > 0:
-                print(f"Opening Zarr store for file {zfile} at index {idx[0]}")
+                #print(f"Opening Zarr store for file {zfile} at index {idx[0]}")
                 self._files.at[idx[0], 'store'] = self.open_archive(zfile)
         elif self.backend == "dask":
             self._files.loc[self._files['full_name'] == Path(zfile), 'store'] = {}
@@ -752,7 +925,8 @@ class SARZarrDataset(Dataset):
         """
         ph, pw = self.get_store_at_level(zfile, self.level_from).shape
         return (ph - self.buffer[0] * 2, pw - self.buffer[1] * 2)
-    def calculate_patches_from_store(self, zfile:os.PathLike, patch_order: str = "row", window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]] = None):
+    
+    def calculate_patches_from_store(self, zfile: os.PathLike, patch_order: str = "row", window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]] = None):
         """
         Compute and store valid patch coordinates for a given Zarr file, according to the patch mode and parameters.
         Downloads metadata if needed (in online mode) and ensures all patches fit within image bounds.
@@ -778,170 +952,82 @@ class SARZarrDataset(Dataset):
                 raise ValueError(f"Levels {self.level_from} and {self.level_to} not found in Zarr store {zfile}.")
         
         self._append_file_to_stores(Path(zfile))
-        # Print the directories (groups/arrays) inside the Zarr store
 
         h, w = self.get_whole_sample_shape(zfile) 
-        coords: List[Tuple[int,int]] = []
+        
         if self.return_whole_image:
             coords = [(0, 0)]
-        else:
-            stride_y, stride_x = self.stride
-            ph, pw = self.get_patch_size(zfile)
-            if self.patch_mode == "rectangular":
-                
-                y_min, y_max = self.buffer[0], h - self.buffer[0]
-                x_min, x_max = self.buffer[1], w - self.buffer[1]
+            self._set_samples_for_file(zfile, coords)
+            return
+        
+        stride_y, stride_x = self.stride
+        ph, pw = self.get_patch_size(zfile)
+        
+        if self.patch_mode == "rectangular":
+            y_min, y_max = self.buffer[0], h - self.buffer[0]
+            x_min, x_max = self.buffer[1], w - self.buffer[1]
 
-                if window is not None:
-                    #print(f"Applying window: {window} to (({x_min}, {y_min}), ({x_max}, {y_max}))")
-                    y_min, y_max = max(window[0][0], y_min), min(window[1][0], y_max)
-                    x_min, x_max = max(window[0][1], x_min), min(window[1][1], x_max)
-                    #print(f"Saving samples from coordinates ({x_min}, {y_min}) to ({x_max}, {y_max})")
-                    stride_x, stride_y = min(stride_x, x_max - x_min), min(stride_y, y_max - y_min)
-                if self.concatenate_patches:
-                    mph, mpw = self.get_max_base_sample_size(zfile)
-                    mph, mpw = min(mph, x_max-x_min), min(mpw, y_max-y_min)
-                    if self.concat_axis == 0:
-                        # Vertical concatenation: fix y-coordinate to 0, vary x-coordinates
-                        self._y_coords[zfile] = np.arange(y_min, y_max - mph + 1, mph) 
-                        self._x_coords[zfile] = np.arange(x_min, x_max - stride_x + 1, stride_x)
-                    elif self.concat_axis == 1:
-                        # Horizontal concatenation: fix y-coordinate to 0, vary x-coordinates
-                        self._y_coords[zfile] = np.arange(y_min, y_max - stride_y + 1, stride_y)
-                        self._x_coords[zfile] = np.arange(x_min, x_max - mpw + 1, mpw)  
-                    else:
-                        raise ValueError(f"Invalid concat_axis: {self.concat_axis}. Must be 0 (vertical) or 1 (horizontal).")
+            if window is not None:
+                y_min, y_max = max(window[0][0], y_min), min(window[1][0], y_max)
+                x_min, x_max = max(window[0][1], x_min), min(window[1][1], x_max)
+                stride_x, stride_y = min(stride_x, x_max - x_min), min(stride_y, y_max - y_min)
+                
+            if self.concatenate_patches:
+                mph, mpw = self.get_max_base_sample_size(zfile)
+                mph, mpw = min(mph, x_max-x_min), min(mpw, y_max-y_min)
+                if self.concat_axis == 0:
+                    # Use lazy coordinate ranges instead of np.arange
+                    y_range = LazyCoordinateRange(y_min, y_max - mph + 1, mph)
+                    x_range = LazyCoordinateRange(x_min, x_max - stride_x + 1, stride_x)
+                elif self.concat_axis == 1:
+                    y_range = LazyCoordinateRange(y_min, y_max - stride_y + 1, stride_y)
+                    x_range = LazyCoordinateRange(x_min, x_max - mpw + 1, mpw)
                 else:
-                    # Original logic when not concatenating patches
-                    self._y_coords[zfile] = np.arange(y_min, y_max - stride_y + 1, stride_y)
-                    self._x_coords[zfile] = np.arange(x_min, x_max - stride_x + 1, stride_x)
-
-
-            elif self.patch_mode == "parabolic":
-                a = self.parabola_a
-                
-                # For parabolic patches, we need to ensure the entire parabolic curve fits within image bounds
-                # The parabolic curve is x = x_center + a * (j - pw//2)^2 for j in [0, pw)
-                # Maximum x offset occurs at the edges: max_offset = a * (pw//2)^2
-                max_offset = int(np.ceil(a * (pw // 2) ** 2))
-                
-                # Apply buffer and ensure parabolic patch fits
-                y_min, y_max = self.buffer[0], h - ph - self.buffer[0]
-                x_min = self.buffer[1] + max_offset  # Left bound considering parabolic curve
-                x_max = w - self.buffer[1] - max_offset  # Right bound considering parabolic curve        
-                
-                # Fully vectorized coordinate generation for maximum performance
-                self._y_coords[zfile] = np.arange(y_min, y_max + 1, stride_y)
-                self._x_coords[zfile] = np.arange(x_min, x_max + 1, stride_x)
+                    raise ValueError(f"Invalid concat_axis: {self.concat_axis}. Must be 0 (vertical) or 1 (horizontal).")
             else:
-                raise ValueError(f"Unknown patch_mode {self.patch_mode}")
-        coords = self.reorder_samples(zfile, patch_order=patch_order)
-        self._set_samples_for_file(zfile, coords) #_samples_by_file[zfile] = coords
-            
-    def reorder_samples(
-        self, zfile: os.PathLike, patch_order: str = "row"
-    ) -> List[Tuple[int, int]]:
-        """
-        Create ordered coordinates using np.meshgrid indexing parameter.
-        
-        Args:
-            zfile: Path to the Zarr file
-            patch_order: Ordering strategy for patch coordinates.
+                # Use lazy coordinate ranges instead of np.arange - THIS IS THE KEY FIX!
+                y_range = LazyCoordinateRange(y_min, y_max - stride_y + 1, stride_y)
+                x_range = LazyCoordinateRange(x_min, x_max - stride_x + 1, stride_x)
 
-        Returns:
-            List of (y, x) coordinate tuples in the specified order
-        """
-        
-        if patch_order == "row":
-            # Row-major: left-to-right, top-to-bottom (default 'xy' indexing)
-            Y_grid, X_grid = np.meshgrid(
-                self._y_coords[zfile], 
-                self._x_coords[zfile], 
-                indexing='ij' 
-            )
-            coords = list(zip(Y_grid.flatten().tolist(), X_grid.flatten().tolist()))
-            
-        elif patch_order == "col":
-            # Column-major: top-to-bottom, left-to-right
-            # Swap the order of coordinates in meshgrid and use different indexing
-            X_grid, Y_grid = np.meshgrid(
-                self._x_coords[zfile],
-                self._y_coords[zfile], 
-                indexing='ij'  
-            )
-            # For column-major, we want to iterate through Y first, then X
-            coords = list(zip(Y_grid.flatten(), X_grid.flatten()))
-            
-        elif patch_order == "chunk":
-            # Chunk-aware ordering: group by Zarr chunks
-            coords = self._create_chunk_aware_coordinates(zfile)
-            
+        elif self.patch_mode == "parabolic":
+            a = self.parabola_a
+            max_offset = int(np.ceil(a * (pw // 2) ** 2))
+            y_min, y_max = self.buffer[0], h - ph - self.buffer[0]
+            x_min = self.buffer[1] + max_offset
+            x_max = w - self.buffer[1] - max_offset        
+            y_range = LazyCoordinateRange(y_min, y_max + 1, stride_y)
+            x_range = LazyCoordinateRange(x_min, x_max + 1, stride_x)
         else:
-            raise ValueError(f"Unknown patch_order: {patch_order}")
+            raise ValueError(f"Unknown patch_mode {self.patch_mode}")
         
-        return coords
-
-    def _create_chunk_aware_coordinates(self, zfile: os.PathLike) -> List[Tuple[int, int]]:
-        """
-        Generate a list of (y, x) coordinate tuples ordered by their Zarr chunk locations for improved cache performance.
-
-        This method creates a meshgrid of all possible (y, x) coordinates based on the internal coordinate arrays for the given Zarr file.
-        It then determines the chunk index for each coordinate, sorts all coordinates so that those belonging to the same chunk are grouped together,
-        and returns the sorted list. This chunk-aware ordering can significantly improve performance when accessing chunked array data.
-
-        Args:
-            zfile (os.PathLike): The path to the Zarr file for which to generate chunk-aware coordinates.
-
-        Returns:
-            List[Tuple[int, int]]: A list of (y, x) coordinate tuples, sorted such that coordinates within the same chunk are contiguous.
-
-        Notes:
-            - The chunk sizes are inferred from the Zarr store at the specified processing level (`self.level_from`).
-            - The method assumes that the attribute 'store' in `self._files`, `self._y_coords`, and `self._x_coords` are properly initialized and populated.
-            - The returned coordinate order is optimized for sequential chunk access, which can reduce I/O overhead and improve cache utilization.
-        """
-
-        # Get chunk size and patch size
-        sample = self.get_store_at_level(zfile=Path(zfile), level=self.level_from)
-        ch, cw = sample.chunks
-        
-        # Create coordinate grids
-        Y_grid, X_grid = np.meshgrid(
-            self._y_coords[zfile], 
-            self._x_coords[zfile], 
-            indexing='ij'
+        # Store a lazy coordinate generator with lazy ranges
+        lazy_coords = LazyCoordinateGenerator(
+            y_range=y_range, 
+            x_range=x_range,
+            patch_order=patch_order,
+            block_pattern=self.block_pattern,
+            zfile=zfile,
+            dataset=self
         )
-        
-        # Calculate chunk indices
-        chunk_y_indices = Y_grid // ch
-        chunk_x_indices = X_grid // cw
-        
-        # Create a combined sorting key for chunk-aware ordering
-        # Primary sort: chunk_y, then chunk_x (process chunks row-major)
-        # Secondary sort: x_coord within chunk, then y_coord within column
-        max_chunk_x = chunk_x_indices.max() + 1
-        max_x = X_grid.max() + 1
-        
-        # Multi-level sorting key:
-        # 1. Chunk row (chunk_y)
-        # 2. Chunk column (chunk_x) 
-        # 3. X coordinate within chunk (for column-wise processing)
-        # 4. Y coordinate within column (for vertical sampling)
-        sort_key = (
-            chunk_y_indices * max_chunk_x * max_x * Y_grid.max() +
-            chunk_x_indices * max_x * Y_grid.max() +
-            X_grid * Y_grid.max() +
-            Y_grid
-        )
-        
-        # Get sort indices
-        sort_indices = np.argsort(sort_key.flatten())
-        
-        # Apply sorting to coordinates
-        flat_y, flat_x = Y_grid.flatten(), X_grid.flatten()
-        coords = [(int(flat_y[i]), int(flat_x[i])) for i in sort_indices]
-        
-        return coords
+        self._set_samples_for_file(zfile, lazy_coords)
+
+    def reorder_samples(self, zfile: os.PathLike, patch_order: str = "row") -> 'LazyCoordinateGenerator':
+        """
+        Create a lazy coordinate generator instead of pre-computing all coordinates.
+        """
+        existing_samples = self.get_samples_by_file(zfile)
+        if isinstance(existing_samples, LazyCoordinateGenerator):
+            return LazyCoordinateGenerator(
+                y_range=existing_samples.y_range,
+                x_range=existing_samples.x_range,
+                patch_order=patch_order,
+                block_pattern=self.block_pattern,
+                zfile=zfile,
+                dataset=self
+            )
+        else:
+            # Fallback for existing implementations
+            return existing_samples
     
     def __len__(self):
         """
@@ -1041,7 +1127,6 @@ class SARZarrDataset(Dataset):
         # Extract stride number from filename if present
         stripmap_mode = extract_stripmap_mode_from_filename(os.path.basename(zfile))
         zfile = Path(zfile)
-        # print(f"Opening zfile: {zfile}, y: {y}, x: {x}, stripmap_mode: {stripmap_mode}")
         start_time = time.time()
 
         t0 = time.time()
@@ -1106,6 +1191,7 @@ class SARZarrDataset(Dataset):
         if self.verbose:
             elapsed = time.time() - start_time
             print(f"Loading patch ({zfile}, {y}, {x}) took {elapsed:.4f} seconds. Stripmap mode: {stripmap_mode}")
+        #print(f"Opening zfile: {zfile}, y: {y}, x: {x}, stripmap_mode: {stripmap_mode}, shape: {x_tensor.shape}, {y_tensor.shape}")
         return x_tensor, y_tensor
     
     def _download_sample_if_missing(self, zfile: os.PathLike, level: str, y: int, x: int) -> Path:
@@ -1880,21 +1966,32 @@ class KPatchSampler(Sampler):
                 print(f"Sampling {len(self.coords[Path(f)])} patches from file {f} took {elapsed:.2f} seconds.")
     def get_coords_from_store(self, zfile: Union[str, os.PathLike], window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]] = None):
         self.dataset.calculate_patches_from_store(Path(zfile), patch_order=self.patch_order, window=window)
-        coords = self.dataset.get_samples_by_file(zfile)  #self.dataset._samples_by_file[Path(zfile)].copy()
-        n = len(coords) if self.samples_per_prod <= 0 else min(self.samples_per_prod, len(coords))
-        return coords[:n]
+        lazy_coords = self.dataset.get_samples_by_file(zfile)
+        
+        # If samples_per_prod is specified, limit the coordinates
+        if self.samples_per_prod > 0:
+            limited_coords = []
+            for i, coord in enumerate(lazy_coords):
+                if i >= self.samples_per_prod:
+                    break
+                limited_coords.append(coord)
+            return limited_coords
+        else:
+            # Return the full lazy generator
+            return lazy_coords
     def __len__(self):
-        """
-        Return the total number of samples to be drawn by the sampler.
-        """
+        """Return the total number of samples to be drawn by the sampler."""
         if self.beginning:
             return len(self.dataset)
-
         else:
-            if self.samples_per_prod > 0:
-                return sum(min(self.samples_per_prod, len(v)) for zfile in self.dataset.get_files() for v in [self.dataset.get_samples_by_file(zfile)])  # ._samples_by_file.values())
-            else:
-                return 0
+            total = 0
+            for zfile in self.dataset.get_files():
+                lazy_coords = self.dataset.get_samples_by_file(zfile)
+                if self.samples_per_prod > 0:
+                    total += min(self.samples_per_prod, len(lazy_coords))
+                else:
+                    total += len(lazy_coords)
+            return total
 
 class SARDataloader(DataLoader):
     dataset: SARZarrDataset
@@ -1919,6 +2016,7 @@ def get_sar_dataloader(
     patch_size: Tuple[int, int] = (512, 512),
     buffer: Tuple[int, int] = (100, 100),
     stride: Tuple[int, int] = (50, 50),
+    block_pattern: Optional[Tuple[int, int]] = None,
     positional_encoding: bool = True,
     max_base_sample_size: Tuple[int, int] = (-1, -1),  # (-1, -1) means full image size
     backend: str = "zarr",  # "zarr" or "dask
@@ -1973,6 +2071,7 @@ def get_sar_dataloader(
         return_whole_image=return_whole_image,
         transform=transform,
         patch_size=patch_size,
+        block_pattern=block_pattern,
         complex_valued=complex_valued,
         level_from=level_from,
         level_to=level_to,

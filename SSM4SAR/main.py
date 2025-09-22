@@ -1,5 +1,10 @@
 '''
-Main function for sarSSM training - Updated to use DataModule
+Main function for sarSSM training - Updated to    parser.add_argument('-gn',
+                        '--gpu_no',
+                        type=int,
+                        default=0,
+                        help='GPU number to run on'
+    )ataModule
 '''
 
 from trainer import azimuthModelTrainer
@@ -596,22 +601,32 @@ if __name__ == '__main__':
         logger = TensorBoardLogger(exp_dir, name=model_name)
 
     # Create trainer
-    # Handle CUDA driver compatibility issues
-    try:
-        accelerator = 'gpu' if torch.cuda.is_available() else 'cpu'
-        devices = gpu_no if torch.cuda.is_available() else 'auto'
+    # GPU validation and device configuration
+    if torch.cuda.is_available():
+        available_gpus = torch.cuda.device_count()
+        print(f"CUDA available: {available_gpus} GPU(s) detected")
+        
+        # Validate requested GPU
+        if gpu_no >= available_gpus:
+            print(f"⚠ Requested GPU {gpu_no} not available. Machine has GPUs: {list(range(available_gpus))}")
+            print(f"Falling back to GPU 0")
+            gpu_no = 0
+        
+        accelerator = 'gpu'
+        devices = [gpu_no]
+        print(f"✓ Using GPU {gpu_no} for training")
+        
         # Test CUDA capability before using
-        if torch.cuda.is_available():
-            try:
-                torch.cuda.get_device_capability(0)
-                print(f"Using GPU acceleration with {gpu_no} device(s)")
-            except RuntimeError as e:
-                print(f"CUDA capability check failed: {e}")
-                print("Falling back to CPU training...")
-                accelerator = 'cpu'
-                devices = 'auto'
-    except Exception as e:
-        print(f"GPU detection failed: {e}")
+        try:
+            torch.cuda.get_device_capability(gpu_no)
+            print(f"✓ GPU {gpu_no} capability check passed")
+        except RuntimeError as e:
+            print(f"⚠ CUDA capability check failed: {e}")
+            print("Falling back to CPU training...")
+            accelerator = 'cpu'
+            devices = 'auto'
+    else:
+        print("⚠ CUDA not available, using CPU training")
         accelerator = 'cpu'
         devices = 'auto'
     

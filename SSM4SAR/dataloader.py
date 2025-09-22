@@ -740,12 +740,59 @@ class SARZarrDataset(Dataset):
         Returns:
             zarr.Group or zarr.Array: The root group or array of the Zarr archive.
         """
+        # Check if the zarr file exists and has valid structure
+        zfile_path = Path(zfile)
+        
+        # For online mode, if the zarr directory doesn't exist or is empty, create a minimal structure
+        if self.online and (not zfile_path.exists() or self._is_empty_zarr_directory(zfile_path)):
+            print(f"Creating minimal zarr structure for online mode: {zfile_path}")
+            zfile_path.mkdir(parents=True, exist_ok=True)
+            
+            # Create a minimal .zgroup file to make zarr.open work
+            zgroup_path = zfile_path / '.zgroup'
+            if not zgroup_path.exists():
+                import json
+                zgroup_content = {"zarr_format": 2}
+                with open(zgroup_path, 'w') as f:
+                    json.dump(zgroup_content, f)
+                print(f"Created minimal .zgroup file at {zgroup_path}")
+        
+        # Check if zarr file has valid structure before opening
+        if not self._has_valid_zarr_structure(zfile_path):
+            if not self.online:
+                raise FileNotFoundError(f"Zarr file {zfile} does not exist or is not a valid zarr archive.")
+            else:
+                # For online mode, we'll handle missing levels in get_store_at_level
+                print(f"Warning: Zarr structure incomplete for {zfile}, but continuing in online mode")
+        
         if self.backend == "dask":
             return da.from_zarr(zfile)
         elif self.backend == "zarr":
             return zarr.open(zfile, mode='r')
         else: 
             raise ValueError(f"Unknown backend {self.backend}")
+    
+    def _is_empty_zarr_directory(self, zfile_path: Path) -> bool:
+        """Check if a zarr directory exists but is empty or has no valid zarr files."""
+        if not zfile_path.exists():
+            return True
+        if not zfile_path.is_dir():
+            return False
+        # Check if directory is empty or has no zarr metadata files
+        zarr_metadata_files = ['.zgroup', '.zarray', 'zarr.json']
+        has_metadata = any((zfile_path / meta).exists() for meta in zarr_metadata_files)
+        return not has_metadata
+    
+    def _has_valid_zarr_structure(self, zfile_path: Path) -> bool:
+        """Check if a path contains a valid zarr structure."""
+        if not zfile_path.exists():
+            return False
+        
+        # Check for zarr metadata files
+        zarr_metadata_files = ['.zgroup', '.zarray', 'zarr.json']
+        has_metadata = any((zfile_path / meta).exists() for meta in zarr_metadata_files)
+        
+        return has_metadata  # For online mode, we don't require levels to exist here
         
     def get_store_at_level(self, zfile: Union[os.PathLike, str], level: str) -> zarr.Array:
         level_dir = Path(zfile) / level
@@ -2070,7 +2117,7 @@ if __name__ == "__main__":
     )
     
     loader = get_sar_dataloader(
-       data_dir="/Data/sar_focusing",
+       data_dir="./Data/sar_focusing",
        level_from="rc",
        level_to="az",
        batch_size=4,

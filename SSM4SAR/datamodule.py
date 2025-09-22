@@ -28,7 +28,7 @@ class SARDataModule(L.LightningDataModule):
         level_to: str = "az",
         num_workers: int = 16,
         patch_mode: str = "rectangular",
-        patch_size: tuple = (10000, 1),
+        patch_size: tuple = (10_000, 1),
         buffer: tuple = (1, 1),
         stride: tuple = (1, 1),
         shuffle_files: bool = False,

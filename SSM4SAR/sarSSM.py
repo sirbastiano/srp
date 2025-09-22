@@ -425,25 +425,19 @@ class sarSSM(nn.Module):
         self.fc2 = nn.Linear(2, 2)
             
     def forward(self, x):    
-        outputs = []
+  
+        # position embedding
+        #print(f"shape of x before input into first layer is: {x.shape}")
+        x = self.fc1(x)
+
+        for ssm in self.ssm:
+            x, _ = ssm(x)
         
-        print(f"shape of x at the start of forward is: {x.shape}")
-        for i in range(x.shape[0]):
-            # position embedding
-            #print(f"shape of x before input into first layer is: {x.shape}")
-            pixel = x[i].unsqueeze(0)  # shape: (1, channels)
-
-            pixel = self.fc1(pixel)
-
-            for ssm in self.ssm:
-                pixel, _ = ssm(pixel)
-
-            #print(f"shape of x before input into last layer is: {x.shape}")
-
-            pixel = self.fc2(pixel)
-            outputs.append(pixel)
-        # Stack outputs to (batch_size*seq_len, output_dim, ...)
-        return torch.cat(outputs, dim=0)
+        #print(f"shape of x before input into last layer is: {x.shape}")
+        
+        x = self.fc2(x)
+        
+        return x
     
     def setup_step(self, batch_size):
         states = []
