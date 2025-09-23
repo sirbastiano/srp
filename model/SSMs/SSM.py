@@ -678,7 +678,7 @@ class sarSSM(nn.Module):
 
 # ---------------- Overlap-save wrapper ----------------
 class OverlapSaveWrapper(nn.Module):
-    def __init__(self, model:nn.Module, chunk_size:int=2048, overlap:int=0):
+    def __init__(self, model:nn.Module, chunk_size:int=2048, overlap:int=768):
         super().__init__()
         assert chunk_size > overlap
         self.model = model
@@ -688,469 +688,73 @@ class OverlapSaveWrapper(nn.Module):
     def forward(self, x):
         # x: (B,L,F)
         if x.shape[1] == 1:
-            squeeze_dim = 1
-            x = x.squeeze()
+            x = x.squeeze(1)
         elif x.shape[2] == 1:
-            squeeze_dim = 2
-            x = x.squeeze()
+            x = x.squeeze(2)
+        
         B, L, feat = x.shape
         step = self.chunk_size - self.overlap
         outputs = []
         starts = list(range(0, L, step))
-        for start in starts:
+        
+        for i, start in enumerate(starts):
             end = start + self.chunk_size
+            # print(f"Chunk {i} from {start} to {end}")
+            
             if end <= L:
                 chunk = x[:, start:end, :]
+                chunk_len = self.chunk_size
             else:
-                pad_len = end - L
-                tail = x[:, start:L, :]
-                pad = torch.zeros(B, pad_len, feat, device=x.device, dtype=x.dtype)
-                chunk = torch.cat([tail, pad], dim=1)
+                # Last chunk - use available data without padding
+                chunk = x[:, start:L, :]
+                chunk_len = L - start
+                # print(f"Last chunk: using {chunk_len} samples")
+            
             y = self.model(chunk)
-            left = 0 if start==0 else self.overlap//2
-            seg_start = start + left
-            seg_end = min(end - (self.overlap - left), L)
-            seg_len = max(0, seg_end - seg_start)
-            seg = y[:, left:left+seg_len, :]
-            outputs.append((seg_start, seg_end, seg))
+            
+            # Fixed segmentation logic
+            if i == 0:
+                # First chunk: keep everything except overlap region at the end
+                seg_start = 0
+                seg_end = min(self.chunk_size - self.overlap//2, chunk_len, L)
+                output_start = start
+                output_end = start + seg_end
+                chunk_output_start = 0
+                chunk_output_end = seg_end
+            elif start + chunk_len >= L:
+                # Last chunk: keep everything from overlap region onward
+                overlap_discard = self.overlap//2
+                seg_len = chunk_len - overlap_discard
+                if seg_len > 0:
+                    output_start = start + overlap_discard
+                    output_end = L
+                    chunk_output_start = overlap_discard
+                    chunk_output_end = chunk_len
+                else:
+                    continue  # Skip if nothing to contribute
+            else:
+                # Middle chunks: discard overlap//2 from both ends
+                overlap_discard = self.overlap//2
+                seg_len = self.chunk_size - 2 * overlap_discard
+                output_start = start + overlap_discard
+                output_end = start + overlap_discard + seg_len
+                chunk_output_start = overlap_discard
+                chunk_output_end = overlap_discard + seg_len
+            
+            # Extract the segment to use
+            if 'chunk_output_start' in locals():
+                seg = y[:, chunk_output_start:chunk_output_end, :]
+                outputs.append((output_start, output_end, seg))
+                # print(f"Chunk {i}: contributing samples {output_start} to {output_end}")
+        
+        # Reconstruct output
         outF = outputs[0][2].shape[-1]
-        out = x.new_zeros(B, L, outF)
-        for seg_start, seg_end, seg in outputs:
-            out[:, seg_start:seg_end, :] = seg
-        #out = out.unsqueeze(squeeze_dim)
+        out = torch.zeros(B, L, outF, device=x.device, dtype=y.dtype)
+        
+        for output_start, output_end, seg in outputs:
+            actual_len = min(seg.shape[1], output_end - output_start, L - output_start)
+            if actual_len > 0:
+                out[:, output_start:output_start + actual_len, :] = seg[:, :actual_len, :]
+        
         return out
 
-
-
-def hippo_initializer(N, dt_min=0.001, dt_max=0.1):
-    """
-    HiPPO-based initialization for better long-range dependencies
-    """
-    # Generate optimized eigenvalues based on HiPPO theory
-    pi = torch.tensor(np.pi)
-    real_part = 0.5 * torch.ones(N//2)
-    imag_part = torch.arange(N//2)
-    
-    # Use inverse scaling for better long-range modeling
-    imag_part = 1/pi * N * (N/(1+2*imag_part)-1)
-    w = -real_part + 1j * imag_part
-    
-    # Generate random dt in log space
-    log_dt = torch.rand(1) * (math.log(dt_max) - math.log(dt_min)) + math.log(dt_min)
-    
-    return w, log_dt
-
-def register_parameter_with_lr(module, name, tensor, trainable=True, lr=None, wd=None):
-    """Utility method: register a tensor as a buffer or trainable parameter with custom LR"""
-    if trainable:
-        module.register_parameter(name, nn.Parameter(tensor))
-    else:
-        module.register_buffer(name, tensor)
-
-    if trainable and lr is not None:
-        optim = {"lr": lr}
-        if wd is not None:
-            optim["weight_decay"] = wd
-        setattr(getattr(module, name), "_optim", optim)
-
-class SimpleSSM(nn.Module):
-    """
-    Simple State Space Model (SSM) with HiPPO initialization and complex state handling.
-
-    This class implements a simple SSM for sequence modeling, using HiPPO-based initialization for
-    long-range dependencies and complex-valued parameters for improved expressivity. It supports
-    both FFT-based and standard convolution for efficient computation.
-
-    Args:
-        state_dim (int): Hidden state dimension of the SSM (must be even for complex parameterization).
-        L (int): Length of the learned impulse response (kernel size).
-        channel_dim (int): Number of parallel SSMs (channels).
-        dt_min (float): Minimum timestep for HiPPO initialization.
-        dt_max (float): Maximum timestep for HiPPO initialization.
-        lr (float, optional): Custom learning rate for SSM parameters.
-        use_fft (bool): Whether to use FFT-based convolution for efficiency.
-    """
-    def __init__(self,
-                 state_dim: int = 64,
-                 L: int = 128,
-                 channel_dim: int = 1,
-                 dt_min: float = 0.001,
-                 dt_max: float = 0.1,
-                 lr: float = None,
-                 use_fft: bool = True):
-        """
-        Initialize the EnhancedSimpleSSM module.
-
-        Args:
-            state_dim (int): Hidden state dimension of the SSM (must be even for complex parameterization).
-            L (int): Length of the learned impulse response (kernel size).
-            channel_dim (int): Number of parallel SSMs (channels).
-            dt_min (float): Minimum timestep for HiPPO initialization.
-            dt_max (float): Maximum timestep for HiPPO initialization.
-            lr (float, optional): Custom learning rate for SSM parameters.
-            use_fft (bool): Whether to use FFT-based convolution for efficiency.
-        """
-        super().__init__()
-        assert state_dim % 2 == 0, "state_dim must be even for complex parameterization"
-        
-        self.state_dim = state_dim
-        self.L = L
-        self.channel_dim = channel_dim
-        self.use_fft = use_fft
-        
-        # Initialize using HiPPO theory for each channel
-        self._init_ssm_parameters(dt_min, dt_max, lr)
-        
-        # Learnable skip connection (D term)
-        self.D = nn.Parameter(torch.randn(channel_dim) * 0.1)
-
-    def _init_ssm_parameters(self, dt_min, dt_max, lr):
-        """
-        Initialize SSM parameters using HiPPO methodology for long-range memory.
-        Registers complex-valued parameters for eigenvalues, input/output matrices, and timestep.
-        """
-        
-        # Generate HiPPO-based eigenvalues for each channel
-        w_list = []
-        log_dt_list = []
-        C_list = []
-        
-        for c in range(self.channel_dim):
-            w, log_dt = hippo_initializer(self.state_dim, dt_min, dt_max)
-            w_list.append(w)
-            log_dt_list.append(log_dt)
-            
-            # Initialize C matrix with proper scaling
-            C = torch.randn(1, self.state_dim//2, dtype=torch.cfloat) * 0.1
-            C_list.append(C)
-        
-        # Stack and register parameters
-        w_stacked = torch.stack(w_list, dim=0)  # (channel_dim, state_dim//2)
-        log_dt_stacked = torch.stack(log_dt_list, dim=0)  # (channel_dim,)
-        C_stacked = torch.stack(C_list, dim=0)  # (channel_dim, 1, state_dim//2)
-        
-        # Register complex parameters using real view
-        register_parameter_with_lr(self, "w_real", w_stacked.real, True, lr)
-        register_parameter_with_lr(self, "w_imag", w_stacked.imag, True, lr)
-        register_parameter_with_lr(self, "log_dt", log_dt_stacked, True, lr)
-        register_parameter_with_lr(self, "C", _c2r(_resolve_conj(C_stacked)), True, lr)
-        
-        # B parameter (input matrix) - normalized for stability
-        B = torch.randn(self.channel_dim, self.state_dim//2, dtype=torch.cfloat)
-        B = B / torch.norm(B, dim=-1, keepdim=True)  # Normalize for stability
-        register_parameter_with_lr(self, "B", _c2r(_resolve_conj(B)), True, lr)
-
-    def _get_ssm_params(self):
-        """
-        Retrieve SSM parameters in complex form for computation.
-        Returns:
-            w (Tensor): Complex eigenvalues.
-            dt (Tensor): Discretization timesteps.
-            C (Tensor): Output matrix (complex).
-            B (Tensor): Input matrix (complex).
-        """
-        w = self.w_real + 1j * self.w_imag  # (channel_dim, state_dim//2)
-        dt = torch.exp(self.log_dt)  # (channel_dim,)
-        C = _r2c(self.C)  # (channel_dim, 1, state_dim//2)
-        B = _r2c(self.B)  # (channel_dim, state_dim//2)
-        return w, dt, C, B
-
-    def _compute_kernel_fft(self, L, device):
-        """
-        Compute the SSM kernel using optimized complex arithmetic and FFT for fast convolution.
-        Args:
-            L (int): Kernel length.
-            device: Device for computation.
-        Returns:
-            kernel (Tensor): Convolution kernel for sequence modeling.
-        """
-        w, dt, C, B = self._get_ssm_params()
-        
-        # Discretize: A_discrete = exp(dt * w)
-        dtA = dt.unsqueeze(-1) * w  # (channel_dim, state_dim//2)
-        A_discrete = torch.exp(dtA)
-        
-        # Compute kernel using matrix powers
-        # h[k] = C * A^k * B for k = 0, 1, ..., L-1
-        kernels = []
-        Ak = torch.ones_like(A_discrete)  # A^0 = I
-        
-        for k in range(L):
-            # h[k] = C @ (A^k @ B)
-            AkB = Ak * B  # Broadcasting: (channel_dim, state_dim//2)
-            hk = torch.sum(C.squeeze(1) * AkB, dim=-1)  # (channel_dim,)
-            
-            # Add D term at k=0
-            if k == 0:
-                hk = hk + self.D
-                
-            kernels.append(hk.real)  # Take real part for output
-            Ak = Ak * A_discrete  # Update A^k
-        
-        kernel = torch.stack(kernels, dim=-1)  # (channel_dim, L)
-        return kernel.unsqueeze(1)  # (channel_dim, 1, L) for conv1d
-
-    def forward(self, azimuth_data: torch.Tensor):
-        """
-        Forward pass for azimuth focusing using the SSM kernel.
-        Args:
-            azimuth_data (Tensor): Input tensor of shape (B, channel_dim, T).
-        Returns:
-            focused (Tensor): Output tensor of shape (B, channel_dim, T) after SSM convolution.
-        """
-        B, C, T = azimuth_data.shape
-        assert C == self.channel_dim, f"Expected {self.channel_dim} channels, got {C}"
-        
-        device = azimuth_data.device
-        
-        if self.use_fft and T > self.L:
-            # Use FFT-based convolution for long sequences
-            kernel = self._compute_kernel_fft(self.L, device)
-            
-            # Pad for causal convolution
-            pad = self.L - 1
-            x_padded = F.pad(azimuth_data, (pad, 0))
-            
-            # FFT-based convolution
-            L_conv = x_padded.size(-1)
-            x_f = torch.fft.rfft(x_padded, n=L_conv)
-            k_f = torch.fft.rfft(kernel, n=L_conv)
-            y_f = x_f * k_f
-            focused = torch.fft.irfft(y_f, n=L_conv)[..., :T]
-        else:
-            # Standard convolution for shorter sequences
-            kernel = self._compute_kernel_fft(min(self.L, T), device)
-            pad = kernel.size(-1) - 1
-            x_padded = F.pad(azimuth_data, (pad, 0))
-            focused = F.conv1d(x_padded, weight=kernel, groups=self.channel_dim)
-        
-        return focused
-
-class MambaModel(nn.Module):
-    """
-    Mamba model with S4D-inspired initialization and complex handling.
-
-    This class implements a selective state-space model (Mamba) with HiPPO-inspired initialization,
-    complex parameter support, and multiple layers for deep sequence modeling. Each range bin is
-    processed independently, and the model supports residual connections and dropout.
-
-    Args:
-        input_dim (int): Input feature dimension.
-        state_dim (int): State dimension for SSM.
-        delta_rank (int): Rank for delta projection in selective scan.
-        num_layers (int): Number of stacked Mamba blocks.
-        dropout (float): Dropout rate.
-        dt_min (float): Minimum timestep for initialization.
-        dt_max (float): Maximum timestep for initialization.
-        lr (float, optional): Custom learning rate for SSM parameters.
-    """
-    def __init__(self, 
-                 input_dim: int = 64,
-                 state_dim: int = 16, 
-                 delta_rank: int = 8,
-                 num_layers: int = 4,
-                 dropout: float = 0.1,
-                 dt_min: float = 0.001,
-                 dt_max: float = 0.1,
-                 bidirectional: bool = False):
-        """
-        Initialize the EnhancedMambaModel module.
-
-        Args:
-            input_dim (int): Input feature dimension.
-            state_dim (int): State dimension for SSM.
-            delta_rank (int): Rank for delta projection in selective scan.
-            num_layers (int): Number of stacked Mamba blocks.
-            dropout (float): Dropout rate.
-            dt_min (float): Minimum timestep for initialization.
-            dt_max (float): Maximum timestep for initialization.
-            bidirectional (bool): Whether to use bidirectional processing.
-        """
-        super().__init__()
-        
-        self.input_dim = input_dim
-        self.state_dim = state_dim
-        self.delta_rank = delta_rank
-        self.num_layers = num_layers
-        self.bidirectional = bidirectional
-
-        # Input/output projections
-        self.input_proj = nn.Linear(1, input_dim)
-        self.output_proj = nn.Linear(input_dim, 1)
-        
-        # Enhanced Mamba blocks with proper initialization
-        self.layers = nn.ModuleList([
-            nn.Sequential(
-                nn.LayerNorm(input_dim),
-                EnhancedMambaBlock(input_dim, state_dim, delta_rank, dt_min, dt_max),
-                nn.Dropout(dropout)
-            ) for _ in range(num_layers)
-        ])
-
-    def forward(self, x):
-        """
-        Forward pass for the Enhanced Mamba model.
-        Processes each range bin independently through stacked Mamba blocks.
-        Args:
-            x (Tensor): Input tensor of shape (B, range_bins, T).
-        Returns:
-            output (Tensor): Output tensor of shape (B, range_bins, T).
-        """
-        B, R, T = x.shape
-        out = []
-        
-        for r in range(R):
-            seq = x[:, r, :].unsqueeze(-1)  # (B, T, 1)
-            h = self.input_proj(seq)  # (B, T, input_dim)
-            if self.bidirectional:
-                h_fwd = h
-                h_bwd = torch.flip(h, dims=[1])
-                for block in self.layers:
-                    h_fwd = block(h_fwd) + h_fwd
-                    h_bwd = block(h_bwd) + h_bwd
-                h_bwd = torch.flip(h_bwd, dims=[1])
-                h = h_fwd + h_bwd  # or torch.cat([h_fwd, h_bwd], dim=-1)
-            else:
-                for block in self.layers:
-                    h = block(h) + h
-            out_r = self.output_proj(h).squeeze(-1)
-            out.append(out_r)
-        return torch.stack(out, dim=1)
-
-class EnhancedMambaBlock(nn.Module):
-    """
-    Enhanced Mamba block with S4D-inspired initialization and selective scan.
-
-    This block implements input projection, causal convolution, selective scan with HiPPO-inspired
-    initialization, gating, and output projection. It is designed for use in deep Mamba models for
-    sequence modeling.
-
-    Args:
-        d_model (int): Model feature dimension.
-        d_state (int): State dimension for SSM.
-        delta_rank (int): Rank for delta projection.
-        dt_min (float): Minimum timestep for initialization.
-        dt_max (float): Maximum timestep for initialization.
-        lr (float, optional): Custom learning rate for SSM parameters.
-    """
-    def __init__(self, 
-                 d_model: int,
-                 d_state: int, 
-                 delta_rank: int,
-                 dt_min: float = 0.001,
-                 dt_max: float = 0.1,
-                 lr: float = None):
-        """
-        Initialize the EnhancedMambaBlock module.
-
-        Args:
-            d_model (int): Model feature dimension.
-            d_state (int): State dimension for SSM.
-            delta_rank (int): Rank for delta projection.
-            dt_min (float): Minimum timestep for initialization.
-            dt_max (float): Maximum timestep for initialization.
-            lr (float, optional): Custom learning rate for SSM parameters.
-        """
-        super().__init__()
-        
-        self.d_model = d_model
-        self.d_state = d_state
-        self.delta_rank = delta_rank
-        
-        # Projections
-        self.in_proj = nn.Linear(d_model, d_model * 2, bias=False)
-        self.conv = nn.Conv1d(d_model, d_model, kernel_size=3, padding=2, groups=d_model)
-        self.x_proj = nn.Linear(d_model, delta_rank + 2 * d_state, bias=False)
-        self.delta_proj = nn.Linear(delta_rank, d_model, bias=True)
-        self.out_proj = nn.Linear(d_model, d_model, bias=False)
-        
-        # Initialize SSM parameters using HiPPO methodology
-        self._init_ssm_params(dt_min, dt_max, lr)
-
-    def _init_ssm_params(self, dt_min, dt_max, lr):
-        """
-        Initialize SSM parameters for the Mamba block using HiPPO-inspired eigenvalue placement and scaling.
-        Registers A matrix and D parameter for skip connection.
-        """
-        
-        # A matrix: use HiPPO-inspired initialization
-        # Instead of simple arange, use optimized eigenvalue placement
-        A_real = -0.5 * torch.ones(self.d_model, self.d_state)
-        A_imag = torch.arange(1, self.d_state + 1).unsqueeze(0).expand(self.d_model, -1)
-        
-        # Apply inverse scaling for better long-range dependencies  
-        A_imag = A_imag / (1 + 2 * torch.arange(self.d_state))
-        
-        A_log = torch.log(A_real.abs() + 1j * A_imag)
-        register_parameter_with_lr(self, "A_log", A_log.real, True, lr)
-        
-        # D parameter: skip connection with proper initialization
-        D = torch.ones(self.d_model) * 0.1
-        register_parameter_with_lr(self, "D", D, True, lr)
-        
-        # Initialize delta projection with proper scale
-        with torch.no_grad():
-            dt = torch.exp(torch.rand(self.d_model) * (math.log(dt_max) - math.log(dt_min)) + math.log(dt_min))
-            self.delta_proj.bias.copy_(torch.log(dt))
-
-    def forward(self, x):
-        """
-        Forward pass for the Enhanced Mamba block.
-        Args:
-            x (Tensor): Input tensor of shape (B, L, d_model).
-        Returns:
-            output (Tensor): Output tensor of shape (B, L, d_model).
-        """
-        B, L, d = x.shape
-        
-        # Input projection and gating
-        x_res = self.in_proj(x)  # (B, L, 2*d_model)
-        x, res = x_res.chunk(2, dim=-1)  # Each: (B, L, d_model)
-        
-        # Convolution (causal)
-        x = self.conv(x.transpose(1, 2))[:, :, :L].transpose(1, 2)
-        x = F.silu(x)
-        
-        # SSM computation
-        y = self._run_ssm(x)
-        
-        # Gating and output projection
-        y = y * F.silu(res)
-        return self.out_proj(y)
-
-    def _run_ssm(self, u):
-        """
-        Run the selective scan SSM computation for the input sequence.
-        Args:
-            u (Tensor): Input tensor of shape (B, L, d_model).
-        Returns:
-            output (Tensor): Output tensor of shape (B, L, d_model).
-        """
-        B, L, d = u.shape
-        
-        # Project to get delta, B, C
-        delta_BC = self.x_proj(u)  # (B, L, delta_rank + 2*d_state)
-        delta, B, C = delta_BC.split([self.delta_rank, self.d_state, self.d_state], dim=-1)
-        
-        # Compute delta with proper activation and bias
-        delta = F.softplus(self.delta_proj(delta))  # (B, L, d_model)
-        
-        # Enhanced selective scan with better stability
-        return selective_scan_fn(u, delta, self.A_log, B, C, self.D) #self._selective_scan_enhanced(u, delta, self.A_log, B, C, self.D)
-
-
-# Usage example and model configurations
-class ModelArgs:
-    """
-    Enhanced model arguments container with better defaults for SSM and Mamba models.
-    """
-    def __init__(self):
-        self.input_dim = 64
-        self.state_dim = 16 
-        self.delta_rank = 8
-        self.num_layers = 4
-        self.dropout = 0.1
-        self.seq_length = 128
-        self.dt_min = 0.001
-        self.dt_max = 0.1
-        self.lr_ssm = 1e-3  # Custom LR for SSM parameters

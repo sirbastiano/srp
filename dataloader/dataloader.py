@@ -1566,8 +1566,10 @@ class SARZarrDataset(Dataset):
         if remove_positional_encoding and self.positional_encoding:
             if patch.ndim == 3:
                 # Remove last 2 channels (positional encoding)
-                if patch.shape[-1] >= 2:
+                if patch.shape[-1] > 2 and np.iscomplexobj(patch):
                     patch = patch[..., :-2]
+                elif patch.shape[-1] == 2 and np.iscomplexobj(patch):
+                    patch = patch[..., :-1]
             elif patch.ndim == 2 and np.iscomplexobj(patch):
                 #The positional encoding is concatenated along one single dimension as complex number
                 patch = patch[...: :-1]

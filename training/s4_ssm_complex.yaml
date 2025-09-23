@@ -107,7 +107,7 @@ dataloader:
 transforms:
   normalize: true
   complex_valued: true
-  rc_min: -4000
-  rc_max: 4000
-  gt_min: -4000
-  gt_max: 4000
+  rc_min: -2000
+  rc_max: 2000
+  gt_min: -2000
+  gt_max: 2000
