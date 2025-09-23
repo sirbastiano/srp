@@ -8,16 +8,14 @@ import dataloader
 from dataloader.dataloader import SARZarrDataset, SARDataloader
 from tqdm import tqdm
 from torch import nn
-from typing import Union, Optional, Tuple, Dict, Callable, List
+from typing import Union, Optional, Tuple, Dict
 import torch
 import logging
 from pathlib import Path
-import wandb
-import io
-from PIL import Image
+from typing import Callable, List
 
 logging.basicConfig(level=logging.INFO)
-def display_inference_results(input_data, gt_data, pred_data, figsize=(20, 6), vminmax=(0, 1000), show: bool=True, save: bool=True, save_path: str="./visualizations/", return_figure:bool=True):
+def display_inference_results(input_data, gt_data, pred_data, figsize=(20, 6), vminmax=(0, 1000), show: bool=True, save: bool=True, save_path: str="./visualizations/"):
     """
     Display input, ground truth, and prediction in a 3-column grid.
     
@@ -27,13 +25,6 @@ def display_inference_results(input_data, gt_data, pred_data, figsize=(20, 6), v
         pred_data: Model prediction
         figsize: Figure size
         vminmax: Value range for visualization
-        show: Whether to show the plot
-        save: Whether to save to file
-        save_path: Path to save the figure
-        return_figure: Whether to return the matplotlib figure for W&B logging
-        
-    Returns:
-        fig (optional): matplotlib figure if return_figure=True
     """
     # Convert tensors to numpy if needed
     if hasattr(input_data, 'numpy'):
@@ -98,62 +89,12 @@ def display_inference_results(input_data, gt_data, pred_data, figsize=(20, 6), v
         axes[i].set_aspect('equal', adjustable='box')
     
     plt.tight_layout()
-    
     if show:
         plt.show()
     if save:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        plt.savefig(save_path, dpi=150, bbox_inches='tight')
+        plt.savefig(save_path)
         logging.info(f"Saved inference results to {save_path}")
-    
-    if return_figure:
-        return fig
-    else:
-        plt.close(fig)  # Close to free memory if not returning
-        
-def log_inference_to_wandb(input_data, gt_data, pred_data, logger, step_or_epoch, figsize=(20, 6), vminmax=(0, 1000), save_path: str="./visualizations/inference.png"):
-    """
-    Create inference visualization and log it to W&B.
-    
-    Args:
-        input_data: Input data from the dataset
-        gt_data: Ground truth data  
-        pred_data: Model prediction
-        logger: W&B logger from PyTorch Lightning
-        step_or_epoch: Current step or epoch for captioning
-        figsize: Figure size
-        vminmax: Value range for visualization
-    """
-    # Create the visualization figure
-    fig = display_inference_results(
-        input_data=input_data,
-        gt_data=gt_data, 
-        pred_data=pred_data,
-        figsize=figsize,
-        vminmax=vminmax,
-        show=False,  # Don't show in notebook
-        save=True,  # Don't save to file  
-        return_figure=True,  # Return the figure for W&B
-        save_path=save_path
-    )
-    
-    # Convert matplotlib figure to W&B Image
-    # Method 1: Save to buffer and convert
-    buf = io.BytesIO()
-    fig.savefig(buf, format='png', dpi=150, bbox_inches='tight')
-    buf.seek(0)
-    img = Image.open(buf)
-    
-    # Log to W&B
-    if hasattr(logger, 'experiment'):  # WandbLogger
-        logger.experiment.log({
-            "inference_comparison": wandb.Image(img, caption=f"Inference at step {step_or_epoch}"),
-            "global_step": step_or_epoch
-        })
-    
-    # Clean up
-    plt.close(fig)
-    buf.close()
         
 def calculate_reconstruction_dimensions(
     coordinates: List[Tuple[int, int]], 
@@ -335,15 +276,27 @@ def get_full_image_and_prediction(
                 x, y = coords[batch_idx * batch_size + patch_idx]
                 x_to = x - dataset.buffer[1]
                 y_to = y - dataset.buffer[0]
-                gt_patch = dataset.get_patch_visualization(output_batch[patch_idx], dataset.level_to, vminmax=vminmax, restore_complex=True, remove_positional_encoding=True)
+                gt_patch = dataset.get_patch_visualization(output_batch[patch_idx], dataset.level_to, vminmax=vminmax, restore_complex=True, remove_positional_encoding=False)
+                if len(gt_patch.shape) > 2:
+                    gt_patch = np.squeeze(gt_patch, -1)
                 #print(f"Ground truth patch with index {idx} has shape: {gt_patch.shape}, while reconstructed ground truth patch has dimension {gt_patch.shape}")
 
                 pred_patch = dataset.get_patch_visualization(pred_batch[patch_idx], dataset.level_to, vminmax=vminmax, restore_complex=True, remove_positional_encoding=False)
+                if len(pred_patch.shape) > 2:
+                    pred_patch = np.squeeze(pred_patch, -1)
                 #print(f"Prediction with index {idx} has shape: {pred_patch.shape}, while reconstructed prediction patch has dimension {pred_patch.shape}")
                 if return_input:
                     input_patch = dataset.get_patch_visualization(input_batch[patch_idx], dataset.level_from, vminmax=vminmax, restore_complex=True)
+                    if input_patch.ndim > 2:
+                        if input_patch.shape[-1] == 1:
+                            input_patch = np.squeeze(input_patch, -1)
+                        elif input_patch.shape[-1] == 0:
+                            input_patch = input_patch.reshape(input_patch.shape[:-1])
+                        else:
+                            raise ValueError(f"Input patch has unexpected shape {input_patch.shape}, cannot squeeze last dimension")
 
                 assert gt_patch.shape == pred_patch.shape, f"Prediction patch has a different size than original patch. Original patch shape: {gt_patch.shape}, prediction patch shape: {pred_patch.shape}"
+
                 ph, pw = gt_patch.shape
                 # if h - x_to < 0 and w - y_to < 0:
                 #     print(f"Stopping further processing -- patch at (x, y)=({x_to}, {y_to}) is out of bounds for array of shape {gt_full.shape}")

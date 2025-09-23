@@ -12,6 +12,7 @@ import torch.nn.functional as F
 from pytorch_lightning.utilities import rank_zero_only
 from einops import rearrange, repeat
 import opt_einsum as oe
+from mamba_ssm.ops.selective_scan_interface import selective_scan_fn
 
 contract = oe.contract
 contract_expression = oe.contract_expression
@@ -332,7 +333,7 @@ class S4D(nn.Module):
             activation='gelu', # activation in between SS and FF
             postact=None, # activation after FF
             dropout=0.0,
-            transposed=True, # axis ordering (B, L, D) or (B, D, L)
+            transposed=False, # axis ordering (B, L, D) or (B, D, L)
             complex:bool=True,
             # SSM Kernel arguments
             **kernel_args,
@@ -495,7 +496,7 @@ class sarSSM(nn.Module):
         use_positional_as_token=False,
         preprocess=True,
         activation_function='gelu',
-        mode="sequential"
+        use_selectivity=True
     ):
         """
         sarSSM: Sequence State Model for Synthetic Aperture Radar (SAR) Data
@@ -515,7 +516,7 @@ class sarSSM(nn.Module):
             complex_valued (bool, optional): If True, processes complex-valued inputs. Default is True.
             use_positional_as_token (bool, optional): If True, treats positional encoding as a token. Default is False.
             preprocess (bool, optional): If True, applies preprocessing to inputs. Default is True.
-            mode (str, optional): Mode to invoke the SSM. Can be either "sequential" or "parallel". Default it "sequential"
+            use_selectivity (bool, optional): If True, applies selective gating mechanism. Default is True.
             **kwargs: Additional arguments for customization.
 
         Inputs:
@@ -542,8 +543,8 @@ class sarSSM(nn.Module):
         self.num_layers = num_layers
         self.use_positional_as_token = use_positional_as_token
         self.model_dim = model_dim
-        self.mode = mode
         self.preprocess = preprocess
+        self.use_selectivity = use_selectivity
         # Input projection: project input_dim to state_dim
         if complex_valued:
             self.input_proj = ComplexLinear(input_dim, model_dim)
@@ -553,9 +554,17 @@ class sarSSM(nn.Module):
             self.output_proj = nn.Linear(model_dim, output_dim)
 
         self.layers = nn.ModuleList([
-            S4D(d_model=model_dim, d_state=state_dim, dropout=dropout, transposed=False, activation=activation_function, complex=complex_valued)
+            S4D(d_model=model_dim, d_state=state_dim, dropout=dropout, transposed=True, activation=activation_function, complex=complex_valued)
             for _ in range(num_layers)
         ])
+        if complex_valued:
+            self.layer_output_projs = nn.ModuleList([
+                ComplexLinear(model_dim*1, model_dim) for _ in range(num_layers)
+            ])
+        else:
+            self.layer_output_projs = nn.ModuleList([
+                nn.Linear(model_dim*1, model_dim) for _ in range(num_layers)
+            ])
         if complex_valued:
             self.norm = ComplexLayerNorm(model_dim)
         else:
@@ -565,6 +574,20 @@ class sarSSM(nn.Module):
         else:
             self.dropout = nn.Dropout(dropout)
         self.use_pos_encoding = use_pos_encoding
+        if self.use_selectivity:
+            if complex_valued:
+                # gate based on magnitude and pos: use a small real module on magnitudes
+                self.gate_mlp = nn.Sequential(
+                    nn.Linear(2*model_dim, model_dim),
+                    nn.GELU(),
+                    nn.Linear(model_dim, 1),
+                )
+            else:
+                self.gate_mlp = nn.Sequential(
+                    nn.Linear(model_dim, model_dim),
+                    nn.GELU(),
+                    nn.Linear(model_dim, 1),
+                )
     def _preprocess_input(self, x):
         # x: (B, 1000, seq_len, 2)
         # Optionally concatenate positional embedding as next token
@@ -579,76 +602,123 @@ class sarSSM(nn.Module):
             # Keep as separate channel, flatten last two dims
             x = x.permute(0, 2, 1, 3).reshape(x.shape[0], x.shape[2], -1)  # (B, seq_len, 1000*2)
         return x
-    
     def _postprocess_output(self, out):
         if len(out.shape) == 3:
             out = out.unsqueeze(-1)
         return out.permute(0, 2, 1, 3)
-    
-    def _forward_batch(self, x):
-        # Project to state_dim
-        # print(f"[SSM] Input shape after preprocessing: {x.shape}")
-        h = self.input_proj(x)  # (B, state_dim, L)
-        # print(f"[SSM] Input shape after input projection: {h.shape}")
-        # Pass through S4D layers
-        for i, layer in enumerate(self.layers):
-            h, _ = layer(h)  # S4D expects (B, state_dim, L)
-        # Normalize and dropout
-        h = self.norm(h)
-        h = self.dropout(h)
-        return self.output_proj(h)  # (B, output_dim, L)
-    
     def forward(self, x):
-        if self.preprocess:
-            x = self._preprocess_input(x)  # (B, L, input_dim)
-        else:
-            # If preprocessing is disabled, remove one before the last dimension (vertical position)
-            x = torch.cat([x[..., :-2], x[..., -1:]], dim=-1)
-            if x.shape[1] == 1:
-                squeeze_dim = 1
-                
-            elif x.shape[2] == 1:
-                squeeze_dim = 2
+        # x: (B, L, F)
+        B, L, feat = x.shape
+        assert feat == self.input_dim, f"Expected input feature dim {self.input_dim}, got {feat}"
+        if self.complex_valued:
+            if x.is_complex():
+                h = self.input_proj(x)  # expects complex input
             else:
-                squeeze_dim= None
-            x = x.squeeze(squeeze_dim)
-        # print(f"[SSM] Input shape after preprocessing: {x.shape}")
-        out = self._forward_batch(x)
-
-        # Return in (B, L, output_dim) format for consistency
-        if self.preprocess:
-            return self._postprocess_output(out)
+                # minimal handling: if first two dims are real/imag, stack them
+                if feat >= 2:
+                    ri = torch.stack([x[...,0], x[...,1]], dim=-1).reshape(B, L, -1)
+                    h = self.input_proj(ri)
+                else:
+                    h = self.input_proj(x.float())
         else:
-            if squeeze_dim is not None:
-                out = out.unsqueeze(squeeze_dim)
-            return out
-    
-    def step(self, x, state):
-        '''
-        this is for reference from the layer below this function:
-        step one time step as recurrent model. intended to be used during validation
-        x: (B H)
-        state: (B H N)
-        Returns: output (B H), state (B H N)
-        '''
-        
-        if state == None:
-            # create a list of 0 states for each of the ssm layers
-            state = [np.zeros(self.d_state) for _ in self.layers]
-        
-        x = self._preprocess_input(x)  # (B, L, input_dim)
-        # Project to state_dim
-        h = self.input_proj(x)  # (B, state_dim, L)
-        # Pass through S4D layers
-        for i, layer in enumerate(self.layers):
-            h, _ = layer.step(h, state[i])  # S4D expects (B, state_dim, L)
-        # Normalize and dropout
+            h = self.input_proj(x.float())
+        # to (B,H,L)
+        h = h.transpose(1,2).contiguous()
+        gate = None
+        if self.use_selectivity:
+            gate_in = h.transpose(1,2).contiguous()
+            if self.complex_valued:
+                mag = gate_in.abs(); ph = torch.angle(gate_in)
+                gate_feat = torch.cat([mag, ph], dim=-1)
+            else:
+                gate_feat = gate_in
+            gate_logits = self.gate_mlp(gate_feat)
+            gate = torch.sigmoid(gate_logits).squeeze(-1)  # (B,L)
+        for layer, proj in zip(self.layers, self.layer_output_projs):
+            y, _ = layer(h)  # (B, C*H, L)
+            y_t = y.transpose(1,2).contiguous()  # (B,L,C*H)
+            y_p = proj(y_t)  # (B,L,H)
+            y_p = y_p.transpose(1,2).contiguous()
+            if gate is not None:
+                g = gate.unsqueeze(1)
+                h = h + y_p * g
+            else:
+                h = h + y_p
+            if self.complex_valued:
+                h = torch.complex(torch.tanh(h.real), torch.tanh(h.imag))
+            else:
+                h = F.gelu(h)
+        h = h.transpose(1,2).contiguous()
         h = self.norm(h)
         h = self.dropout(h)
+        out = self.output_proj(h)  # (B,L,output_dim)
+        return out
 
-        out = self.output_proj(h)  # (B, output_dim, L)
-        # Return in (B, L, output_dim) format for consistency
-        return self._postprocess_output(out), state
+    def step(self, u, states=None):
+        # single-time-step recurrent fallback (not optimized)
+        if states is None:
+            states = [None]*len(self.layers)
+        h = self.input_proj(u)  # (B,H)
+        next_states = []
+        for i, layer in enumerate(self.layers):
+            y, ns = layer.step(h, states[i])
+            y_p = self.layer_output_projs[i](y)
+            if self.use_selectivity:
+                if self.complex_valued:
+                    g = torch.sigmoid(h.abs().mean(-1, keepdim=True))
+                else:
+                    g = torch.sigmoid(h.mean(-1, keepdim=True))
+                h = h + y_p * g
+            else:
+                h = h + y_p
+            h = torch.complex(torch.tanh(h.real), torch.tanh(h.imag)) if self.complex_valued else F.gelu(h)
+            next_states.append(ns)
+        out = self.output_proj(h.unsqueeze(1)).squeeze(1)
+        return out, next_states
+
+# ---------------- Overlap-save wrapper ----------------
+class OverlapSaveWrapper(nn.Module):
+    def __init__(self, model:nn.Module, chunk_size:int=2048, overlap:int=0):
+        super().__init__()
+        assert chunk_size > overlap
+        self.model = model
+        self.chunk_size = chunk_size
+        self.overlap = overlap
+
+    def forward(self, x):
+        # x: (B,L,F)
+        if x.shape[1] == 1:
+            squeeze_dim = 1
+            x = x.squeeze()
+        elif x.shape[2] == 1:
+            squeeze_dim = 2
+            x = x.squeeze()
+        B, L, feat = x.shape
+        step = self.chunk_size - self.overlap
+        outputs = []
+        starts = list(range(0, L, step))
+        for start in starts:
+            end = start + self.chunk_size
+            if end <= L:
+                chunk = x[:, start:end, :]
+            else:
+                pad_len = end - L
+                tail = x[:, start:L, :]
+                pad = torch.zeros(B, pad_len, feat, device=x.device, dtype=x.dtype)
+                chunk = torch.cat([tail, pad], dim=1)
+            y = self.model(chunk)
+            left = 0 if start==0 else self.overlap//2
+            seg_start = start + left
+            seg_end = min(end - (self.overlap - left), L)
+            seg_len = max(0, seg_end - seg_start)
+            seg = y[:, left:left+seg_len, :]
+            outputs.append((seg_start, seg_end, seg))
+        outF = outputs[0][2].shape[-1]
+        out = x.new_zeros(B, L, outF)
+        for seg_start, seg_end, seg in outputs:
+            out[:, seg_start:seg_end, :] = seg
+        #out = out.unsqueeze(squeeze_dim)
+        return out
 
 
 
@@ -981,8 +1051,6 @@ class EnhancedMambaBlock(nn.Module):
             dt_max (float): Maximum timestep for initialization.
             lr (float, optional): Custom learning rate for SSM parameters.
         """
-        from mamba_ssm.ops.selective_scan_interface import selective_scan_fn
-
         super().__init__()
         
         self.d_model = d_model

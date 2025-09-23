@@ -1,15 +1,6 @@
 import sys 
 import os 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# if sys.platform.startswith('linux'):
-#     # Force HF Hub to use POSIX paths on Linux
-#     os.environ['HF_HUB_DISABLE_EXPERIMENTAL_WARNING'] = '1'
-#     os.environ['HF_HUB_OFFLINE'] = '0'
-#     # Ensure cache directory doesn't have Windows path handling
-#     cache_dir = os.path.expanduser('~/.cache/huggingface/hub')
-#     os.environ['HF_HOME'] = cache_dir
-#     os.environ['HUGGINGFACE_HUB_CACHE'] = cache_dir
 import yaml
 import argparse
 from pathlib import Path
@@ -20,37 +11,14 @@ import logging
 import time
 from typing import Dict, Any
 import os
-from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
-
-import wandb
+from pytorch_lightning.loggers import TensorBoardLogger
 
 from dataloader.dataloader import SampleFilter, get_sar_dataloader, SARTransform
 from model.model_utils import get_model_from_configs
 from training.training_loops import get_training_loop_by_model_name
-from typing import Optional, Dict, List, Literal
 
-def setup_logging(
-        out_file: str = 'training.log', 
-        model_name: str = 'model', 
-        exp_dir: str = './results', 
-        use_wandb: bool = False, 
-        wandb_project: str = 'ssm4sar', 
-        wandb_entity: Optional[str] = None, 
-        wandb_tags: Optional[List[str]] = None, 
-        config: Optional[Dict] = None
-    ):
-    if use_wandb:
-        run_name = f'{model_name}'
-        tb_logger = WandbLogger(
-            project=wandb_project,
-            entity=wandb_entity,
-            name=run_name,
-            tags=wandb_tags,
-            config=config
-        )
-        # Watch gradients/parameters and graph
-    else:
-        tb_logger = TensorBoardLogger(save_dir=exp_dir, name=model_name)
+def setup_logging(out_file : str = 'training.log', model_name: str = 'model', exp_dir: str = './results'):
+    tb_logger = TensorBoardLogger(save_dir=exp_dir, name=model_name)
     log_file = os.path.join(exp_dir, out_file)
     log_dir = os.path.dirname(log_file)
     if not os.path.exists(log_dir):
@@ -58,7 +26,7 @@ def setup_logging(
     logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s',
-            handlers=[
+            handlers=[  
                 logging.FileHandler(log_file),
                 logging.StreamHandler()
             ]
@@ -74,6 +42,9 @@ def load_config(config_path: Path, args):
     else:
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
     
+    # Add data_dir to dataloader config if it exists at top level
+    if 'data_dir' in config and 'dataloader' in config:
+        config['dataloader']['data_dir'] = config['data_dir']
     
     # Add transforms to dataloader if it exists at top level
     if 'transforms' in config and 'dataloader' in config:
@@ -318,9 +289,6 @@ def main():
     parser.add_argument('--num_epochs', type=int, default=None, help='Number of epochs override')
     parser.add_argument('--save_dir', type=str, default="./results", help='Save directory override')
     parser.add_argument('--scheduler_type', type=str, default='cosine', choices=['plateau', 'cosine'], help='LR scheduler type')
-    parser.add_argument('--use_wandb', type=bool, default=True, help='Use Weights & Biases for logging')
-    parser.add_argument('--wandb_project', type=str, default='ssm4sar', help='W&B project name')
-    parser.add_argument('--wandb_entity', type=str, default=None, help='W&B entity name')
     args = parser.parse_args()
     
     # Load configuration
@@ -332,8 +300,7 @@ def main():
     training_cfg = config['training']
             
     # Setup logging
-    tb_logger, text_logger = setup_logging(model_name=os.path.basename(training_cfg['save_dir']), exp_dir=args.save_dir, use_wandb=args.use_wandb, wandb_project=args.wandb_project, wandb_entity=args.wandb_entity, config=config)
-    wandb.login()
+    tb_logger, text_logger = setup_logging(model_name=training_cfg['save_dir'], exp_dir=args.save_dir)
     text_logger.info(f"Starting training with config: {args.config}")
     
     # Log configuration summary
@@ -345,6 +312,17 @@ def main():
                 text_logger.info(f"    {key}: {value}")
         else:
             text_logger.info(f"    {section_cfg}")
+    # text_logger.info("Configuration Summary:")
+    # text_logger.info(f"  Model: {model_cfg.get('name', 'Unknown')}")
+    # text_logger.info(f"  Mode: {training_cfg.get('mode', 'parallel')}")
+    # text_logger.info(f"  Device: {training_cfg.get('device', 'cuda')}")
+    # text_logger.info(f"  Batch size: {training_cfg.get('batch_size', 32)}")
+    # text_logger.info(f"  Learning rate: {training_cfg.get('learning_rate', 1e-4)}")
+    # text_logger.info(f"  Epochs: {training_cfg.get('num_epochs', 100)}")
+    # text_logger.info(f"  Save directory: {training_cfg.get('save_dir', './results')}")
+    # text_logger.info(f"  Scheduler type: {training_cfg.get('scheduler_type', 'cosine')}")
+    # text_logger.info(f"  Patience: {training_cfg.get('patience', 10)}")
+    # ###### TODO: FINISH LOGGING ALL CONFIGS ######
     
     # Check if patch preprocessing is needed
     
@@ -354,7 +332,7 @@ def main():
     # Create dataloaders
     text_logger.info("Creating dataloaders...")
     train_loader, val_loader, test_loader, inference_loader = create_dataloaders(dataloader_cfg)
-    text_logger.info(f"Created dataloaders - Train: {len(train_loader)}, Val: {len(val_loader)}, Test: {len(test_loader)}, Inference: {len(inference_loader) if inference_loader is not None else 0}")
+    text_logger.info(f"Created dataloaders - Train: {len(train_loader)}, Val: {len(val_loader)}, Test: {len(test_loader)}, Inference: {len(inference_loader)}")
 
     # Determine trainer class and create trainer
     lightning_model, trainer = get_training_loop_by_model_name(
@@ -364,20 +342,12 @@ def main():
         val_loader=val_loader,
         test_loader=test_loader,
         inference_loader=inference_loader,
-        num_epochs=training_cfg.get('epochs_num', None),
-        max_iterations=training_cfg.get('max_steps', None),
         save_dir=training_cfg['save_dir'], 
         loss_fn_name=training_cfg['loss_fn'],
         mode=training_cfg['mode'],
         scheduler_type=training_cfg['scheduler_type'], 
         logger=tb_logger,
     )
-
-    if args.use_wandb:
-        try:
-            tb_logger.watch(lightning_model, log='all', log_freq=200, log_graph=True)
-        except Exception as e:
-            print(f'W&B watch failed (non-fatal): {e}')
     # Start training
     text_logger.info("Starting training process...")
     try:
