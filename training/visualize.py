@@ -62,7 +62,7 @@ def log_inference_to_wandb(input_data, gt_data, pred_data, logger, step_or_epoch
     buf.close()
 
         
-def display_inference_results(input_data, gt_data, pred_data, figsize=(20, 6), vminmax=(0, 1000), show: bool=True, save: bool=True, save_path: str="./visualizations/"):
+def display_inference_results(input_data, gt_data, pred_data, figsize=(20, 6), vminmax=(0, 1000), show: bool=True, save: bool=True, save_path: str="./visualizations/", return_figure: bool=False):
     """
     Display input, ground truth, and prediction in a 3-column grid.
     
@@ -142,6 +142,8 @@ def display_inference_results(input_data, gt_data, pred_data, figsize=(20, 6), v
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         plt.savefig(save_path)
         logging.info(f"Saved inference results to {save_path}")
+    if return_figure:
+        return fig
         
 def calculate_reconstruction_dimensions(
     coordinates: List[Tuple[int, int]], 

@@ -57,7 +57,13 @@ class TrainerBase(pl.LightningModule):
         self.resume_from = resume_from
         self.validation_metrics = []
         self.train_metrics = []
-
+        self.last_improve_steps = 0
+    def get_current_step_or_epoch(self):
+        """Get current step or epoch depending on training mode."""
+        if hasattr(self.trainer, 'max_steps') and self.trainer.max_steps > 0:
+            return self.global_step, 'step'
+        else:
+            return self.current_epoch, 'epoch'
     def train_dataloader(self):
         return self._train_loader
 
@@ -133,77 +139,111 @@ class TrainerBase(pl.LightningModule):
             print(f"Visualization failed with error: {str(e)}")
             raise
 
-    def save_checkpoint(self, epoch: int, optimizer, scheduler=None, is_best: bool = False, **kwargs):
+    def save_checkpoint(self, optimizer, scheduler=None, is_best: bool = False, **kwargs):
         """Save training checkpoint with all necessary information."""
         from model.model_utils import save_checkpoint
         
-        # Determine filename based on checkpoint type
-        if is_best:
-            filename = "checkpoint_best.pth"
-        else:
-            filename = f"checkpoint_epoch_{epoch}.pth"
-            
-        checkpoint_path = os.path.join(self.base_save_dir, filename)
+        # Get current progress indicator
+        current_progress, progress_type = self.get_current_step_or_epoch()
+        
+        # Always save the latest checkpoint
+        latest_checkpoint_path = os.path.join(self.base_save_dir, "checkpoint_latest.pth")
+        latest_model_path = os.path.join(self.base_save_dir, "model_last.pth")
         
         # Prepare metrics
         metrics = {
-            'epoch': epoch,
+            'epoch': self.current_epoch,
+            'global_step': self.global_step,
             'val_losses': self.val_losses,
-            'best_val_loss': self.best_val_loss
+            'train_losses': self.train_losses,
+            'best_val_loss': self.best_val_loss,
+            'last_improve_epochs': self.last_improve_epochs,
+            # 'last_improve_steps': self.last_improve_steps,
+            'progress_type': progress_type
         }
         metrics.update(kwargs)
         
-        # Save comprehensive checkpoint
+        # Save comprehensive latest checkpoint
         save_checkpoint(
             model=self.model,
-            save_path=checkpoint_path,
-            epoch=epoch,
+            save_path=latest_checkpoint_path,
+            epoch=self.current_epoch,
             optimizer=optimizer,
             scheduler=scheduler,
             metrics=metrics,
             model_config=getattr(self.model, '_model_config', None)
         )
         
-        # Also save legacy format for compatibility
+        # Save latest model weights
+        torch.save(self.model.state_dict(), latest_model_path)
+        print(f"✅ Saved latest checkpoint: {progress_type} {current_progress}")
+        
+        # Save best checkpoint if this is the best model
         if is_best:
-            torch.save(self.model.state_dict(), f"{self.base_save_dir}/model_best.pth")
-        torch.save(self.model.state_dict(), f"{self.base_save_dir}/model_last.pth")
+            best_checkpoint_path = os.path.join(self.base_save_dir, "checkpoint_best.pth")
+            best_model_path = os.path.join(self.base_save_dir, "model_best.pth")
+            
+            # Copy latest checkpoint to best checkpoint
+            save_checkpoint(
+                model=self.model,
+                save_path=best_checkpoint_path,
+                epoch=self.current_epoch,
+                optimizer=optimizer,
+                scheduler=scheduler,
+                metrics=metrics,
+                model_config=getattr(self.model, '_model_config', None)
+            )
+            
+            # Save best model weights
+            torch.save(self.model.state_dict(), best_model_path)
+            val_loss = kwargs.get('val_loss', 'N/A')
+            print(f"🎉 New best model saved! {progress_type.capitalize()} {current_progress}, Validation loss: {val_loss:.6f}")
 
     def resume_from_checkpoint(self, checkpoint_path: Optional[Union[str, os.PathLike]], optimizer, scheduler=None):
         """Resume training from a checkpoint."""
-        from model.model_utils import load_pretrained_weights
-        if not self.resume_from:
-            print("No resume checkpoint specified.")
-            return False
-        if not os.path.exists(checkpoint_path):
+        if not checkpoint_path or not os.path.exists(checkpoint_path):
             print(f"Checkpoint not found: {checkpoint_path}")
             return False
             
         try:
             # Load checkpoint
-            checkpoint = torch.load(checkpoint_path, map_location='cpu')
+            checkpoint = torch.load(checkpoint_path, map_location=self.device)
             
             # Load model weights
-            self.model.load_state_dict(checkpoint['model_state_dict'])
+            if 'model_state_dict' in checkpoint:
+                self.model.load_state_dict(checkpoint['model_state_dict'])
+            else:
+                # Fallback for simple state dict
+                self.model.load_state_dict(checkpoint)
             
             # Load optimizer state
             if optimizer and 'optimizer_state_dict' in checkpoint:
-                optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+                try:
+                    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+                except Exception as e:
+                    print(f"⚠️  Could not load optimizer state: {e}")
                 
             # Load scheduler state
             if scheduler and 'scheduler_state_dict' in checkpoint:
-                scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+                try:
+                    scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+                except Exception as e:
+                    print(f"⚠️  Could not load scheduler state: {e}")
                 
             # Load training state
-            self.start_epoch = checkpoint.get('epoch', 0) + 1
             if 'metrics' in checkpoint:
                 metrics = checkpoint['metrics']
                 self.val_losses = metrics.get('val_losses', [])
                 self.train_losses = metrics.get('train_losses', [])
                 self.best_val_loss = metrics.get('best_val_loss', float('inf'))
                 self.last_improve_epochs = metrics.get('last_improve_epochs', 0)
+                self.last_improve_steps = metrics.get('last_improve_steps', 0)
+                self.start_epoch = checkpoint.get('epoch', 0) + 1
 
-            print(f"✅ Resumed training from epoch {self.start_epoch}")
+            progress_type = checkpoint.get('metrics', {}).get('progress_type', 'epoch')
+            current_progress = checkpoint.get('global_step', 0) if progress_type == 'step' else checkpoint.get('epoch', 0)
+            
+            print(f"✅ Resumed training from {progress_type} {current_progress}")
             print(f"📊 Best validation loss so far: {self.best_val_loss:.6f}")
             return True
             
@@ -269,21 +309,76 @@ class TrainerBase(pl.LightningModule):
             gt_patch, pred_patch = self.preprocess_output_and_prediction_before_comparison(gt_patch, pred_patch)
             m = compute_metrics(gt_patch, pred_patch)
             self.validation_metrics.append(m)
+        if hasattr(self.trainer, 'max_steps') and self.trainer.max_steps > 0:    
+            if self.validation_metrics:
+                avg_metrics = average_metrics(self.validation_metrics)
+                self.validation_metrics = []
+                self.log_metrics(avg_metrics, 'val_metrics', on_step=False, on_epoch=True, prog_bar=False)
 
+            # Get current validation loss
+            # current_val_loss = self.trainer.callback_metrics.get('val_loss', float('inf'))
+            
+            # Check if this is the best model so far
+            is_best = loss < self.best_val_loss
+            optimizer = self.trainer.optimizers[0] if self.trainer.optimizers else None
+            scheduler = self.trainer.lr_scheduler_configs[0].scheduler if self.trainer.lr_scheduler_configs else None
+            self.save_checkpoint(
+                epoch=self.current_epoch, 
+                optimizer=optimizer, 
+                scheduler=scheduler, 
+                is_best=is_best,
+                val_loss=float(loss),
+                train_loss=self.trainer.callback_metrics.get('train_loss_epoch', float('inf'))
+            )
         return loss
     def on_validation_epoch_end(self):
-        avg_metrics = average_metrics(self.validation_metrics)
-        self.validation_metrics = []
-        self.log_metrics(avg_metrics, 'val_metrics', on_step=False, on_epoch=True, prog_bar=False)
+        # Calculate average validation metrics
+        if self.validation_metrics:
+            avg_metrics = average_metrics(self.validation_metrics)
+            self.validation_metrics = []
+            self.log_metrics(avg_metrics, 'val_metrics', on_step=False, on_epoch=True, prog_bar=False)
 
-        if self.inference_loader is not None:
-            self.show_example(self.inference_loader, window=((1000, 1000), (2000, 2000)), vminmax=(3800, 4000), figsize=(20, 6), metrics_save_path=f"metrics_{self.current_epoch}.json", img_save_path=f"val_{self.current_epoch}.png")
-        self.save_checkpoint(epoch=self.current_epoch, optimizer=self.trainer.optimizers[0], scheduler=None, is_best=(self.trainer.callback_metrics['val_loss'] < self.best_val_loss), val_loss=self.trainer.callback_metrics['val_loss'])
-        if self.trainer.callback_metrics['val_loss'] < self.best_val_loss:
-            self.best_val_loss = self.trainer.callback_metrics['val_loss']
+        # Get current validation loss
+        current_val_loss = self.trainer.callback_metrics.get('val_loss', float('inf'))
+        
+        # Check if this is the best model so far
+        is_best = current_val_loss < self.best_val_loss
+        
+        if is_best:
+            print(f"🎉 New best validation loss: {current_val_loss:.6f} (previous: {self.best_val_loss:.6f})")
+            self.best_val_loss = float(current_val_loss)
             self.last_improve_epochs = 0
         else:
             self.last_improve_epochs += 1
+            print(f"📊 Validation loss: {current_val_loss:.6f} (best: {self.best_val_loss:.6f}) - No improvement for {self.last_improve_epochs} epochs")
+
+        # Save checkpoints
+        optimizer = self.trainer.optimizers[0] if self.trainer.optimizers else None
+        scheduler = self.trainer.lr_scheduler_configs[0].scheduler if self.trainer.lr_scheduler_configs else None
+        
+        self.save_checkpoint(
+            epoch=self.current_epoch, 
+            optimizer=optimizer, 
+            scheduler=scheduler, 
+            is_best=is_best,
+            val_loss=float(current_val_loss),
+            train_loss=self.trainer.callback_metrics.get('train_loss_epoch', float('inf'))
+        )
+
+        # Show example inference if inference loader is available
+        if self.inference_loader is not None:
+            try:
+                self.show_example(
+                    self.inference_loader, 
+                    window=((1000, 1000), (2000, 2000)), 
+                    vminmax=(3800, 4000), 
+                    figsize=(20, 6), 
+                    metrics_save_path=f"metrics_{self.current_epoch}.json", 
+                    img_save_path=f"val_{self.current_epoch}.png"
+                )
+            except Exception as e:
+                print(f"⚠️  Inference visualization failed: {str(e)}")
+
         super().on_validation_epoch_end()
     
     def test_step(self, batch, batch_idx):
