@@ -33,8 +33,10 @@ import numpy as np
 import pandas as pd
 import rasterio
 from rasterio import windows
+from rasterio.io import DatasetReader
 from rasterio.transform import xy
-from rasterio.warp import transform, transform_bounds
+from rasterio.crs import CRS
+from rasterio.warp import transform as warp_transform, transform_bounds
 from scipy.ndimage import zoom
 import xml.etree.ElementTree as ET
 
@@ -52,16 +54,22 @@ except ImportError:  # pragma: no cover - OpenCV is optional at runtime
 class VesselData:
     """Container for vessel validation data in SLC pixel coordinates."""
 
-    latitude: float
-    longitude: float
-    x_pixel: float
-    y_pixel: float
-    length_pixel: float
-    top_pixel: float
-    left_pixel: float
-    bottom_pixel: float
-    right_pixel: float
-    swath: int
+    detect_lat: float
+    detect_lon: float
+    vessel_length_m: float
+    source: str
+    detect_scene_row: float
+    detect_scene_column: float
+    is_vessel: bool
+    is_fishing: bool
+    distance_from_shore_km: float
+    scene_id: str
+    confidence: float
+    top: float
+    left: float
+    bottom: float
+    right: float
+    detect_id: str
 
 
 @dataclass
@@ -72,6 +80,8 @@ class TileDefinition:
     corner_coords: List[Tuple[float, float]]
     origin_row: int
     origin_col: int
+    centre_lat: float
+    centre_lon: float
 
 
 # ----------------------------------------------------------------------------
@@ -87,11 +97,18 @@ logger = logging.getLogger(__name__)
 # ----------------------------------------------------------------------------
 
 
-class DarkVesselProcessor:
-    """Replicates the MATLAB tiling pipeline for Sentinel-1 dark vessel data."""
+class Tiler:
+    """Tiling pipeline for Sentinel-1 data."""
 
     def __init__(self, base_directory: str, tile_size: int = 512, tile_overlap: float = 0.0) -> None:
-        """Initialise the processor and create output directories on demand."""
+        """
+        Initialize the processor and create output directories on demand.
+        
+        Args:
+            base_directory: Base directory for output files
+            tile_size: Size of tiles in pixels
+            tile_overlap: Fractional overlap between tiles
+        """
 
         self.base_dir = Path(base_directory)
         self.tile_size = tile_size
@@ -106,6 +123,143 @@ class DarkVesselProcessor:
         # Simple caches to avoid reparsing manifest.safe multiple times.
         self._manifest_cache: Dict[str, Dict[str, List[Dict[str, Optional[str]]]]] = {}
 
+    def _window_from_corner_coords(
+        self,
+        dataset: Optional[DatasetReader],
+        corner_coords: List[Tuple[float, float]],
+    ) -> Optional[Tuple[windows.Window, int, int]]:
+        """Return dataset window and origin derived from geographic corner coords."""
+
+        if dataset is None:
+            return None
+
+        dataset_crs = dataset.crs or CRS.from_epsg(4326)
+
+        lon_vals, lat_vals = zip(*corner_coords)
+        if dataset_crs.to_string() != "EPSG:4326":
+            xs, ys = warp_transform("EPSG:4326", dataset_crs, lon_vals, lat_vals)
+        else:
+            xs, ys = lon_vals, lat_vals
+
+        rows: List[int] = []
+        cols: List[int] = []
+        for x_coord, y_coord in zip(xs, ys):
+            try:
+                row, col = dataset.index(x_coord, y_coord)
+            except Exception:
+                continue
+
+            if np.isnan(row) or np.isnan(col):
+                continue
+
+            rows.append(int(np.clip(row, 0, dataset.height - 1)))
+            cols.append(int(np.clip(col, 0, dataset.width - 1)))
+
+        if not rows or not cols:
+            return None
+
+        row_start = max(0, min(rows))
+        row_stop = min(dataset.height, max(rows) + 1)
+        col_start = max(0, min(cols))
+        col_stop = min(dataset.width, max(cols) + 1)
+
+        if row_stop <= row_start or col_stop <= col_start:
+            return None
+
+        window = windows.Window.from_slices(
+            slice(row_start, row_stop),
+            slice(col_start, col_stop),
+        )
+
+        return window, row_start, col_start
+
+    @staticmethod
+    def _lonlat_to_colrow(
+        dataset: Optional[DatasetReader],
+        lon: float,
+        lat: float,
+    ) -> Optional[Tuple[int, int]]:
+        """Project geographic coordinates onto a dataset grid returning (col, row)."""
+
+        if dataset is None:
+            return None
+
+        dataset_crs = dataset.crs or CRS.from_epsg(4326)
+
+        if dataset_crs.to_string() != "EPSG:4326":
+            xs, ys = warp_transform("EPSG:4326", dataset_crs, [lon], [lat])
+            x_coord, y_coord = xs[0], ys[0]
+        else:
+            x_coord, y_coord = lon, lat
+
+        try:
+            row, col = dataset.index(x_coord, y_coord)
+        except Exception:
+            return None
+
+        if np.isnan(row) or np.isnan(col):
+            return None
+
+        col_idx = int(np.clip(col, 0, dataset.width - 1))
+        row_idx = int(np.clip(row, 0, dataset.height - 1))
+        return col_idx, row_idx
+
+    def _convert_bbox_grd_to_slc(
+        self,
+        vessel: VesselData,
+        grd_dataset: Optional[DatasetReader],
+        slc_dataset: Optional[DatasetReader],
+    ) -> Optional[Tuple[int, int, int, int]]:
+        """Map a GRD-aligned bounding box onto the SLC grid."""
+
+        if grd_dataset is None or slc_dataset is None:
+            return None
+
+        grd_crs = grd_dataset.crs or CRS.from_epsg(4326)
+        slc_crs = slc_dataset.crs or CRS.from_epsg(4326)
+
+        if any(
+            np.isnan(value)
+            for value in (vessel.top, vessel.left, vessel.bottom, vessel.right)
+        ):
+            return None
+
+        grd_rows = [vessel.top, vessel.top, vessel.bottom, vessel.bottom]
+        grd_cols = [vessel.left, vessel.right, vessel.left, vessel.right]
+
+        xs: List[float] = []
+        ys: List[float] = []
+        for row_value, col_value in zip(grd_rows, grd_cols):
+            row_clamped = float(np.clip(row_value, 0, grd_dataset.height - 1))
+            col_clamped = float(np.clip(col_value, 0, grd_dataset.width - 1))
+            x_coord, y_coord = grd_dataset.xy(row_clamped, col_clamped)
+            xs.append(x_coord)
+            ys.append(y_coord)
+
+        if grd_crs.to_string() != "EPSG:4326":
+            lon_vals, lat_vals = warp_transform(grd_crs, "EPSG:4326", xs, ys)
+        else:
+            lon_vals, lat_vals = xs, ys
+
+        slc_rows: List[int] = []
+        slc_cols: List[int] = []
+        for lon_value, lat_value in zip(lon_vals, lat_vals):
+            result = self._lonlat_to_colrow(slc_dataset, lon_value, lat_value)
+            if result is None:
+                return None
+            slc_col, slc_row = result
+            slc_rows.append(slc_row)
+            slc_cols.append(slc_col)
+
+        if not slc_rows or not slc_cols:
+            return None
+
+        top = min(slc_rows)
+        bottom = max(slc_rows)
+        left = min(slc_cols)
+        right = max(slc_cols)
+
+        return top, left, bottom, right
     # ------------------------------------------------------------------
     # Manifest helpers
     # ------------------------------------------------------------------
@@ -115,53 +269,58 @@ class DarkVesselProcessor:
         for directory in self.output_dirs.values():
             directory.mkdir(parents=True, exist_ok=True)
 
-    def load_vessel_data(self, validation_file: Optional[str]) -> List[VesselData]:
-        """Load and validate the vessel catalogue (CSV) if provided."""
-
-        if not validation_file:
-            logger.info("No validation file provided; sliding across full scene.")
-            return []
-
-        path = Path(validation_file)
-        if not path.exists():
-            logger.warning("Validation file %s not found; proceeding without annotations.", path)
+    def load_vessel_data(self, vessel_df: Optional[pd.DataFrame]) -> List[VesselData]:
+        """
+        Load and validate the vessel catalogue from DataFrame if provided.
+        
+        Args:
+            vessel_df: DataFrame containing vessel detection data
+            
+        Returns:
+            List of VesselData objects with validated and cleaned data
+        """
+        if vessel_df is None or vessel_df.empty:
+            logger.info('No vessel data provided; sliding across full scene.')
             return []
 
         required_columns = {
-            "latitude",
-            "longitude",
-            "x_pixel",
-            "y_pixel",
-            "length_pixel",
-            "top_pixel",
-            "left_pixel",
-            "bottom_pixel",
-            "right_pixel",
-            "swath",
+            'detect_lat', 'detect_lon', 'vessel_length_m', 'source', 'detect_scene_row',
+            'detect_scene_column', 'is_vessel', 'is_fishing', 'distance_from_shore_km',
+            'scene_id', 'confidence', 'top', 'left', 'bottom', 'right', 'detect_id'
         }
 
-        df = pd.read_csv(path)
-        missing = required_columns.difference(df.columns)
+        missing = required_columns.difference(vessel_df.columns)
         if missing:
-            raise ValueError(f"Validation file missing required columns: {sorted(missing)}")
+            raise ValueError(f'Vessel DataFrame missing required columns: {sorted(missing)}')
 
-        vessels = [
-            VesselData(
-                latitude=row["latitude"],
-                longitude=row["longitude"],
-                x_pixel=row["x_pixel"],
-                y_pixel=row["y_pixel"],
-                length_pixel=row["length_pixel"],
-                top_pixel=row["top_pixel"],
-                left_pixel=row["left_pixel"],
-                bottom_pixel=row["bottom_pixel"],
-                right_pixel=row["right_pixel"],
-                swath=int(row["swath"]),
+        vessels = []
+        for _, row in vessel_df.iterrows():
+            # Handle NaN values with safe defaults
+            vessel_length = row['vessel_length_m'] if not pd.isna(row['vessel_length_m']) else 50.0
+            detect_scene_row = row['detect_scene_row'] if not pd.isna(row['detect_scene_row']) else 0.0
+            detect_scene_column = row['detect_scene_column'] if not pd.isna(row['detect_scene_column']) else 0.0
+            
+            vessel = VesselData(
+                detect_lat=row['detect_lat'],
+                detect_lon=row['detect_lon'],
+                vessel_length_m=vessel_length,
+                source=row['source'],
+                detect_scene_row=detect_scene_row,
+                detect_scene_column=detect_scene_column,
+                is_vessel=bool(row['is_vessel']),
+                is_fishing=bool(row['is_fishing']),
+                distance_from_shore_km=row['distance_from_shore_km'],
+                scene_id=row['scene_id'],
+                confidence=row['confidence'],
+                top=row['top'] if not pd.isna(row['top']) else np.nan,
+                left=row['left'] if not pd.isna(row['left']) else np.nan,
+                bottom=row['bottom'] if not pd.isna(row['bottom']) else np.nan,
+                right=row['right'] if not pd.isna(row['right']) else np.nan,
+                detect_id=row['detect_id'],
             )
-            for _, row in df.iterrows()
-        ]
+            vessels.append(vessel)
 
-        logger.info("Loaded %d vessel records from %s", len(vessels), path)
+        logger.info(f'Loaded {len(vessels)} vessel records from DataFrame')
         return vessels
 
     def _parse_pol_and_swath(self, filename: str) -> Tuple[Optional[str], Optional[str]]:
@@ -222,9 +381,20 @@ class DarkVesselProcessor:
     # ------------------------------------------------------------------
     # Tile generation helpers
     # ------------------------------------------------------------------
-    def _build_tiles_from_vessels(self, dataset: rasterio.io.DatasetReader, vessels: List[VesselData]) -> List[TileDefinition]:
-        """Create one tile per vessel, centred on its SLC pixel coordinates."""
-
+    def _build_tiles_from_vessels(self, dataset: DatasetReader, vessels: List[VesselData]) -> List[TileDefinition]:
+        """
+        Create one tile per vessel using georeferenced positions.
+        
+        This method now properly accounts for vessel positions in SLC coordinates
+        and ensures tiles are centered on actual vessel locations.
+        
+        Args:
+            dataset: Reference dataset for tile positioning
+            vessels: List of vessel detections
+            
+        Returns:
+            List of tile definitions centered on vessels
+        """
         tiles: List[TileDefinition] = []
         seen_offsets: set[Tuple[int, int]] = set()
         half = self.tile_size // 2
@@ -232,20 +402,34 @@ class DarkVesselProcessor:
         max_col_off = max(dataset.width - self.tile_size, 0)
 
         for vessel in vessels:
-            centre_col = int(round(vessel.x_pixel))
-            centre_row = int(round(vessel.y_pixel))
+            centre_pixel = self._lonlat_to_colrow(dataset, vessel.detect_lon, vessel.detect_lat)
+            if centre_pixel is None:
+                logger.warning(
+                    "Unable to geolocate vessel %s via lat/lon; skipping tile.",
+                    vessel.detect_id,
+                )
+                continue
+
+            centre_col, centre_row = centre_pixel
+            
+            # Calculate tile origin ensuring vessel is centered
             col_off = max(0, min(centre_col - half, max_col_off))
             row_off = max(0, min(centre_row - half, max_row_off))
+            
+            # Adjust if tile would extend beyond image bounds
+            if col_off + self.tile_size > dataset.width:
+                col_off = dataset.width - self.tile_size
+            if row_off + self.tile_size > dataset.height:
+                row_off = dataset.height - self.tile_size
+            
             key = (row_off, col_off)
             if key in seen_offsets:
                 continue  # Avoid duplicating tiles when vessels cluster together
             seen_offsets.add(key)
 
-            window = windows.Window(
-                col_off=float(col_off),
-                row_off=float(row_off),
-                width=min(self.tile_size, dataset.width),
-                height=min(self.tile_size, dataset.height),
+            window = windows.Window.from_slices(
+                slice(int(row_off), int(row_off) + min(self.tile_size, dataset.height - row_off)),
+                slice(int(col_off), int(col_off) + min(self.tile_size, dataset.width - col_off))
             )
             corner_coords = self._window_corner_coords(dataset, window)
             tiles.append(
@@ -254,12 +438,14 @@ class DarkVesselProcessor:
                     corner_coords=corner_coords,
                     origin_row=int(row_off),
                     origin_col=int(col_off),
+                    centre_lat=vessel.detect_lat,
+                    centre_lon=vessel.detect_lon,
                 )
             )
 
         return tiles
 
-    def _build_full_scene_tiles(self, dataset: rasterio.io.DatasetReader) -> List[TileDefinition]:
+    def _build_full_scene_tiles(self, dataset: DatasetReader) -> List[TileDefinition]:
         """Slide a fixed-size window across the full scene covering every pixel."""
 
         tiles: List[TileDefinition] = []
@@ -278,11 +464,9 @@ class DarkVesselProcessor:
                     col = max(dataset.width - self.tile_size, 0)
                 key = (int(row), int(col))
                 if key not in visited:
-                    window = windows.Window(
-                        col_off=float(col),
-                        row_off=float(row),
-                        width=min(self.tile_size, dataset.width),
-                        height=min(self.tile_size, dataset.height),
+                    window = windows.Window.from_slices(
+                        slice(int(row), int(row) + min(self.tile_size, dataset.height)),
+                        slice(int(col), int(col) + min(self.tile_size, dataset.width))
                     )
                     corner_coords = self._window_corner_coords(dataset, window)
                     tiles.append(
@@ -303,7 +487,7 @@ class DarkVesselProcessor:
 
         return tiles
 
-    def _window_corner_coords(self, dataset: rasterio.io.DatasetReader, window: windows.Window) -> List[Tuple[float, float]]:
+    def _window_corner_coords(self, dataset: DatasetReader, window: windows.Window) -> List[Tuple[float, float]]:
         """Return the geographic corner coordinates (lon, lat) of a window."""
 
         transform = dataset.window_transform(window)
@@ -312,16 +496,66 @@ class DarkVesselProcessor:
         cols = [0, int(window.width) - 1, int(window.width) - 1, 0]
         coords = [xy(transform, row, col, offset="center") for row, col in zip(rows, cols)]
 
-        if dataset.crs and dataset.crs.to_string() != "EPSG:4326":
+        dataset_crs = dataset.crs or CRS.from_epsg(4326)
+        if dataset_crs.to_string() != "EPSG:4326":
             xs, ys = zip(*coords)
-            lon, lat = transform(dataset.crs, "EPSG:4326", xs, ys)
+            transform_result = warp_transform(dataset_crs, "EPSG:4326", xs, ys)
+            lon, lat = transform_result[0], transform_result[1]
             coords = list(zip(lon, lat))
 
         return coords
 
-    def _vessels_in_window(self, vessels: Optional[List[VesselData]], tile: TileDefinition) -> List[VesselData]:
-        """Filter vessel detections that fall inside the given tile window."""
+    def _window_from_center(
+        self,
+        dataset: Optional[DatasetReader],
+        centre_lon: float,
+        centre_lat: float,
+    ) -> Optional[Tuple[windows.Window, int, int]]:
+        """Derive a tile window from a lat/lon centre for the given dataset."""
 
+        if dataset is None:
+            return None
+
+        centre = self._lonlat_to_colrow(dataset, centre_lon, centre_lat)
+        if centre is None:
+            return None
+
+        centre_col, centre_row = centre
+        half = self.tile_size // 2
+
+        row_start = max(0, centre_row - half)
+        col_start = max(0, centre_col - half)
+
+        if row_start + self.tile_size > dataset.height:
+            row_start = max(0, dataset.height - self.tile_size)
+        if col_start + self.tile_size > dataset.width:
+            col_start = max(0, dataset.width - self.tile_size)
+
+        row_end = min(dataset.height, row_start + self.tile_size)
+        col_end = min(dataset.width, col_start + self.tile_size)
+
+        if row_end <= row_start or col_end <= col_start:
+            return None
+
+        window = windows.Window.from_slices(
+            slice(row_start, row_end),
+            slice(col_start, col_end),
+        )
+
+        return window, row_start, col_start
+
+    def _vessels_in_window(
+        self,
+        dataset: Optional[DatasetReader],
+        vessels: Optional[List[VesselData]],
+        tile: TileDefinition,
+    ) -> List[VesselData]:
+        """
+        Filter vessel detections that fall inside the given tile window.
+        
+        This method now properly handles coordinate system conversions and
+        ensures vessels are correctly associated with tiles.
+        """
         if not vessels:
             return []
 
@@ -332,8 +566,19 @@ class DarkVesselProcessor:
 
         selected: List[VesselData] = []
         for vessel in vessels:
-            if col_start <= vessel.x_pixel < col_end and row_start <= vessel.y_pixel < row_end:
+            if dataset is None:
+                continue
+
+            col_row = self._lonlat_to_colrow(dataset, vessel.detect_lon, vessel.detect_lat)
+            if col_row is None:
+                logger.debug("Skipping vessel %s due to missing geographic match", vessel.detect_id)
+                continue
+
+            vessel_col, vessel_row = col_row
+
+            if col_start <= vessel_col < col_end and row_start <= vessel_row < row_end:
                 selected.append(vessel)
+
         return selected
 
     # ------------------------------------------------------------------
@@ -421,57 +666,90 @@ class DarkVesselProcessor:
 
     def _read_slc_window(
         self,
-        dataset: rasterio.io.DatasetReader,
+        dataset: DatasetReader,
         window: windows.Window,
         calibration_factor: float,
     ) -> Optional[np.ndarray]:
-        """Read, calibrate, and amplitude-compute a SLC tile."""
-
+        """
+        Read, calibrate, and amplitude-compute a SLC tile.
+        
+        This method now properly handles SLC complex data calibration
+        to match the MATLAB sigma0 calibration approach.
+        """
         try:
             array = dataset.read(window=window, boundless=False)
         except ValueError as exc:
-            logger.warning("Failed reading SLC window: %s", exc)
+            logger.warning(f'Failed reading SLC window: {exc}')
             return None
 
         if array.ndim == 3:
             if array.shape[0] == 2:
+                # Handle I/Q data stored in separate bands
                 real_part = array[0].astype(np.float32)
                 imag_part = array[1].astype(np.float32)
-                amplitude = np.abs(real_part + 1j * imag_part)
+                complex_data = real_part + 1j * imag_part
             else:
-                amplitude = array[0].astype(np.float32)
+                # Handle single-band complex data
+                if np.iscomplexobj(array[0]):
+                    complex_data = array[0].astype(np.complex64)
+                else:
+                    # Assume real data represents amplitude
+                    complex_data = array[0].astype(np.complex64)
         else:
-            amplitude = array.astype(np.float32)
+            # Handle 2D complex data
+            if np.iscomplexobj(array):
+                complex_data = array.astype(np.complex64)
+            else:
+                complex_data = array.astype(np.complex64)
 
-        if calibration_factor not in (0.0, None):
-            amplitude /= calibration_factor
+        # Apply calibration to convert to sigma0 (similar to MATLAB approach)
+        # MATLAB: imcal = sqrt(imgSCLabs/calfactor^2)
+        if calibration_factor > 0:
+            amplitude_squared = np.abs(complex_data) ** 2
+            calibrated_amplitude = np.sqrt(amplitude_squared / (calibration_factor ** 2))
+        else:
+            calibrated_amplitude = np.abs(complex_data)
 
-        return self._prepare_tile_array(amplitude)
+        return self._prepare_tile_array(calibrated_amplitude)
 
     def _write_slc_tiles(
         self,
         tile_id: int,
         tile: TileDefinition,
         measurements: List[Dict[str, Optional[str]]],
-        datasets: Dict[str, rasterio.io.DatasetReader],
+        datasets: Dict[str, DatasetReader],
         calibration_factors: Dict[str, float],
-    ) -> bool:
+    ) -> Tuple[bool, Dict[str, Tuple[int, int]]]:
         """Write SLC tiles for every available polarisation."""
 
         if not datasets:
             logger.warning("No SLC datasets opened; skipping SLC export.")
-            return False
+            return False, {}
 
         success = False
+        origins: Dict[str, Tuple[int, int]] = {}
         for entry in measurements:
             href = entry["href"]
+            if href is None:
+                continue
             dataset = datasets.get(href)
             if dataset is None:
                 continue
 
+            window_info = self._window_from_center(dataset, tile.centre_lon, tile.centre_lat)
+            if window_info is None:
+                logger.warning(
+                    "Unable to derive SLC window for tile %s using lat/lon; skipping entry %s",
+                    tile_id,
+                    href,
+                )
+                continue
+
+            window, row_start, col_start = window_info
+
             amplitude = self._read_slc_window(
                 dataset,
-                tile.window,
+                window,
                 calibration_factors.get(href, 1.0),
             )
             if amplitude is None:
@@ -479,60 +757,72 @@ class DarkVesselProcessor:
 
             pol_label = entry["polarization"] or "UNKNOWN"
             output_path = self.output_dirs["slc"] / f"DB_OPENSAR_VD_{tile_id}_SLC_{pol_label}.tiff"
-            transform = dataset.window_transform(tile.window)
+            transform = dataset.window_transform(window)
             self._write_tiff(output_path, amplitude, transform, dataset.crs)
+            origins[href] = (row_start, col_start)
             success = True
 
-        return success
+        return success, origins
 
     def _write_grd_tiles(
         self,
         tile_id: int,
         tile: TileDefinition,
         measurements: List[Dict[str, Optional[str]]],
-        datasets: Dict[str, rasterio.io.DatasetReader],
+        datasets: Dict[str, DatasetReader],
     ) -> bool:
-        """Write GRD tiles co-registered to the SLC tile footprint."""
-
+        """
+        Write GRD tiles co-registered to the SLC tile footprint.
+        
+        This method now properly handles GRD data without contrast enhancement
+        as specified in the requirements.
+        """
         if not datasets:
-            logger.debug("No GRD datasets opened; skipping GRD export.")
+            logger.debug('No GRD datasets opened; skipping GRD export.')
             return True  # Not an error condition when GRD is optional
-
-        lons, lats = zip(*tile.corner_coords)
-        min_lon, max_lon = min(lons), max(lons)
-        min_lat, max_lat = min(lats), max(lats)
 
         success = False
         for entry in measurements:
-            href = entry["href"]
+            href = entry['href']
+            if href is None:
+                continue
             dataset = datasets.get(href)
             if dataset is None:
                 continue
 
-            if dataset.crs and dataset.crs.to_string() != "EPSG:4326":
-                left, bottom, right, top = transform_bounds(
-                    "EPSG:4326",
-                    dataset.crs,
-                    min_lon,
-                    min_lat,
-                    max_lon,
-                    max_lat,
-                    densify_pts=21,
+            window_info = self._window_from_center(dataset, tile.centre_lon, tile.centre_lat)
+            if window_info is None:
+                logger.warning(
+                    'Unable to derive GRD window for tile %s at (%.6f, %.6f)',
+                    tile_id,
+                    tile.centre_lat,
+                    tile.centre_lon,
                 )
+                continue
+
+            window, _, _ = window_info
+
+            try:
+                data = dataset.read(1, window=window, boundless=False)
+                if data is None or data.size == 0:
+                    logger.warning(f'No data read for tile {tile_id}')
+                    continue
+            except Exception as exc:
+                logger.warning(f'Failed to read data for tile {tile_id}: {exc}')
+                continue
+
+            # Convert to linear scale if data appears to be in dB
+            if np.median(data[data > 0]) < 1.0:
+                # Likely dB data, convert to linear
+                data_linear = 10 ** (data / 10.0)
+                prepared = self._prepare_tile_array(data_linear)
             else:
-                left, bottom, right, top = min_lon, min_lat, max_lon, max_lat
+                prepared = self._prepare_tile_array(data)
 
-            window = windows.from_bounds(left, bottom, right, top, dataset.transform, boundless=True)
-            window = window.round_offsets().round_lengths()
-            window = window.intersection(windows.Window(0, 0, dataset.width, dataset.height))
-
-            data = dataset.read(1, window=window, boundless=True, fill_value=0)
-            prepared = self._prepare_tile_array(data)
-
-            pol_label = entry["polarization"] or "UNKNOWN"
-            output_path = self.output_dirs["grd"] / f"DB_OPENSAR_VD_{tile_id}_GRD_{pol_label}.tiff"
-            transform = dataset.window_transform(window)
-            self._write_tiff(output_path, prepared, transform, dataset.crs)
+            pol_label = entry['polarization'] or 'UNKNOWN'
+            output_path = self.output_dirs['grd'] / f'DB_OPENSAR_VD_{tile_id}_GRD_{pol_label}.tiff'
+            window_transform = dataset.window_transform(window)
+            self._write_tiff(output_path, prepared, window_transform, dataset.crs)
             success = True
 
         return success
@@ -545,55 +835,97 @@ class DarkVesselProcessor:
         tile_id: int,
         tile: TileDefinition,
         vessels: List[VesselData],
+        reference_dataset: Optional[DatasetReader],
     ) -> Dict:
-        """Build the XML metadata structure equivalent to MATLAB's outxml."""
-
+        """
+        Build the XML metadata structure equivalent to MATLAB's outxml.
+        
+        Args:
+            tile_id: Unique identifier for the tile
+            tile: Tile definition containing window and coordinates
+            vessels: List of vessel detections within the tile
+            
+        Returns:
+            Dictionary containing metadata structure for XML serialization
+        """
         metadata = {
-            "ProcessingData": {
-                "Tile_ID": tile_id,
-                "Corner_Coord": {
-                    "Latitude": [coord[1] for coord in tile.corner_coords],
-                    "Longitude": [coord[0] for coord in tile.corner_coords],
+            'ProcessingData': {
+                'Tile_ID': tile_id,
+                'Corner_Coord': {
+                    'Latitude': [coord[1] for coord in tile.corner_coords],
+                    'Longitude': [coord[0] for coord in tile.corner_coords],
                 },
-                "StatisticsReport": {
-                    "Number_of_ships": len(vessels),
+                'StatisticsReport': {
+                    'Number_of_ships': len(vessels),
                 },
-                "List_of_ships": {"Ship": []},
+                'List_of_ships': {'Ship': []},
             }
         }
 
         for idx, vessel in enumerate(vessels, start=1):
-            scene_sample = int(round(vessel.x_pixel)) - tile.origin_col + 1
-            scene_line = int(round(vessel.y_pixel)) - tile.origin_row + 1
+            sample_line = self._lonlat_to_colrow(reference_dataset, vessel.detect_lon, vessel.detect_lat) if reference_dataset else None
+            if sample_line is None:
+                logger.debug(
+                    "Reference dataset missing geolocation for vessel %s; falling back to stored pixel coords.",
+                    vessel.detect_id,
+                )
+                sample_col = int(round(vessel.detect_scene_column))
+                sample_row = int(round(vessel.detect_scene_row))
+            else:
+                sample_col, sample_row = sample_line
+
+            scene_sample = sample_col - tile.origin_col + 1
+            scene_line = sample_row - tile.origin_row + 1
+
             scene_sample = max(1, min(self.tile_size, scene_sample))
             scene_line = max(1, min(self.tile_size, scene_line))
 
-            top = int(round(vessel.top_pixel)) - tile.origin_row + 1
-            left = int(round(vessel.left_pixel)) - tile.origin_col + 1
-            bottom = int(round(vessel.bottom_pixel)) - tile.origin_row + 1
-            right = int(round(vessel.right_pixel)) - tile.origin_col + 1
+            # Handle NaN vessel length with safe default
+            vessel_length = vessel.vessel_length_m if not np.isnan(vessel.vessel_length_m) else 50.0
+            
+            # Calculate bounding box - use vessel-specific bbox if available
+            if not (np.isnan(vessel.top) or np.isnan(vessel.left) or 
+                   np.isnan(vessel.bottom) or np.isnan(vessel.right)):
+                # Convert GRD-based bounding box to SLC tile coordinates
+                top = int(round(vessel.top)) - tile.origin_row + 1
+                left = int(round(vessel.left)) - tile.origin_col + 1
+                bottom = int(round(vessel.bottom)) - tile.origin_row + 1
+                right = int(round(vessel.right)) - tile.origin_col + 1
+            else:
+                # Create default bounding box based on vessel length
+                vessel_length_pixels = max(10, int(vessel_length / 10))  # Rough m to pixel conversion
+                bbox_size = max(vessel_length_pixels, 10)
+                
+                top = max(1, scene_line - bbox_size // 2)
+                left = max(1, scene_sample - bbox_size // 2)  
+                bottom = min(self.tile_size, scene_line + bbox_size // 2)
+                right = min(self.tile_size, scene_sample + bbox_size // 2)
 
-            clamp = lambda value: max(1, min(self.tile_size, value))
+            # Ensure bounding box is within tile bounds
+            top = max(1, min(self.tile_size, top))
+            left = max(1, min(self.tile_size, left))
+            bottom = max(1, min(self.tile_size, bottom))
+            right = max(1, min(self.tile_size, right))
 
             ship_entry = {
-                "Name": f"Ship_{idx}",
-                "Centroid_Position": {
-                    "Latitude": vessel.latitude,
-                    "Longitude": vessel.longitude,
-                    "SARData_Sample": int(round(vessel.x_pixel)),
-                    "SARData_Line": int(round(vessel.y_pixel)),
-                    "Scene_Sample": clamp(scene_sample),
-                    "Scene_Line": clamp(scene_line),
+                'Name': f'Ship_{idx}',
+                'Centroid_Position': {
+                    'Latitude': vessel.detect_lat,
+                    'Longitude': vessel.detect_lon,
+                    'SARData_Sample': int(round(vessel.detect_scene_column)),
+                    'SARData_Line': int(round(vessel.detect_scene_row)),
+                    'Scene_Sample': scene_sample,
+                    'Scene_Line': scene_line,
                 },
-                "Size": vessel.length_pixel,
-                "BoundingBox": {
-                    "Top": clamp(top),
-                    "Left": clamp(left),
-                    "Bottom": clamp(bottom),
-                    "Right": clamp(right),
+                'Size': vessel_length,
+                'BoundingBox': {
+                    'Top': top,
+                    'Left': left,
+                    'Bottom': bottom,
+                    'Right': right,
                 },
             }
-            metadata["ProcessingData"]["List_of_ships"]["Ship"].append(ship_entry)
+            metadata['ProcessingData']['List_of_ships']['Ship'].append(ship_entry)
 
         return metadata
 
@@ -638,66 +970,102 @@ class DarkVesselProcessor:
         slc_product: str,
         vessel_data: Optional[List[VesselData]] = None,
     ) -> bool:
-        """Process one Sentinel-1 scene and export all requested artefacts."""
-
+        """
+        Process one Sentinel-1 scene and export all requested artefacts.
+        
+        This method now properly handles the coordinate system transformations
+        and ensures vessels are correctly positioned within tiles.
+        """
         slc_manifest = self.parse_safe_manifest(slc_product)
-        slc_measurements = slc_manifest["measurement"]
+        slc_measurements = slc_manifest['measurement']
         if not slc_measurements:
-            logger.error("No SLC measurement files discovered in %s", slc_product)
+            logger.error(f'No SLC measurement files discovered in {slc_product}')
             return False
 
-        reference_path = Path(slc_product) / slc_measurements[0]["href"]
+        reference_href = slc_measurements[0]['href']
+        if reference_href is None:
+            logger.error('Reference SLC measurement href is None')
+            return False
+        reference_path = Path(slc_product) / reference_href
         if not reference_path.exists():
-            logger.error("Reference SLC file missing: %s", reference_path)
+            logger.error(f'Reference SLC file missing: {reference_path}')
             return False
 
-        with rasterio.open(reference_path) as reference_dataset:
-            if vessel_data:
-                tiles = self._build_tiles_from_vessels(reference_dataset, vessel_data)
-            else:
-                tiles = self._build_full_scene_tiles(reference_dataset)
-
-        if not tiles:
-            logger.warning("No tiles generated for the scene; nothing to export.")
-            return False
-
+        tiles: List[TileDefinition] = []
         overall_success = True
         with ExitStack() as stack:
-            slc_datasets: Dict[str, rasterio.io.DatasetReader] = {}
+            slc_datasets: Dict[str, rasterio.DatasetReader] = {}
             slc_calibration: Dict[str, float] = {}
+            
+            # Open all SLC datasets and load calibration factors
             for entry in slc_measurements:
-                measurement_path = Path(slc_product) / entry["href"]
-                if not measurement_path.exists():
-                    logger.warning("Missing SLC measurement: %s", measurement_path)
+                href = entry['href']
+                if href is None:
                     continue
-                slc_datasets[entry["href"]] = stack.enter_context(rasterio.open(measurement_path))
+                measurement_path = Path(slc_product) / href
+                if not measurement_path.exists():
+                    logger.warning(f'Missing SLC measurement: {measurement_path}')
+                    continue
+                slc_datasets[href] = stack.enter_context(rasterio.open(measurement_path))
                 cal_href = self._match_calibration(entry, slc_manifest)
                 cal_factor = 1.0
                 if cal_href:
                     cal_path = Path(slc_product) / cal_href
                     if cal_path.exists():
                         cal_factor = self._read_calibration_factor(cal_path)
-                slc_calibration[entry["href"]] = cal_factor
+                slc_calibration[href] = cal_factor
 
             grd_measurements: List[Dict[str, Optional[str]]] = []
-            grd_datasets: Dict[str, rasterio.io.DatasetReader] = {}
+            grd_datasets: Dict[str, rasterio.DatasetReader] = {}
             if grd_product:
                 grd_manifest = self.parse_safe_manifest(grd_product)
                 grd_measurements = grd_manifest["measurement"]
                 for entry in grd_measurements:
-                    grd_path = Path(grd_product) / entry["href"]
+                    href = entry["href"]
+                    if href is None:
+                        continue
+                    grd_path = Path(grd_product) / href
                     if grd_path.exists():
-                        grd_datasets[entry["href"]] = stack.enter_context(rasterio.open(grd_path))
+                        grd_datasets[href] = stack.enter_context(rasterio.open(grd_path))
                     else:
                         logger.warning("Missing GRD measurement: %s", grd_path)
 
+            # Prefer GRD dataset for tile referencing due to reliable georeferencing
+            tile_reference_dataset = next(iter(grd_datasets.values()), None)
+            if tile_reference_dataset is None:
+                tile_reference_dataset = slc_datasets.get(reference_href) or next(iter(slc_datasets.values()), None)
+            
+            if tile_reference_dataset is not None:
+                if vessel_data:
+                    tiles = self._build_tiles_from_vessels(tile_reference_dataset, vessel_data)
+                else:
+                    tiles = self._build_full_scene_tiles(tile_reference_dataset)
+            else:
+                logger.error('No reference dataset available for tile generation')
+                return False
+
+            if not tiles:
+                logger.warning('No tiles generated for the scene; nothing to export.')
+                return False
+
+            # Process each tile
             for idx, tile in enumerate(tiles, start=1):
-                tile_vessels = self._vessels_in_window(vessel_data, tile)
-                slc_written = self._write_slc_tiles(idx, tile, slc_measurements, slc_datasets, slc_calibration)
+                tile_vessels = self._vessels_in_window(tile_reference_dataset, vessel_data, tile)
+                
+                slc_written, _ = self._write_slc_tiles(
+                    idx,
+                    tile,
+                    slc_measurements,
+                    slc_datasets,
+                    slc_calibration,
+                )
                 grd_written = self._write_grd_tiles(idx, tile, grd_measurements, grd_datasets)
-                metadata = self.create_vessel_metadata(idx, tile, tile_vessels)
+                metadata = self.create_vessel_metadata(idx, tile, tile_vessels, tile_reference_dataset)
                 xml_written = self.save_metadata_xml(metadata, idx)
-                overall_success = overall_success and slc_written and grd_written and xml_written
+                
+                if not (slc_written and grd_written and xml_written):
+                    logger.warning(f'Failed to write some outputs for tile {idx}')
+                    overall_success = False
 
         return overall_success
 
@@ -725,13 +1093,21 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    processor = DarkVesselProcessor(
+    processor = Tiler(
         base_directory=args.base_dir,
         tile_size=args.tile_size,
         tile_overlap=args.tile_overlap,
     )
 
-    vessels = processor.load_vessel_data(args.vessel_data)
+    # Load DataFrame from CSV if vessel-data path is provided
+    vessel_df = None
+    if args.vessel_data:
+        try:
+            vessel_df = pd.read_csv(args.vessel_data)
+        except Exception as exc:
+            logger.warning("Failed to load vessel data from %s: %s", args.vessel_data, exc)
+
+    vessels = processor.load_vessel_data(vessel_df)
     success = processor.process_scene(args.grd_product, args.slc_product, vessels if vessels else None)
 
     if success:

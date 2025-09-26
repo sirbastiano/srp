@@ -5,16 +5,63 @@ from skimage.metrics import peak_signal_noise_ratio
 import json
 from torch.utils.data import DataLoader
 import dataloader
-from dataloader.dataloader import SARZarrDataset, SARDataloader
+from dataloader.dataloader import SARDataloader
 from tqdm import tqdm
 from torch import nn
-from typing import Union, Optional, Tuple, Dict
+from typing import Union, Optional, Tuple, Dict, Callable, List
 import torch
 import logging
 from pathlib import Path
-from typing import Callable, List
+import wandb
+import io
+from PIL import Image
 
-logging.basicConfig(level=logging.INFO)
+        
+def log_inference_to_wandb(input_data, gt_data, pred_data, logger, step_or_epoch, figsize=(20, 6), vminmax=(0, 1000), save_path: str="./visualizations/inference.png"):
+    """
+    Create inference visualization and log it to W&B.
+    
+    Args:
+        input_data: Input data from the dataset
+        gt_data: Ground truth data  
+        pred_data: Model prediction
+        logger: W&B logger from PyTorch Lightning
+        step_or_epoch: Current step or epoch for captioning
+        figsize: Figure size
+        vminmax: Value range for visualization
+    """
+    # Create the visualization figure
+    fig = display_inference_results(
+        input_data=input_data,
+        gt_data=gt_data, 
+        pred_data=pred_data,
+        figsize=figsize,
+        vminmax=vminmax,
+        show=False,  # Don't show in notebook
+        save=True,  # Don't save to file  
+        return_figure=True,  # Return the figure for W&B
+        save_path=save_path
+    )
+    
+    # Convert matplotlib figure to W&B Image
+    # Method 1: Save to buffer and convert
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', dpi=150, bbox_inches='tight')
+    buf.seek(0)
+    img = Image.open(buf)
+    
+    # Log to W&B
+    if hasattr(logger, 'experiment'):  # WandbLogger
+        logger.experiment.log({
+            "inference_comparison": wandb.Image(img, caption=f"Inference at step {step_or_epoch}"),
+            "global_step": step_or_epoch
+        })
+    
+    # Clean up
+    plt.close(fig)
+    buf.close()
+
+        
 def display_inference_results(input_data, gt_data, pred_data, figsize=(20, 6), vminmax=(0, 1000), show: bool=True, save: bool=True, save_path: str="./visualizations/"):
     """
     Display input, ground truth, and prediction in a 3-column grid.
@@ -159,9 +206,10 @@ def get_full_image_and_prediction(
     inference_fn: Callable[[np.ndarray], np.ndarray],
     show_window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]] = None,
     return_input: bool = False,
+    return_original: bool = False,
     vminmax: Union[Tuple[int, int], str] = 'auto', 
     device: Union[str, torch.device] = "cuda"
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> Union[Tuple[np.ndarray, np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray]]:
     """
     Given a file name or index, runs inference on the first max_samples_per_prod patches,
     and reconstructs the full image (at level_to) and the corresponding prediction.
@@ -333,9 +381,15 @@ def get_full_image_and_prediction(
         print(f"Reconstructed image shape: {gt_full.shape}, prediction shape: {pred_full.shape}")
 
     if return_input:
+        if return_original:
+            return gt_full, pred_full, input_full, output_batch, pred_batch
         return gt_full, pred_full, input_full
     else:
+        if return_original:
+            return gt_full, pred_full, output_batch, pred_batch
+
         return gt_full, pred_full
+
 
 
 

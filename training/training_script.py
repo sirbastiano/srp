@@ -9,16 +9,27 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 import logging
 import time
-from typing import Dict, Any
+from typing import Dict, Any, Optional, List
 import os
-from pytorch_lightning.loggers import TensorBoardLogger
+from lightning.pytorch.loggers import TensorBoardLogger, WandbLogger
 
 from dataloader.dataloader import SampleFilter, get_sar_dataloader, SARTransform
 from model.model_utils import get_model_from_configs
 from training.training_loops import get_training_loop_by_model_name
 
-def setup_logging(out_file : str = 'training.log', model_name: str = 'model', exp_dir: str = './results'):
-    tb_logger = TensorBoardLogger(save_dir=exp_dir, name=model_name)
+def setup_logging(out_file : str = 'training.log', model_name: str = 'model', exp_dir: str = './results', use_wandb: bool = True, wandb_project: str = 'ssm4sar', wandb_entity: Optional[str] = None, wandb_tags: List[str] = ['training'], config: Optional[Dict[str, Any]] = None) -> (Any, logging.Logger):
+    if use_wandb:
+        run_name = f'{model_name}_{exp_dir}'
+        tb_logger = WandbLogger(
+            project=wandb_project,
+            entity=wandb_entity,
+            name=run_name,
+            tags=wandb_tags,
+            config=config
+        )
+
+    else: 
+        tb_logger = TensorBoardLogger(save_dir=exp_dir, name=model_name)
     log_file = os.path.join(exp_dir, out_file)
     log_dir = os.path.dirname(log_file)
     if not os.path.exists(log_dir):
@@ -161,7 +172,7 @@ def create_transforms_from_config(transforms_cfg):
             gt_max = transforms_cfg.get('gt_max', GT_MAX)
             adaptive = transforms_cfg.get('adaptive', False)
             complex_valued = transforms_cfg.get('complex_valued', True)
-            
+            print(f"Creating SARTransform with min-max normalization: rc_min={rc_min}, rc_max={rc_max}, gt_min={gt_min}, gt_max={gt_max}, adaptive={adaptive}, complex_valued={complex_valued}")
             transforms = SARTransform.create_minmax_normalized_transform(
                 normalize=True,
                 adaptive=adaptive,
@@ -202,7 +213,8 @@ def create_dataloader_from_config(data_dir, dataloader_cfg, split_cfg, transform
         'concatenate_patches': dataloader_cfg.get('concatenate_patches', True),
         'concat_axis': dataloader_cfg.get('concat_axis', 0),
         'positional_encoding': dataloader_cfg.get('positional_encoding', True),
-        'transform': transforms
+        'transform': transforms,
+        'block_pattern': split_cfg.get('block_pattern', None)
     }
     
     # Split-specific configuration
@@ -289,6 +301,7 @@ def main():
     parser.add_argument('--num_epochs', type=int, default=None, help='Number of epochs override')
     parser.add_argument('--save_dir', type=str, default="./results", help='Save directory override')
     parser.add_argument('--scheduler_type', type=str, default='cosine', choices=['plateau', 'cosine'], help='LR scheduler type')
+    
     args = parser.parse_args()
     
     # Load configuration
@@ -300,7 +313,7 @@ def main():
     training_cfg = config['training']
             
     # Setup logging
-    tb_logger, text_logger = setup_logging(model_name=training_cfg['save_dir'], exp_dir=args.save_dir)
+    tb_logger, text_logger = setup_logging(model_name=training_cfg['save_dir'], exp_dir=args.save_dir, use_wandb=True, wandb_project=training_cfg.get('wandb_project', 'ssm4sar'), wandb_entity=training_cfg.get('wandb_entity', None), wandb_tags=training_cfg.get('wandb_tags', ['training']), config=config)
     text_logger.info(f"Starting training with config: {args.config}")
     
     # Log configuration summary
@@ -328,7 +341,8 @@ def main():
     
     model = get_model_from_configs(**model_cfg)
     text_logger.info(f"Created standard model: {model_cfg.get('name', 'Unknown')}")
-    
+            # Watch gradients/parameters and graph
+
     # Create dataloaders
     text_logger.info("Creating dataloaders...")
     train_loader, val_loader, test_loader, inference_loader = create_dataloaders(dataloader_cfg)
@@ -348,6 +362,10 @@ def main():
         scheduler_type=training_cfg['scheduler_type'], 
         logger=tb_logger,
     )
+    try:
+        tb_logger.watch(lightning_model, log='all', log_freq=10, log_graph=True)
+    except Exception as e:
+        print(f'W&B watch failed (non-fatal): {e}')
     # Start training
     text_logger.info("Starting training process...")
     try:

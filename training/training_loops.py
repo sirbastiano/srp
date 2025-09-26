@@ -13,7 +13,7 @@ from model.transformers.rv_transformer import RealValuedTransformer
 from model.transformers.cv_transformer import ComplexTransformer
 from training.visualize import compute_metrics, save_metrics, average_metrics
 from sarpyx.utils.losses import get_loss_function
-from training.visualize import get_full_image_and_prediction, compute_metrics, display_inference_results
+from training.visualize import get_full_image_and_prediction, compute_metrics, display_inference_results, log_inference_to_wandb
 import pytorch_lightning as pl
 
 import numpy as np
@@ -103,17 +103,27 @@ class TrainerBase(pl.LightningModule):
                 device="cuda", 
                 vminmax=vminmax
             )
-
-            display_inference_results(
+            step_or_epoch = self.current_epoch if self.current_epoch is not None else self.current
+            log_inference_to_wandb(
                 input_data=input,
                 gt_data=gt,
                 pred_data=pred,
-                figsize=figsize,
-                vminmax=vminmax,  
-                show=True, 
-                save=True,
+                logger=self.logger,
+                vminmax=vminmax,
+                step_or_epoch=step_or_epoch,
                 save_path=os.path.join(self.base_save_dir, img_save_path)
             )
+    
+            # display_inference_results(
+            #     input_data=input,
+            #     gt_data=gt,
+            #     pred_data=pred,
+            #     figsize=figsize,
+            #     vminmax=vminmax,  
+            #     show=True, 
+            #     save=True,
+            #     save_path=os.path.join(self.base_save_dir, img_save_path)
+            # )
             gt, pred = self.preprocess_output_and_prediction_before_comparison(gt, pred)
             metrics = compute_metrics(gt, pred)
             with open(os.path.join(self.base_save_dir, metrics_save_path), 'w') as f:
@@ -267,7 +277,7 @@ class TrainerBase(pl.LightningModule):
         self.log_metrics(avg_metrics, 'val_metrics', on_step=False, on_epoch=True, prog_bar=False)
 
         if self.inference_loader is not None:
-            self.show_example(self.inference_loader, window=((1000, 1000), (2000, 2000)), vminmax=(4000, 4200), figsize=(20, 6), metrics_save_path=f"metrics_{self.current_epoch}.json", img_save_path=f"val_{self.current_epoch}.png")
+            self.show_example(self.inference_loader, window=((1000, 1000), (2000, 2000)), vminmax=(3800, 4000), figsize=(20, 6), metrics_save_path=f"metrics_{self.current_epoch}.json", img_save_path=f"val_{self.current_epoch}.png")
         self.save_checkpoint(epoch=self.current_epoch, optimizer=self.trainer.optimizers[0], scheduler=None, is_best=(self.trainer.callback_metrics['val_loss'] < self.best_val_loss), val_loss=self.trainer.callback_metrics['val_loss'])
         if self.trainer.callback_metrics['val_loss'] < self.best_val_loss:
             self.best_val_loss = self.trainer.callback_metrics['val_loss']

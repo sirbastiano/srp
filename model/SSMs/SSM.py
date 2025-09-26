@@ -12,7 +12,6 @@ import torch.nn.functional as F
 from pytorch_lightning.utilities import rank_zero_only
 from einops import rearrange, repeat
 import opt_einsum as oe
-from mamba_ssm.ops.selective_scan_interface import selective_scan_fn
 
 contract = oe.contract
 contract_expression = oe.contract_expression
