@@ -8,11 +8,13 @@ from tqdm import tqdm
 import os
 from typing import Optional, Callable, Union
 from dataloader.dataloader import SARZarrDataset, get_sar_dataloader, SARDataloader
-from model.SSMs.SSM import OverlapSaveWrapper
+from model.SSMs.SSM import OverlapSaveWrapper, WindowedOverlapWrapper
 from model.transformers.rv_transformer import RealValuedTransformer  
 from model.transformers.cv_transformer import ComplexTransformer
 from training.visualize import compute_metrics, save_metrics, average_metrics
 from sarpyx.utils.losses import get_loss_function
+from training.distillation_models import DistillationSSM, create_teacher_student_pair
+from training.distillation_losses import FeatureDistillationLoss, CombinedDistillationLoss, AttentionTransferLoss
 from training.visualize import get_full_image_and_prediction, compute_metrics, display_inference_results, log_inference_to_wandb
 import pytorch_lightning as pl
 
@@ -30,7 +32,10 @@ class TrainerBase(pl.LightningModule):
             criterion: Callable = nn.MSELoss, 
             scheduler_type: str = 'cosine', 
             metrics_file_name: str = "test_metrics.json", 
-            lr: int = 1e-4, 
+            lr: float = 1e-4, 
+            warmup_epochs: int = 3,
+            warmup_start_lr: float = 1e-6,
+            weight_decay: float = 1e-6,
             resume_from: Optional[str] = None
         ):
         super().__init__()
@@ -58,6 +63,11 @@ class TrainerBase(pl.LightningModule):
         self.validation_metrics = []
         self.train_metrics = []
         self.last_improve_steps = 0
+        
+        self.warmup_epochs = warmup_epochs
+        self.warmup_start_lr = warmup_start_lr
+        self.weight_decay = weight_decay
+        
     def get_current_step_or_epoch(self):
         """Get current step or epoch depending on training mode."""
         if hasattr(self.trainer, 'max_steps') and self.trainer.max_steps > 0:
@@ -258,11 +268,11 @@ class TrainerBase(pl.LightningModule):
     def preprocess_output_and_prediction_before_comparison(self, target: torch.Tensor, output: torch.Tensor) -> Tuple[np.ndarray, np.ndarray]:
         if output.shape[-1] > 2:
             output = output[..., :-2]
-        elif output.shape[-1] == 2 and np.iscomplex(output.dtype):
+        elif output.shape[-1] == 2 and torch.is_complex(output):
             output = output[..., :-1]
         if target.shape[-1] > 2:
             target = target[..., :-2]
-        elif target.shape[-1] == 2 and np.iscomplex(target.dtype):
+        elif target.shape[-1] == 2 and torch.is_complex(target):
             target = target[..., :-1]
         return target, output
     def training_step(self, batch, batch_idx):
@@ -272,6 +282,23 @@ class TrainerBase(pl.LightningModule):
         #print(f"Ground truth: {y}")
         loss = self.compute_loss(output, y)
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True)
+        
+        # Log gradient norms for monitoring
+        if self.global_step % 100 == 0:  # Log every 100 steps to avoid spam
+            total_grad_norm = 0.0
+            num_params = 0
+            for name, param in self.model.named_parameters():
+                if param.grad is not None:
+                    param_grad_norm = param.grad.data.norm(2).item()
+                    total_grad_norm += param_grad_norm ** 2
+                    num_params += 1
+                    # Log individual layer gradient norms for complex models
+                    if 'layers' in name or 'kernel' in name:
+                        self.log(f'grad_norm/{name}', param_grad_norm, on_step=True, on_epoch=False)
+            
+            if num_params > 0:
+                total_grad_norm = total_grad_norm ** 0.5
+                self.log('grad_norm/total', total_grad_norm, on_step=True, on_epoch=False)
         
         y_np = y.detach().cpu().numpy() #.squeeze()
         output_np = output.detach().cpu().numpy() #.squeeze()
@@ -290,6 +317,12 @@ class TrainerBase(pl.LightningModule):
         avg_metrics = average_metrics(self.train_metrics)
         self.train_metrics = []
         self.log_metrics(avg_metrics, 'train_metrics', on_step=False, on_epoch=True, prog_bar=False)
+        
+        # Log learning rate
+        optimizer = self.trainer.optimizers[0] if self.trainer.optimizers else None
+        if optimizer:
+            current_lr = optimizer.param_groups[0]['lr']
+            self.log('learning_rate', current_lr, on_step=False, on_epoch=True, prog_bar=False)
         
     def validation_step(self, batch, batch_idx):
         x, y = batch
@@ -371,7 +404,7 @@ class TrainerBase(pl.LightningModule):
                 self.show_example(
                     self.inference_loader, 
                     window=((1000, 1000), (2000, 2000)), 
-                    vminmax=(3800, 4000), 
+                    vminmax=(2000, 6000), 
                     figsize=(20, 6), 
                     metrics_save_path=f"metrics_{self.current_epoch}.json", 
                     img_save_path=f"val_{self.current_epoch}.png"
@@ -419,19 +452,80 @@ class TrainerBase(pl.LightningModule):
         save_metrics(summary, metrics_path)
 
     def configure_optimizers(self):
-        optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
-        if self.scheduler_type == 'cosine':
-            scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50)
-            return [optimizer], [scheduler]
+        """Configure optimizers with warmup support."""
+        import math
+        
+        # Create optimizer with weight decay
+        optimizer = optim.AdamW(
+            self.model.parameters(), 
+            lr=self.lr, 
+            weight_decay=self.weight_decay
+        )
+        
+        # Calculate total training steps
+        if hasattr(self.trainer, 'estimated_stepping_batches') and self.trainer.estimated_stepping_batches:
+            total_steps = self.trainer.estimated_stepping_batches
         else:
-            scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
-            return {
-                'optimizer': optimizer,
-                'lr_scheduler': {
-                    'scheduler': scheduler,
-                    'monitor': 'val_loss'
-                }
-            }
+            # Fallback calculation
+            steps_per_epoch = len(self.train_dataloader())
+            if hasattr(self.trainer, 'max_epochs') and self.trainer.max_epochs:
+                total_steps = steps_per_epoch * self.trainer.max_epochs
+            elif hasattr(self.trainer, 'max_steps') and self.trainer.max_steps:
+                total_steps = self.trainer.max_steps
+            else:
+                total_steps = steps_per_epoch * 50  # Default fallback
+        
+        # Calculate warmup steps
+        if hasattr(self.trainer, 'max_steps') and self.trainer.max_steps > 0:
+            # Step-based training
+            warmup_steps = min(self.warmup_epochs * 100, total_steps // 10)  # 10% of total or warmup_epochs * 100
+        else:
+            # Epoch-based training
+            steps_per_epoch = len(self.train_dataloader())
+            warmup_steps = self.warmup_epochs * steps_per_epoch
+        
+        print(f"🔥 Warmup configuration:")
+        print(f"   Warmup epochs: {self.warmup_epochs}")
+        print(f"   Warmup steps: {warmup_steps}")
+        print(f"   Total steps: {total_steps}")
+        print(f"   Start LR: {self.warmup_start_lr:.2e}")
+        print(f"   Target LR: {self.lr:.2e}")
+        
+        # Create learning rate scheduler with warmup
+        def lr_lambda(step):
+            if step < warmup_steps:
+                # Linear warmup: from warmup_start_lr to lr
+                warmup_factor = self.warmup_start_lr / self.lr
+                return warmup_factor + (1.0 - warmup_factor) * step / warmup_steps
+            else:
+                # Post-warmup scheduling
+                if self.scheduler_type == 'cosine':
+                    # Cosine annealing after warmup
+                    progress = (step - warmup_steps) / max(1, total_steps - warmup_steps)
+                    return 0.5 * (1 + math.cos(math.pi * progress))
+                elif self.scheduler_type == 'linear':
+                    # Linear decay after warmup
+                    progress = (step - warmup_steps) / max(1, total_steps - warmup_steps)
+                    return 1.0 - progress
+                elif self.scheduler_type == 'constant':
+                    # Constant LR after warmup
+                    return 1.0
+                else:
+                    # Default: cosine annealing
+                    progress = (step - warmup_steps) / max(1, total_steps - warmup_steps)
+                    return 0.5 * (1 + math.cos(math.pi * progress))
+        
+        scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
+        
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "interval": "step",  # Update every step for smooth warmup
+                "frequency": 1,
+                "name": "lr_with_warmup"
+            },
+        }
 
 class TrainRVTransformer(TrainerBase):
     def __init__(self, 
@@ -443,10 +537,13 @@ class TrainRVTransformer(TrainerBase):
                 inference_loader: Optional[SARDataloader] = None,
                 mode: str = "parallel",
                 criterion: Callable = nn.MSELoss,
-                scheduler_type: str = 'cosine'
-            
-        ):
-        super().__init__(base_save_dir, model, train_loader, val_loader, test_loader, inference_loader, mode, criterion=criterion, scheduler_type=scheduler_type)
+                scheduler_type: str = 'cosine',
+                weight_decay: float = 1e-6,
+                warmup_epochs: int = 3,
+                warmup_start_lr: float = 1e-6,
+                lr: float = 1e-4
+            ):
+        super().__init__(base_save_dir, model, train_loader, val_loader, test_loader, inference_loader, mode, criterion=criterion, scheduler_type=scheduler_type,  weight_decay=weight_decay, warmup_epochs=warmup_epochs, warmup_start_lr=warmup_start_lr, lr=lr)
         assert mode == "parallel" or "autoregressive", "training mode must be either 'parallel' or 'autoregressive'"
 
     def preprocess_output_and_prediction_before_comparison(self, target: torch.Tensor, output: torch.Tensor) -> Tuple[np.ndarray, np.ndarray]:
@@ -481,9 +578,13 @@ class TrainCVTransformer(TrainRVTransformer):
             inference_loader: Optional[SARDataloader] = None,
             mode: str = "parallel",  
             criterion: Callable = nn.MSELoss, 
-            scheduler_type: str = 'cosine'
+            scheduler_type: str = 'cosine', 
+            weight_decay: float = 1e-6,
+            warmup_epochs: int = 3,
+            warmup_start_lr: float = 1e-6,
+            lr: float = 1e-4
         ):
-        super().__init__(base_save_dir, model, train_loader, val_loader, test_loader, inference_loader, mode, criterion=criterion, scheduler_type=scheduler_type)
+        super().__init__(base_save_dir, model, train_loader, val_loader, test_loader, inference_loader, mode, criterion=criterion, scheduler_type=scheduler_type, weight_decay=weight_decay, warmup_epochs=warmup_epochs, warmup_start_lr=warmup_start_lr, lr=lr)
 
         # # Count parameters and log model info
         # if hasattr(model, 'parameters'):
@@ -526,7 +627,11 @@ class TrainSSM(TrainerBase):
             criterion: Callable = nn.MSELoss, 
             mode: str = "parallel",
             scheduler_type: str = 'cosine', 
-            wrapper: bool = True
+            wrapper: bool = True, 
+            weight_decay: float = 1e-6,
+            warmup_epochs: int = 3,
+            warmup_start_lr: float = 1e-6, 
+            lr: float = 1e-4
         ):
         super().__init__(
             base_save_dir=base_save_dir, 
@@ -537,10 +642,15 @@ class TrainSSM(TrainerBase):
             inference_loader=inference_loader, 
             criterion=criterion, 
             mode=mode,
-            scheduler_type=scheduler_type
+            scheduler_type=scheduler_type,
+            weight_decay=weight_decay,
+            warmup_epochs=warmup_epochs,
+            warmup_start_lr=warmup_start_lr,
+            lr=lr
         )
+        print(f"Model is using wrapper? {wrapper}")
         if wrapper: 
-            self.wrapper = OverlapSaveWrapper(model=model)
+            self.wrapper = WindowedOverlapWrapper(model=model) #OverlapSaveWrapper(model=model)
         else:
             self.wrapper = None
         # self.logger = logging.getLogger(__name__)
@@ -625,7 +735,12 @@ def get_training_loop_by_model_name(
         scheduler_type: str = 'cosine', 
         num_epochs: int = 250, 
         logger: Optional[pl.loggers.Logger] = None, 
-        device_no: int= 0
+        device_no: int= 0, 
+        weight_decay: float = 1e-6,
+        warmup_epochs: int = 3,
+        warmup_start_lr: float = 1e-6,
+        lr: float = 1e-4, 
+        wrapper: bool = True
     ) -> Tuple[TrainerBase, pl.Trainer]:
 
     if model_name == 'cv_transformer':
@@ -638,7 +753,11 @@ def get_training_loop_by_model_name(
             inference_loader=inference_loader,
             mode=mode,
             criterion=get_loss_function(loss_fn_name),
-            scheduler_type=scheduler_type
+            scheduler_type=scheduler_type,
+            weight_decay=weight_decay,
+            warmup_epochs=warmup_epochs,
+            warmup_start_lr=warmup_start_lr,
+            lr=lr
         )
     elif 'transformer' in model_name.lower():
         lightning_model = TrainRVTransformer(
@@ -650,7 +769,11 @@ def get_training_loop_by_model_name(
             inference_loader=inference_loader,
             criterion=get_loss_function(loss_fn_name),
             mode=mode,
-            scheduler_type=scheduler_type
+            scheduler_type=scheduler_type,
+            weight_decay=weight_decay,
+            warmup_epochs=warmup_epochs,
+            warmup_start_lr=warmup_start_lr,
+            lr=lr
         )
     elif 'ssm' in model_name.lower():
         lightning_model = TrainSSM(
@@ -662,7 +785,12 @@ def get_training_loop_by_model_name(
             inference_loader=inference_loader,
             criterion=get_loss_function(loss_fn_name),
             mode=mode,
-            scheduler_type=scheduler_type
+            scheduler_type=scheduler_type,
+            weight_decay=weight_decay,
+            warmup_epochs=warmup_epochs,
+            warmup_start_lr=warmup_start_lr,
+            lr=lr, 
+            wrapper=wrapper
         )
     else:
         raise ValueError(f"Unsupported model type: {model_name}")
@@ -672,6 +800,248 @@ def get_training_loop_by_model_name(
                         fast_dev_run=False,
                         log_every_n_steps=1,
                         accelerator="gpu" if torch.cuda.is_available() else "cpu",
-                        enable_progress_bar=True
+                        enable_progress_bar=True,
                         )
+    print(f"Created training loop for model: {model_name}, with parameters: weight_decay={weight_decay}, warmup_epochs={warmup_epochs}, warmup_start_lr={warmup_start_lr}, lr={lr}, scheduler_type={scheduler_type}, num_epochs={num_epochs},  mode={mode}, loss_fn={loss_fn_name}, device_no={device_no}, save_dir={save_dir}, trainer={trainer}, lightning_model={lightning_model}")
     return lightning_model, trainer
+
+
+class DistillationTrainer(TrainerBase):
+    """
+    Trainer class for knowledge distillation with teacher-student models.
+    
+    Supports training a student model to mimic both the outputs and 
+    intermediate features of a pretrained teacher model.
+    """
+    
+    def __init__(
+        self,
+        teacher_model: DistillationSSM,
+        student_model: DistillationSSM,
+        train_loader: SARDataloader,
+        val_loader: SARDataloader,
+        test_loader: SARDataloader,
+        base_save_dir: str = "/tmp",
+        inference_loader: Optional[SARDataloader] = None,
+        mode: str = "parallel",
+        criterion: Callable = nn.MSELoss, 
+        scheduler_type: str = 'cosine', 
+        metrics_file_name: str = "test_metrics.json", 
+        lr: float = 1e-4, 
+        warmup_epochs: int = 3,
+        warmup_start_lr: float = 1e-6,
+        weight_decay: float = 1e-6,
+        resume_from: Optional[str] = None,
+        **kwargs
+    ):
+        # Initialize with student model as the main model
+        super().__init__(
+            model=student_model,
+            train_loader=train_loader,
+            val_loader=val_loader,
+            test_loader=test_loader,
+            base_save_dir=base_save_dir,
+            inference_loader=inference_loader,
+            mode=mode,
+            criterion=criterion,
+            scheduler_type=scheduler_type,
+            metrics_file_name=metrics_file_name,
+            lr=lr,
+            warmup_epochs=warmup_epochs,
+            warmup_start_lr=warmup_start_lr,
+            weight_decay=weight_decay,
+            resume_from=resume_from,
+            **kwargs
+        )
+        
+        self.teacher_model = teacher_model
+        self.student_model = student_model
+        
+        # Freeze teacher model
+        self.teacher_model.eval()
+        for param in self.teacher_model.parameters():
+            param.requires_grad = False
+            
+        # Setup distillation losses with default config
+        distillation_config = kwargs.get('distillation_config', {})
+        self.setup_distillation_losses(distillation_config)
+        
+        print(f"🎓 Distillation trainer initialized")
+        print(f"   Teacher: {self.teacher_model.__class__.__name__}")
+        print(f"   Student: {self.student_model.__class__.__name__}")
+        print(f"   Task loss weight: {self.task_loss_weight}")
+        print(f"   Feature loss weight: {self.feature_loss_weight}")
+        print(f"   Temperature: {self.temperature}")
+    
+    def setup_distillation_losses(self, config: dict):
+        """Setup the distillation loss components."""
+        distill_config = config.get('distillation', {})
+        
+        # Loss weights
+        self.task_loss_weight = distill_config.get('task_loss_weight', 1.0)
+        self.feature_loss_weight = distill_config.get('feature_loss_weight', 1.0)
+        self.attention_loss_weight = distill_config.get('attention_loss_weight', 0.0)
+        
+        # Temperature for output distillation
+        self.temperature = distill_config.get('temperature', 4.0)
+        
+        # Feature distillation loss
+        self.feature_distill_loss = FeatureDistillationLoss(
+            temperature=self.temperature,
+            alpha=self.feature_loss_weight
+        )
+        
+        # Attention transfer loss (optional)
+        if self.attention_loss_weight > 0:
+            self.attention_loss = AttentionTransferLoss()
+        else:
+            self.attention_loss = None
+            
+        # Combined distillation loss
+        self.distillation_criterion = CombinedDistillationLoss(
+            task_loss=self.criterion,
+            feature_loss=self.feature_distill_loss,
+            attention_loss=self.attention_loss,
+            task_weight=self.task_loss_weight,
+            feature_weight=self.feature_loss_weight,
+            attention_weight=self.attention_loss_weight
+        )
+    
+    def forward(self, x: Union[np.ndarray, torch.Tensor], y: Optional[Union[np.ndarray, torch.Tensor]]=None, device: Union[str, torch.device]="cuda") -> torch.Tensor:
+        """Forward pass through student model only."""
+        if device is None:
+            device = self.device
+        x_preprocessed = self.preprocess_sample(x, device)
+        if y is None:
+            y_preprocessed = None
+        else:
+            y_preprocessed = self.preprocess_sample(y, device)
+        return self.student_model(x_preprocessed, y_preprocessed)
+    
+    def distillation_forward(self, x: torch.Tensor, y: torch.Tensor) -> dict:
+        """
+        Forward pass through both teacher and student models.
+        Returns predictions and intermediate features.
+        """
+        # Teacher forward (no gradients)
+        with torch.no_grad():
+            teacher_output, teacher_features = self.teacher_model(x, y, return_features=True)
+        
+        # Student forward (with gradients)
+        student_output, student_features = self.student_model(x, y, return_features=True)
+        
+        return {
+            'teacher_output': teacher_output,
+            'teacher_features': teacher_features,
+            'student_output': student_output,
+            'student_features': student_features,
+            'target': y
+        }
+    
+    def compute_distillation_loss(self, batch_results: dict) -> torch.Tensor:
+        """Compute the combined distillation loss."""
+        return self.distillation_criterion(
+            student_output=batch_results['student_output'],
+            teacher_output=batch_results['teacher_output'],
+            student_features=batch_results['student_features'],
+            teacher_features=batch_results['teacher_features'],
+            target=batch_results['target']
+        )
+    
+    def train_step(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        """Single training step with distillation."""
+        # Forward pass through both models
+        batch_results = self.distillation_forward(x, y)
+        
+        # Compute distillation loss
+        loss = self.compute_distillation_loss(batch_results)
+        
+        return loss
+    
+    def val_step(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        """Single validation step with distillation."""
+        # Forward pass through both models
+        batch_results = self.distillation_forward(x, y)
+        
+        # Compute distillation loss
+        loss = self.compute_distillation_loss(batch_results)
+        
+        return loss
+    
+    def load_teacher_from_checkpoint(self, teacher_checkpoint_path: str):
+        """Load pretrained teacher model from checkpoint."""
+        if not os.path.exists(teacher_checkpoint_path):
+            raise FileNotFoundError(f"Teacher checkpoint not found: {teacher_checkpoint_path}")
+        
+        checkpoint = torch.load(teacher_checkpoint_path, map_location=self.device)
+        
+        if 'model_state_dict' in checkpoint:
+            self.teacher_model.load_state_dict(checkpoint['model_state_dict'])
+        else:
+            self.teacher_model.load_state_dict(checkpoint)
+        
+        print(f"✅ Teacher model loaded from: {teacher_checkpoint_path}")
+    
+    def save_student_checkpoint(self, optimizer, scheduler=None, is_best: bool = False, **kwargs):
+        """Save checkpoint for student model only."""
+        # Use parent's save_checkpoint but ensure we're saving student model
+        original_model = self.model
+        self.model = self.student_model
+        try:
+            self.save_checkpoint(optimizer, scheduler, is_best, **kwargs)
+        finally:
+            self.model = original_model
+
+
+def create_distillation_trainer(
+    teacher_config: dict,
+    student_config: dict, 
+    distillation_config: dict,
+    teacher_checkpoint_path: str,
+    train_loader: SARDataloader,
+    val_loader: SARDataloader,
+    test_loader: SARDataloader,
+    base_save_dir: str = "/tmp",
+    device: str = "cuda",
+    **kwargs
+) -> DistillationTrainer:
+    """
+    Factory function to create a distillation trainer.
+    
+    Args:
+        teacher_config: Configuration for teacher model
+        student_config: Configuration for student model
+        distillation_config: Distillation-specific configuration
+        teacher_checkpoint_path: Path to pretrained teacher checkpoint
+        train_loader: Training data loader
+        val_loader: Validation data loader
+        test_loader: Test data loader
+        base_save_dir: Directory for saving training artifacts
+        device: Device for training
+    
+    Returns:
+        Configured DistillationTrainer instance
+    """
+    # Create teacher and student models
+    teacher_model, student_model = create_teacher_student_pair(
+        teacher_config=teacher_config,
+        student_config=student_config,
+        device=device
+    )
+    
+    # Create trainer
+    trainer = DistillationTrainer(
+        teacher_model=teacher_model,
+        student_model=student_model,
+        train_loader=train_loader,
+        val_loader=val_loader,
+        test_loader=test_loader,
+        base_save_dir=base_save_dir,
+        distillation_config=distillation_config,
+        **kwargs
+    )
+    
+    # Load pretrained teacher
+    trainer.load_teacher_from_checkpoint(teacher_checkpoint_path)
+    
+    return trainer

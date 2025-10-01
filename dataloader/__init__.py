@@ -19,14 +19,16 @@ def _import_with_fallback():
     try:
         from .dataloader import (
             SARZarrDataset,
+            KPatchSampler,
+            get_sar_dataloader, 
+            SARDataloader
+        )
+        from .normalization import (
             SARTransform, 
             NormalizationModule,
             ComplexNormalizationModule,
             IdentityModule,
-            BaseTransformModule,
-            KPatchSampler,
-            get_sar_dataloader, 
-            SARDataloader
+            BaseTransformModule
         )
         from .api import (
             list_base_files_in_repo,
@@ -56,14 +58,16 @@ def _import_with_fallback():
         try:
             from dataloader.dataloader import (
                 SARZarrDataset,
+                KPatchSampler,
+                get_sar_dataloader,
+                SARDataloader
+            )
+            from dataloader.normalization import (
                 SARTransform,
                 NormalizationModule,
                 ComplexNormalizationModule,
                 IdentityModule,
-                BaseTransformModule,
-                KPatchSampler,
-                get_sar_dataloader,
-                SARDataloader
+                BaseTransformModule
             )
             from dataloader.api import (
                 list_base_files_in_repo,
@@ -96,6 +100,7 @@ def _import_with_fallback():
                 
                 # Load modules directly by file path
                 dataloader_path = current_dir / "dataloader.py"
+                normalization_path = current_dir / "normalization.py"
                 api_path = current_dir / "api.py"
                 utils_path = current_dir / "utils.py"
                 
@@ -110,7 +115,13 @@ def _import_with_fallback():
                 api_module = importlib.util.module_from_spec(spec_api)
                 sys.modules["api"] = api_module
                 spec_api.loader.exec_module(api_module)
-                
+
+                # Load normalization
+                spec_normalization = importlib.util.spec_from_file_location("normalization", normalization_path)
+                normalization_module = importlib.util.module_from_spec(spec_normalization)
+                sys.modules["normalization"] = normalization_module
+                spec_normalization.loader.exec_module(normalization_module)
+
                 # Load dataloader
                 spec_dataloader = importlib.util.spec_from_file_location("dataloader_main", dataloader_path)
                 dataloader_module = importlib.util.module_from_spec(spec_dataloader)
@@ -118,11 +129,11 @@ def _import_with_fallback():
                 
                 return (
                     dataloader_module.SARZarrDataset,
-                    dataloader_module.SARTransform,
-                    dataloader_module.NormalizationModule,
-                    dataloader_module.ComplexNormalizationModule,
-                    dataloader_module.IdentityModule,
-                    dataloader_module.BaseTransformModule,
+                    normalization_module.SARTransform,
+                    normalization_module.NormalizationModule,
+                    normalization_module.ComplexNormalizationModule,
+                    normalization_module.IdentityModule,
+                    normalization_module.BaseTransformModule,
                     dataloader_module.KPatchSampler,
                     dataloader_module.SARDataloader,
                     dataloader_module.get_sar_dataloader,
@@ -167,14 +178,16 @@ except ImportError as e:
 __all__ = [
     # Main classes
     'SARZarrDataset',
+    'KPatchSampler',
+    'get_sar_dataloader',
+    'SARDataloader',
+    
+    # Normalization and transformation modules
     'SARTransform', 
     'NormalizationModule',
     'ComplexNormalizationModule', 
     'IdentityModule',
     'BaseTransformModule',
-    'KPatchSampler',
-    'get_sar_dataloader',
-    'SARDataloader',
     
     # API functions
     'list_base_files_in_repo',

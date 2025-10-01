@@ -13,6 +13,7 @@ from typing import Optional, Union, Tuple
 from abc import ABC, abstractmethod
 import kornia.losses as losses
 import kornia as K
+import math
 
 class BaseLoss(nn.Module, ABC):
     """
@@ -278,8 +279,86 @@ class CombinedComplexLoss(BaseLoss):
         )
         
         return self._reduce(combined_loss)
+class MagnitudeL1Loss(BaseLoss):
+    def forward(self, prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        # operate on magnitudes
+        pred_mag = prediction.abs() if prediction.is_complex() else prediction
+        tgt_mag = target.abs() if target.is_complex() else target
+        loss = torch.abs(pred_mag - tgt_mag)
+        return self._reduce(loss)
 
-class EdgeLoss(nn.Module): # Currently not using this
+class LogMagMSELoss(BaseLoss):
+    """MSE on log(1 + alpha*|z|) to preserve dynamic range."""
+    def __init__(self, alpha:float=1e-3, reduction='mean'):
+        super().__init__(reduction)
+        self.alpha = alpha
+    def forward(self, prediction, target):
+        pm = prediction.abs() if prediction.is_complex() else prediction
+        tm = target.abs() if target.is_complex() else target
+        pl = torch.log1p(self.alpha * pm)
+        tl = torch.log1p(self.alpha * tm)
+        return self._reduce((pl - tl)**2)
+
+class PhaseLossMasked(BaseLoss):
+    """
+    Angular difference, weighted by target magnitude to avoid tiny-mag noise.
+
+    Expects:
+      - prediction and target either complex tensors (dtype=torch.cfloat / torch.cdouble)
+        OR real tensors where the last dimension is size 2 and contains [real, imag],
+        e.g. shape (B, L, 2). If your real tensors are (B, 2, L) adapt before calling.
+    """
+    def __init__(self, mag_threshold: float = 1e-3, reduction: str = 'mean'):
+        super().__init__(reduction)
+        self.th = float(mag_threshold)
+
+    def _to_complex(self, z: torch.Tensor) -> torch.Tensor:
+        # Convert real pair representation (last dim = 2) to complex, otherwise return as-is.
+        if z.is_complex():
+            return z
+        if z.dim() >= 1 and z.shape[-1] == 2:
+            return torch.view_as_complex(z)
+        raise ValueError("Input must be a complex tensor or real tensor with last-dim == 2 ([real,imag]).")
+
+    def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        assert pred.shape == target.shape, f"Shape mismatch {pred.shape} vs {target.shape}"
+
+        # Convert to complex if necessary
+        pred_c = self._to_complex(pred)
+        target_c = self._to_complex(target)
+
+        # Compute magnitudes and mask
+        tgt_mag = target_c.abs()                       # shape (...), real dtype
+        mask = (tgt_mag > self.th).to(tgt_mag.dtype)   # same dtype as magnitudes
+
+        # Compute phase difference (wrapped to [-pi, pi])
+        pred_phase = torch.angle(pred_c)
+        tgt_phase  = torch.angle(target_c)
+        phase_diff = torch.abs(pred_phase - tgt_phase)
+
+        # Use tensor PI on same device/dtype to avoid any casting issues
+        PI = torch.tensor(math.pi, device=phase_diff.device, dtype=phase_diff.dtype)
+        phase_diff = torch.minimum(phase_diff, 2.0 * PI - phase_diff)
+
+        # Weighted (masked) sum per sample
+        # We'll treat the 0-th dim as batch; if your data has no batch, this still works with batch=first dim
+        bsz = phase_diff.shape[0]
+        # flatten everything except batch
+        rest = phase_diff.shape[1:]
+        n_elems = int(torch.tensor(rest).prod().item()) if len(rest) > 0 else 1
+
+        phase_flat = phase_diff.reshape(bsz, -1)      # (B, N)
+        mask_flat  = mask.reshape(bsz, -1)            # (B, N)
+
+        num = (phase_flat * mask_flat).sum(dim=1)     # (B,)
+        denom = mask_flat.sum(dim=1).clamp_min(1.0)   # (B,) avoid division by 0
+
+        loss_per_sample = num / denom                 # (B,)
+
+        # Use BaseLoss's reduction (mean/sum/none)
+        return self._reduce(loss_per_sample)
+
+class EdgeLoss(BaseLoss): # Currently not using this
     def __init__(self):
         super(EdgeLoss, self).__init__()
         self.l1_loss = nn.L1Loss()
@@ -298,6 +377,115 @@ class EdgeLoss(nn.Module): # Currently not using this
         loss_y = self.l1_loss(pred_dy, target_dy)
 
         return loss_x + loss_y
+
+def gaussian_1d_kernel(window_size: int, sigma: Optional[float] = None, device=None, dtype=torch.float32):
+    if sigma is None:
+        sigma = 0.5 * window_size
+    coords = torch.arange(window_size, dtype=dtype, device=device) - (window_size - 1) / 2.
+    g = torch.exp(-(coords ** 2) / (2 * sigma ** 2))
+    g = g / g.sum()
+    return g.view(1, 1, -1)  # shape (1,1,L) for conv1d
+
+class SSIM1DLoss(BaseLoss):
+    def __init__(self, window_size=11, sigma=None, K1=0.01, K2=0.03,
+                 data_range=1.0, eps=1e-6, reduction='mean'):
+        super().__init__(reduction)
+        assert window_size % 2 == 1, "window_size should be odd"
+        self.wsize = window_size
+        self.sigma = sigma
+        self.K1 = float(K1)
+        self.K2 = float(K2)
+        self.data_range = float(data_range)
+        self.eps = float(eps)
+        self.C1 = (self.K1 * self.data_range) ** 2
+        self.C2 = (self.K2 * self.data_range) ** 2
+
+    def forward(self, pred, target):
+        # normalize shapes to (B, C, L)
+        if pred.ndim == 2:
+            pred = pred.unsqueeze(1)
+            target = target.unsqueeze(1)
+        # ensure shapes (B,C,L)
+        if pred.ndim == 4 and pred.shape[-1] == 1:
+            pred = pred.squeeze(-1)
+            target = target.squeeze(-1)
+        if pred.ndim == 3 and pred.shape[-1] == 1:
+            pred = pred.permute(0, 2, 1)
+            target = target.permute(0, 2, 1)
+
+        pred = pred.to(dtype=target.dtype, device=target.device)
+
+        B, C, L = pred.shape
+        device = pred.device
+        dtype = pred.dtype
+
+        # kernel
+        win = gaussian_1d_kernel(self.wsize, self.sigma, device=device, dtype=dtype)  # (1,1,K)
+        win = win.repeat(C, 1, 1)  # (C,1,K)
+        pad = self.wsize // 2
+
+        # local stats
+        mu1 = F.conv1d(pred, win, padding=pad, groups=C)
+        mu2 = F.conv1d(target, win, padding=pad, groups=C)
+        mu1_sq = mu1 * mu1
+        mu2_sq = mu2 * mu2
+        mu1_mu2 = mu1 * mu2
+
+        sigma1_sq = F.conv1d(pred * pred, win, padding=pad, groups=C) - mu1_sq
+        sigma2_sq = F.conv1d(target * target, win, padding=pad, groups=C) - mu2_sq
+        sigma12 = F.conv1d(pred * target, win, padding=pad, groups=C) - mu1_mu2
+
+        # Numerical stability: clamp variances to >= 0
+        sigma1_sq = torch.clamp(sigma1_sq, min=0.0)
+        sigma2_sq = torch.clamp(sigma2_sq, min=0.0)
+
+        # SSIM map
+        num = (2.0 * mu1_mu2 + self.C1) * (2.0 * sigma12 + self.C2)
+        den = (mu1_sq + mu2_sq + self.C1) * (sigma1_sq + sigma2_sq + self.C2)
+
+        ssim_map = num / (den + self.eps)   # add eps to avoid div-by-zero
+        # clamp to [0,1]
+        ssim_map = torch.clamp(ssim_map, min=0.0, max=1.0)
+
+        ssim_val = ssim_map.mean(dim=[1,2])   # per-batch mean
+        loss = 1.0 - ssim_val                 # non-negative
+
+        if self.reduction == 'mean':
+            return loss.mean()
+        elif self.reduction == 'sum':
+            return loss.sum()
+        else:
+            return loss
+    
+class ComplexSSIMCombinedLoss(BaseLoss):
+    def __init__(self, alpha=0.0, beta=1.0, gamma=1.0, delta=0.1, ssim_window=11, reduction='mean'):
+        super().__init__(reduction)
+        self.alpha = alpha
+        self.beta = beta
+        self.gamma = gamma
+        self.delta = delta
+        self.ssim = SSIM1DLoss(window_size=ssim_window, reduction='mean')
+        self.cmse = ComplexMSELoss(reduction='none')
+        self.mag_l1 = MagnitudeL1Loss(reduction='none')
+        self.phase_mask = PhaseLossMasked(reduction='none')
+
+    def forward(self, pred, tgt):
+        # per-pixel terms
+        cmse_scalar = self.cmse(pred, tgt).mean()
+        magl1_scalar = self.mag_l1(pred, tgt).mean()
+
+        # SSIM on magnitudes; ensure proper shape (B,L) -> (B,1,L)
+        pred_mag = (pred.abs() if pred.is_complex() else pred).to(dtype=cmse_scalar.dtype, device=cmse_scalar.device)
+        tgt_mag  = (tgt.abs()  if tgt.is_complex()  else tgt).to(dtype=cmse_scalar.dtype, device=cmse_scalar.device)
+        # call ssim (returns scalar if reduction='mean')
+        ssim_loss = self.ssim(pred_mag, tgt_mag)  # already 1 - ssim averaged per batch
+
+        phase_scalar = self.phase_mask(pred, tgt)
+
+        loss = self.alpha * cmse_scalar + self.beta * magl1_scalar + self.gamma * ssim_loss + self.delta * phase_scalar
+        # loss should be non-negative; nevertheless clamp small negative numerical noise to 0
+        loss = torch.clamp(loss, min=0.0)
+        return self._reduce(loss)
     
 def get_loss_function(loss_name: str, **kwargs) -> BaseLoss:
     """
@@ -321,8 +509,9 @@ def get_loss_function(loss_name: str, **kwargs) -> BaseLoss:
         'complex_mse': ComplexMSELoss,
         'phase': PhaseLoss,
         'combined_complex': CombinedComplexLoss,
-        'ssim': losses.SSIMLoss(window_size=7, reduction='mean'), 
-        'edge': EdgeLoss
+        'ssim': SSIM1DLoss(window_size=7, reduction='mean'), 
+        'edge': EdgeLoss, 
+        'combined_complex_ssim': ComplexSSIMCombinedLoss,
     }
     
     if loss_name.lower() not in loss_registry:

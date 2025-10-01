@@ -24,71 +24,6 @@ if tuple(map(int, torch.__version__.split('.')[:2])) >= (1, 10):
 else:
     _resolve_conj = lambda x: x.conj()
 
-def init_ssm_model(model):
-    """
-    Specialized initialization for SAR SSM models.
-    Different strategies for SSM layers vs linear layers.
-    """
-    for name, module in model.named_modules():
-        if isinstance(module, nn.Linear):
-            if 'ssm' in name.lower() or 'state' in name.lower():
-                # SSM-specific initialization
-                init_ssm_linear_layer(module, name)
-            else:
-                # Standard linear layer initialization
-                init_standard_linear_layer(module, name)
-        elif isinstance(module, nn.Conv1d):
-            init_conv1d_layer(module, name)
-        elif isinstance(module, nn.LayerNorm):
-            nn.init.constant_(module.bias, 0)
-            nn.init.constant_(module.weight, 1)
-
-def init_ssm_linear_layer(layer, name):
-    """Initialize SSM-specific linear layers."""
-    if 'A' in name or 'state_transition' in name:
-        # State transition matrix - small values for stability
-        nn.init.normal_(layer.weight, mean=0.0, std=0.1)
-        if layer.bias is not None:
-            nn.init.zeros_(layer.bias)
-    elif 'B' in name or 'input' in name:
-        # Input matrix - Xavier initialization
-        nn.init.xavier_uniform_(layer.weight, gain=0.1)
-        if layer.bias is not None:
-            nn.init.zeros_(layer.bias)
-    elif 'C' in name or 'output' in name:
-        # Output matrix - small random initialization
-        nn.init.normal_(layer.weight, mean=0.0, std=0.1)
-        if layer.bias is not None:
-            nn.init.zeros_(layer.bias)
-    elif 'D' in name or 'skip' in name:
-        # Skip connection - near zero initialization
-        nn.init.normal_(layer.weight, mean=0.0, std=1e-3)
-        if layer.bias is not None:
-            nn.init.zeros_(layer.bias)
-    else:
-        # Default SSM layer initialization
-        nn.init.kaiming_normal_(layer.weight, mode='fan_in', nonlinearity='linear')
-        if layer.bias is not None:
-            nn.init.zeros_(layer.bias)
-
-def init_standard_linear_layer(layer, name):
-    """Initialize standard linear layers."""
-    if 'output' in name.lower() or 'final' in name.lower():
-        # Output layers - smaller initialization
-        nn.init.xavier_uniform_(layer.weight, gain=0.1)
-        if layer.bias is not None:
-            nn.init.zeros_(layer.bias)
-    else:
-        # Hidden layers - He initialization
-        nn.init.kaiming_normal_(layer.weight, mode='fan_in', nonlinearity='relu')
-        if layer.bias is not None:
-            nn.init.zeros_(layer.bias)
-
-def init_conv1d_layer(layer, name):
-    """Initialize 1D convolution layers."""
-    nn.init.kaiming_normal_(layer.weight, mode='fan_out', nonlinearity='relu')
-    if layer.bias is not None:
-        nn.init.zeros_(layer.bias)
 
 
 """ simple nn.Module components """
@@ -125,33 +60,6 @@ class ComplexLayerNorm(nn.Module):
             return torch.complex(self.real_norm(x.real), self.imag_norm(x.imag))
         else:
             return self.real_norm(x)
-        
-class ComplexModReLU(nn.Module):
-    def __init__(self, bias_init=0.0):
-        super().__init__()
-        self.b = nn.Parameter(torch.tensor(bias_init, dtype=torch.float))
-    def forward(self, z):
-        r = z.abs() 
-        out_r = F.relu(r + self.b)  
-        eps = 1e-6
-        return z * (out_r / (r + eps))
-
-class ComplexGLU(nn.Module):
-    def __init__(self, dim=-1):
-        super().__init__()
-        self.dim = dim
-    def forward(self, z):
-        # z: complex tensor with last dim divisible by 2
-        r = z.real
-        i = z.imag
-        # split on channel dim
-        a_r, b_r = r.chunk(2, dim=self.dim)
-        a_i, b_i = i.chunk(2, dim=self.dim)
-        a = torch.complex(a_r, a_i)
-        b = torch.complex(b_r, b_i)
-        gate = torch.sigmoid(b.real)  # simple gate from real part
-        return a * gate
-    
 def Activation(activation=None, dim=-1, complex:bool=False):
     if activation in [ None, 'id', 'identity', 'linear' ]:
         act = nn.Identity()
@@ -587,7 +495,7 @@ class sarSSM(nn.Module):
         use_positional_as_token=False,
         preprocess=True,
         activation_function='gelu',
-        use_selectivity=False
+        use_selectivity=True
     ):
         """
         sarSSM: Sequence State Model for Synthetic Aperture Radar (SAR) Data
@@ -656,8 +564,10 @@ class sarSSM(nn.Module):
             self.layer_output_projs = nn.ModuleList([
                 nn.Linear(model_dim*1, model_dim) for _ in range(num_layers)
             ])
-
-        self.layer_norm = ComplexLayerNorm(model_dim) if self.complex_valued else nn.LayerNorm(model_dim)
+        if complex_valued:
+            self.norm = ComplexLayerNorm(model_dim)
+        else:
+            self.norm = nn.LayerNorm(model_dim)
         if complex_valued:
             self.dropout = ComplexDropout(dropout)
         else:
@@ -677,14 +587,6 @@ class sarSSM(nn.Module):
                     nn.GELU(),
                     nn.Linear(model_dim, 1),
                 )
-            # Add learnable scaling for gate to allow amplification
-            # self.gate_scale = nn.Parameter(torch.tensor(2.0))  # Allow gates > 1.0
-            # self.gate_bias = nn.Parameter(torch.tensor(1.0))   # Bias towards passing info
-        # self.layer_scales = nn.ParameterList([nn.Parameter(torch.tensor(1.0)) for _ in range(self.num_layers)])
-        self.output_scale = nn.Parameter(torch.tensor(0.1))  # Scale down output to avoid large initial outputs
-        # self.complex_modrelu = ComplexModReLU(bias_init=0.0)
-        
-        print("✅ Applied specialized SSM initialization")
     def _preprocess_input(self, x):
         # x: (B, 1000, seq_len, 2)
         # Optionally concatenate positional embedding as next token
@@ -704,10 +606,8 @@ class sarSSM(nn.Module):
             out = out.unsqueeze(-1)
         return out.permute(0, 2, 1, 3)
     def forward(self, x):
-        if len(x.shape) == 4:
-            x = x.squeeze()
-        #print(f"Input shape: {x.shape}")
         # x: (B, L, F)
+        x = x.squeeze()
         B, L, feat = x.shape
         assert feat == self.input_dim, f"Expected input feature dim {self.input_dim}, got {feat}"
         if self.complex_valued:
@@ -733,40 +633,25 @@ class sarSSM(nn.Module):
             else:
                 gate_feat = gate_in
             gate_logits = self.gate_mlp(gate_feat)
-            # Use tanh-based gating with learnable scaling
-            # This allows both suppression and amplification
-            gate = torch.tanh(gate_logits).squeeze(-1)  # (B,L) range [-1,1]
-            #gate = self.gate_bias + self.gate_scale * gate_raw  # Allow values > 1.0
+            gate = torch.sigmoid(gate_logits).squeeze(-1)  # (B,L)
         for layer, proj in zip(self.layers, self.layer_output_projs):
             y, _ = layer(h)  # (B, C*H, L)
+            y_t = y.transpose(1,2).contiguous()  # (B,L,C*H)
+            y_p = proj(y_t)  # (B,L,H)
+            y_p = y_p.transpose(1,2).contiguous()
             if gate is not None:
-                y_t = y.transpose(1,2).contiguous()  # (B,L,C*H)
-                y_p = proj(y_t)  # (B,L,H)
-                y_p = y_p.transpose(1,2).contiguous()            
-                g = gate.unsqueeze(1)                # (B,1,L)
-                upd = y_p * g
-                h = h + upd # * layer_scale
+                g = gate.unsqueeze(1)
+                h = h + y_p * g
             else:
-                h = h + y
-
-
-            # Remove range-limiting activation for better dynamic range
-            # Complex ModReLU was limiting the output magnitude
-            # if self.complex_valued:
-            #     # Use a gentler activation that preserves magnitude better
-            #     h = self.layer_norm(h.transpose(1,2)).transpose(1,2)
-            # else:
-            #     h = F.gelu(h)
-
-        h = h.transpose(1,2).contiguous()           
-
-        # Apply layer norm and dropout before final projection
-        h = self.layer_norm(h)
+                h = h + y_p
+            if self.complex_valued:
+                h = torch.complex(torch.tanh(h.real), torch.tanh(h.imag))
+            else:
+                h = F.gelu(h)
+        h = h.transpose(1,2).contiguous()
+        h = self.norm(h)
         h = self.dropout(h)
-        
-        # Final output projection with proper scaling
         out = self.output_proj(h)  # (B,L,output_dim)
-                
         return out
 
     def step(self, u, states=None):
@@ -780,12 +665,9 @@ class sarSSM(nn.Module):
             y_p = self.layer_output_projs[i](y)
             if self.use_selectivity:
                 if self.complex_valued:
-                    # Use tanh-based gating consistent with forward pass
-                    g_raw = torch.tanh(h.abs().mean(-1, keepdim=True))
-                    g = self.gate_bias + self.gate_scale * g_raw
+                    g = torch.sigmoid(h.abs().mean(-1, keepdim=True))
                 else:
-                    g_raw = torch.tanh(h.mean(-1, keepdim=True))
-                    g = self.gate_bias + self.gate_scale * g_raw
+                    g = torch.sigmoid(h.mean(-1, keepdim=True))
                 h = h + y_p * g
             else:
                 h = h + y_p
@@ -796,40 +678,21 @@ class sarSSM(nn.Module):
 
 # ---------------- Overlap-save wrapper ----------------
 class OverlapSaveWrapper(nn.Module):
-    def __init__(self, model:nn.Module, chunk_size:int=512, overlap:int=128, preserve_states:bool=False):
+    def __init__(self, model:nn.Module, chunk_size:int=2048, overlap:int=768):
         super().__init__()
         assert chunk_size > overlap
         self.model = model
         self.chunk_size = chunk_size
         self.overlap = overlap
-        self.preserve_states = preserve_states  # For SSM state continuity
-        
-        # Check if model supports stateful processing
-        self.is_stateful = hasattr(model, 'step') and hasattr(model, 'default_state')
-        
-        if self.preserve_states and not self.is_stateful:
-            print("⚠️  preserve_states=True but model doesn't support stateful processing")
-            self.preserve_states = False
 
-    def forward(self, x, y=None):
-        # x: (B,L,F), y: optional target for autoregressive models
+    def forward(self, x):
+        # x: (B,L,F)
         if x.shape[1] == 1:
             x = x.squeeze(1)
         elif x.shape[2] == 1:
             x = x.squeeze(2)
         
-        # For autoregressive mode, just pass through without chunking
-        # as it breaks the sequential dependencies needed for proper training
-        if y is not None:
-            print("⚠️  OverlapSaveWrapper bypassed for autoregressive mode")
-            return self.model(x, y)
-        
         B, L, feat = x.shape
-        
-        # For very short sequences, don't chunk
-        if L <= self.chunk_size:
-            return self.model(x)
-            
         step = self.chunk_size - self.overlap
         outputs = []
         starts = list(range(0, L, step))
@@ -894,6 +757,8 @@ class OverlapSaveWrapper(nn.Module):
                 out[:, output_start:output_start + actual_len, :] = seg[:, :actual_len, :]
         
         return out
+
+
 
 def hann_window(n):
     return torch.hann_window(n, periodic=False, device='cpu')

@@ -1,37 +1,43 @@
 # Configuration for S4 SSM Training
 
 # Data directory
-data_dir: "/Data/sar_focusing"
+data_dir: "/Data_large/marine/PythonProjects/SAR/sarpyx/data"
 
 # Model configuration
 model:
   name: "s4_ssm"
   dim_head: 1
   input_dim: 2
-  model_dim: 48
-  state_dim: 400
+  model_dim: 64
+  state_dim: 540
   output_dim: 1
   num_layers: 6
   dropout: 0.2
   use_pos_encoding: true
   complex_valued: true
+  use_selectivity: true  # Enable selective gating
+  activation_function: 'gelu'  # Explicitly set activation
 # Training configuration
 training:
-  patience: 30
-  delta: 0.00005
-  weight_decay: 1e-3
-  epochs: 250
-  lr: 1e-3
+  patience: 50         # Increased patience
+  delta: 0.00001       # More reasonable improvement threshold
+  weight_decay: 0.001  # Increased for better regularization
+  epochs: 300          # More epochs for complex model
+  lr: 0.0001           # Increased learning rate
   scheduler_type: "cosine"
   loss_fn : "complex_mse"
-  save_dir: "./results/s4_ssm_results"
+  save_dir: "./results/s4_ssm_complex_results_mse_warmup"
   mode: "parallel"
+  warmup_epochs: 5     # Longer warmup
+  warmup_start_lr: 0.00001
+
 
 # Device configuration
 device: "cuda"
 
 # Dataloader configuration
 dataloader:
+  data_dir: "/Data_large/marine/PythonProjects/SAR/sarpyx/data"
   level_from: "rc"
   level_to: "az"
   num_workers: 0
@@ -54,7 +60,7 @@ dataloader:
     batch_size: 32
     samples_per_prod: 1000
     patch_order: "row"
-    max_products: 10
+    max_products: 5
     filters: {
       "years": [
         2023,
@@ -107,7 +113,7 @@ dataloader:
 transforms:
   normalize: true
   complex_valued: true
-  rc_min: -4000
-  rc_max: 4000
-  gt_min: -4000
-  gt_max: 4000
+  rc_min: -5000
+  rc_max: 5000
+  gt_min: -5000
+  gt_max: 5000

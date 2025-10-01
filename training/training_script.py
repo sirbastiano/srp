@@ -97,7 +97,7 @@ def load_config(config_path: Path, args):
     
     # Set dataloader defaults if missing
     dataloader_defaults = {
-        'level_from': 'rcmc',
+        'level_from': 'rc',
         'level_to': 'az', 
         'num_workers': 0,
         'patch_mode': 'rectangular',
@@ -160,33 +160,87 @@ def load_config(config_path: Path, args):
 
 
 def create_transforms_from_config(transforms_cfg):
-    """Create SARTransform from configuration."""
+    """Create SARTransform from configuration with support for multiple normalization types."""
     try:
         from dataloader.utils import RC_MIN, RC_MAX, GT_MIN, GT_MAX
         
         if transforms_cfg.get('normalize', True):
-            # Use config values if provided, otherwise use defaults from utils
-            rc_min = transforms_cfg.get('rc_min', RC_MIN)
-            rc_max = transforms_cfg.get('rc_max', RC_MAX)
-            gt_min = transforms_cfg.get('gt_min', GT_MIN)
-            gt_max = transforms_cfg.get('gt_max', GT_MAX)
-            adaptive = transforms_cfg.get('adaptive', False)
+            normalization_type = transforms_cfg.get('normalization_type', 'minmax')
             complex_valued = transforms_cfg.get('complex_valued', True)
-            print(f"Creating SARTransform with min-max normalization: rc_min={rc_min}, rc_max={rc_max}, gt_min={gt_min}, gt_max={gt_max}, adaptive={adaptive}, complex_valued={complex_valued}")
-            transforms = SARTransform.create_minmax_normalized_transform(
-                normalize=True,
-                adaptive=adaptive,
-                rc_min=rc_min,
-                rc_max=rc_max,
-                gt_min=gt_min,
-                gt_max=gt_max,
-                complex_valued=complex_valued
-            )
+            adaptive = transforms_cfg.get('adaptive', False)
+            
+            if normalization_type == 'minmax':
+                # MinMax normalization (existing functionality)
+                rc_min = transforms_cfg.get('rc_min', RC_MIN)
+                rc_max = transforms_cfg.get('rc_max', RC_MAX)
+                gt_min = transforms_cfg.get('gt_min', GT_MIN)
+                gt_max = transforms_cfg.get('gt_max', GT_MAX)
+                
+                print(f"Creating SARTransform with min-max normalization: "
+                      f"rc_min={rc_min}, rc_max={rc_max}, gt_min={gt_min}, gt_max={gt_max}, "
+                      f"adaptive={adaptive}, complex_valued={complex_valued}")
+                
+                transforms = SARTransform.create_minmax_normalized_transform(
+                    normalize=True,
+                    adaptive=adaptive,
+                    rc_min=rc_min,
+                    rc_max=rc_max,
+                    gt_min=gt_min,
+                    gt_max=gt_max,
+                    complex_valued=complex_valued
+                )
+                
+            elif normalization_type == 'zscore' or normalization_type == 'standardize':
+                # Z-score normalization (mean=0, std=1)
+                
+                # Get statistics from config or compute adaptively
+                if adaptive:
+                    print("Creating SARTransform with adaptive z-score normalization")
+                    transforms = SARTransform.create_zscore_normalized_transform(
+                        normalize=True,
+                        adaptive=True,
+                        complex_valued=complex_valued
+                    )
+                else:
+                    # Use provided statistics or defaults
+                    rc_mean = transforms_cfg.get('rc_mean', 0.0)
+                    rc_std = transforms_cfg.get('rc_std', 1.0)
+                    gt_mean = transforms_cfg.get('gt_mean', 0.0)
+                    gt_std = transforms_cfg.get('gt_std', 1.0)
+                    
+                    print(f"Creating SARTransform with z-score normalization: "
+                          f"rc_mean={rc_mean}, rc_std={rc_std}, gt_mean={gt_mean}, gt_std={gt_std}, "
+                          f"complex_valued={complex_valued}")
+                    
+                    transforms = SARTransform.create_zscore_normalized_transform(
+                        normalize=True,
+                        adaptive=False,
+                        rc_mean=rc_mean,
+                        rc_std=rc_std,
+                        gt_mean=gt_mean,
+                        gt_std=gt_std,
+                        complex_valued=complex_valued
+                    )
+            
+            elif normalization_type == 'robust':
+                # Robust normalization using median and IQR
+                print("Creating SARTransform with robust normalization")
+                transforms = SARTransform.create_robust_normalized_transform(
+                    normalize=True,
+                    adaptive=adaptive,
+                    complex_valued=complex_valued
+                )
+            
+            else:
+                raise ValueError(f"Unsupported normalization_type: {normalization_type}. "
+                               f"Supported types: 'minmax', 'zscore', 'standardize', 'robust'")
         else:
+            print("Creating SARTransform with no normalization")
             transforms = SARTransform()  # Uses identity transforms
-    except ImportError:
-        # Fallback if utils are not available
-        transforms = SARTransform()
+            
+    except ImportError as e:
+        print(f"Warning: Could not import normalization utilities: {e}")
+        transforms = SARTransform()  # Fallback
     
     return transforms
 
@@ -341,7 +395,11 @@ def main():
     
     model = get_model_from_configs(**model_cfg)
     text_logger.info(f"Created standard model: {model_cfg.get('name', 'Unknown')}")
-            # Watch gradients/parameters and graph
+    
+    # Watch gradients/parameters and graph if using WandB
+    if hasattr(tb_logger, 'experiment'):
+        tb_logger.experiment.watch(model, log='all', log_freq=100)
+        text_logger.info("✅ Enabled WandB gradient and parameter tracking")
 
     # Create dataloaders
     text_logger.info("Creating dataloaders...")
@@ -361,6 +419,11 @@ def main():
         mode=training_cfg['mode'],
         scheduler_type=training_cfg['scheduler_type'], 
         logger=tb_logger,
+        weight_decay=training_cfg.get('weight_decay', 1e-6),
+        warmup_epochs=training_cfg.get('warmup_epochs', 3),
+        warmup_start_lr=training_cfg.get('warmup_start_lr', 1e-6),
+        lr=training_cfg.get('lr', 1e-4),
+        wrapper=training_cfg.get('wrapper', True),
     )
     try:
         tb_logger.watch(lightning_model, log='all', log_freq=10, log_graph=True)
