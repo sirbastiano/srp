@@ -135,6 +135,7 @@ def create_ssm_model(
     complex_valued: bool = True,
     mode: str = "sequential",
     preprocess: bool = True,
+    use_selectivity: bool = False,
 ) -> nn.Module:
     """
     Factory function to create SSM models based on configuration.
@@ -167,7 +168,8 @@ def create_ssm_model(
             dropout=dropout,
             use_pos_encoding=use_pos_encoding,
             complex_valued=complex_valued,
-            preprocess=preprocess
+            preprocess=preprocess, 
+            use_selectivity=use_selectivity 
         )
     else:
         raise ValueError(f"Unsupported SSM model type: {model_type}. Supported types: 'simple', 'mamba', 's4'")

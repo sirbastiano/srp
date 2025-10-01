@@ -23,6 +23,7 @@ from api import list_base_files_in_repo, list_repos_by_author
 from utils import minmax_normalize, minmax_inverse, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN
 from api import fetch_chunk_from_hf_zarr, download_metadata_from_product
 import matplotlib.pyplot as plt
+from normalization import BaseTransformModule, SARTransform
 from matplotlib.figure import Figure
 
 class LazyCoordinateRange:
@@ -191,251 +192,10 @@ class LazyCoordinateGenerator:
             # For chunk order, fall back to list conversion (less efficient)
             coords = list(self)
             return coords[index]
-    
 
-        
-class BaseTransformModule(nn.Module):
-    """Base class for SAR data transformations."""
-    
-    def __init__(self):
-        super(BaseTransformModule, self).__init__()
-    
-    def forward(self, x: np.ndarray) -> np.ndarray:
-        """Apply transformation to input data."""
-        raise NotImplementedError("Subclasses must implement forward method")
-    def inverse(self, x: np.ndarray) -> np.ndarray:
-        """Inverse transformation, if applicable."""
-        raise NotImplementedError("Subclasses must implement inverse method")
-
-
-class NormalizationModule(BaseTransformModule):
-    """Normalization module for SAR data."""
-    
-    def __init__(self, data_min: float, data_max: float):
-        super(NormalizationModule, self).__init__()
-        self.data_min = data_min
-        self.data_max = data_max
-    
-    def forward(self, x: np.ndarray) -> np.ndarray:
-        """Normalize array to range [0, 1]."""
-        # Apply normalization directly on numpy array
-        return minmax_normalize(x, self.data_min, self.data_max)
-    def inverse(self, x: np.ndarray) -> np.ndarray:
-        """Inverse normalization."""
-        # Apply inverse normalization
-        return minmax_inverse(x, self.data_min, self.data_max)
-
-
-class IdentityModule(BaseTransformModule):
-    """Identity transformation that returns input unchanged."""
-    
-    def __init__(self):
-        super(IdentityModule, self).__init__()
-    
-    def forward(self, x: np.ndarray) -> np.ndarray:
-        """Return input unchanged."""
-        return x
-    def inverse(self, x: np.ndarray) -> np.ndarray:
-        """Return input unchanged."""
-        return x
-
-
-class ComplexNormalizationModule(BaseTransformModule):
-    """Complex-valued normalization module for SAR data."""
-    
-    def __init__(self, real_min: float, real_max: float, imag_min: float, imag_max: float):
-        super(ComplexNormalizationModule, self).__init__()
-        self.real_min = real_min
-        self.real_max = real_max
-        self.imag_min = imag_min
-        self.imag_max = imag_max
-    
-    def forward(self, x: np.ndarray) -> np.ndarray:
-        """Normalize complex array separately for real and imaginary parts."""
-        if np.iscomplexobj(x):
-            # Normalize real and imaginary parts separately
-            # Use numpy functions to extract real and imaginary parts
-            real_part = minmax_normalize(np.real(x), self.real_min, self.real_max)
-            imag_part = minmax_normalize(np.imag(x), self.imag_min, self.imag_max)
-
-            #real_part = np.clip(real_part, 0, 1)
-            #imag_part = np.clip(imag_part, 0, 1)
-            
-            normalized = real_part + 1j * imag_part
-        else:
-            # Assume magnitude data
-            normalized = minmax_normalize(x, self.real_min, self.real_max)
-
-        return normalized
-    def inverse(self, x: np.ndarray) -> np.ndarray:
-        """Inverse normalization."""
-        if np.iscomplexobj(x):
-            # Inverse normalize real and imaginary parts separately
-            real_part = minmax_inverse(np.real(x), self.real_min, self.real_max)
-            imag_part = minmax_inverse(np.imag(x), self.imag_min, self.imag_max)
-            return real_part + 1j * imag_part
-        else:
-            # Assume magnitude data
-            return minmax_inverse(x, self.real_min, self.real_max)
-
-class AdaptiveNormalizationModule(BaseTransformModule):
-    """Complex-valued normalization module for SAR data."""
-    
-    def __init__(self):
-        super(AdaptiveNormalizationModule, self).__init__()
-
-    
-    def forward(self, x: np.ndarray) -> np.ndarray:
-        """Normalize complex array separately for real and imaginary parts."""
-        if np.iscomplexobj(x):
-            # Normalize real and imaginary parts separately
-            # Use numpy functions to extract real and imaginary parts
-            re = np.real(x)
-            im = np.imag(x)
-            real_part = minmax_normalize(re, np.min(re), np.max(re))
-            imag_part = minmax_normalize(im, np.min(im), np.max(im))
-
-            #real_part = np.clip(real_part, 0, 1)
-            #imag_part = np.clip(imag_part, 0, 1)
-            
-            normalized = real_part + 1j * imag_part
-        else:
-            # Assume magnitude data
-            normalized = minmax_normalize(x, np.min(x), np.max(x))
-
-        return normalized
-    def inverse(self, x: np.ndarray) -> np.ndarray:
-        """Inverse normalization."""
-        if np.iscomplexobj(x):
-            # Inverse normalize real and imaginary parts separately
-            real_part = minmax_inverse(np.real(x), np.min(x), np.max(x))
-            imag_part = minmax_inverse(np.imag(x), np.min(x), np.max(x))
-            return real_part + 1j * imag_part
-        else:
-            # Assume magnitude data
-            return minmax_inverse(x, np.min(x), np.max(x))
-
-class SARTransform(nn.Module):
-    """
-    PyTorch transform module for normalizing SAR data patches at different processing levels.
-
-    This class uses separate PyTorch modules for each SAR processing level (e.g., 'raw', 'rc', 'rcmc', 'az').
-    Each module can be any PyTorch nn.Module that implements the transformation.
-
-    Args:
-        transform_raw (BaseTransformModule, optional): Module to transform 'raw' level data.
-        transform_rc (BaseTransformModule, optional): Module to transform 'rc' level data.
-        transform_rcmc (BaseTransformModule, optional): Module to transform 'rcmc' level data.
-        transform_az (BaseTransformModule, optional): Module to transform 'az' level data.
-    """
-    def __init__(
-        self,
-        transform_raw: Optional[Union[Callable[[np.ndarray], np.ndarray], functools.partial, BaseTransformModule]] = None,
-        transform_rc: Optional[Union[Callable[[np.ndarray], np.ndarray], functools.partial, BaseTransformModule]] = None,
-        transform_rcmc: Optional[Union[Callable[[np.ndarray], np.ndarray], functools.partial, BaseTransformModule]] = None,
-        transform_az: Optional[Union[Callable[[np.ndarray], np.ndarray], functools.partial, BaseTransformModule]] = None,
-    ):
-        super(SARTransform, self).__init__()
-        
-        # Register transform modules
-        self.transform_raw = transform_raw if transform_raw is not None else IdentityModule()
-        self.transform_rc = transform_rc if transform_rc is not None else IdentityModule()
-        self.transform_rcmc = transform_rcmc if transform_rcmc is not None else IdentityModule()
-        self.transform_az = transform_az if transform_az is not None else IdentityModule()
-        
-        # Create a mapping for easy access
-        self.transforms = {
-            'raw': self.transform_raw,
-            'rc': self.transform_rc,
-            'rcmc': self.transform_rcmc,
-            'az': self.transform_az,
-        }
-
-    def forward(self, x: np.ndarray, level: str) -> np.ndarray:
-        """
-        Apply the appropriate transform module to the input array for the specified SAR processing level.
-
-        Args:
-            x (np.ndarray): Input data array.
-            level (str): SAR processing level ('raw', 'rc', 'rcmc', or 'az').
-
-        Returns:
-            np.ndarray: Transformed data array.
-        """
-        assert level in self.transforms, f"Transform for level '{level}' not defined."
-        return self.transforms[level](x)
-    def inverse(self, x: np.ndarray, level: str) -> np.ndarray:
-        """
-        Apply the appropriate inverse transform module to the input array for the specified SAR processing level.
-
-        Args:
-            x (np.ndarray): Input data array.
-            level (str): SAR processing level ('raw', 'rc', 'rcmc', or 'az').
-
-        Returns:
-            np.ndarray: Inverse transformed data array.
-        """
-        assert level in self.transforms, f"Transform for level '{level}' not defined."
-        if isinstance(self.transforms[level], BaseTransformModule):
-            # If the transform is a custom module, use its inverse method
-            return self.transforms[level].inverse(x)
-        print("[WARNING] Inverse transform not defined, returning input unchanged.")
-        return x
-
-    @classmethod
-    def create_minmax_normalized_transform(
-        cls,
-        normalize: bool = True,
-        adaptive: bool = False,
-        rc_min: float = RC_MIN,
-        rc_max: float = RC_MAX,
-        gt_min: float = GT_MIN,
-        gt_max: float = GT_MAX,
-        complex_valued: bool = True
-    ):
-        """
-        Factory method to create a SARTransform with normalization modules.
-        
-        Args:
-            normalize (bool): Whether to apply normalization.
-            adaptive (bool): Whether to use adaptive normalization based on patch min/max.
-            rc_min (float): Minimum value for RC data normalization.
-            rc_max (float): Maximum value for RC data normalization.
-            gt_min (float): Minimum value for ground truth data normalization.
-            gt_max (float): Maximum value for ground truth data normalization.
-            complex_valued (bool): Whether data is complex-valued.
-        
-        Returns:
-            SARTransform: Configured transform instance.
-        """
-        if not normalize:
-            return cls()
-        if not adaptive:
-            if complex_valued:
-                raw_transform = ComplexNormalizationModule(rc_min, rc_max, rc_min, rc_max)
-                rc_transform = ComplexNormalizationModule(gt_min, gt_max, gt_min, gt_max)
-                rcmc_transform = ComplexNormalizationModule(gt_min, gt_max, gt_min, gt_max)
-                az_transform = ComplexNormalizationModule(gt_min, gt_max, gt_min, gt_max)
-            else:
-                # Use simple normalization for magnitude data
-                raw_transform = NormalizationModule(rc_min, rc_max)
-                rc_transform = NormalizationModule(gt_min, gt_max)
-                rcmc_transform = NormalizationModule(gt_min, gt_max)
-                az_transform = NormalizationModule(gt_min, gt_max)
-        else:
-            raw_transform = AdaptiveNormalizationModule()
-            rc_transform = AdaptiveNormalizationModule()
-            rcmc_transform = AdaptiveNormalizationModule()
-            az_transform = AdaptiveNormalizationModule()
-        return cls(
-            transform_raw=raw_transform,
-            transform_rc=rc_transform,
-            transform_rcmc=rcmc_transform,
-            transform_az=az_transform
-        )
 
 class SampleFilter:
-    def __init__(self, parts: List[str]=None, years: List[int] = None, months: List[int] = None, polarizations: List[str] = None, stripmap_modes: List[int] = None):
+    def __init__(self, parts: Optional[List[str]]=None, years: Optional[List[int]] = None, months: Optional[List[int]] = None, polarizations: Optional[List[str]] = None, stripmap_modes: Optional[List[int]] = None):
         """
         Initialize a filter for SAR dataset samples.
 
@@ -1589,7 +1349,7 @@ class SARZarrDataset(Dataset):
             #print(f"Patch shape before concatenation: {patch.shape}")
             patch = self._reverse_concatenation(patch, zfile=zfile)
         #print(f"Patch shape in the end: {patch.shape}")
-        if not self.transform is None:
+        if self.transform is not None:
             patch = self.transform.inverse(patch, level)
         if prepare_for_plotting:
             patch, vmin, vmax = get_sample_visualization(data=patch, plot_type=plot_type, vminmax=vminmax)
