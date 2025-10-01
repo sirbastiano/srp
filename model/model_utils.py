@@ -17,6 +17,7 @@
 from model.transformers.rv_transformer import RealValuedTransformer  # your import
 from model.transformers.cv_transformer import ComplexTransformer
 from model.SSMs.SSM import sarSSM, S4D
+from model.SSMs.SSM import sarSSM, S4D
 import torch
 import torch.nn as nn
 from typing import Optional, Dict, Any
@@ -92,6 +93,7 @@ class SARSSMFactory:
             use_pos_encoding: bool = True,
             complex_valued: bool = True,
             preprocess: bool = True,
+            use_selectivity: bool = True,
             mode: str = "sequential",
             **kwargs
         ) -> nn.Module:
@@ -106,6 +108,7 @@ class SARSSMFactory:
             dropout: Dropout rate
             use_pos_encoding: Whether to use positional encoding
             complex_valued: Whether to use complex-valued layers
+            use_selectivity: Whether to use selectivity mechanism
 
         Returns:
             Configured sarSSM model
@@ -120,6 +123,7 @@ class SARSSMFactory:
             use_pos_encoding=use_pos_encoding,
             complex_valued=complex_valued,
             preprocess = preprocess,
+            use_selectivity=use_selectivity,
             **kwargs
         )
 
@@ -173,7 +177,12 @@ def create_ssm_model(
         )
     else:
         raise ValueError(f"Unsupported SSM model type: {model_type}. Supported types: 'simple', 'mamba', 's4'")
-
+            
+models = {
+    "rv_transformer": RealValuedTransformer,
+    "cv_transformer": ComplexTransformer, 
+    "s4_ssm": lambda **kwargs: create_ssm_model("s4", **kwargs)
+}
 
 def create_sar_complex_transformer(
     input_dim: int = 4,

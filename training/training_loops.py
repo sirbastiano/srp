@@ -18,6 +18,13 @@ from training.distillation_losses import FeatureDistillationLoss, CombinedDistil
 from training.visualize import get_full_image_and_prediction, compute_metrics, display_inference_results, log_inference_to_wandb
 import pytorch_lightning as pl
 
+# Import wandb with fallback for gradient tracking
+try:
+    import wandb
+    WANDB_AVAILABLE = True
+except ImportError:
+    WANDB_AVAILABLE = False
+
 import numpy as np
 class TrainerBase(pl.LightningModule):
     def __init__(
@@ -67,6 +74,11 @@ class TrainerBase(pl.LightningModule):
         self.warmup_epochs = warmup_epochs
         self.warmup_start_lr = warmup_start_lr
         self.weight_decay = weight_decay
+                # Initialize gradient tracking if wandb is available
+        self.gradient_tracker = None
+        self.global_step_count = 0
+        if WANDB_AVAILABLE:
+            self.gradient_tracker = self._create_gradient_tracker()
         
     def get_current_step_or_epoch(self):
         """Get current step or epoch depending on training mode."""
@@ -74,6 +86,63 @@ class TrainerBase(pl.LightningModule):
             return self.global_step, 'step'
         else:
             return self.current_epoch, 'epoch'
+
+    def _create_gradient_tracker(self):
+        """Create gradient tracker utility"""
+        class SimpleGradientTracker:
+            def __init__(self, log_frequency: int = 100):
+                self.log_frequency = log_frequency
+            
+            def log_gradients(self, model: nn.Module, model_name: str, global_step: int):
+                if global_step % self.log_frequency != 0:
+                    return
+                    
+                gradient_stats = {}
+                total_norm = 0.0
+                param_count = 0
+                
+                for name, param in model.named_parameters():
+                    if param.grad is not None:
+                        grad = param.grad.data
+                        grad_norm = torch.norm(grad).item()
+                        total_norm += grad_norm ** 2
+                        param_count += 1
+                        
+                        # Log key layer gradients
+                        if any(key in name for key in ['input_proj', 'output_proj', 'layers.0', 'layers.-1']):
+                            clean_name = name.replace('.', '/')
+                            gradient_stats[f"{model_name}/gradients/{clean_name}/norm"] = grad_norm
+                            gradient_stats[f"{model_name}/gradients/{clean_name}/mean"] = torch.mean(grad).item()
+                            gradient_stats[f"{model_name}/gradients/{clean_name}/std"] = torch.std(grad).item()
+                
+                if param_count > 0:
+                    total_norm = (total_norm ** 0.5)
+                    gradient_stats[f"{model_name}/gradients/total_norm"] = total_norm
+                    gradient_stats[f"{model_name}/gradients/param_count"] = param_count
+                
+                try:
+                    if WANDB_AVAILABLE:
+                        wandb.log(gradient_stats, step=global_step)
+                except:
+                    pass  # Fail silently if wandb is not available
+        
+        return SimpleGradientTracker()
+    
+    def on_after_backward(self):
+        """Hook called after backward pass to log gradients"""
+        if self.gradient_tracker is not None:
+            self.global_step_count += 1
+            self.gradient_tracker.log_gradients(
+                self.model,
+                "model",
+                self.global_step_count
+            )
+        self.last_improve_steps = 0
+        
+        self.warmup_epochs = warmup_epochs
+        self.warmup_start_lr = warmup_start_lr
+        self.weight_decay = weight_decay
+        
     def train_dataloader(self):
         return self._train_loader
 
@@ -627,7 +696,7 @@ class TrainSSM(TrainerBase):
             criterion: Callable = nn.MSELoss, 
             mode: str = "parallel",
             scheduler_type: str = 'cosine', 
-            wrapper: bool = True, 
+            wrapper: bool = False, 
             weight_decay: float = 1e-6,
             warmup_epochs: int = 3,
             warmup_start_lr: float = 1e-6, 

@@ -608,6 +608,7 @@ class sarSSM(nn.Module):
     def forward(self, x):
         # x: (B, L, F)
         x = x.squeeze()
+        x = x.squeeze()
         B, L, feat = x.shape
         assert feat == self.input_dim, f"Expected input feature dim {self.input_dim}, got {feat}"
         if self.complex_valued:
@@ -678,7 +679,7 @@ class sarSSM(nn.Module):
 
 # ---------------- Overlap-save wrapper ----------------
 class OverlapSaveWrapper(nn.Module):
-    def __init__(self, model:nn.Module, chunk_size:int=2048, overlap:int=768):
+    def __init__(self, model:nn.Module, chunk_size:int=2048, overlap:int=0):
         super().__init__()
         assert chunk_size > overlap
         self.model = model
@@ -688,75 +689,38 @@ class OverlapSaveWrapper(nn.Module):
     def forward(self, x):
         # x: (B,L,F)
         if x.shape[1] == 1:
-            x = x.squeeze(1)
+            squeeze_dim = 1
+            x = x.squeeze()
         elif x.shape[2] == 1:
-            x = x.squeeze(2)
-        
+            squeeze_dim = 2
+            x = x.squeeze()
         B, L, feat = x.shape
         step = self.chunk_size - self.overlap
         outputs = []
         starts = list(range(0, L, step))
-        
-        for i, start in enumerate(starts):
+        for start in starts:
             end = start + self.chunk_size
-            # print(f"Chunk {i} from {start} to {end}")
-            
             if end <= L:
                 chunk = x[:, start:end, :]
-                chunk_len = self.chunk_size
             else:
-                # Last chunk - use available data without padding
-                chunk = x[:, start:L, :]
-                chunk_len = L - start
-                # print(f"Last chunk: using {chunk_len} samples")
-            
+                pad_len = end - L
+                tail = x[:, start:L, :]
+                pad = torch.zeros(B, pad_len, feat, device=x.device, dtype=x.dtype)
+                chunk = torch.cat([tail, pad], dim=1)
             y = self.model(chunk)
-            
-            # Fixed segmentation logic
-            if i == 0:
-                # First chunk: keep everything except overlap region at the end
-                seg_start = 0
-                seg_end = min(self.chunk_size - self.overlap//2, chunk_len, L)
-                output_start = start
-                output_end = start + seg_end
-                chunk_output_start = 0
-                chunk_output_end = seg_end
-            elif start + chunk_len >= L:
-                # Last chunk: keep everything from overlap region onward
-                overlap_discard = self.overlap//2
-                seg_len = chunk_len - overlap_discard
-                if seg_len > 0:
-                    output_start = start + overlap_discard
-                    output_end = L
-                    chunk_output_start = overlap_discard
-                    chunk_output_end = chunk_len
-                else:
-                    continue  # Skip if nothing to contribute
-            else:
-                # Middle chunks: discard overlap//2 from both ends
-                overlap_discard = self.overlap//2
-                seg_len = self.chunk_size - 2 * overlap_discard
-                output_start = start + overlap_discard
-                output_end = start + overlap_discard + seg_len
-                chunk_output_start = overlap_discard
-                chunk_output_end = overlap_discard + seg_len
-            
-            # Extract the segment to use
-            if 'chunk_output_start' in locals():
-                seg = y[:, chunk_output_start:chunk_output_end, :]
-                outputs.append((output_start, output_end, seg))
-                # print(f"Chunk {i}: contributing samples {output_start} to {output_end}")
-        
-        # Reconstruct output
+            left = 0 if start==0 else self.overlap//2
+            seg_start = start + left
+            seg_end = min(end - (self.overlap - left), L)
+            seg_len = max(0, seg_end - seg_start)
+            seg = y[:, left:left+seg_len, :]
+            outputs.append((seg_start, seg_end, seg))
         outF = outputs[0][2].shape[-1]
-        out = torch.zeros(B, L, outF, device=x.device, dtype=y.dtype)
-        
-        for output_start, output_end, seg in outputs:
-            actual_len = min(seg.shape[1], output_end - output_start, L - output_start)
-            if actual_len > 0:
-                out[:, output_start:output_start + actual_len, :] = seg[:, :actual_len, :]
-        
+        out = x.new_zeros(B, L, outF)
+        for seg_start, seg_end, seg in outputs:
+            out[:, seg_start:seg_end, :] = seg
+        #out = out.unsqueeze(squeeze_dim)
         return out
+
 
 
 

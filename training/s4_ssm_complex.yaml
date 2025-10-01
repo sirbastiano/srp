@@ -113,7 +113,14 @@ dataloader:
 transforms:
   normalize: true
   complex_valued: true
+<<<<<<< HEAD
   rc_min: -5000
   rc_max: 5000
   gt_min: -5000
   gt_max: 5000
+=======
+  rc_min: -2000
+  rc_max: 2000
+  gt_min: -2000
+  gt_max: 2000
+>>>>>>> b1ab294 (Added comprehensive knowledge distillation script)
