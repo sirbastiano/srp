@@ -15,6 +15,26 @@ import kornia.losses as losses
 import kornia as K
 import math
 
+def complex_abs(x: torch.Tensor) -> torch.Tensor:
+    # works with complex dtype or real tensors representing complex values
+    if torch.is_complex(x):
+        return x.abs()
+    else:
+        # assume last dim = 2 for real/imag
+        return torch.sqrt((x[..., 0] ** 2) + (x[..., 1] ** 2))
+
+def complex_angle(x: torch.Tensor) -> torch.Tensor:
+    if torch.is_complex(x):
+        return torch.angle(x)
+    else:
+        # last dim: real, imag
+        return torch.atan2(x[..., 1], x[..., 0])
+
+def angle_difference(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+    # principal value difference: atan2(sin(d), cos(d))
+    d = a - b
+    return torch.atan2(torch.sin(d), torch.cos(d))
+
 class BaseLoss(nn.Module, ABC):
     """
     Base class for all loss functions.
@@ -487,6 +507,411 @@ class ComplexSSIMCombinedLoss(BaseLoss):
         loss = torch.clamp(loss, min=0.0)
         return self._reduce(loss)
     
+
+class SplitRealImagLoss(BaseLoss):
+    """Lsplit = ||Re(X^) - Re(X)||^2 + ||Im(X^) - Im(X)||^2"""
+    def forward(self, prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        if torch.is_complex(prediction):
+            loss = (prediction.real - target.real).pow(2) + (prediction.imag - target.imag).pow(2)
+        else:
+            # assume last dim size 2: [..., 2] = (real, imag)
+            loss = (prediction[..., 0] - target[..., 0]).pow(2) + (prediction[..., 1] - target[..., 1]).pow(2)
+        return self._reduce(loss)
+
+
+class PolarLoss(BaseLoss):
+    """
+    Lpolar = w_mag * |||X^| - |X|||^2 + w_phase * ||phase_diff||^2
+    Uses robust principal-value angle-difference.
+    """
+    def __init__(self, w_mag: float = 1.0, w_phase: float = 1.0, reduction: str = 'mean') -> None:
+        super().__init__(reduction=reduction)
+        self.w_mag = w_mag
+        self.w_phase = w_phase
+
+    def forward(self, prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        mag_pred = complex_abs(prediction)
+        mag_tgt = complex_abs(target)
+        mag_loss = (mag_pred - mag_tgt).pow(2)
+
+        ang_pred = complex_angle(prediction)
+        ang_tgt = complex_angle(target)
+        ang_diff = angle_difference(ang_pred, ang_tgt)
+        phase_loss = ang_diff.pow(2)
+
+        loss = self.w_mag * mag_loss + self.w_phase * phase_loss
+        return self._reduce(loss)
+
+
+class ComplexMSELoss(BaseLoss):
+    """LcMSE = ||X^ - X||^2 (complex squared error)"""
+    def forward(self, prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        if torch.is_complex(prediction):
+            diff_sq = (prediction.real - target.real).pow(2) + (prediction.imag - target.imag).pow(2)
+        else:
+            diff_sq = (prediction - target).pow(2)
+        return self._reduce(diff_sq)
+
+
+class RobustComplexLoss(BaseLoss):
+    """
+    Robust alternatives. Two modes:
+      - 'quartic' -> sum |diff|^4
+      - 'logcosh' -> sum log(cosh(|diff|))
+    """
+    def __init__(self, mode: str = 'logcosh', reduction: str = 'mean'):
+        super().__init__(reduction=reduction)
+        assert mode in ['quartic', 'logcosh'], "mode must be 'quartic' or 'logcosh'"
+        self.mode = mode
+
+    def forward(self, prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        diff = prediction - target
+        mag = complex_abs(diff)
+        if self.mode == 'quartic':
+            loss = mag.pow(4)
+        else:
+            # logcosh(|diff|)
+            # log(cosh(x)) is approx. x^2/2 for small x and linear for large x
+            # to keep numerical stability clip magnitude
+            loss = torch.log(torch.cosh(mag + 1e-12))
+        return self._reduce(loss)
+
+
+class LogMagnitudeLoss(BaseLoss):
+    """
+    Llogmag = || ln|X^| - ln|X| ||^2
+    Avoids -inf at zeros with eps.
+    """
+    def __init__(self, eps: float = 1e-6, reduction: str = 'mean'):
+        super().__init__(reduction=reduction)
+        self.eps = eps
+
+    def forward(self, prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        mag_pred = complex_abs(prediction).clamp(min=self.eps)
+        mag_tgt = complex_abs(target).clamp(min=self.eps)
+        loss = (torch.log(mag_pred) - torch.log(mag_tgt)).pow(2)
+        return self._reduce(loss)
+
+
+class SymmetryConstrainedLoss(BaseLoss):
+    """
+    L = ||X^ - X||^2 + lambda * ||X^ - S(X^)||^2,
+    where S is a symmetry operator (callable). If S is None, defaults to conjugate transpose along last two dims (Hermitian)
+    """
+    def __init__(self, lam: float = 1.0, symmetry_op: Optional[Callable[[torch.Tensor], torch.Tensor]] = None, reduction: str = 'mean'):
+        super().__init__(reduction=reduction)
+        self.lam = lam
+        self.symmetry_op = symmetry_op
+
+    def default_symmetry(self, x: torch.Tensor) -> torch.Tensor:
+        # Attempt a generic conjugate symmetry: conj and reverse spatial dims if 2D
+        if torch.is_complex(x):
+            return x.conj()
+        else:
+            # if real-imag stacked: flip imag sign
+            out = x.clone()
+            out[..., 1] = -out[..., 1]
+            return out
+
+    def forward(self, prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        recon_loss = ComplexMSELoss(reduction='none')(prediction, target)
+        op = self.symmetry_op or self.default_symmetry
+        sym_loss = ComplexMSELoss(reduction='none')(prediction, op(prediction))
+        loss = recon_loss + self.lam * sym_loss
+        return self._reduce(loss)
+
+
+class PolarimetricDecompositionLoss(BaseLoss):
+    """
+    For PolSAR: expects predictions and targets as sequence/tuple/list of complex components cpred_i.
+    Usage: pass prediction as tensor with extra channel dim or a sequence of component tensors.
+    Simple implementation supports two styles:
+     - prediction/target: (B, C, H, W) complex with C = number of polarimetric channels
+     - or prediction/target: list/tuple of length C of (B, H, W) complex tensors
+    """
+    def __init__(self, reduction: str = 'mean'):
+        super().__init__(reduction=reduction)
+
+    def forward(self, prediction, target):
+        if isinstance(prediction, (list, tuple)):
+            # list of components
+            loss = 0.0
+            for p, t in zip(prediction, target):
+                loss = loss + ComplexMSELoss(reduction='none')(p, t)
+            return self._reduce(loss)
+        else:
+            # assume tensor shape (B, C, H, W)
+            # compute per-channel complex mse and sum over channels
+            # if real layout (B, C, H, W, 2) treat accordingly
+            if torch.is_complex(prediction):
+                diff_sq = (prediction.real - target.real).pow(2) + (prediction.imag - target.imag).pow(2)
+            else:
+                diff_sq = (prediction - target).pow(2)
+            # sum across channel dimension (1)
+            loss = diff_sq.sum(dim=1)
+            return self._reduce(loss)
+
+
+class PowerLoss(BaseLoss):
+    """
+    Lpower = (sum |X^|^2 - sum |X|^2)^2
+    Computes global power difference per-batch.
+    """
+    def __init__(self, reduction: str = 'mean'):
+        super().__init__(reduction=reduction)
+
+    def forward(self, prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        P_pred = complex_abs(prediction).pow(2).sum(dim=list(range(1, prediction.dim())))  # sum over non-batch dims
+        P_tgt = complex_abs(target).pow(2).sum(dim=list(range(1, target.dim())))
+        diff_sq = (P_pred - P_tgt).pow(2)
+        # diff_sq is per-batch scalar; we want to reduce according to reduction
+        if self.reduction == 'none':
+            return diff_sq
+        return self._reduce(diff_sq)
+
+
+class SpeckleNLLLoss(BaseLoss):
+    """
+    Negative log-likelihood for circular complex Gaussian speckle:
+    p(x | mu, sigma^2) = 1/(pi sigma^2) * exp(-|x-mu|^2 / sigma^2)
+    NLL per pixel: ln(pi sigma^2) + |x-mu|^2 / sigma^2
+    Two modes:
+       - fixed_sigma: scalar sigma provided
+       - predicted_sigma: second output channel gives variance estimate
+    prediction can be:
+       - complex tensor (mu) and sigma given as float
+       - tuple (mu, sigma_pred) where sigma_pred is real non-negative (same shape as mu magnitude)
+    """
+    def __init__(self, sigma: Optional[float] = None, eps: float = 1e-6, reduction: str = 'mean'):
+        super().__init__(reduction=reduction)
+        self.sigma = sigma
+        self.eps = eps
+
+    def forward(self, prediction, target):
+        if isinstance(prediction, (tuple, list)) and len(prediction) == 2:
+            mu, sigma_pred = prediction
+            sigma2 = sigma_pred.clamp(min=self.eps)
+        else:
+            mu = prediction
+            if self.sigma is None:
+                raise ValueError("Either pass (mu, sigma_pred) or set fixed sigma in constructor")
+            sigma2 = torch.tensor(self.sigma ** 2, device=mu.device, dtype=mu.dtype)
+
+        mag_sq = (complex_abs(target - mu)).pow(2)
+        # if sigma2 is scalar tensor expand to match
+        if sigma2.dim() == 0:
+            nll = torch.log(torch.tensor(torch.pi, device=mu.device, dtype=mu.dtype) * sigma2) + mag_sq / sigma2
+        else:
+            nll = torch.log(torch.pi * sigma2) + mag_sq / sigma2
+        return self._reduce(nll)
+
+
+class ComplexTVLoss(BaseLoss):
+    """
+    Isotropic TV on complex-valued image:
+    sum_{m,n} (|X_{m+1,n} - X_{m,n}| + |X_{m,n+1} - X_{m,n}|)
+    Implemented with magnitude of complex differences.
+    """
+    def forward(self, prediction: torch.Tensor, target: torch.Tensor = None) -> torch.Tensor:
+        # target not used; TV is regularizer on prediction
+        x = prediction
+        # compute forward differences
+        dx = x[..., 1:] - x[..., :-1]
+        dy = x[..., :, 1:] - x[..., :, :-1] if x.dim() >= 3 else (x[..., :, 1:] - x[..., :, :-1])
+        # Because indexing differs with dims, we compute generically:
+        # We'll compute differences along last two spatial dims if available.
+        if x.dim() < 2:
+            raise ValueError("Input must have at least 2 dims (batch, spatial...)")
+        # We assume shape (B, H, W) or (B, C, H, W)
+        if x.dim() >= 3:
+            # spatial dims assumed last two
+            dh = x[..., 1:, :] - x[..., :-1, :]
+            dw = x[..., :, 1:] - x[..., :, :-1]
+            loss = complex_abs(dh).sum(-1).sum(-1) if torch.is_complex(x) else complex_abs(dh).sum()
+            # but better: compute elementwise and sum all
+            loss = complex_abs(dh)
+            loss = loss.sum()
+            loss = loss + complex_abs(dw).sum()
+        else:
+            # fallback 1D difference
+            loss = complex_abs(dx).sum()
+        # return scalar or per-batch?
+        # We'll average per-batch if reduction == 'mean', else sum or none (none not well-defined here)
+        if self.reduction == 'none':
+            return loss  # note: returns scalar; user can adapt
+        return self._reduce(loss)
+
+
+class GradientMatchingLoss(BaseLoss):
+    """
+    Lgrad = ||grad |X^| - grad |X|||^2 + ||grad angle(X^) - grad angle(X)||^2
+    Uses simple finite differences to compute gradients (sobel-ish could be added).
+    """
+    def __init__(self, w_mag: float = 1.0, w_phase: float = 1.0, reduction: str = 'mean'):
+        super().__init__(reduction=reduction)
+        self.w_mag = w_mag
+        self.w_phase = w_phase
+
+    def _spatial_grads(self, t: torch.Tensor):
+        # expects shape (B, H, W) or (B, C, H, W)
+        # compute simple forward differences on last two dims
+        if t.dim() < 3:
+            raise ValueError("Tensor must be at least 3D (B, H, W)")
+        gx = t[..., 1:, :] - t[..., :-1, :]
+        gy = t[..., :, 1:] - t[..., :, :-1]
+        # pad to same shape
+        gx = F.pad(gx, (0, 0, 0, 1))
+        gy = F.pad(gy, (0, 1, 0, 0))
+        return gx, gy
+
+    def forward(self, prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        mag_p = complex_abs(prediction)
+        mag_t = complex_abs(target)
+        ang_p = complex_angle(prediction)
+        ang_t = complex_angle(target)
+
+        gmag_p_x, gmag_p_y = self._spatial_grads(mag_p)
+        gmag_t_x, gmag_t_y = self._spatial_grads(mag_t)
+        grad_mag_loss = (gmag_p_x - gmag_t_x).pow(2) + (gmag_p_y - gmag_t_y).pow(2)
+
+        gang_p_x, gang_p_y = self._spatial_grads(ang_p)
+        gang_t_x, gang_t_y = self._spatial_grads(ang_t)
+        # angle differences wrapped
+        d1 = angle_difference(gang_p_x, gang_t_x).pow(2)
+        d2 = angle_difference(gang_p_y, gang_t_y).pow(2)
+        grad_phase_loss = d1 + d2
+
+        loss = self.w_mag * grad_mag_loss + self.w_phase * grad_phase_loss
+        return self._reduce(loss)
+
+
+class PhaseSmoothnessLoss(BaseLoss):
+    """
+    Penalize Laplacian (second-order differences) of the phase to encourage smooth phase.
+    Lphase = sum (Delta angle(Xhat))^2
+    """
+    def __init__(self, reduction: str = 'mean'):
+        super().__init__(reduction=reduction)
+
+    def forward(self, prediction: torch.Tensor, target: torch.Tensor = None) -> torch.Tensor:
+        ang = complex_angle(prediction)
+        # discrete Laplacian on last two dims
+        # assume (B, H, W) or (B, C, H, W)
+        # create padded version for neighbors
+        pad = (1, 1, 1, 1)  # pad left,right,top,bottom
+        ang_p = F.pad(ang, pad, mode='replicate')
+        center = ang_p[..., 1:-1, 1:-1]
+        up = ang_p[..., :-2, 1:-1]
+        down = ang_p[..., 2:, 1:-1]
+        left = ang_p[..., 1:-1, :-2]
+        right = ang_p[..., 1:-1, 2:]
+        lap = (up + down + left + right - 4 * center)
+        loss = angle_difference(lap, torch.zeros_like(lap)).pow(2)
+        return self._reduce(loss)
+
+
+class GANLoss(BaseLoss):
+    """
+    Standard GAN loss wrappers. Expects discriminator outputs.
+    mode:
+      - 'vanilla' -> BCE with logits
+      - 'hinge' -> hinge loss
+    The forward signature:
+      - forward(pred_fake_logits, pred_real_logits=None)
+      or provide labels tensors.
+    """
+    def __init__(self, mode: str = 'vanilla', reduction: str = 'mean'):
+        super().__init__(reduction=reduction)
+        assert mode in ['vanilla', 'hinge']
+        self.mode = mode
+        self.bce = nn.BCEWithLogitsLoss(reduction='none')
+
+    def fake_loss(self, pred_fake: torch.Tensor) -> torch.Tensor:
+        if self.mode == 'vanilla':
+            labels = torch.zeros_like(pred_fake)
+            return self._reduce(self.bce(pred_fake, labels))
+        else:
+            # hinge
+            return self._reduce(F.relu(1.0 + pred_fake).mean())
+
+    def real_loss(self, pred_real: torch.Tensor) -> torch.Tensor:
+        if self.mode == 'vanilla':
+            labels = torch.ones_like(pred_real)
+            return self._reduce(self.bce(pred_real, labels))
+        else:
+            return self._reduce(F.relu(1.0 - pred_real).mean())
+
+    def forward(self, pred_fake: torch.Tensor, pred_real: Optional[torch.Tensor] = None, which: str = 'both') -> torch.Tensor:
+        """
+        which: 'both', 'gen' (generator wants fake to be real), 'disc' (compute discriminator loss using pred_real and pred_fake)
+        If which == 'gen' -> generator loss = -E[log D(fake)] (vanilla) approximated by BCE with target ones.
+        """
+        if which == 'gen':
+            if self.mode == 'vanilla':
+                labels = torch.ones_like(pred_fake)
+                return self._reduce(self.bce(pred_fake, labels))
+            else:
+                # hinge generator loss
+                return self._reduce((-pred_fake).mean())
+        else:
+            # discriminator loss
+            if pred_real is None:
+                raise ValueError("pred_real must be provided for discriminator loss")
+            real_l = self.real_loss(pred_real)
+            fake_l = self.fake_loss(pred_fake)
+            return real_l + fake_l
+
+
+class FeatureLoss(BaseLoss):
+    """
+    Lfeat = ||Phi(X^) - Phi(X)||^2
+    feature_extractor should accept complex or real tensors and produce a real feature tensor.
+    Provide preprocess_fn if conversion from complex to feature extractor input is needed.
+    """
+    def __init__(self, feature_extractor: Callable[[torch.Tensor], torch.Tensor], preprocess_fn: Optional[Callable[[torch.Tensor], torch.Tensor]] = None, reduction: str = 'mean'):
+        super().__init__(reduction=reduction)
+        self.feature_extractor = feature_extractor
+        self.preprocess_fn = preprocess_fn
+
+    def forward(self, prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        pred_in = prediction if self.preprocess_fn is None else self.preprocess_fn(prediction)
+        tgt_in = target if self.preprocess_fn is None else self.preprocess_fn(target)
+        feat_pred = self.feature_extractor(pred_in)
+        feat_tgt = self.feature_extractor(tgt_in)
+        loss = (feat_pred - feat_tgt).pow(2)
+        return self._reduce(loss)
+
+
+class CompositeLoss(BaseLoss):
+    """
+    Composite weighted combination of sub-losses:
+    L = sum_i alpha_i * Li
+    sub_losses: sequence of (weight, loss_instance)
+    """
+    def __init__(self, sub_losses: Sequence[tuple], reduction: str = 'mean'):
+        super().__init__(reduction=reduction)
+        # sub_losses: [(weight, loss_module), ...]
+        self.sub_losses = nn.ModuleList([l for _, l in sub_losses])
+        self.weights = [w for w, _ in sub_losses]
+
+    def forward(self, prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        total = 0.0
+        # use each loss with reduction='none' to combine spatially/elementwise if possible
+        for w, loss_module in zip(self.weights, self.sub_losses):
+            # temporarily force none to get elementwise loss if module supports it
+            # if module has attribute reduction, set and restore
+            prev_reduction = getattr(loss_module, 'reduction', None)
+            try:
+                loss_module.reduction = 'none'
+            except Exception:
+                pass
+            l = loss_module(prediction, target)
+            # restore
+            if prev_reduction is not None:
+                loss_module.reduction = prev_reduction
+            total = total + w * l
+        return self._reduce(total)
+    
 def get_loss_function(loss_name: str, **kwargs) -> BaseLoss:
     """
     Factory function to get loss function by name.
@@ -512,6 +937,20 @@ def get_loss_function(loss_name: str, **kwargs) -> BaseLoss:
         'ssim': SSIM1DLoss(window_size=7, reduction='mean'), 
         'edge': EdgeLoss, 
         'combined_complex_ssim': ComplexSSIMCombinedLoss,
+        'split_real_imag': SplitRealImagLoss,
+        'polar': PolarLoss,
+        'robust_complex': RobustComplexLoss,
+        'log_magnitude': LogMagnitudeLoss,
+        'symmetry': SymmetryConstrainedLoss,
+        'polarimetric': PolarimetricDecompositionLoss,
+        'power': PowerLoss,
+        'speckle_nll': SpeckleNLLLoss,
+        'complex_tv': ComplexTVLoss,
+        'gradient_matching': GradientMatchingLoss,
+        'phase_smoothness': PhaseSmoothnessLoss,
+        'gan': GANLoss,
+        'feature': FeatureLoss,
+        'composite': CompositeLoss,
     }
     
     if loss_name.lower() not in loss_registry:

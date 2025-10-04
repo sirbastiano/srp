@@ -476,10 +476,21 @@ class ComplexLinear(nn.Module):
     """A simple complex linear layer using two real-valued linear layers."""
     def __init__(self, in_features, out_features, bias=True):
         super().__init__()
-        self.real = nn.Linear(in_features, out_features, bias=bias)
-        self.imag = nn.Linear(in_features, out_features, bias=bias)
+        self.W_real = nn.Linear(in_features, out_features, bias=bias)
+        self.W_imag = nn.Linear(in_features, out_features, bias=bias)
+
     def forward(self, x):
-        return torch.complex(self.real(x.real), self.imag(x.imag))
+        xr, xi = x.real, x.imag
+        yr = self.W_real(xr) - self.W_imag(xi)
+        yi = self.W_real(xi) + self.W_imag(xr)
+        return torch.complex(yr, yi)
+    # def __init__(self, in_features, out_features, bias=True):
+    #     super().__init__()
+    #     self.real = nn.Linear(in_features, out_features, bias=bias)
+    #     self.imag = nn.Linear(in_features, out_features, bias=bias)
+    # def forward(self, x):
+    #     return torch.complex(self.real(x.real), self.imag(x.imag))
+
 
 class sarSSM(nn.Module):
     def __init__(

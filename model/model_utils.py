@@ -17,7 +17,6 @@
 from model.transformers.rv_transformer import RealValuedTransformer  # your import
 from model.transformers.cv_transformer import ComplexTransformer
 from model.SSMs.SSM import sarSSM, S4D
-from model.SSMs.SSM import sarSSM, S4D
 import torch
 import torch.nn as nn
 from typing import Optional, Dict, Any
@@ -83,6 +82,178 @@ class SARSSMFactory:
     """
     
     @staticmethod
+    def create_simple_ssm(
+        input_dim: int = 4,
+        state_dim: int = 64,
+        output_dim: int = 2,
+        num_layers: int = 6,
+        dropout: float = 0.1,
+        use_pos_encoding: bool = True,
+        **kwargs
+    ) -> nn.Module:
+        """
+        Create a SimpleSSM model for column-wise SAR focusing.
+        
+        Args:
+            input_dim: Input feature dimension (typically 4 for real, imag, pos_y, pos_x)
+            state_dim: Hidden state dimension for the SSM
+            output_dim: Output dimension (typically 2 for real, imag)
+            num_layers: Number of SSM layers to stack
+            dropout: Dropout rate
+            use_pos_encoding: Whether to use positional encoding
+            
+        Returns:
+            Configured SimpleSSM model
+        """
+        # Create wrapper model with proper input/output projections
+        class SimpleSSMWrapper(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.use_pos_encoding = use_pos_encoding
+                
+                # Input projection
+                if use_pos_encoding:
+                    self.input_proj = nn.Linear(input_dim, 2)  # Project to 2D for real/imag
+                else:
+                    self.input_proj = nn.Linear(input_dim - 2, 2)  # Exclude pos encoding
+                
+                # SSM layers
+                self.ssm_layers = nn.ModuleList([
+                    SimpleSSM(
+                        state_dim=state_dim,
+                        L=kwargs.get('seq_length', 1000),
+                        channel_dim=2,  # For real and imaginary parts
+                        dt_min=kwargs.get('dt_min', 0.001),
+                        dt_max=kwargs.get('dt_max', 0.1),
+                        lr=kwargs.get('lr_ssm', None),
+                        use_fft=kwargs.get('use_fft', True)
+                    )
+                    for _ in range(num_layers)
+                ])
+                
+                # Output projection
+                self.output_proj = nn.Linear(2, output_dim)
+                self.dropout = nn.Dropout(dropout)
+                
+            def forward(self, x):
+                # x shape: (B, T, input_dim) for column-wise processing
+                if self.use_pos_encoding:
+                    # Use all features including positional encoding
+                    h = self.input_proj(x)  # (B, T, 2)
+                else:
+                    # Exclude positional encoding (last 2 dims)
+                    h = self.input_proj(x[..., :-2])  # (B, T, 2)
+                
+                # Transpose for SSM: (B, 2, T)
+                h = h.transpose(1, 2)
+                
+                # Apply SSM layers
+                for ssm in self.ssm_layers:
+                    h_new = ssm(h)
+                    h = h + h_new  # Residual connection
+                    h = self.dropout(h)
+                
+                # Transpose back and project output
+                h = h.transpose(1, 2)  # (B, T, 2)
+                return self.output_proj(h)  # (B, T, output_dim)
+        
+        return SimpleSSMWrapper()
+    
+    @staticmethod
+    def create_mamba_ssm(
+        input_dim: int = 4,
+        state_dim: int = 256,
+        output_dim: int = 2,
+        num_layers: int = 8,
+        dropout: float = 0.1,
+        expansion_factor: int = 2,
+        use_pos_encoding: bool = True,
+        **kwargs
+    ) -> nn.Module:
+        """
+        Create a Mamba SSM model for selective state space modeling.
+        
+        Args:
+            input_dim: Input feature dimension
+            state_dim: Hidden state dimension
+            output_dim: Output dimension
+            num_layers: Number of Mamba layers
+            dropout: Dropout rate
+            expansion_factor: Expansion factor for the model
+            use_pos_encoding: Whether to use positional encoding
+            
+        Returns:
+            Configured MambaModel
+        """
+        # Calculate model dimension based on expansion factor
+        model_dim = state_dim * expansion_factor
+        
+        # Create wrapper for input/output handling
+        class MambaSSMWrapper(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.use_pos_encoding = use_pos_encoding
+                
+                # Input projection
+                proj_input_dim = input_dim if use_pos_encoding else input_dim - 2
+                self.input_proj = nn.Linear(proj_input_dim, model_dim)
+                
+                # Mamba model
+                self.mamba = MambaModel(
+                    input_dim=model_dim,
+                    state_dim=state_dim,
+                    delta_rank=kwargs.get('delta_rank', state_dim // 16),
+                    num_layers=num_layers,
+                    dropout=dropout,
+                    dt_min=kwargs.get('dt_min', 0.001),
+                    dt_max=kwargs.get('dt_max', 0.1),
+                    lr=kwargs.get('lr_ssm', None)
+                )
+                
+                # Output projection
+                self.output_proj = nn.Linear(model_dim, output_dim)
+                
+            def forward(self, x):
+                # Handle input projection
+                if self.use_pos_encoding:
+                    h = self.input_proj(x)
+                else:
+                    h = self.input_proj(x[..., :-2])
+                
+                # Process through Mamba (expects (B, range_bins, T))
+                # For column-wise processing, we treat each column as a range bin
+                B, T, D = h.shape
+                h = h.unsqueeze(1)  # (B, 1, T, D) - single range bin
+                h = h.transpose(2, 3)  # (B, 1, D, T)
+                h = h.squeeze(1)  # (B, D, T)
+                
+                # Transpose for Mamba input format (B, T, D)
+                h = h.transpose(1, 2)  # (B, T, D)
+                
+                # Apply Mamba (note: need to adapt for single range bin)
+                # Create temporary expanded format for Mamba
+                h_expanded = h.unsqueeze(1)  # (B, 1, T, D)
+                h_expanded = h_expanded.transpose(1, 2)  # (B, T, 1, D)
+                h_expanded = h_expanded.squeeze(-1)  # (B, T, D)
+                
+                # Process each sequence
+                outputs = []
+                for i in range(h.shape[0]):  # Batch dimension
+                    seq = h[i:i+1]  # (1, T, D)
+                    out = self.mamba.input_proj(seq)  # (1, T, model_dim)
+                    
+                    for block in self.mamba.layers:
+                        out = block(out) + out  # Residual connection
+                    
+                    out = self.mamba.output_proj(out)  # (1, T, 1)
+                    outputs.append(out.squeeze(-1))  # (1, T)
+                
+                result = torch.stack(outputs, dim=0)  # (B, T)
+                return self.output_proj(h)  # Use original projection
+        
+        return MambaSSMWrapper()
+    
+    @staticmethod
     def create_s4_ssm(
             input_dim: int = 4,
             state_dim: int = 512,
@@ -95,6 +266,7 @@ class SARSSMFactory:
             preprocess: bool = True,
             use_selectivity: bool = True,
             mode: str = "sequential",
+            activation_function: str = "gelu",
             **kwargs
         ) -> nn.Module:
         """
@@ -122,8 +294,9 @@ class SARSSMFactory:
             dropout=dropout,
             use_pos_encoding=use_pos_encoding,
             complex_valued=complex_valued,
-            preprocess = preprocess,
+            preprocess=preprocess,
             use_selectivity=use_selectivity,
+            activation_function=activation_function,
             **kwargs
         )
 
@@ -131,7 +304,7 @@ def create_ssm_model(
     model_type: str,
     input_dim: int = 4,
     state_dim: int = 64,
-    model_dim: int = 1000,
+    model_dim: int = 512,
     output_dim: int = 2,
     num_layers: int = 6,
     dropout: float = 0.1,
@@ -139,7 +312,7 @@ def create_ssm_model(
     complex_valued: bool = True,
     mode: str = "sequential",
     preprocess: bool = True,
-    use_selectivity: bool = False,
+    activation_function: str = "gelu",
 ) -> nn.Module:
     """
     Factory function to create SSM models based on configuration.
@@ -172,8 +345,8 @@ def create_ssm_model(
             dropout=dropout,
             use_pos_encoding=use_pos_encoding,
             complex_valued=complex_valued,
-            preprocess=preprocess, 
-            use_selectivity=use_selectivity 
+            preprocess=preprocess,
+            activation_function=activation_function
         )
     else:
         raise ValueError(f"Unsupported SSM model type: {model_type}. Supported types: 'simple', 'mamba', 's4'")
@@ -256,6 +429,7 @@ def get_model_from_configs(
         mode: str = "parallel",
         preprocess: bool = True,
         complex_valued: bool = True,
+        activation_function: str = "gelu",
         **kwargs
     ):
     if name == "cv_transformer":
@@ -302,26 +476,10 @@ def get_model_from_configs(
             dropout=dropout,
             mode=mode  
         )
-    elif name in ["simple_ssm", "mamba_ssm", "s4_ssm"]:
-        # Extract SSM type from name
-        ssm_type = name.split("_")[0]  # "simple", "mamba", or "s4"
-        
-        model = create_ssm_model(
-            model_type=ssm_type,
-            input_dim=input_dim,
-            state_dim=state_dim,
-            output_dim=kwargs.get('output_dim', 2),
-            model_dim=model_dim,
-            num_layers=num_layers,
-            dropout=dropout,
-            complex_valued=complex_valued,
-            use_pos_encoding=kwargs.get('use_pos_encoding', True), 
-            preprocess=preprocess
-        )
-    elif name=="ssm":
+    elif name in ["simple_ssm", "mamba_ssm", "s4_ssm", "ssm"]:
         # Legacy support - defaults to simple SSM
         model = create_ssm_model(
-            model_type="simple",
+            model_type="s4",
             input_dim=input_dim,
             state_dim=state_dim,
             output_dim=kwargs.get('output_dim', 2),
@@ -329,7 +487,8 @@ def get_model_from_configs(
             num_layers=num_layers,
             dropout=dropout, 
             complex_valued=complex_valued,
-            preprocess=preprocess
+            preprocess=preprocess,
+            activation_function=activation_function
         )
     else:
         raise ValueError(f"Invalid model name: {name}")
@@ -423,6 +582,41 @@ def load_pretrained_weights(
     except Exception as e:
         raise RuntimeError(f"Failed to load state dict: {str(e)}")
 
+def create_model_with_pretrained(
+    model_config: Dict[str, Any],
+    pretrained_path: Optional[str] = None,
+    strict_loading: bool = True,
+    device: str = 'cpu'
+) -> nn.Module:
+    """
+    Create a model and optionally load pretrained weights.
+    
+    Args:
+        model_config: Configuration dictionary for model creation
+        pretrained_path: Optional path to pretrained weights
+        strict_loading: Whether to use strict loading
+        device: Device to load model on
+        
+    Returns:
+        Model with optionally loaded pretrained weights
+    """
+    # Create model using existing factory
+    model = get_model_from_configs(**model_config)
+    model = model.to(device)
+    
+    # Load pretrained weights if provided
+    if pretrained_path:
+        loading_info = load_pretrained_weights(
+            model=model,
+            checkpoint_path=pretrained_path,
+            strict=strict_loading,
+            map_location=device
+        )
+        
+        # Store loading info as model attribute for reference
+        model._pretrained_info = loading_info
+    
+    return model
 
 def save_checkpoint(
     model: nn.Module,
@@ -478,39 +672,3 @@ def save_checkpoint(
     # Save checkpoint
     torch.save(checkpoint, save_path)
     print(f"Saved checkpoint to: {save_path}")
-    
-def create_model_with_pretrained(
-    model_config: Dict[str, Any],
-    pretrained_path: Optional[str] = None,
-    strict_loading: bool = True,
-    device: str = 'cpu'
-) -> nn.Module:
-    """
-    Create a model and optionally load pretrained weights.
-    
-    Args:
-        model_config: Configuration dictionary for model creation
-        pretrained_path: Optional path to pretrained weights
-        strict_loading: Whether to use strict loading
-        device: Device to load model on
-        
-    Returns:
-        Model with optionally loaded pretrained weights
-    """
-    # Create model using existing factory
-    model = get_model_from_configs(**model_config)
-    model = model.to(device)
-    
-    # Load pretrained weights if provided
-    if pretrained_path:
-        loading_info = load_pretrained_weights(
-            model=model,
-            checkpoint_path=pretrained_path,
-            strict=strict_loading,
-            map_location=device
-        )
-        
-        # Store loading info as model attribute for reference
-        model._pretrained_info = loading_info
-    
-    return model
