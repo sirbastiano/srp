@@ -46,12 +46,12 @@ def main():
                        help='Path to student model configuration file')
     parser.add_argument('--save_dir', type=str, default='./results/distillation',
                        help='Directory to save distillation results')
-    parser.add_argument('--temperature', type=float, default=4.0,
-                       help='Temperature for knowledge distillation')
-    parser.add_argument('--alpha', type=float, default=0.3,
-                       help='Weight for student loss (ground truth)')
-    parser.add_argument('--beta', type=float, default=0.5,
-                       help='Weight for distillation loss (teacher knowledge)')
+    parser.add_argument('--temperature', type=float, default=2.5,
+                       help='Temperature for knowledge distillation (reduced for sharper signals)')
+    parser.add_argument('--alpha', type=float, default=0.8,
+                       help='Weight for student loss (ground truth) - increased for better learning')
+    parser.add_argument('--beta', type=float, default=0.15,
+                       help='Weight for distillation loss (teacher knowledge) - reduced to prevent mode collapse')
     parser.add_argument('--num_epochs', type=int, default=None,
                        help='Number of training epochs (overrides config)')
     parser.add_argument('--learning_rate', type=float, default=None,
@@ -65,7 +65,35 @@ def main():
     parser.add_argument('--student_num_layers', type=int, default=None,
                        help='Student number of layers (overrides config)')
     
+    # Progressive layer coupling arguments
+    parser.add_argument('--progressive_layers', action='store_true',
+                       help='Enable progressive layer coupling strategy')
+    parser.add_argument('--teacher_layers', type=int, default=6,
+                       help='Number of teacher model layers')
+    parser.add_argument('--student_layers', type=int, default=4,
+                       help='Number of student model layers')
+    parser.add_argument('--stage_epochs', type=int, default=15,
+                       help='Number of epochs per progressive training stage')
+    
+    # Distribution preservation arguments (NEW)
+    parser.add_argument('--preserve_distribution', action='store_true', default=True,
+                       help='Enable distribution-preserving knowledge distillation (DEFAULT: True)')
+    parser.add_argument('--variance_weight', type=float, default=0.2,
+                       help='Weight for variance preservation loss')
+    parser.add_argument('--moment_weight', type=float, default=0.15,
+                       help='Weight for moment matching loss')
+    parser.add_argument('--confidence_weight', type=float, default=0.08,
+                       help='Weight for confidence calibration loss')
+    parser.add_argument('--dynamic_temperature', action='store_true', default=True,
+                       help='Enable dynamic temperature scaling (DEFAULT: True)')
+    parser.add_argument('--disable_distribution_preservation', action='store_true',
+                       help='Disable distribution preservation (use standard KD)')
+    
     args = parser.parse_args()
+    
+    # Handle distribution preservation flag
+    if args.disable_distribution_preservation:
+        args.preserve_distribution = False
     
     # Ensure save directory exists
     os.makedirs(args.save_dir, exist_ok=True)
@@ -78,6 +106,18 @@ def main():
     print(f"Student config: {args.student_config}")
     print(f"Save directory: {args.save_dir}")
     print(f"Distillation parameters: T={args.temperature}, α={args.alpha}, β={args.beta}")
+    
+    # Print distillation strategy
+    if args.progressive_layers:
+        print(f"Strategy: Progressive layer coupling (Teacher: {args.teacher_layers}, Student: {args.student_layers}, Stage epochs: {args.stage_epochs})")
+    elif args.preserve_distribution:
+        print(f"Strategy: Distribution-preserving KD")
+        print(f"   Variance weight: {args.variance_weight}")
+        print(f"   Moment weight: {args.moment_weight}")
+        print(f"   Confidence weight: {args.confidence_weight}")
+        print(f"   Dynamic temperature: {args.dynamic_temperature}")
+    else:
+        print(f"Strategy: Standard knowledge distillation")
     print()
     
     # Load configurations
@@ -117,7 +157,20 @@ def main():
         'beta': args.beta,
         'gamma': 1.0 - args.alpha - args.beta,
         'feature_matching': student_config.get('distillation', {}).get('feature_matching', True),
-        'freeze_teacher': student_config.get('distillation', {}).get('freeze_teacher', True)
+        'freeze_teacher': student_config.get('distillation', {}).get('freeze_teacher', True),
+        
+        # Progressive layer coupling parameters
+        'progressive_layers': args.progressive_layers,
+        'teacher_layers': args.teacher_layers,
+        'student_layers': args.student_layers,
+        'stage_epochs': args.stage_epochs,
+        
+        # Distribution preservation parameters (NEW)
+        'preserve_distribution': args.preserve_distribution and not args.progressive_layers,  # Don't mix strategies
+        'variance_weight': args.variance_weight,
+        'moment_weight': args.moment_weight,
+        'confidence_weight': args.confidence_weight,
+        'dynamic_temperature': args.dynamic_temperature
     }
     
     # Create models
@@ -219,6 +272,7 @@ def main():
             inference_loader=inference_loader,
             mode=student_config['training'].get('mode', 'parallel'),
             lr=student_config['training'].get('lr', 1e-4),
+            loss_fn_name=student_config['training'].get('loss_fn', 'complex_mse'),
             **distillation_config
         )
         
@@ -249,7 +303,6 @@ def main():
             callbacks=[checkpoint_callback, early_stopping],
             devices=1,
             accelerator="gpu" if torch.cuda.is_available() else "cpu",
-            precision=16 if torch.cuda.is_available() else 32,
             gradient_clip_val=1.0,
             log_every_n_steps=50,
             check_val_every_n_epoch=1,
