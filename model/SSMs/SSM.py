@@ -505,7 +505,7 @@ class sarSSM(nn.Module):
         complex_valued=True,
         use_positional_as_token=False,
         preprocess=True,
-        activation_function='gelu',
+        activation_function='relu',
         use_selectivity=True
     ):
         """
@@ -575,14 +575,14 @@ class sarSSM(nn.Module):
             self.layer_output_projs = nn.ModuleList([
                 nn.Linear(model_dim*1, model_dim) for _ in range(num_layers)
             ])
-        if complex_valued:
-            self.norm = ComplexLayerNorm(model_dim)
-        else:
-            self.norm = nn.LayerNorm(model_dim)
-        if complex_valued:
-            self.dropout = ComplexDropout(dropout)
-        else:
-            self.dropout = nn.Dropout(dropout)
+        # if complex_valued:
+        #     self.norm = ComplexLayerNorm(model_dim)
+        # else:
+        #     self.norm = nn.LayerNorm(model_dim)
+        # if complex_valued:
+        #     self.dropout = ComplexDropout(dropout)
+        # else:
+        #     self.dropout = nn.Dropout(dropout)
         self.use_pos_encoding = use_pos_encoding
         if self.use_selectivity:
             if complex_valued:
@@ -619,7 +619,7 @@ class sarSSM(nn.Module):
     def forward(self, x):
         # x: (B, L, F)
         x = x.squeeze()
-        x = x.squeeze()
+        #print(f"sarSSM input shape: {x.shape}")
         B, L, feat = x.shape
         assert feat == self.input_dim, f"Expected input feature dim {self.input_dim}, got {feat}"
         if self.complex_valued:
@@ -656,13 +656,13 @@ class sarSSM(nn.Module):
                 h = h + y_p * g
             else:
                 h = h + y_p
-            if self.complex_valued:
-                h = torch.complex(torch.tanh(h.real), torch.tanh(h.imag))
-            else:
-                h = F.gelu(h)
+            # if self.complex_valued:
+            #     h = torch.complex(torch.tanh(h.real), torch.tanh(h.imag))
+            # else:
+            #     h = F.gelu(h)
         h = h.transpose(1,2).contiguous()
-        h = self.norm(h)
-        h = self.dropout(h)
+        # h = self.norm(h)
+        # h = self.dropout(h)
         out = self.output_proj(h)  # (B,L,output_dim)
         return out
 

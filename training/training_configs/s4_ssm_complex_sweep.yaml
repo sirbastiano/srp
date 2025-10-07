@@ -1,0 +1,150 @@
+# Example Configuration with Parameter Sweeps
+# This file demonstrates how to set up parameter sweeps for hyperparameter optimization
+
+# Data directory
+data_dir: "/Data_large/marine/PythonProjects/SAR/sarpyx/data"
+
+# Model configuration
+model:
+  name: "s4_ssm"
+  dim_head: 1
+  input_dim: 2
+  model_dim: 2
+  state_dim: 512
+  output_dim: 1
+  num_layers: 4
+  dropout: 0.1
+  use_pos_encoding: true
+  complex_valued: true
+  use_selectivity: false
+  activation_function: 'relu'
+
+# Training configuration
+training:
+  patience: 50
+  delta: 0.00001
+  weight_decay: 0.001
+  epochs: 200
+  lr: 0.0001
+  scheduler_type: "cosine"
+  loss_fn: "complex_mse"
+  save_dir: "./results/sweep_experiment"
+  mode: "parallel"
+  warmup_epochs: 3
+  warmup_start_lr: 0.00001
+  
+  # Enhanced training options for PyTorch Lightning
+  gradient_clip_val: 1.0  # Gradient clipping to prevent exploding gradients
+  accumulate_grad_batches: 1  # Gradient accumulation for large effective batch sizes
+  #precision: "16-mixed"  # Mixed precision training for faster training and less memory
+  
+  # WandB configuration
+  wandb_project: "ssm4sar_sweep"
+  wandb_entity: "ms3"
+  # wandb_entity: "gabri"  # Comment out to use your default WandB entity
+  wandb_tags: ["sweep", "hyperparameter_optimization", "s4_ssm"]
+
+# Device configuration
+device: "cuda"
+
+# Dataloader configuration
+dataloader:
+  data_dir: "/Data_large/marine/PythonProjects/SAR/sarpyx/data"
+  level_from: "rc"
+  level_to: "az"
+  num_workers: 0
+  patch_mode: "rectangular"
+  patch_size: [1000, 1]
+  buffer: [1000, 1000]
+  stride: [1000, 1]
+  max_base_sample_size: [50000, 50000]
+  shuffle_files: false
+  concatenate_patches: false
+  complex_valued: true
+  save_samples: false
+  online: true
+  verbose: false
+  
+  # Split configurations
+  train:
+    batch_size: 64
+    samples_per_prod: 5000
+    patch_order: "row"
+    max_products: 10
+    filters:
+      years: [2023]
+  
+  validation:
+    batch_size: 32
+    samples_per_prod: 500
+    patch_order: "row"
+    max_products: 1
+    filters:
+      years: [2024]
+  
+  test:
+    batch_size: 32
+    samples_per_prod: 500
+    patch_order: "row"
+    max_products: 1
+    filters:
+      years: [2025]
+
+  inference:
+    batch_size: 32
+    samples_per_prod: 10000
+    patch_order: "row"
+    max_products: 1
+    filters:
+      years: [2023]
+
+# Transform configuration
+transforms:
+  normalize: true
+  complex_valued: true
+  normalization_type: "minmax"
+  rc_min: -2000
+  rc_max: 2000
+  gt_min: -2000
+  gt_max: 2000
+
+
+# Parameter sweep configuration
+sweep:
+  # Training hyperparameters to sweep
+  #"training.lr": [0.0001, 0.0003, 0.001, 0.003]
+  #"training.weight_decay": [0.0001, 0.001, 0.01]
+  #"training.warmup_epochs": [3, 5, 10]
+  #"training.scheduler_type": ["cosine", "plateau"]
+  
+  # Model architecture parameters to sweep
+  #"model.model_dim": [32, 64, 128]
+  #"model.state_dim": [256, 512, 1024]
+  #"model.num_layers": [2, 4, 6]
+  #"model.dropout": [0.1, 0.2, 0.3]
+  
+  # Dataloader parameters to sweep
+  #"dataloader.train.batch_size": [8, 16, 32]
+  #"dataloader.patch_size": [[4000, 1], [6000, 1], [8000, 1]]
+  
+  # Loss function sweep
+  "training.loss_fn": ['log_magnitude', 'polarimetric', 'power'] #['split_real_imag', 'polar', 'robust_complex', 'log_magnitude', 'symmetry', 'polarimetric', 'power', 'speckle_nll', 'complex_tv', 'gradient_matching', 'phase_smoothness', 'gan']
+
+
+# Alternative sweep configuration using WandB distribution syntax
+# sweep_wandb:
+#   method: "bayes"  # or "grid", "random"
+#   metric:
+#     name: "val_loss"
+#     goal: "minimize"
+#   parameters:
+#     "training.lr":
+#       distribution: "log_uniform_values"
+#       min: 0.0001
+#       max: 0.01
+#     "model.model_dim":
+#       values: [32, 64, 128, 256]
+#     "training.weight_decay":
+#       distribution: "log_uniform_values"  
+#       min: 0.0001
+#       max: 0.1

@@ -1,33 +1,8 @@
 """
 Knowledge Distillation Pipeline for sarSSM Models
 
-This module implements a sophisticated knowledge distillation pipeline specifically designed
-for State Space Models (SSMs) working with complex-valued SAR data. The implementation 
-addresses critical challenges identified during development:
-
-CORE INNOVATIONS:
-1. **Mode Collapse Prevention**: Rebalanced loss weights and curriculum learning
-2. **Complex Feature Handling**: Custom complex MSE loss and feature restoration  
-3. **Progressive Layer Coupling**: Semantic layer matching with gradual introduction
-4. **Dimension Mismatch Resolution**: Learnable projections with PCA initialization
-
-TECHNICAL ACHIEVEMENTS:
-- Solved mode collapse where students predicted constant values (~0)
-- Preserved complex feature information through projection operations
-- Achieved 94.2% information retention in extreme compression (64-dim → 1-dim)
-- Implemented curriculum learning preventing teacher over-dependence
-
-IMPLEMENTATION RATIONALE:
-The standard knowledge distillation approach failed for our SAR SSM models because:
-1. High-dimensional teacher features (64-540 dims) vs compressed students (1-16 dims)
-2. Complex-valued features requiring special handling
-3. Sequential nature of SSM features needing semantic layer alignment
-4. Risk of mode collapse due to competing learning objectives
-
-This implementation provides a robust, production-ready solution for SAR model compression.
-
-AUTHORS: Implementation developed through collaborative problem-solving addressing
-         specific failures in standard distillation approaches.
+This module implements knowledge distillation to transfer knowledge from a larger,
+complex teacher model to a smaller, simpler student model.
 """
 
 import torch
@@ -57,7 +32,7 @@ from dataloader.dataloader import SARDataloader
 from pathlib import Path
 import sys
 sys.path.append(str(Path(__file__).parent.parent))
-from training.progressive_layer_coupling import ProgressiveLayerCouplingLoss
+from progressive_layer_coupling import ProgressiveLayerCouplingLoss
 
 # Import distribution preserving distillation
 from training.distribution_preserving_distillation import DistributionPreservingLoss, DistributionStatisticsTracker
@@ -266,150 +241,28 @@ class GradientTracker:
 
 class KnowledgeDistillationLoss(nn.Module):
     """
-    Advanced Knowledge Distillation Loss for Complex-Valued SAR Data
-    
-    This class implements a sophisticated loss function specifically designed to address
-    the challenges of knowledge distillation with State Space Models on SAR data.
-    
-    CRITICAL INNOVATIONS:
-    
-    1. **Mode Collapse Prevention**:
-       - Rebalanced loss weights: α=0.8 (high ground truth focus)
-       - Reduced teacher dependency: β=0.15 (low distillation weight)
-       - Minimal feature competition: γ=0.05 (reduced feature matching)
-       
-    2. **Complex-Valued Feature Support**:
-       - Custom complex MSE implementation (PyTorch doesn't support complex in standard ops)
-       - Phase and magnitude preservation through distillation
-       - Temperature scaling adapted for complex tensors
-       
-    3. **Adaptive Dimension Handling**:
-       - Automatic shape adaptation between teacher and student outputs
-       - Learnable projection for extreme dimension mismatches
-       - Sequence length adaptation using adaptive pooling
-    
-    DESIGN RATIONALE:
-    
-    Traditional distillation parameters (α=0.5, β=0.3, T=4.0) caused mode collapse where
-    student models converged to distribution centers (~0) instead of learning actual patterns.
-    Our empirical testing showed these rebalanced weights prevent collapse while maintaining
-    effective knowledge transfer.
-    
-    LOSS COMPONENTS:
-    
-    Total Loss = α × Student_Loss + β × Distillation_Loss + γ × Feature_Loss
-    
-    Where:
-    - Student_Loss: MSE(student_pred, ground_truth) - Primary learning signal
-    - Distillation_Loss: Complex_MSE(student_pred, teacher_pred) - Knowledge transfer
-    - Feature_Loss: Multi_scale_MSE(student_feat, teacher_feat) - Representation alignment
-    
-    EMPIRICAL VALIDATION:
-    
-    Testing on SAR data showed:
-    - 97.8% improvement in mean preservation
-    - 84.3% improvement in skewness preservation  
-    - 81.9% improvement in kurtosis preservation
-    - Student predictions: -0.095 ± 1.847 (vs collapsed: 0.001 ± 0.0001)
-    
-    Args:
-        temperature (float): Softening factor for teacher outputs. 
-                           Lower = harder targets, Higher = softer targets.
-                           Default: 2.5 (empirically optimal, was 4.0)
-        alpha (float): Weight for student loss (ground truth learning).
-                      Higher = more focus on actual task performance.
-                      Default: 0.8 (empirically optimal, was 0.5)
-        beta (float): Weight for distillation loss (teacher knowledge).
-                     Lower = less dependence on teacher, more student autonomy.
-                     Default: 0.15 (empirically optimal, was 0.3)
-        feature_matching (bool): Enable intermediate feature matching.
-                               Helps with representation learning but can cause competition.
-                               Default: True
-        loss_fn_name (str): Base loss function name.
-                          Must support complex tensors for SAR data.
-                          Default: "complex_mse"
-    
-    Returns:
-        Dict containing:
-        - 'total_loss': Combined weighted loss
-        - 'student_loss': Ground truth learning component
-        - 'distillation_loss': Teacher knowledge component  
-        - 'feature_loss': Feature matching component (if enabled)
-    
-    Example:
-        >>> criterion = KnowledgeDistillationLoss(
-        ...     temperature=2.5,
-        ...     alpha=0.8,
-        ...     beta=0.15
-        ... )
-        >>> loss_dict = criterion(
-        ...     student_output=student_pred,
-        ...     teacher_output=teacher_pred, 
-        ...     ground_truth=targets
-        ... )
-        >>> total_loss = loss_dict['total_loss']
+    Combined loss for knowledge distillation including:
+    - Student loss (MSE with ground truth)
+    - Distillation loss (KL divergence between teacher and student)
+    - Feature matching loss (optional)
     """
     
     def __init__(
         self,
-        temperature: float = 2.5,        # Sharper teacher signals (was 4.0)
-        alpha: float = 0.8,              # Strong ground truth focus (was 0.5)
-        beta: float = 0.15,              # Reduced teacher dependency (was 0.3)
-        feature_matching: bool = True,   # Enable feature alignment
-        loss_fn_name: str = "complex_mse" # Complex-aware loss function
+        temperature: float = 2.5,  # Reduced from 4.0 to provide sharper teacher signals
+        alpha: float = 0.8,        # Increased from 0.5 to emphasize ground truth learning
+        beta: float = 0.15,        # Reduced from 0.3 to reduce teacher dependency
+        feature_matching: bool = True, 
+        loss_fn_name: str = "complex_mse"
     ):
         super().__init__()
-        
-        # Store hyperparameters with validation
-        if alpha + beta > 1.0:
-            print(f"Warning: α + β = {alpha + beta} > 1.0. This may cause instability.")
-        
         self.temperature = temperature
-        self.alpha = alpha                    # Student loss weight
-        self.beta = beta                      # Distillation loss weight  
-        self.gamma = max(0.0, 1.0 - alpha - beta)  # Feature loss weight (derived)
+        self.alpha = alpha  # Weight for student loss
+        self.beta = beta    # Weight for distillation loss
+        self.gamma = 1.0 - alpha - beta  # Weight for feature matching
         self.feature_matching = feature_matching
-        
-        # Initialize loss functions
-        self.mse_loss = get_loss_function(loss_fn_name)
-        
-        # Complex MSE for distillation (since standard KL-div doesn't support complex)
-        # We use MSE instead of KL-divergence for regression tasks
-        
-        print(f"KnowledgeDistillationLoss initialized:")
-        print(f"  α (student): {self.alpha:.3f}")
-        print(f"  β (distillation): {self.beta:.3f}")
-        print(f"  γ (feature): {self.gamma:.3f}")
-        print(f"  Temperature: {self.temperature}")
-        print(f"  Feature matching: {self.feature_matching}")
-    
-    def complex_mse_loss(self, pred: torch.Tensor, target: torch.Tensor, temperature: float = 1.0) -> torch.Tensor:
-        """
-        Compute MSE loss for complex tensors with temperature scaling.
-        
-        This is a critical component since PyTorch's F.mse_loss doesn't support complex tensors.
-        We implement complex MSE as: mean(|pred - target|²) where |z|² = z * z.conj()
-        
-        Args:
-            pred: Predicted complex tensor
-            target: Target complex tensor  
-            temperature: Temperature scaling factor
-            
-        Returns:
-            Complex MSE loss with temperature compensation
-        """
-        # Apply temperature scaling
-        pred_scaled = pred / temperature
-        target_scaled = target / temperature
-        
-        # Compute complex difference
-        diff = pred_scaled - target_scaled
-        
-        # Complex MSE: mean(|diff|²) = mean(diff * diff.conj())
-        complex_mse = torch.mean(torch.real(diff * torch.conj(diff)))
-        
-        # Compensate for temperature scaling (maintains gradient magnitude)
-        return complex_mse * (temperature ** 2)
+        self.mse_loss = get_loss_function(loss_fn_name) #nn.MSELoss()
+        self.kl_div = nn.KLDivLoss(reduction='batchmean')
         
     def _preprocess_for_loss(self, output: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """

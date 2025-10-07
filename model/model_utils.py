@@ -312,7 +312,8 @@ def create_ssm_model(
     complex_valued: bool = True,
     mode: str = "sequential",
     preprocess: bool = True,
-    activation_function: str = "gelu",
+    activation_function: str = "relu",
+    use_selectivity: bool = True,
 ) -> nn.Module:
     """
     Factory function to create SSM models based on configuration.
@@ -346,7 +347,8 @@ def create_ssm_model(
             use_pos_encoding=use_pos_encoding,
             complex_valued=complex_valued,
             preprocess=preprocess,
-            activation_function=activation_function
+            activation_function=activation_function, 
+            use_selectivity=use_selectivity
         )
     else:
         raise ValueError(f"Unsupported SSM model type: {model_type}. Supported types: 'simple', 'mamba', 's4'")
@@ -488,7 +490,8 @@ def get_model_from_configs(
             dropout=dropout, 
             complex_valued=complex_valued,
             preprocess=preprocess,
-            activation_function=activation_function
+            activation_function=activation_function, 
+            use_selectivity=kwargs.get('use_selectivity', True),
         )
     else:
         raise ValueError(f"Invalid model name: {name}")

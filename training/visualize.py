@@ -15,6 +15,46 @@ from pathlib import Path
 import wandb
 import io
 from PIL import Image
+import time
+import psutil
+import gc
+
+
+def get_memory_usage() -> Dict[str, float]:
+    """
+    Get current memory usage statistics.
+    
+    Returns:
+        Dict with memory usage in MB for RAM and GPU memory (if available)
+    """
+    # RAM memory usage
+    process = psutil.Process()
+    ram_usage_mb = process.memory_info().rss / 1024 / 1024  # Convert bytes to MB
+    
+    memory_stats = {
+        'ram_usage_mb': ram_usage_mb
+    }
+    
+    # GPU memory usage (if CUDA is available)
+    if torch.cuda.is_available():
+        gpu_memory_allocated_mb = torch.cuda.memory_allocated() / 1024 / 1024
+        gpu_memory_reserved_mb = torch.cuda.memory_reserved() / 1024 / 1024
+        memory_stats.update({
+            'gpu_memory_allocated_mb': gpu_memory_allocated_mb,
+            'gpu_memory_reserved_mb': gpu_memory_reserved_mb
+        })
+    
+    return memory_stats
+
+
+def format_memory_stats(stats: Dict[str, float]) -> str:
+    """Format memory statistics for logging."""
+    parts = [f"RAM: {stats['ram_usage_mb']:.1f}MB"]
+    if 'gpu_memory_allocated_mb' in stats:
+        parts.append(f"GPU Allocated: {stats['gpu_memory_allocated_mb']:.1f}MB")
+        parts.append(f"GPU Reserved: {stats['gpu_memory_reserved_mb']:.1f}MB")
+    return " | ".join(parts)
+
 
         
 def log_inference_to_wandb(input_data, gt_data, pred_data, logger, step_or_epoch, figsize=(20, 6), vminmax=(0, 1000), save_path: str="./visualizations/inference.png"):
@@ -210,7 +250,8 @@ def get_full_image_and_prediction(
     return_input: bool = False,
     return_original: bool = False,
     vminmax: Union[Tuple[int, int], str] = 'auto', 
-    device: Union[str, torch.device] = "cuda"
+    device: Union[str, torch.device] = "cuda", 
+    verbose: bool = True
 ) -> Union[Tuple[np.ndarray, np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray]]:
     """
     Given a file name or index, runs inference on the first max_samples_per_prod patches,
@@ -289,9 +330,22 @@ def get_full_image_and_prediction(
     
     #print(f"Dataloader dimension: {len(dataloader)}")
     out_batches = 0
+    tot_inference_time = 0.0
+    
+    # Memory tracking for inference only
+    memory_stats = {
+        'initial_memory': get_memory_usage(),
+        'peak_memory': get_memory_usage(),
+        'batch_memory_usage': [],
+        'inference_memory_deltas': []
+    }
+    
     with torch.no_grad():
         removed_positions = 0
         for batch_idx, (input_batch, output_batch) in enumerate(dataloader):
+            # Memory before inference
+            pre_inference_memory = get_memory_usage()
+            
             stop = True
             batch_size = input_batch.shape[0]
             max_patch_idx = 0
@@ -317,7 +371,42 @@ def get_full_image_and_prediction(
                 
             # print(f"Processing batch {batch_idx}")
             
+            # Clear cache before inference to get accurate memory measurement
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            gc.collect()
+            
+            # INFERENCE - this is what we're measuring
+            t0 = time.time()
             pred_batch = inference_fn(x=input_batch, device=device)  # Should return (B, ph, pw) or (B, ph, pw, ...)
+            dt = time.time() - t0
+            tot_inference_time = tot_inference_time + dt
+            
+            # Memory after inference
+            post_inference_memory = get_memory_usage()
+            
+            # Calculate memory delta for this inference
+            inference_memory_delta = {
+                'ram_delta_mb': post_inference_memory['ram_usage_mb'] - pre_inference_memory['ram_usage_mb']
+            }
+            if 'gpu_memory_allocated_mb' in post_inference_memory:
+                inference_memory_delta['gpu_allocated_delta_mb'] = (
+                    post_inference_memory['gpu_memory_allocated_mb'] - 
+                    pre_inference_memory['gpu_memory_allocated_mb']
+                )
+                inference_memory_delta['gpu_reserved_delta_mb'] = (
+                    post_inference_memory['gpu_memory_reserved_mb'] - 
+                    pre_inference_memory['gpu_memory_reserved_mb']
+                )
+            
+            memory_stats['inference_memory_deltas'].append(inference_memory_delta)
+            memory_stats['batch_memory_usage'].append(post_inference_memory)
+            
+            # Update peak memory
+            for key in post_inference_memory:
+                if post_inference_memory[key] > memory_stats['peak_memory'].get(key, 0):
+                    memory_stats['peak_memory'][key] = post_inference_memory[key]
+            
             if isinstance(pred_batch, torch.Tensor):
                 pred_batch = pred_batch.detach().cpu().numpy()
             
@@ -370,7 +459,50 @@ def get_full_image_and_prediction(
             if stop:
                 #print(f"Stopping further processing -- all remaining patches are out of bounds for array of shape {gt_full.shape}")
                 break
-
+    if verbose:
+        print(f"Total inference time for {out_batches} batches: {tot_inference_time:.2f} seconds")
+        if out_batches > 0:
+            print(f"Average inference time per batch: {tot_inference_time / out_batches:.2f} seconds")
+        else:
+            print(f"Only one batch processed, total time: {tot_inference_time:.2f} seconds")
+        
+        # Memory usage statistics (inference only)
+        print("\n=== INFERENCE MEMORY STATISTICS ===")
+        print(f"Initial memory: {format_memory_stats(memory_stats['initial_memory'])}")
+        print(f"Peak memory: {format_memory_stats(memory_stats['peak_memory'])}")
+        
+        # Calculate memory usage deltas
+        if memory_stats['inference_memory_deltas']:
+            ram_deltas = [delta['ram_delta_mb'] for delta in memory_stats['inference_memory_deltas']]
+            avg_ram_delta = np.mean(ram_deltas)
+            max_ram_delta = np.max(ram_deltas)
+            print(f"Average RAM increase per inference: {avg_ram_delta:.1f}MB")
+            print(f"Maximum RAM increase per inference: {max_ram_delta:.1f}MB")
+            
+            if 'gpu_allocated_delta_mb' in memory_stats['inference_memory_deltas'][0]:
+                gpu_alloc_deltas = [delta['gpu_allocated_delta_mb'] for delta in memory_stats['inference_memory_deltas']]
+                gpu_reserved_deltas = [delta['gpu_reserved_delta_mb'] for delta in memory_stats['inference_memory_deltas']]
+                
+                avg_gpu_alloc_delta = np.mean(gpu_alloc_deltas)
+                max_gpu_alloc_delta = np.max(gpu_alloc_deltas)
+                avg_gpu_reserved_delta = np.mean(gpu_reserved_deltas)
+                max_gpu_reserved_delta = np.max(gpu_reserved_deltas)
+                
+                print(f"Average GPU allocated increase per inference: {avg_gpu_alloc_delta:.1f}MB")
+                print(f"Maximum GPU allocated increase per inference: {max_gpu_alloc_delta:.1f}MB")
+                print(f"Average GPU reserved increase per inference: {avg_gpu_reserved_delta:.1f}MB")
+                print(f"Maximum GPU reserved increase per inference: {max_gpu_reserved_delta:.1f}MB")
+        
+        # Total memory increase from start to finish
+        final_memory = memory_stats['batch_memory_usage'][-1] if memory_stats['batch_memory_usage'] else memory_stats['initial_memory']
+        total_ram_increase = final_memory['ram_usage_mb'] - memory_stats['initial_memory']['ram_usage_mb']
+        print(f"Total RAM increase during inference: {total_ram_increase:.1f}MB")
+        
+        if 'gpu_memory_allocated_mb' in final_memory:
+            total_gpu_increase = final_memory['gpu_memory_allocated_mb'] - memory_stats['initial_memory']['gpu_memory_allocated_mb']
+            print(f"Total GPU allocated increase during inference: {total_gpu_increase:.1f}MB")
+        
+        print("=====================================\n")
 
     # Average overlapping regions
     mask = count_map > 0

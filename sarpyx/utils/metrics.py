@@ -37,6 +37,48 @@ from scipy.ndimage import uniform_filter
 from typing import Tuple, Union
 
 
+def _safe_divide(numerator: Union[float, np.floating], denominator: Union[float, np.floating], default: float = 0.0) -> float:
+    """
+    Safely divide two numbers, returning default value if denominator is zero or invalid.
+    
+    Args:
+        numerator: Numerator value
+        denominator: Denominator value  
+        default: Value to return if division is invalid
+        
+    Returns:
+        Result of division or default value
+    """
+    num = float(numerator)
+    den = float(denominator) 
+    
+    if den == 0 or not np.isfinite(den) or not np.isfinite(num):
+        return default
+    return num / den
+
+
+def _validate_arrays(ref: np.ndarray, pred: np.ndarray) -> bool:
+    """
+    Validate that input arrays are suitable for metric computation.
+    
+    Args:
+        ref: Reference array
+        pred: Predicted array
+        
+    Returns:
+        True if arrays are valid, False otherwise
+    """
+    # Check for NaN or infinite values
+    if not (np.isfinite(ref).all() and np.isfinite(pred).all()):
+        return False
+    
+    # Check for all-zero arrays (common with incomplete downloads)
+    if np.all(ref == 0) or np.all(pred == 0):
+        return False
+        
+    return True
+
+
 # Magnitude Fidelity Metrics (Amplitude Domain)
 
 def mse_complex(ref: np.ndarray, pred: np.ndarray) -> float:
@@ -108,12 +150,15 @@ def psnr_amplitude(ref: np.ndarray, pred: np.ndarray) -> float:
     
     # Mean squared error on amplitude
     mse_val = np.mean((ref_mag - pred_mag) ** 2)
-    if mse_val == 0:
+    if mse_val == 0 or not np.isfinite(mse_val):
         return float('inf')  # No error
         
     # Peak signal value (use max amplitude of reference as MAX)
     max_val = ref_mag.max()
-    psnr = 10 * np.log10((max_val**2) / mse_val)
+    if max_val == 0 or not np.isfinite(max_val):
+        return 0.0  # Invalid reference image
+        
+    psnr = 10 * np.log10(_safe_divide(max_val**2, mse_val, 1.0))
     return float(psnr)
 
 
@@ -193,7 +238,7 @@ def amplitude_correlation(ref: np.ndarray, pred: np.ndarray) -> float:
     num = np.sum((x - x_mean) * (y - y_mean))
     den = np.sqrt(np.sum((x - x_mean)**2) * np.sum((y - y_mean)**2))
     
-    return float(num / den)
+    return float(_safe_divide(num, den, 0.0))
 
 
 # Phase Accuracy Metrics (Phase Domain)
@@ -264,8 +309,8 @@ def complex_coherence(ref: np.ndarray, pred: np.ndarray) -> float:
     num = np.vdot(x, y)  # equivalent to sum(conj(x) * y)
     den = np.sqrt(np.vdot(x, x) * np.vdot(y, y))
     
-    coherence = np.abs(num / den)
-    return float(coherence.real)  # coherence is real non-negative (magnitude)
+    coherence = _safe_divide(np.abs(num), den, 0.0)
+    return float(coherence)
 
 
 def phase_coherence(ref: np.ndarray, pred: np.ndarray) -> float:
@@ -353,24 +398,34 @@ def resolution_gain(orig: np.ndarray, sr: np.ndarray, threshold: float = 0.5) ->
         img = img - img.mean()  # remove mean
         corr = np.fft.ifft2(np.abs(np.fft.fft2(img))**2)
         corr = np.real(np.fft.fftshift(corr))
-        # Normalize to peak=1
-        return corr / (corr.max() + 1e-8)
+        # Normalize to peak=1 with protection against zero max
+        max_val = corr.max()
+        if max_val == 0:
+            return np.zeros_like(corr)
+        return corr / (max_val + 1e-8)
     
-    corr_orig = autocorr_map(np.abs(orig))
-    corr_sr = autocorr_map(np.abs(sr))
+    # Check for valid input arrays
+    if not _validate_arrays(orig, sr):
+        return 0.0
     
-    # Create boolean masks for mainlobe region above threshold
-    orig_mask = corr_orig > threshold
-    sr_mask = corr_sr > threshold
-    
-    # Count pixels in main lobe above threshold
-    area_orig = np.sum(orig_mask)
-    area_sr = np.sum(sr_mask)
-    
-    if area_sr == 0:
-        return float('inf')
+    try:
+        corr_orig = autocorr_map(np.abs(orig))
+        corr_sr = autocorr_map(np.abs(sr))
         
-    return float(area_orig / area_sr)
+        # Create boolean masks for mainlobe region above threshold
+        orig_mask = corr_orig > threshold
+        sr_mask = corr_sr > threshold
+        
+        # Count pixels in main lobe above threshold
+        area_orig = int(np.sum(orig_mask))
+        area_sr = int(np.sum(sr_mask))
+        
+        if area_sr == 0:
+            return float('inf')
+            
+        return float(_safe_divide(area_orig, area_sr, 0.0))
+    except (ValueError, RuntimeError) as e:
+        return 0.0
 
 
 # Convenience function for comprehensive evaluation
@@ -391,30 +446,58 @@ def evaluate_sar_metrics(ref: np.ndarray, pred: np.ndarray,
         
     Returns:
         Dictionary containing all computed metrics with descriptive keys.
+        Returns default values if arrays are invalid (e.g., from incomplete downloads).
         
     Raises:
         AssertionError: If input arrays have different shapes
     """
     assert ref.shape == pred.shape, 'Reference and predicted arrays must have same shape'
     
+    # Validate arrays for common concurrency issues (incomplete downloads, etc.)
+    if not _validate_arrays(ref, pred):
+        # Return default metrics for invalid data (common with partial downloads)
+        return {
+            'mse': float('inf'), 'rmse': float('inf'), 'psnr_db': 0.0,
+            'ssim': 0.0, 'amplitude_correlation': 0.0,
+            'phase_mae_rad': float('inf'), 'phase_rmse_rad': float('inf'),
+            'phase_mae_deg': float('inf'), 'phase_rmse_deg': float('inf'),
+            'complex_coherence': 0.0, 'phase_coherence': 0.0,
+            'enl_reference': 0.0, 'enl_predicted': 0.0, 'enl_ratio': 0.0,
+            'resolution_gain': 0.0
+        }
+    
     # Magnitude fidelity metrics
-    mse_val = mse_complex(ref, pred)
-    rmse_val = rmse_complex(ref, pred)
-    psnr_val = psnr_amplitude(ref, pred)
-    ssim_val = ssim_amplitude(ref, pred, window_size)
-    corr_val = amplitude_correlation(ref, pred)
+    try:
+        mse_val = mse_complex(ref, pred)
+        rmse_val = rmse_complex(ref, pred)
+        psnr_val = psnr_amplitude(ref, pred)
+        ssim_val = ssim_amplitude(ref, pred, window_size)
+        corr_val = amplitude_correlation(ref, pred)
+    except (ValueError, ZeroDivisionError, RuntimeError) as e:
+        # Handle errors from corrupted/incomplete data
+        mse_val = rmse_val = float('inf')
+        psnr_val = ssim_val = corr_val = 0.0
     
     # Phase accuracy metrics
-    phase_mae, phase_rmse = phase_error_stats(ref, pred)
-    complex_coh = complex_coherence(ref, pred)
-    phase_coh = phase_coherence(ref, pred)
+    try:
+        phase_mae, phase_rmse = phase_error_stats(ref, pred)
+        complex_coh = complex_coherence(ref, pred)
+        phase_coh = phase_coherence(ref, pred)
+    except (ValueError, ZeroDivisionError, RuntimeError) as e:
+        # Handle errors from corrupted/incomplete data
+        phase_mae = phase_rmse = float('inf')
+        complex_coh = phase_coh = 0.0
     
-    # SAR-specific metrics
-    ref_intensity = np.abs(ref)**2
-    pred_intensity = np.abs(pred)**2
-    enl_ref = enl(ref_intensity)
-    enl_pred = enl(pred_intensity)
-    res_gain = resolution_gain(ref, pred, threshold)
+    # SAR-specific metrics with error handling
+    try:
+        ref_intensity = np.abs(ref)**2
+        pred_intensity = np.abs(pred)**2
+        enl_ref = enl(ref_intensity)
+        enl_pred = enl(pred_intensity)
+        res_gain = resolution_gain(ref, pred, threshold)
+    except (ValueError, ZeroDivisionError, RuntimeError) as e:
+        # Handle errors from corrupted/incomplete data
+        enl_ref = enl_pred = res_gain = 0.0
     
     return {
         # Magnitude fidelity
@@ -432,9 +515,9 @@ def evaluate_sar_metrics(ref: np.ndarray, pred: np.ndarray,
         'complex_coherence': complex_coh,
         'phase_coherence': phase_coh,
         
-        # SAR-specific
+        # SAR-specific (with safe division)
         'enl_reference': enl_ref,
         'enl_predicted': enl_pred,
-        'enl_ratio': enl_pred / enl_ref,
+        'enl_ratio': _safe_divide(enl_pred, enl_ref, 0.0),
         'resolution_gain': res_gain
     }

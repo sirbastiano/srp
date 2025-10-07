@@ -205,5 +205,6 @@ def parse_product_filename(filename: Union[str, os.PathLike]) -> dict:
         "store": None,
         "lat": None, 
         "lon": None, 
-        "samples": []
+        "samples": [], 
+        "acquisition_date": acquisition_date
     }

@@ -1,0 +1,80 @@
+# Configuration for Real-Valued Transformer training on SAR data
+# Dataset
+data_dir: "/Data/sar_focusing"
+
+# Training parameters
+epochs: 200
+lr: 1e-3
+
+
+# Model configuration
+model:
+  name: "rv_transformer"
+  seq_len: 100  # Maximum number of patches in column (1000, 1)
+  input_dim: 2000   # patch size (1000, 1) * (num_channels + pos_encoding_shape)
+  model_dim: 1024
+  num_layers: 4
+  num_heads: 4
+  ff_dim: 256
+  dropout: 0.1
+  dim_head: 16
+  mode: "parallel"
+
+# Training-specific parameters
+training:
+  patience: 20
+  delta: 0.001
+
+# Data loader configuration
+dataloader:
+  level_from: "rcmc"
+  level_to: "az"
+  num_workers: 0
+  patch_mode: "rectangular"
+  patch_size: [1000, 100]
+  buffer: [1000, 1000]
+  stride: [1000, 100]
+  max_base_sample_size: [10000, 5000]
+  shuffle_files: false
+  complex_valued: false
+  save_samples: false
+  backend: "zarr"
+  verbose: false
+  cache_size: 1000
+  online: true
+  concatenate_patches: true
+  concat_axis: 0
+  positional_encoding: true
+  train: 
+    batch_size: 1
+    samples_per_prod: 1
+    patch_order: "row"
+    max_products: 1
+    pattern: "*2023*.zarr"
+  validation: 
+    batch_size: 32
+    samples_per_prod: 1000
+    patch_order: "row"
+    max_products: 1
+    pattern: "*2024*.zarr"
+  test: 
+    batch_size: 32
+    samples_per_prod: 5000
+    patch_order: "row"
+    max_products: 1
+    pattern: "*2025*.zarr"
+
+# Transform configuration
+transforms:
+  normalize: true
+  rc_min: -3000.0    
+  rc_max: 3000.0     
+  gt_min: -12000.0   
+  gt_max: 12000.0     
+
+# Device configurationcentral
+device: "cuda"  # or "cpu"
+
+# Output configuration
+base_save_dir: "./results/rv_parallel"
+save_results: true

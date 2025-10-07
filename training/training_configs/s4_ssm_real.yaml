@@ -1,0 +1,109 @@
+# Configuration for S4 SSM Training
+
+# Data directory
+experiment_name: "s4_ssm_real"
+data_dir: "/Data/sar_focusing"
+# Model configuration
+model:
+  name: "s4_ssm"
+  dim_head: 2
+  input_dim: 3
+  model_dim: 2
+  state_dim: 8
+  output_dim: 2
+  num_layers: 6
+  dropout: 0.2
+  use_pos_encoding: true
+  preprocess : false
+  complex_valued: false
+# Training configuration
+training:
+  patience: 30
+  delta: 0.00005
+  weight_decay: 1e-3
+  save_dir: "./results/s4_ssm_results"
+  loss_fn : "mse"
+  epochs: 250
+  lr: 1e-2
+  scheduler_type: "cosine"
+  mode: "parallel"
+
+# Device configuration
+device: "cuda"
+
+# Dataloader configuration
+dataloader:
+  level_from: "rcmc"
+  level_to: "az"
+  num_workers: 0
+  patch_mode: "rectangular"
+  patch_size: [10000, 1]
+  buffer: [1000, 1000]
+  stride: [10000, 1]
+  shuffle_files: false
+  complex_valued: false
+  save_samples: false
+  backend: "zarr"
+  verbose: false
+  cache_size: 1000
+  online: true
+  positional_encoding: true
+  concatenate_patches: false
+  train: 
+    batch_size: 32
+    samples_per_prod: 100
+    patch_order: "row"
+    max_products: 10
+    filters: {
+      "years": [
+        2023,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
+  validation: 
+    batch_size: 32
+    samples_per_prod: 1000
+    patch_order: "row"
+    max_products: 2
+    filters: {
+      "years": [
+        2024,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
+  test: 
+    batch_size: 32
+    samples_per_prod: 5000
+    patch_order: "row"
+    max_products: 10
+    filters: {
+      "years": [
+        2025,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
+  inference: 
+    batch_size: 16
+    samples_per_prod: 2000
+    patch_order: "chunk"
+    max_products: 5
+    filters: {
+      "years": [
+        2023,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
+
+# Transform configuration
+transforms:
+  normalize: true"
+  complex_valued: true
+  adaptive_normalization: true

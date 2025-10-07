@@ -1,0 +1,119 @@
+# Configuration for S4 SSM Training
+
+# Data directory
+data_dir: "/Data/sar_focusing"
+
+# Model configuration
+model:
+  name: "s4_ssm"
+  dim_head: 1
+  input_dim: 2
+  model_dim: 64
+  state_dim: 540
+  output_dim: 1
+  num_layers: 6
+  dropout: 0.2
+  use_pos_encoding: true
+  complex_valued: true
+  use_selectivity: true  # Enable selective gating
+  activation_function: 'gelu'  # Explicitly set activation
+# Training configuration
+training:
+  patience: 50         # Increased patience
+  delta: 0.00001       # More reasonable improvement threshold
+  weight_decay: 0.001  # Increased for better regularization
+  epochs: 300          # More epochs for complex model
+  lr: 0.0001           # Increased learning rate
+  scheduler_type: "cosine"
+  loss_fn : "complex_mse"
+  save_dir: "./results/s4_ssm_complex_results_mse_warmup"
+  mode: "parallel"
+  warmup_epochs: 5     # Longer warmup
+  warmup_start_lr: 0.00001
+
+
+# Device configuration
+device: "cuda"
+
+# Dataloader configuration
+dataloader:
+  data_dir: "/Data/sar_focusing"
+  level_from: "rc"
+  level_to: "az"
+  num_workers: 0
+  patch_mode: "rectangular"
+  patch_size: [1000, 1]
+  buffer: [1000, 1000]
+  stride: [1000, 1]
+  max_base_sample_size: [5000, 5000]
+  shuffle_files: false
+  complex_valued: true
+  save_samples: false
+  backend: "zarr"
+  verbose: false
+  cache_size: 1000
+  online: true
+  concatenate_patches: false
+  concat_axis: 0
+  positional_encoding: true
+  train: 
+    batch_size: 32
+    samples_per_prod: 10000
+    patch_order: "row"
+    max_products: 5
+    filters: {
+      "years": [
+        2023,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
+  validation: 
+    batch_size: 32
+    samples_per_prod: 1000
+    patch_order: "row"
+    max_products: 10
+    filters: {
+      "years": [
+        2024,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
+  test: 
+    batch_size: 32
+    samples_per_prod: 5000
+    patch_order: "row"
+    max_products: 10
+    filters: {
+      "years": [
+        2025,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
+  inference: 
+    batch_size: 32
+    samples_per_prod: 5000
+    patch_order: "row"
+    max_products: 1
+    filters: {
+      "years": [
+        2023,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
+
+# Transform configuration
+transforms:
+  normalize: true
+  complex_valued: true
+  rc_min: -2000
+  rc_max: 2000
+  gt_min: -2000
+  gt_max: 2000

@@ -14,6 +14,7 @@ from abc import ABC, abstractmethod
 import kornia.losses as losses
 import kornia as K
 import math
+from typing import Callable, Sequence
 
 def complex_abs(x: torch.Tensor) -> torch.Tensor:
     # works with complex dtype or real tensors representing complex values
