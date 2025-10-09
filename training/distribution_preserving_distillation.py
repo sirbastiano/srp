@@ -292,6 +292,9 @@ class DistributionPreservingLoss(nn.Module):
         """
         # Standard student loss (ground truth alignment)
         student_loss = self.mse_loss(student_output, ground_truth)
+        # Ensure loss is real
+        if torch.is_complex(student_loss):
+            student_loss = student_loss.real
         
         # Adaptive temperature for distillation
         adaptive_temp = self.compute_adaptive_temperature(teacher_output, student_output)
@@ -311,6 +314,9 @@ class DistributionPreservingLoss(nn.Module):
             teacher_phase = torch.angle(teacher_output)
             student_phase = torch.angle(student_output)
             phase_loss = F.mse_loss(student_phase, teacher_phase)
+            # Ensure phase loss is real
+            if torch.is_complex(phase_loss):
+                phase_loss = phase_loss.real
             distillation_loss = distillation_loss + 0.3 * phase_loss
         else:
             # Real-valued distillation
@@ -320,15 +326,27 @@ class DistributionPreservingLoss(nn.Module):
         
         # NEW: Variance preservation loss
         variance_loss = self.compute_variance_preservation_loss(student_output, teacher_output, ground_truth)
+        # Ensure variance loss is real
+        if torch.is_complex(variance_loss):
+            variance_loss = variance_loss.real
         
         # NEW: Moment matching loss  
         moment_loss = self.compute_moment_matching_loss(student_output, ground_truth)
+        # Ensure moment loss is real
+        if torch.is_complex(moment_loss):
+            moment_loss = moment_loss.real
         
         # NEW: Confidence calibration loss
         confidence_loss = self.compute_confidence_calibration_loss(student_output, teacher_output)
+        # Ensure confidence loss is real
+        if torch.is_complex(confidence_loss):
+            confidence_loss = confidence_loss.real
         
         # NEW: Distribution alignment loss
         distribution_loss = self.compute_distribution_alignment_loss(student_output, ground_truth)
+        # Ensure distribution loss is real
+        if torch.is_complex(distribution_loss):
+            distribution_loss = distribution_loss.real
         
         # Feature matching loss (if available)
         feature_loss = torch.tensor(0.0, device=student_output.device)

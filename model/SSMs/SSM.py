@@ -234,9 +234,13 @@ class SSKernelDiag(nn.Module):
         return state
 
     def step(self, u, state):
+        print(f"SSKernelDiag step u: {u.shape}, dA shape: {self.dA.shape}, dB shape: {self.dB.shape},state: {state.shape}")
+        u = u.squeeze()
+        
         next_state = contract("h n, b h n -> b h n", self.dA, state) \
                 + contract("h n, b h -> b h n", self.dB, u)
         y = contract("c h n, b h n -> b c h", self.dC, next_state)
+        print(f"SSKernelDiag step y: {y.shape}, next_state: {next_state.shape}, dC: {self.dC.shape}")
         return 2*y.real, next_state
 
 
@@ -382,7 +386,6 @@ class S4D(nn.Module):
         )
 
 
-# ...existing code...
     def forward(self, u):
         """
         u: (B H L) if self.transposed else (B L H)
@@ -409,7 +412,7 @@ class S4D(nn.Module):
         else:
             k_f = torch.fft.rfft(k, n=2*L) # (C H L)
             u_f = torch.fft.rfft(u, n=2*L) # (B H L)
-            # print(f"u_f: {u_f.shape}, k_f: {k_f.shape}")
+            # print(f"u_f: {u_f.shape}, k_f: {k_f.shape}, k: {k.shape}, u: {u.shape}")
             y_f = contract('bhl,chl->bchl', u_f, k_f) # k_f.unsqueeze(-4) * u_f.unsqueeze(-3) # (B C H L)
             y = torch.fft.irfft(y_f, n=2*L)[..., :L] # (B C H L)
 
@@ -446,16 +449,20 @@ class S4D(nn.Module):
         state: (B H N)
         Returns: output (B H), state (B H N)
         """
-        # assert not self.training
 
         y, next_state = self.kernel.step(u, state) # (B C H)
-        y = y + u.unsqueeze(-2) * self.D
+        print(f"S4D step y before D of shape {self.D.shape}: {y.shape}, next_state: {next_state.shape}, state: {state.shape}, u: {u.shape}")
+        # y = y + u.unsqueeze(-2) * self.D
+        y = y + u * self.D
+        print(f"S4D step y after D: {y.shape}, next_state: {next_state.shape}, state: {state.shape}, u: {u.shape}")
         y = rearrange(y, '... c h -> ... (c h)')
+        print(f"S4D step y after rearrange: {y.shape}, next_state: {next_state.shape}, state: {state.shape}, u: {u.shape}")
         y = self.activation(y)
         if self.transposed:
             y = self.output_linear(y.unsqueeze(-1)).squeeze(-1)
         else:
             y = self.output_linear(y)
+        
         return y, next_state
 
     def default_state(self, *batch_shape, device=None):
@@ -575,14 +582,14 @@ class sarSSM(nn.Module):
             self.layer_output_projs = nn.ModuleList([
                 nn.Linear(model_dim*1, model_dim) for _ in range(num_layers)
             ])
-        # if complex_valued:
-        #     self.norm = ComplexLayerNorm(model_dim)
-        # else:
-        #     self.norm = nn.LayerNorm(model_dim)
-        # if complex_valued:
-        #     self.dropout = ComplexDropout(dropout)
-        # else:
-        #     self.dropout = nn.Dropout(dropout)
+        if complex_valued:
+            self.norm = ComplexLayerNorm(model_dim)
+        else:
+            self.norm = nn.LayerNorm(model_dim)
+        if complex_valued:
+            self.dropout = ComplexDropout(dropout)
+        else:
+            self.dropout = nn.Dropout(dropout)
         self.use_pos_encoding = use_pos_encoding
         if self.use_selectivity:
             if complex_valued:
@@ -616,11 +623,14 @@ class sarSSM(nn.Module):
         if len(out.shape) == 3:
             out = out.unsqueeze(-1)
         return out.permute(0, 2, 1, 3)
-    def forward(self, x):
+    def extract_features(self, x):
+        return self.forward(x, extract_features=True)
+    def forward(self, x, extract_features=False):
         # x: (B, L, F)
         x = x.squeeze()
         #print(f"sarSSM input shape: {x.shape}")
         B, L, feat = x.shape
+        feats = []
         assert feat == self.input_dim, f"Expected input feature dim {self.input_dim}, got {feat}"
         if self.complex_valued:
             if x.is_complex():
@@ -656,15 +666,21 @@ class sarSSM(nn.Module):
                 h = h + y_p * g
             else:
                 h = h + y_p
+            
             # if self.complex_valued:
             #     h = torch.complex(torch.tanh(h.real), torch.tanh(h.imag))
             # else:
             #     h = F.gelu(h)
+            if extract_features:
+                feats.append(h.transpose(1,2).contiguous())
         h = h.transpose(1,2).contiguous()
         # h = self.norm(h)
         # h = self.dropout(h)
         out = self.output_proj(h)  # (B,L,output_dim)
-        return out
+        if extract_features:
+            return out, feats
+        else:
+            return out
 
     def step(self, u, states=None):
         # single-time-step recurrent fallback (not optimized)
@@ -687,15 +703,97 @@ class sarSSM(nn.Module):
             next_states.append(ns)
         out = self.output_proj(h.unsqueeze(1)).squeeze(1)
         return out, next_states
+    
+class sarSSMFinal(nn.Module):
+    def __init__(self,
+                num_layers: int,
+                input_dim: int = 3,
+                model_dim: int = 2,
+                state_dim: int = 16,
+                activation_function: str = 'relu',
+                output_dim: int = 2,
+                transposed: bool = False,
+                ):
+        super(sarSSMFinal, self).__init__()
+        # print(f" SARSSMFINAL: Initializing sarSSM with input_dim={input_dim}, model_dim={model_dim}, state_dim={state_dim}, output_dim={output_dim}, num_layers={num_layers}, activation_function={activation_function}")
+        self.num_layers = num_layers
+        self.ssm = nn.ModuleList()
+        self.state_dim = state_dim
+        
+
+        # position embedding mixing
+        self.fc1 = nn.Linear(input_dim, model_dim)
+        
+        # ssm layers
+        for _ in range(num_layers):
+            self.ssm.append(
+                S4D(d_model=model_dim, d_state=state_dim, transposed=transposed, activation=activation_function, complex=False),                
+            )
+
+        self.fc2 = nn.Linear(model_dim, output_dim)
+    def extract_features(self, x):
+        return self.forward(x, extract_features=True)
+    def forward(self, x, extract_features=False):    
+  
+        # position embedding
+        # print(f"shape of x before input into first layer is: {x.shape}")
+        feats = []
+        x = self.fc1(x)
+
+        for ssm in self.ssm:
+            x, _ = ssm(x)
+            if extract_features:
+                feats.append(x)
+
+        # print(f"shape of x before input into last layer is: {x.shape}")
+        
+        x = self.fc2(x)
+        if extract_features:
+            return x, feats
+        else: 
+            return x
+    
+    def setup_step(self):
+        for ssm in self.ssm:
+            ssm.setup_step()
+    
+    def step(self, u, state):
+        '''
+        this is for reference from the layer below this function:
+        step one time step as recurrent model. intended to be used during validation
+        u: (B H)
+        state: (B H N)
+        Returns: output (B H), state (B H N)
+        '''
+        
+        if state == None:
+            # create a list of proper states for each of the ssm layers
+            batch_size = u.shape[0] if len(u.shape) > 1 else 1
+            state = []
+            for ssm in self.ssm:
+                # Each SSM layer needs state with shape (batch_size, H, N)
+                layer_state = ssm.default_state(batch_size)
+                state.append(layer_state)
+            
+        u = self.fc1(u)   
+        
+        for i, ssm in enumerate(self.ssm):
+            u, state[i] = ssm.step(u, state[i])
+            
+        u = self.fc2(u)
+        
+        return u, state
 
 # ---------------- Overlap-save wrapper ----------------
 class OverlapSaveWrapper(nn.Module):
-    def __init__(self, model:nn.Module, chunk_size:int=2048, overlap:int=0):
+    def __init__(self, model:nn.Module, chunk_size:int=2048, overlap:int=0, step_mode: bool=False):
+        
         super().__init__()
         assert chunk_size > overlap
         self.model = model
         self.chunk_size = chunk_size
         self.overlap = overlap
+        self.step_mode = step_mode
 
     def forward(self, x):
         # x: (B,L,F)
@@ -718,7 +816,19 @@ class OverlapSaveWrapper(nn.Module):
                 tail = x[:, start:L, :]
                 pad = torch.zeros(B, pad_len, feat, device=x.device, dtype=x.dtype)
                 chunk = torch.cat([tail, pad], dim=1)
-            y = self.model(chunk)
+            if self.step_mode:
+                assert self.overlap == 0, "Overlap not supported in step_mode"
+                state = None
+                for t in range(chunk.shape[1]):
+                    xt = chunk[:, t:t+1, :]  # (B, 1, C)
+                    out_step, state = self.model.step(xt, state)
+                    if t == 0:
+                        out = out_step
+                    else:
+                        out = torch.cat((out, out_step), dim=1)  # Concatenate along sequence dimension
+
+            else:
+                y = self.model(chunk)
             left = 0 if start==0 else self.overlap//2
             seg_start = start + left
             seg_end = min(end - (self.overlap - left), L)

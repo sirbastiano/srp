@@ -29,10 +29,10 @@ from training.training_loops import TrainSSM
 from dataloader.dataloader import SARDataloader
 
 # Import progressive layer coupling
-from pathlib import Path
-import sys
-sys.path.append(str(Path(__file__).parent.parent))
-from progressive_layer_coupling import ProgressiveLayerCouplingLoss
+# from pathlib import Path
+# import sys
+# sys.path.append(str(Path(__file__).parent.parent))
+# from progressive_layer_coupling import ProgressiveLayerCouplingLoss
 
 # Import distribution preserving distillation
 from training.distribution_preserving_distillation import DistributionPreservingLoss, DistributionStatisticsTracker
@@ -317,6 +317,9 @@ class KnowledgeDistillationLoss(nn.Module):
         # Preprocess outputs to ensure compatible shapes
         student_output_processed, ground_truth_processed = self._preprocess_for_loss(student_output, ground_truth)
         student_loss = self.mse_loss(student_output_processed, ground_truth_processed)
+        # Ensure student loss is real
+        if torch.is_complex(student_loss):
+            student_loss = student_loss.real
         
         # Distillation loss (soft targets from teacher)
         # For regression, we use MSE instead of KL divergence
@@ -382,6 +385,9 @@ class KnowledgeDistillationLoss(nn.Module):
         #     distillation_loss = self.mse_loss(student_processed, teacher_processed)
         teacher_processed, student_processed = self._preprocess_for_loss(teacher_output_adapted, student_output)
         distillation_loss = self.mse_loss(student_processed, teacher_processed)
+        # Ensure distillation loss is real
+        if torch.is_complex(distillation_loss):
+            distillation_loss = distillation_loss.real
         
         # Feature matching loss (optional) - Now with sophisticated alignment
         feature_loss = torch.tensor(0.0, device=student_output.device)
@@ -414,10 +420,16 @@ class KnowledgeDistillationLoss(nn.Module):
                         # Preprocess features before computing loss
                         teacher_feat_processed, student_feat_processed = self._preprocess_for_loss(teacher_feat_adapted, student_features)
                         feature_loss = self.mse_loss(student_feat_processed, teacher_feat_processed)
+                        # Ensure feature loss is real
+                        if torch.is_complex(feature_loss):
+                            feature_loss = feature_loss.real
                 else:
                     # Preprocess features before computing loss
                     teacher_feat_processed, student_feat_processed = self._preprocess_for_loss(teacher_features, student_features)
                     feature_loss = self.mse_loss(student_feat_processed, teacher_feat_processed)
+                    # Ensure feature loss is real
+                    if torch.is_complex(feature_loss):
+                        feature_loss = feature_loss.real
             except Exception as e:
                 print(f"Warning: Feature matching loss computation failed: {e}")
                 feature_loss = torch.tensor(0.0, device=student_output.device)
@@ -428,6 +440,10 @@ class KnowledgeDistillationLoss(nn.Module):
             self.beta * distillation_loss +
             self.gamma * feature_loss
         )
+        
+        # Ensure total loss is real
+        if torch.is_complex(total_loss):
+            total_loss = total_loss.real
         
         return {
             'total_loss': total_loss,
@@ -463,7 +479,7 @@ class KnowledgeDistillationTrainer(TrainSSM):
         curriculum_learning: bool = True,  # Enable curriculum learning to prevent mode collapse
         curriculum_epochs: int = 10,       # Number of epochs with pure student learning
         progressive_layers: bool = False,  # Enable progressive layer coupling
-        teacher_layers: int = 6,           # Number of teacher layers
+        teacher_layers: int = 4,           # Number of teacher layers
         student_layers: int = 4,           # Number of student layers
         stage_epochs: int = 15,            # Epochs per progressive stage
         # NEW: Distribution preservation parameters
@@ -529,18 +545,16 @@ class KnowledgeDistillationTrainer(TrainSSM):
         
         # Initialize distillation loss
         if progressive_layers:
-            # Use progressive layer coupling
-            self.distillation_criterion = ProgressiveLayerCouplingLoss(
-                teacher_layers=teacher_layers,
-                student_layers=student_layers,
-                stage_epochs=stage_epochs,
+            print("Warning: Progressive layer coupling not implemented. Using standard knowledge distillation with progressive features.")
+            # Use standard knowledge distillation with progressive feature coupling
+            self.distillation_criterion = KnowledgeDistillationLoss(
+                temperature=temperature,
                 alpha=alpha,
                 beta=beta,
-                gamma=1.0 - alpha - beta,
-                temperature=temperature,
+                feature_matching=feature_matching, 
                 loss_fn_name=loss_fn_name
             )
-            self.progressive_layers = True
+            self.progressive_layers = False  # We handle progressive features in the training loop
         elif preserve_distribution:
             # Use distribution-preserving knowledge distillation
             self.distillation_criterion = DistributionPreservingLoss(
@@ -590,6 +604,9 @@ class KnowledgeDistillationTrainer(TrainSSM):
         # Ensure models are in the correct dtype (float32 for mixed precision compatibility)
         self.student_model = self.student_model.float()
         self.teacher_model = self.teacher_model.float()
+        
+        # Initialize layer projection modules for progressive feature coupling
+        self._layer_projections = nn.ModuleDict()
         
         self.save_hyperparameters(ignore=['student_model', 'teacher_model'])
     
@@ -661,7 +678,9 @@ class KnowledgeDistillationTrainer(TrainSSM):
         else:
             raise FileNotFoundError(f"Teacher checkpoint not found: {self.teacher_checkpoint_path}")
     
-    def extract_features(self, model: nn.Module, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+
+
+    def extract_features(self, model: nn.Module, x: torch.Tensor, is_student: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Extract intermediate features from the model for feature matching
         
@@ -677,19 +696,32 @@ class KnowledgeDistillationTrainer(TrainSSM):
             return model.extract_features(x)
         else:
             # For sarSSM models, extract features from intermediate layers
+            ssm_layers = None
             if hasattr(model, 'layers') and len(model.layers) > 0:
+                ssm_layers = model.layers
+            elif hasattr(model, 'ssm') and len(model.ssm) > 0:
+                # For sarSSMFinal model
+                ssm_layers = model.ssm
+            
+            if ssm_layers and len(ssm_layers) > 0:
                 # Hook into intermediate layer to extract features
                 features = []
                 
                 def hook_fn(module, input, output):
                     if isinstance(output, tuple):
-                        features.append(output[0])  # S4D returns (output, state)
+                        # S4D returns (output, state) - use output for feature matching
+                        if is_student:
+                            # For student, store the state update: state = state + new_state
+                            # This corresponds to the additive update mentioned in requirements
+                            features.append(output[0])  # Use the output which represents state update
+                        else:
+                            features.append(output[0])  # Teacher uses standard output
                     else:
                         features.append(output)
                 
                 # Register hook on middle layer
-                middle_layer_idx = len(model.layers) // 2
-                hook = model.layers[middle_layer_idx].register_forward_hook(hook_fn)
+                middle_layer_idx = len(ssm_layers) // 2
+                hook = ssm_layers[middle_layer_idx].register_forward_hook(hook_fn)
                 
                 try:
                     output = model(x)
@@ -789,6 +821,241 @@ class KnowledgeDistillationTrainer(TrainSSM):
         combined = torch.cat(resized_features, dim=-1)
         return combined
     
+    def _compute_progressive_feature_coupling_loss(self, teacher_features_list: list, student_features_list: list, current_epoch: int) -> torch.Tensor:
+        """
+        Compute progressive feature coupling loss with gradual layer introduction
+        
+        This method:
+        1. Creates feature correspondences between teacher and student layers
+        2. Gradually introduces features from shallow to deep layers across epochs
+        3. Weights losses progressively to focus on different layer depths over training
+        
+        Args:
+            teacher_features_list: List of feature tensors from teacher layers
+            student_features_list: List of feature tensors from student layers  
+            current_epoch: Current training epoch for progressive weighting
+            
+        Returns:
+            Progressive feature coupling loss
+        """
+        if not teacher_features_list or not student_features_list:
+            return torch.tensor(0.0, device=next(iter(teacher_features_list or student_features_list)).device)
+        
+        num_teacher_layers = len(teacher_features_list)
+        num_student_layers = len(student_features_list)
+        
+        # Create layer correspondences
+        layer_correspondences = self._create_layer_correspondences(num_teacher_layers, num_student_layers)
+        
+        # Progressive weighting based on current epoch
+        total_epochs = getattr(self.hparams, 'num_epochs', 100)  # Default to 100 if not specified
+        epoch_progress = min(current_epoch / max(total_epochs - 1, 1), 1.0)  # Normalize to [0, 1]
+        
+        total_loss = torch.tensor(0.0, device=teacher_features_list[0].device)
+        total_weight = 0.0
+        
+        # Compute loss for each layer correspondence with progressive weighting
+        for i, (teacher_idx, student_idx) in enumerate(layer_correspondences):
+            # Progressive weight: early layers get more weight initially, later layers get more weight later
+            layer_depth_ratio = i / max(len(layer_correspondences) - 1, 1)  # [0, 1] from shallow to deep
+            
+            # Sigmoid-based progressive weighting
+            # Early epochs: focus on shallow layers (low layer_depth_ratio)
+            # Late epochs: focus on deep layers (high layer_depth_ratio)
+            progress_shift = layer_depth_ratio - epoch_progress
+            layer_weight = torch.sigmoid(torch.tensor(-5.0 * progress_shift))  # Sharper transition
+            
+            # Additional emphasis on final output in later epochs
+            if i == len(layer_correspondences) - 1:  # Last layer (closest to output)
+                output_emphasis = 1.0 + 2.0 * epoch_progress  # Gradually increase importance
+                layer_weight = layer_weight * output_emphasis
+            
+            if layer_weight > 0.01:  # Only compute loss if weight is significant
+                # Get corresponding features
+                teacher_feat = teacher_features_list[teacher_idx]
+                student_feat = student_features_list[student_idx]
+                
+                # Align features for this layer pair
+                teacher_feat_aligned, student_feat_aligned = self._align_single_feature_pair(
+                    teacher_feat, student_feat
+                )
+                
+                # Compute feature matching loss for this layer pair
+                layer_loss = self._compute_single_layer_feature_loss(
+                    teacher_feat_aligned, student_feat_aligned
+                )
+                
+                # Ensure layer loss is real
+                if torch.is_complex(layer_loss):
+                    layer_loss = layer_loss.real
+                
+                # Weight and accumulate
+                weighted_loss = layer_weight * layer_loss
+                total_loss = total_loss + weighted_loss
+                total_weight += layer_weight.item()
+        
+        # Normalize by total weight to maintain consistent loss scale
+        if total_weight > 0:
+            total_loss = total_loss / total_weight
+        
+        # Ensure final progressive loss is real
+        if torch.is_complex(total_loss):
+            total_loss = total_loss.real
+        
+        return total_loss
+    
+    def _create_layer_correspondences(self, num_teacher_layers: int, num_student_layers: int) -> list:
+        """
+        Create correspondences between teacher and student layers
+        
+        Args:
+            num_teacher_layers: Number of teacher layers
+            num_student_layers: Number of student layers
+            
+        Returns:
+            List of (teacher_idx, student_idx) tuples
+        """
+        correspondences = []
+        
+        if num_teacher_layers == num_student_layers:
+            # 1:1 mapping (0-0, 1-1, 2-2, etc.)
+            correspondences = [(i, i) for i in range(num_student_layers)]
+        elif num_teacher_layers > num_student_layers:
+            # Map multiple teacher layers to each student layer
+            teacher_per_student = num_teacher_layers / num_student_layers
+            for student_idx in range(num_student_layers):
+                teacher_idx = int(student_idx * teacher_per_student)
+                correspondences.append((teacher_idx, student_idx))
+        else:
+            # Map teacher layers to subset of student layers
+            student_per_teacher = num_student_layers / num_teacher_layers
+            for teacher_idx in range(num_teacher_layers):
+                student_idx = int(teacher_idx * student_per_teacher)
+                correspondences.append((teacher_idx, student_idx))
+        
+        return correspondences
+    
+    def _align_single_feature_pair(self, teacher_feat: torch.Tensor, student_feat: torch.Tensor) -> tuple:
+        """
+        Align a single pair of teacher-student features
+        
+        Args:
+            teacher_feat: Teacher feature tensor (B, L, D_t)
+            student_feat: Student feature tensor (B, L, D_s)
+            
+        Returns:
+            Tuple of aligned (teacher_feat, student_feat)
+        """
+        if teacher_feat is None or student_feat is None:
+            return teacher_feat, student_feat
+        
+        # Ensure both features are in (B, L, D) format
+        if len(teacher_feat.shape) != 3 or len(student_feat.shape) != 3:
+            return teacher_feat, student_feat
+        
+        B_t, L_t, D_t = teacher_feat.shape
+        B_s, L_s, D_s = student_feat.shape
+        
+        # Step 1: Align sequence lengths
+        if L_t != L_s:
+            # Use the student's sequence length as target
+            if torch.is_complex(teacher_feat):
+                teacher_real = F.adaptive_avg_pool1d(
+                    teacher_feat.real.transpose(1, 2), L_s
+                ).transpose(1, 2)
+                teacher_imag = F.adaptive_avg_pool1d(
+                    teacher_feat.imag.transpose(1, 2), L_s
+                ).transpose(1, 2)
+                teacher_feat = torch.complex(teacher_real, teacher_imag)
+            else:
+                teacher_feat = F.adaptive_avg_pool1d(
+                    teacher_feat.transpose(1, 2), L_s
+                ).transpose(1, 2)
+        
+        # Step 2: Align feature dimensions using learned projection
+        if D_t != D_s:
+            # Create or reuse a projection layer for this specific dimension pair
+            proj_key = f"layer_proj_{D_t}_to_{D_s}"
+            
+            if not hasattr(self, '_layer_projections'):
+                self._layer_projections = nn.ModuleDict()
+            
+            if proj_key not in self._layer_projections:
+                # Create a projection layer with proper initialization
+                proj_layer = nn.Sequential(
+                    nn.Linear(D_t, D_s, device=teacher_feat.device, dtype=teacher_feat.dtype),
+                    nn.LayerNorm(D_s, device=teacher_feat.device, dtype=teacher_feat.dtype) if not torch.is_complex(teacher_feat) else nn.Identity()
+                )
+                
+                # Initialize projection weights
+                if D_t > D_s:
+                    nn.init.xavier_uniform_(proj_layer[0].weight)
+                else:
+                    nn.init.kaiming_uniform_(proj_layer[0].weight, a=0.1)
+                nn.init.zeros_(proj_layer[0].bias)
+                self._layer_projections[proj_key] = proj_layer
+            
+            # Apply projection
+            teacher_feat_aligned = self._layer_projections[proj_key](teacher_feat)
+        else:
+            teacher_feat_aligned = teacher_feat
+        
+        return teacher_feat_aligned, student_feat
+    
+    def _compute_single_layer_feature_loss(self, teacher_feat: torch.Tensor, student_feat: torch.Tensor) -> torch.Tensor:
+        """
+        Compute feature matching loss for a single layer pair
+        
+        Args:
+            teacher_feat: Aligned teacher feature tensor
+            student_feat: Student feature tensor
+            
+        Returns:
+            Feature matching loss for this layer
+        """
+        if teacher_feat is None or student_feat is None:
+            return torch.tensor(0.0, device=student_feat.device if student_feat is not None else teacher_feat.device)
+        
+        # Preprocess features before computing loss
+        teacher_feat_processed, student_feat_processed = self.distillation_criterion._preprocess_for_loss(teacher_feat, student_feat)
+        
+        # Multi-scale loss computation for single layer
+        losses = []
+        
+        # 1. Direct MSE loss
+        direct_loss = self.distillation_criterion.mse_loss(student_feat_processed, teacher_feat_processed)
+        # Ensure loss is real
+        if torch.is_complex(direct_loss):
+            direct_loss = direct_loss.real
+        losses.append(direct_loss)
+        
+        # 2. Cosine similarity loss (reduced weight)
+        if teacher_feat_processed.shape[-1] > 1:  # Only if feature dim > 1
+            if torch.is_complex(teacher_feat_processed) or torch.is_complex(student_feat_processed):
+                # For complex tensors, compute cosine similarity using magnitude
+                teacher_mag = torch.abs(teacher_feat_processed)
+                student_mag = torch.abs(student_feat_processed)
+                teacher_norm = F.normalize(teacher_mag, p=2, dim=-1)
+                student_norm = F.normalize(student_mag, p=2, dim=-1)
+                cosine_sim = F.cosine_similarity(teacher_norm, student_norm, dim=-1)
+            else:
+                # For real tensors, use standard cosine similarity
+                teacher_norm = F.normalize(teacher_feat_processed, p=2, dim=-1)
+                student_norm = F.normalize(student_feat_processed, p=2, dim=-1)
+                cosine_sim = F.cosine_similarity(teacher_norm, student_norm, dim=-1)
+            cosine_loss = 1 - cosine_sim.mean()  # Convert similarity to loss
+            # Ensure loss is real
+            if torch.is_complex(cosine_loss):
+                cosine_loss = cosine_loss.real
+            losses.append(0.1 * cosine_loss)  # Reduced weight
+        
+        # Combine losses
+        total_layer_loss = sum(losses)
+        # Ensure final loss is real
+        if torch.is_complex(total_layer_loss):
+            total_layer_loss = total_layer_loss.real
+        return total_layer_loss
+
     def _align_features_for_distillation(self, teacher_features: torch.Tensor, student_features: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Align teacher and student features for effective knowledge distillation
@@ -888,6 +1155,9 @@ class KnowledgeDistillationTrainer(TrainSSM):
         
         # 1. Direct MSE loss
         direct_loss = self.distillation_criterion.mse_loss(student_feat_processed, teacher_feat_processed)
+        # Ensure loss is real
+        if torch.is_complex(direct_loss):
+            direct_loss = direct_loss.real
         losses.append(direct_loss)
         
         # 2. Cosine similarity loss (for semantic alignment) - Reduced weight
@@ -905,16 +1175,25 @@ class KnowledgeDistillationTrainer(TrainSSM):
                 student_norm = F.normalize(student_feat_processed, p=2, dim=-1)
                 cosine_sim = F.cosine_similarity(teacher_norm, student_norm, dim=-1)
             cosine_loss = 1 - cosine_sim.mean()  # Convert similarity to loss
+            # Ensure loss is real
+            if torch.is_complex(cosine_loss):
+                cosine_loss = cosine_loss.real
             losses.append(0.02 * cosine_loss)  # Reduced from 0.1 to 0.02
         
         # 3. Distribution matching (statistical moments) - Reduced weight
         teacher_mean = torch.mean(teacher_feat_processed, dim=1)  # (B, D)
         student_mean = torch.mean(student_feat_processed, dim=1)  # (B, D)
         mean_loss = complexmse(student_mean, teacher_mean)  # Fixed: use F.mse_loss instead of self.compute_loss
+        # Ensure loss is real
+        if torch.is_complex(mean_loss):
+            mean_loss = mean_loss.real
         losses.append(0.01 * mean_loss)  # Reduced from 0.05 to 0.01
         
         # Combine all losses
         total_feature_loss = sum(losses)
+        # Ensure final loss is real
+        if torch.is_complex(total_feature_loss):
+            total_feature_loss = total_feature_loss.real
         return total_feature_loss
     
     def _update_curriculum_weights(self, current_epoch: int):
@@ -952,6 +1231,13 @@ class KnowledgeDistillationTrainer(TrainSSM):
             self.log('curriculum/alpha', alpha, on_step=False, on_epoch=True)
             self.log('curriculum/beta', beta, on_step=False, on_epoch=True)
             self.log('curriculum/gamma', gamma, on_step=False, on_epoch=True)
+    def forward(self, x, device): 
+        x_student = self.preprocess_sample(x, device=self.device)
+        # Student uses real preprocessing (convert complex to real)
+        x_student = self._convert_complex_to_real(x_student)
+        student_output_real = self.student_model(x_student)
+        student_output = self._convert_real_to_complex(student_output_real)
+        return student_output
     
     def training_step(self, batch, batch_idx):
         """Training step with knowledge distillation (standard or progressive)"""
@@ -961,15 +1247,22 @@ class KnowledgeDistillationTrainer(TrainSSM):
         
         x, y = batch
         
-        # Preprocess input data to ensure correct dtype
-        x = self.preprocess_sample(x, device=self.device)
+        # Teacher uses complex preprocessing (original input)
+        x_teacher = self.preprocess_sample(x, device=self.device)
+        
+        # Student uses real preprocessing (convert complex to real)
+        x_student = self._convert_complex_to_real(x_teacher)
 
         if self.progressive_layers:
             # Progressive layer coupling approach
-            # Student and teacher forward passes
-            student_output = self.student_model(x)
+            # Student and teacher forward passes with different inputs
+            student_output_real = self.student_model(x_student)
             with torch.no_grad():
-                teacher_output = self.teacher_model(x)
+                teacher_output = self.teacher_model(x_teacher)
+            
+            # Convert student real output to complex for comparison
+            student_output = self._convert_real_to_complex(student_output_real)
+            
             y, student_output = self.preprocess_output_and_prediction_before_comparison(y, student_output)
             y, teacher_output = self.preprocess_output_and_prediction_before_comparison(y, teacher_output)
             # Compute progressive loss with models and input
@@ -979,7 +1272,7 @@ class KnowledgeDistillationTrainer(TrainSSM):
                 ground_truth=y,
                 student_model=self.student_model,
                 teacher_model=self.teacher_model,
-                input_tensor=x
+                input_tensor=x_teacher  # Use teacher input for progressive coupling
             )
             
             # Log progressive-specific metrics
@@ -989,59 +1282,71 @@ class KnowledgeDistillationTrainer(TrainSSM):
             
         else:
             # Standard knowledge distillation approach
-            # Student forward pass with feature extraction
-            student_output, student_features = self.extract_features(self.student_model, x)
+            # Student forward pass with feature extraction using real input
+            student_output_real, student_features_list = self.extract_features(self.student_model, x_student, is_student=True)
             
-            # Teacher forward pass (no gradients) with feature extraction
+            # Teacher forward pass (no gradients) with feature extraction using complex input
             with torch.no_grad():
-                teacher_output, teacher_features = self.extract_features(self.teacher_model, x)
+                teacher_output, teacher_features_list = self.extract_features(self.teacher_model, x_teacher, is_student=False)
             
-            # Apply sophisticated feature alignment before computing distillation loss
-            if student_features is not None and teacher_features is not None:
-                teacher_features, student_features = self._align_features_for_distillation(
-                    teacher_features, student_features
-                )
+            # Convert student real output to complex for comparison
+            student_output = self._convert_real_to_complex(student_output_real)
+            
             y, student_output = self.preprocess_output_and_prediction_before_comparison(y, student_output)
             y, teacher_output = self.preprocess_output_and_prediction_before_comparison(y, teacher_output)
 
-            # Compute distillation loss with aligned features
+            # Compute progressive feature coupling loss
+            if student_features_list is not None and teacher_features_list is not None:
+                # Apply progressive feature coupling with list of features
+                feature_loss = self._compute_progressive_feature_coupling_loss(
+                    teacher_features_list, student_features_list, self.current_epoch
+                )
+            else:
+                feature_loss = torch.tensor(0.0, device=student_output.device)
+            
+            # Compute standard distillation loss (without features)
             loss_dict = self.distillation_criterion(
                 student_output=student_output,
                 teacher_output=teacher_output,
                 ground_truth=y,
-                student_features=student_features,
-                teacher_features=teacher_features
+                student_features=None,  # We handle features separately now
+                teacher_features=None
             )
             
-            # If we have aligned features, use sophisticated multi-scale feature loss
-            if student_features is not None and teacher_features is not None:
-                sophisticated_feature_loss = self._compute_multi_scale_feature_loss(
-                    teacher_features, student_features
-                )
-                # Replace the simple feature loss with sophisticated one
-                loss_dict['feature_loss'] = sophisticated_feature_loss
-                # Recompute total loss
-                loss_dict['total_loss'] = (
-                    self.distillation_criterion.alpha * loss_dict['student_loss'] +
-                    self.distillation_criterion.beta * loss_dict['distillation_loss'] +
-                    self.distillation_criterion.gamma * sophisticated_feature_loss
-                )
+            # Replace the feature loss with progressive coupling loss
+            loss_dict['feature_loss'] = feature_loss
+            # Recompute total loss
+            loss_dict['total_loss'] = (
+                self.distillation_criterion.alpha * loss_dict['student_loss'] +
+                self.distillation_criterion.beta * loss_dict['distillation_loss'] +
+                self.distillation_criterion.gamma * feature_loss
+            )
         
         # Log all loss components
         for loss_name, loss_value in loss_dict.items():
             if isinstance(loss_value, torch.Tensor):
                 self.log(f'train_{loss_name}', loss_value, on_step=True, on_epoch=True, prog_bar=True)
         
+        # Log progressive feature coupling metrics
+        if student_features_list is not None and teacher_features_list is not None:
+            self.log('progressive/num_teacher_layers', len(teacher_features_list), on_step=False, on_epoch=True)
+            self.log('progressive/num_student_layers', len(student_features_list), on_step=False, on_epoch=True)
+            self.log('progressive/epoch_progress', min(self.current_epoch / max(getattr(self.hparams, 'num_epochs', 100) - 1, 1), 1.0), on_step=False, on_epoch=True)
+        
         # Track distribution statistics (if enabled)
         if self.distribution_tracker is not None:
             if self.progressive_layers:
-                # For progressive layers, we need to extract outputs separately
-                student_output = self.student_model(x)
+                # For progressive layers, we need to extract outputs separately using proper preprocessing
+                student_output_real_for_tracking = self.student_model(x_student)
                 with torch.no_grad():
-                    teacher_output = self.teacher_model(x)
-                y, student_output = self.preprocess_output_and_prediction_before_comparison(y, student_output)
-                y, teacher_output = self.preprocess_output_and_prediction_before_comparison(y, teacher_output)
-                self.distribution_tracker.update(student_output, teacher_output, y)
+                    teacher_output_for_tracking = self.teacher_model(x_teacher)
+                
+                # Convert student real output to complex for tracking
+                student_output_for_tracking = self._convert_real_to_complex(student_output_real_for_tracking)
+                
+                y, student_output_for_tracking = self.preprocess_output_and_prediction_before_comparison(y, student_output_for_tracking)
+                y, teacher_output_for_tracking = self.preprocess_output_and_prediction_before_comparison(y, teacher_output_for_tracking)
+                self.distribution_tracker.update(student_output_for_tracking, teacher_output_for_tracking, y)
             else:
                 # For standard and distribution-preserving KD, outputs are already available
                 self.distribution_tracker.update(student_output, teacher_output, y)
@@ -1057,15 +1362,20 @@ class KnowledgeDistillationTrainer(TrainSSM):
         """Validation step with knowledge distillation"""
         x, y = batch
         
-        # Preprocess input data to ensure correct dtype
-        x = self.preprocess_sample(x, device=self.device)
+        # Teacher uses complex preprocessing (original input)
+        x_teacher = self.preprocess_sample(x, device=self.device)
         
-        # Student forward pass with feature extraction
-        student_output, student_features = self.extract_features(self.student_model, x)
-        # print(f"Student output dtype: {student_output.dtype}, shape: {student_output.shape}")
-        # Teacher forward pass (no gradients) with feature extraction
+        # Student uses real preprocessing (convert complex to real)
+        x_student = self._convert_complex_to_real(x_teacher)
+        
+        # Student forward pass with feature extraction using real input
+        student_output_real, student_features_list = self.extract_features(self.student_model, x_student, is_student=True)
+        # Teacher forward pass (no gradients) with feature extraction using complex input
         with torch.no_grad():
-            teacher_output, teacher_features = self.extract_features(self.teacher_model, x)
+            teacher_output, teacher_features_list = self.extract_features(self.teacher_model, x_teacher, is_student=False)
+        
+        # Convert student real output to complex for comparison
+        student_output = self._convert_real_to_complex(student_output_real)
         # print(f"Teacher output dtype: {teacher_output.dtype}, shape: {teacher_output.shape}")
         # print(f"Ground truth dtype: {y.dtype}, shape: {y.shape}")
         
@@ -1096,17 +1406,21 @@ class KnowledgeDistillationTrainer(TrainSSM):
         else:
             # Standard knowledge distillation approach
             # Student forward pass with feature extraction
-            student_output, student_features = self.extract_features(self.student_model, x)
+            # student_output, student_features = self.extract_features(self.student_model, x)
             
-            # Teacher forward pass (no gradients) with feature extraction
-            with torch.no_grad():
-                teacher_output, teacher_features = self.extract_features(self.teacher_model, x)
+            # # Teacher forward pass (no gradients) with feature extraction
+            # with torch.no_grad():
+            #     teacher_output, teacher_features = self.extract_features(self.teacher_model, x)
             
             # Apply sophisticated feature alignment before computing distillation loss
-            if student_features is not None and teacher_features is not None:
-                teacher_features, student_features = self._align_features_for_distillation(
-                    teacher_features, student_features
+            if student_features_list is not None and teacher_features_list is not None:
+                # Apply progressive feature coupling with list of features for validation
+                feature_loss = self._compute_progressive_feature_coupling_loss(
+                    teacher_features_list, student_features_list, self.current_epoch
                 )
+            else:
+                feature_loss = torch.tensor(0.0, device=student_output.device)
+            
             y, student_output = self.preprocess_output_and_prediction_before_comparison(y, student_output)
             y, teacher_output = self.preprocess_output_and_prediction_before_comparison(y, teacher_output)
 
@@ -1115,23 +1429,18 @@ class KnowledgeDistillationTrainer(TrainSSM):
                 student_output=student_output,
                 teacher_output=teacher_output,
                 ground_truth=y,
-                student_features=student_features,
-                teacher_features=teacher_features
+                student_features=None,  # We handle features separately now
+                teacher_features=None
             )
             
-            # If we have aligned features, use sophisticated multi-scale feature loss
-            if student_features is not None and teacher_features is not None:
-                sophisticated_feature_loss = self._compute_multi_scale_feature_loss(
-                    teacher_features, student_features
-                )
-                # Replace the simple feature loss with sophisticated one
-                loss_dict['feature_loss'] = sophisticated_feature_loss
-                # Recompute total loss
-                loss_dict['total_loss'] = (
-                    self.distillation_criterion.alpha * loss_dict['student_loss'] +
-                    self.distillation_criterion.beta * loss_dict['distillation_loss'] +
-                    self.distillation_criterion.gamma * sophisticated_feature_loss
-                )
+            # Replace the feature loss with progressive coupling loss
+            loss_dict['feature_loss'] = feature_loss
+            # Recompute total loss
+            loss_dict['total_loss'] = (
+                self.distillation_criterion.alpha * loss_dict['student_loss'] +
+                self.distillation_criterion.beta * loss_dict['distillation_loss'] +
+                self.distillation_criterion.gamma * feature_loss
+            )
         
         # Log validation losses
         for loss_name, loss_value in loss_dict.items():
@@ -1147,15 +1456,21 @@ class KnowledgeDistillationTrainer(TrainSSM):
         """Test step comparing student vs teacher performance"""
         x, y = batch
         
-        # Preprocess input data to ensure correct dtype
-        x = self.preprocess_sample(x, device=self.device)
+        # Teacher uses complex preprocessing (original input)
+        x_teacher = self.preprocess_sample(x, device=self.device)
         
-        # Student predictions with feature extraction
-        student_output, student_features = self.extract_features(self.student_model, x)
+        # Student uses real preprocessing (convert complex to real)
+        x_student = self._convert_complex_to_real(x_teacher)
         
-        # Teacher predictions (for comparison) with feature extraction
+        # Student predictions with feature extraction using real input
+        student_output_real, student_features_list = self.extract_features(self.student_model, x_student, is_student=True)
+        
+        # Teacher predictions (for comparison) with feature extraction using complex input
         with torch.no_grad():
-            teacher_output, teacher_features = self.extract_features(self.teacher_model, x)
+            teacher_output, teacher_features_list = self.extract_features(self.teacher_model, x_teacher, is_student=False)
+        
+        # Convert student real output to complex for comparison
+        student_output = self._convert_real_to_complex(student_output_real)
         
         # Compute individual losses
         student_mse = F.mse_loss(student_output, y)

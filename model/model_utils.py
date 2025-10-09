@@ -16,7 +16,7 @@
 
 from model.transformers.rv_transformer import RealValuedTransformer  # your import
 from model.transformers.cv_transformer import ComplexTransformer
-from model.SSMs.SSM import sarSSM, S4D
+from model.SSMs.SSM import sarSSM, sarSSMFinal, S4D
 import torch
 import torch.nn as nn
 from typing import Optional, Dict, Any
@@ -255,6 +255,7 @@ class SARSSMFactory:
     
     @staticmethod
     def create_s4_ssm(
+            model_name: str = "s4_ssm",
             input_dim: int = 4,
             state_dim: int = 512,
             output_dim: int = 2,
@@ -273,6 +274,7 @@ class SARSSMFactory:
         Create a sarSSM model (S4D-based) for long-range sequence modeling.
 
         Args:
+            model_name: Type of SSM model ('s4_ssm' for sarSSM, 's4_ssm_final' for sarSSMFinal)
             input_dim: Input feature dimension
             state_dim: Hidden state dimension (N in S4D terminology)
             output_dim: Output dimension
@@ -283,22 +285,34 @@ class SARSSMFactory:
             use_selectivity: Whether to use selectivity mechanism
 
         Returns:
-            Configured sarSSM model
+            Configured sarSSM or sarSSMFinal model based on use_selectivity
         """
-        return sarSSM(
-            input_dim=input_dim,
-            state_dim=state_dim,
-            output_dim=output_dim,
-            model_dim = model_dim,
-            num_layers=num_layers,
-            dropout=dropout,
-            use_pos_encoding=use_pos_encoding,
-            complex_valued=complex_valued,
-            preprocess=preprocess,
-            use_selectivity=use_selectivity,
-            activation_function=activation_function,
-            **kwargs
-        )
+        if model_name == "s4_ssm":
+            # Use standard sarSSM with selectivity (residuals and MLPs)
+            return sarSSM(
+                input_dim=input_dim,
+                state_dim=state_dim,
+                output_dim=output_dim,
+                model_dim = model_dim,
+                num_layers=num_layers,
+                dropout=dropout,
+                use_pos_encoding=use_pos_encoding,
+                complex_valued=complex_valued,
+                preprocess=preprocess,
+                use_selectivity=use_selectivity,
+                activation_function=activation_function,
+                **kwargs
+            )
+        else:
+            # Use sarSSMFinal without selectivity (no residuals, cascade layers)
+            return sarSSMFinal(
+                num_layers=num_layers,
+                input_dim=input_dim,
+                model_dim=model_dim,
+                state_dim=state_dim,
+                activation_function=activation_function,
+                **kwargs
+            )
 
 def create_ssm_model(
     model_type: str,
@@ -336,8 +350,9 @@ def create_ssm_model(
     Raises:
         ValueError: If model_type is not supported
     """
-    if model_type == "s4":
+    if model_type == "s4_ssm":
         return SARSSMFactory.create_s4_ssm(
+            model_name = model_type,
             input_dim=input_dim,
             state_dim=state_dim,
             output_dim=output_dim,
@@ -356,7 +371,8 @@ def create_ssm_model(
 models = {
     "rv_transformer": RealValuedTransformer,
     "cv_transformer": ComplexTransformer, 
-    "s4_ssm": lambda **kwargs: create_ssm_model("s4", **kwargs)
+    "s4_ssm": lambda **kwargs: create_ssm_model("s4", **kwargs),
+    "s4_ssm_final": lambda **kwargs: sarSSMFinal(**kwargs)
 }
 
 def create_sar_complex_transformer(
@@ -418,7 +434,7 @@ def create_sar_complex_transformer(
 
 def get_model_from_configs(
         name: str,
-        dim_head: int,
+        dim_head: int = 256,
         seq_len: int = 256,
         input_dim: int = 1, 
         state_dim: int= 512,
@@ -479,9 +495,9 @@ def get_model_from_configs(
             mode=mode  
         )
     elif name in ["simple_ssm", "mamba_ssm", "s4_ssm", "ssm"]:
-        # Legacy support - defaults to simple SSM
+        # Standard sarSSM with selectivity - defaults to selectivity enabled
         model = create_ssm_model(
-            model_type="s4",
+            model_type="s4_ssm",
             input_dim=input_dim,
             state_dim=state_dim,
             output_dim=kwargs.get('output_dim', 2),
@@ -491,7 +507,17 @@ def get_model_from_configs(
             complex_valued=complex_valued,
             preprocess=preprocess,
             activation_function=activation_function, 
-            use_selectivity=kwargs.get('use_selectivity', True),
+            use_selectivity=kwargs.get('use_selectivity', True),  # Default to True for standard SSM
+        )
+    elif name == "s4_ssm_final":
+        # sarSSMFinal without selectivity - explicitly creates sarSSMFinal
+        model = sarSSMFinal(
+            num_layers=num_layers,
+            input_dim=input_dim,
+            model_dim=model_dim,
+            state_dim=state_dim,
+            activation_function=activation_function,
+            **{k: v for k, v in kwargs.items() if k not in ['output_dim', 'dropout', 'use_pos_encoding', 'complex_valued', 'preprocess', 'use_selectivity']}
         )
     else:
         raise ValueError(f"Invalid model name: {name}")
@@ -503,7 +529,7 @@ def load_pretrained_weights(
     checkpoint_path: str, 
     strict: bool = True,
     map_location: str = 'cpu',
-    verbose: bool = True
+    verbose: bool = False
 ) -> Dict[str, Any]:
     """
     Load pretrained weights into a model with comprehensive error handling.
@@ -531,7 +557,6 @@ def load_pretrained_weights(
     # Load checkpoint
     try:
         checkpoint = torch.load(checkpoint_path, map_location=map_location)
-        
         # Handle different checkpoint formats
         if isinstance(checkpoint, dict):
             if 'model_state_dict' in checkpoint:
@@ -540,6 +565,9 @@ def load_pretrained_weights(
             elif 'state_dict' in checkpoint:
                 state_dict = checkpoint['state_dict']
                 metadata = {k: v for k, v in checkpoint.items() if k != 'state_dict'}
+            elif 'model' in checkpoint:
+                state_dict = checkpoint['model']
+                metadata = {k: v for k, v in checkpoint.items() if k != 'model'}
             else:
                 # Assume the entire dict is the state_dict
                 state_dict = checkpoint
@@ -552,7 +580,23 @@ def load_pretrained_weights(
     
     # Load weights into model
     try:
-        missing_keys, unexpected_keys = model.load_state_dict(state_dict, strict=strict)
+        # Preprocess state_dict to remove "model." prefix if present
+        cleaned_state_dict = {}
+        for key, value in state_dict.items():
+            if key.startswith('model.'):
+                new_key = key[6:]  # Remove "model." prefix (6 characters)
+                cleaned_state_dict[new_key] = value
+                if verbose:
+                    print(f"Renamed key: {key} -> {new_key}")
+            elif key.startswith('student_model.'):
+                new_key = key[14:]  # Remove "student_model." prefix (14 characters)
+                cleaned_state_dict[new_key] = value
+                if verbose:
+                    print(f"Renamed key: {key} -> {new_key}")
+            # else:
+            #     cleaned_state_dict[key] = value
+        
+        missing_keys, unexpected_keys = model.load_state_dict(cleaned_state_dict, strict=strict)
         
         loading_info = {
             'checkpoint_path': str(checkpoint_path),
@@ -584,7 +628,7 @@ def load_pretrained_weights(
         
     except Exception as e:
         raise RuntimeError(f"Failed to load state dict: {str(e)}")
-
+    
 def create_model_with_pretrained(
     model_config: Dict[str, Any],
     pretrained_path: Optional[str] = None,

@@ -9,13 +9,13 @@ model:
   dim_head: 1
   input_dim: 2
   model_dim: 8
-  state_dim: 32
+  state_dim: 128
   output_dim: 1
   num_layers: 4
   dropout: 0.2
   use_pos_encoding: true
   complex_valued: true
-  use_selectivity: true  # Enable selective gating
+  use_selectivity: false  # Enable selective gating
   activation_function: 'leakyrelu'  # Explicitly set activation
 # Training configuration
 training:

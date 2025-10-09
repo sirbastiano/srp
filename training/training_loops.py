@@ -194,7 +194,7 @@ class TrainerBase(pl.LightningModule):
                 save=True,
                 save_path=os.path.join(self.base_save_dir, img_save_path)
             )
-            gt, pred = self.preprocess_output_and_prediction_before_comparison(gt, pred)
+            # gt, pred = self.preprocess_output_and_prediction_before_comparison(gt, pred)
             metrics = compute_metrics(gt, pred)
             with open(os.path.join(self.base_save_dir, metrics_save_path), 'w') as f:
                 json.dump(metrics, f)
@@ -503,7 +503,9 @@ class TrainSSM(TrainerBase):
             mode: str = "parallel",
             scheduler_type: str = 'cosine',
             lr: float = 1e-4, 
-            wrapper: bool = False
+            wrapper: bool = False, 
+            real: bool = False, 
+            step_mode: bool = False
         ):
         super().__init__(
             base_save_dir=base_save_dir, 
@@ -518,9 +520,11 @@ class TrainSSM(TrainerBase):
             lr=lr
         )
         if wrapper: 
-            self.wrapper = OverlapSaveWrapper(model=model)
+            self.wrapper = OverlapSaveWrapper(model=model, step_mode=step_mode)
         else:
             self.wrapper = None
+        self.real = real
+        self.step_mode = step_mode
         # self.logger = logging.getLogger(__name__)
         
         # # Count parameters and log model info
@@ -529,6 +533,91 @@ class TrainSSM(TrainerBase):
         #     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
         #     self.logger.info(f"Model created with {total_params:,} total parameters")
         #     self.logger.info(f"Trainable parameters: {trainable_params:,}")
+    def _convert_complex_to_real(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Convert complex SAR input to real format for student model.
+        Student expects real tensors with channels: (real_part, imag_part, horizontal_pos_embedding)
+        
+        Args:
+            x: Complex input tensor (B, L, 2) where last dim is [real+1j*imag, horizontal_pos_embedding]
+            
+        Returns:
+            Real tensor (B, L, 3) with [real_part, imag_part, horizontal_pos_embedding]
+        """
+        if torch.is_complex(x):
+            # x is complex tensor (B, L, 2) - [complex_value, horizontal_pos_embedding]
+            if x.shape[-1] >= 2:
+                complex_part = x[..., 0]  # (B, L) - complex values
+                horizontal_pos = x[..., 1].imag  # (B, L) - horizontal position (take imag part)
+                
+                # Convert complex to (real, imag, horizontal_pos)
+                real_part = complex_part.real  # (B, L)
+                imag_part = complex_part.imag  # (B, L)
+                
+                # Stack to create (B, L, 3)
+                student_input = torch.stack([real_part, imag_part, horizontal_pos], dim=-1)
+            else:
+                # If only complex values, add zero horizontal position
+                complex_part = x[..., 0] if x.shape[-1] > 0 else x.squeeze(-1)
+                real_part = complex_part.real
+                imag_part = complex_part.imag
+                horizontal_pos = torch.zeros_like(real_part)
+                
+                student_input = torch.stack([real_part, imag_part, horizontal_pos], dim=-1)
+        else:
+            # x is already real - check if it needs conversion
+            if x.shape[-1] == 2:
+                # Assume it's [real, imag] format, add zero horizontal position
+                real_part = x[..., 0]
+                imag_part = x[..., 1]
+                horizontal_pos = torch.zeros_like(real_part)
+                student_input = torch.stack([real_part, imag_part, horizontal_pos], dim=-1)
+            elif x.shape[-1] == 3:
+                # Already in correct format
+                student_input = x
+            else:
+                # Add padding dimensions if needed
+                if x.shape[-1] == 1:
+                    # Single channel - assume real part, add imag and pos
+                    real_part = x[..., 0]
+                    imag_part = torch.zeros_like(real_part)
+                    horizontal_pos = torch.zeros_like(real_part)
+                    student_input = torch.stack([real_part, imag_part, horizontal_pos], dim=-1)
+                else:
+                    student_input = x
+        self.squeeze_dim = None
+        if student_input.shape[1] == 1:
+            self.squeeze_dim = 1
+        elif student_input.shape[2] == 1:
+            self.squeeze_dim = 2
+        if self.squeeze_dim is not None:
+            student_input = student_input.squeeze(self.squeeze_dim)
+        return student_input.float()
+    
+    def _convert_real_to_complex(self, student_real_output: torch.Tensor) -> torch.Tensor:
+        """
+        Convert student's real output back to complex format for loss computation.
+        
+        Args:
+            student_real_output: Real output from student (B, L, 2) with [real_part, imag_part]
+            
+        Returns:
+            Complex tensor (B, L, 1) for loss computation
+        """
+        if student_real_output.shape[-1] >= 2:
+            real_part = student_real_output[..., 0]
+            imag_part = student_real_output[..., 1]
+            complex_output = torch.complex(real_part, imag_part)
+            # Add dimension to match expected format (B, L, 1)
+            complex_output = complex_output.unsqueeze(-1)
+        else:
+            # If only one channel, treat as real part
+            real_part = student_real_output[..., 0] if student_real_output.shape[-1] > 0 else student_real_output.squeeze(-1)
+            complex_output = torch.complex(real_part, torch.zeros_like(real_part))
+            complex_output = complex_output.unsqueeze(-1)
+        if self.squeeze_dim is not None:
+            complex_output = complex_output.unsqueeze(self.squeeze_dim)
+        return complex_output
     def forward(self, x: Union[np.ndarray, torch.Tensor], y: Optional[Union[np.ndarray, torch.Tensor]] = None, device: Union[str, torch.device]="cuda") -> torch.Tensor:
         """
         Forward pass through the model.
@@ -541,18 +630,37 @@ class TrainSSM(TrainerBase):
         if device is None:
             device = self.device
         x_preprocessed = self.preprocess_sample(x, device=device)
-        if y is not None and self.mode == 'autoregressive':
-            y_preprocessed = self.preprocess_sample(y, device=device)
-            if self.wrapper is not None:
-                out = self.wrapper(x_preprocessed, y_preprocessed)
-            else:
-                out = self.model(x_preprocessed, y_preprocessed)
+        if self.real:
+            x_preprocessed = self._convert_complex_to_real(x_preprocessed)
+        # if y is not None and self.mode == 'autoregressive':
+        #     y_preprocessed = self.preprocess_sample(y, device=device)
+        #     if self.wrapper is not None:
+        #         out = self.wrapper(x_preprocessed, y_preprocessed)
+        #     else:
+        #         if self.step_mode:
+        #             out = self.model.step(x_preprocessed, y_preprocessed)
+        #        else:
+        #             out = self.model(x_preprocessed, y_preprocessed)
+        # else:
+        if self.wrapper is not None:
+            out = self.wrapper(x_preprocessed)
         else:
-            if self.wrapper is not None:
-                out = self.wrapper(x_preprocessed)
+            if self.step_mode:
+                self.model.setup_step()
+                state = None
+                for t in range(x_preprocessed.shape[1]):
+                    xt = x_preprocessed[:, t:t+1, :]  # (B, 1, C)
+                    print(f"Input to step: {xt.shape}")
+                    out_step, state = self.model.step(xt, state)
+                    if t == 0:
+                        out = out_step
+                    else:
+                        out = torch.cat((out, out_step), dim=1)  # Concatenate along sequence dimension
             else:
                 out = self.model(x_preprocessed)
-
+        # print(f"Output from model before conversion: shape={out.shape}, dtype={out.dtype}, iscomplex={torch.is_complex(out)}")
+        if self.real:
+            out = self._convert_real_to_complex(out)
         return out
     def preprocess_output_and_prediction_before_comparison(self, target: torch.Tensor, output: torch.Tensor) -> Tuple[np.ndarray, np.ndarray]:
         # print(f"Output shape: {output.shape}, dtype={output.dtype} iscomplex={torch.is_complex(output)}")
@@ -640,7 +748,8 @@ def get_training_loop_by_model_name(
             inference_loader=inference_loader,
             criterion=get_loss_function(loss_fn_name),
             mode=mode,
-            scheduler_type=scheduler_type
+            scheduler_type=scheduler_type,
+            real=('final' in model_name.lower())
         )
     else:
         raise ValueError(f"Unsupported model type: {model_name}")

@@ -6,40 +6,27 @@ data_dir: "/Data/sar_focusing"
 
 # Student Model configuration (customizable for different compression levels)
 model:
-  name: "s4_ssm"
-  dim_head: 1
-  input_dim: 2
-  model_dim: 4      # Can be reduced further: 32, 48 for more compression
-  state_dim: 16     # Can be reduced: 256, 384 for faster inference  
-  output_dim: 1
-  num_layers: 4      # Can be reduced: 4, 5 for smaller model
-  dropout: 0.2
-  use_pos_encoding: true
-  complex_valued: true
-  use_selectivity: false  # Key difference: no selectivity mechanism
+  name: "s4_ssm_final"
+  input_dim: 3      
+  model_dim: 2      
+  state_dim: 8      
+  output_dim: 2    
+  num_layers: 4      
   activation_function: 'leakyrelu'
-# Alternative smaller configurations (uncomment to use):
-# Small student (50% compression):
-#   model_dim: 32
-#   state_dim: 256  
-#   num_layers: 4
-#
-# Tiny student (75% compression):
-#   model_dim: 24
-#   state_dim: 128
-#   num_layers: 3
+
 
 # Training configuration for knowledge distillation
 training:
   patience: 40
   delta: 0.00001
-  weight_decay: 1e-3
+  weight_decay: 0.0001
   num_epochs: 300
-  lr: 5e-4  # Lower learning rate for distillation
+  lr: 0.0005  # Lower learning rate for distillation
   scheduler_type: "cosine"
   loss_fn: "complex_mse"
   save_dir: "./results/s4_ssm_distilled"
   mode: "parallel"
+  wraper: false
 
 # Knowledge Distillation specific parameters
 distillation:
@@ -62,7 +49,7 @@ dataloader:
   patch_size: [1000, 1]
   buffer: [1000, 1000]
   stride: [1000, 1]
-  max_base_sample_size: [5000, 5000]
+  max_base_sample_size: [50000, 50000]
   shuffle_files: false
   complex_valued: true
   save_samples: false
@@ -88,7 +75,7 @@ dataloader:
     batch_size: 32
     samples_per_prod: 1000
     patch_order: "row"
-    max_products: 10
+    max_products: 1
     filters: {
       "years": [2024],
       "polarizations": ["vv"]
