@@ -234,13 +234,14 @@ class SSKernelDiag(nn.Module):
         return state
 
     def step(self, u, state):
-        print(f"SSKernelDiag step u: {u.shape}, dA shape: {self.dA.shape}, dB shape: {self.dB.shape},state: {state.shape}")
+       
+        # print(f"SSKernelDiag step u: {u.shape}, dA shape: {self.dA.shape}, dB shape: {self.dB.shape},state: {state.shape}")
         u = u.squeeze()
         
         next_state = contract("h n, b h n -> b h n", self.dA, state) \
                 + contract("h n, b h -> b h n", self.dB, u)
         y = contract("c h n, b h n -> b c h", self.dC, next_state)
-        print(f"SSKernelDiag step y: {y.shape}, next_state: {next_state.shape}, dC: {self.dC.shape}")
+        # print(f"SSKernelDiag step y: {y.shape}, next_state: {next_state.shape}, dC: {self.dC.shape}")
         return 2*y.real, next_state
 
 
@@ -451,18 +452,19 @@ class S4D(nn.Module):
         """
 
         y, next_state = self.kernel.step(u, state) # (B C H)
-        print(f"S4D step y before D of shape {self.D.shape}: {y.shape}, next_state: {next_state.shape}, state: {state.shape}, u: {u.shape}")
+        # print(f"S4D step y before D of shape {self.D.shape}: {y.shape}, next_state: {next_state.shape}, state: {state.shape}, u: {u.shape}")
         # y = y + u.unsqueeze(-2) * self.D
-        y = y + u * self.D
-        print(f"S4D step y after D: {y.shape}, next_state: {next_state.shape}, state: {state.shape}, u: {u.shape}")
+        # y = y + u * self.D
+        y = y + contract('b l h, c h -> b c h', u, self.D)
+        # print(f"S4D step y after D: {y.shape}, next_state: {next_state.shape}, state: {state.shape}, u: {u.shape}")
         y = rearrange(y, '... c h -> ... (c h)')
-        print(f"S4D step y after rearrange: {y.shape}, next_state: {next_state.shape}, state: {state.shape}, u: {u.shape}")
+        # print(f"S4D step y after rearrange: {y.shape}, next_state: {next_state.shape}, state: {state.shape}, u: {u.shape}")
         y = self.activation(y)
         if self.transposed:
             y = self.output_linear(y.unsqueeze(-1)).squeeze(-1)
         else:
             y = self.output_linear(y)
-        
+        y = y.unsqueeze(1) 
         return y, next_state
 
     def default_state(self, *batch_shape, device=None):
