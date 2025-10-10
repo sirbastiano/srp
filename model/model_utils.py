@@ -16,7 +16,7 @@
 
 from model.transformers.rv_transformer import RealValuedTransformer  # your import
 from model.transformers.cv_transformer import ComplexTransformer
-from model.SSMs.SSM import sarSSM, sarSSMFinal, S4D
+from model.SSMs.SSM import sarSSM, sarSSMFinal, S4D, stepCompreSSM
 import torch
 import torch.nn as nn
 from typing import Optional, Dict, Any
@@ -372,7 +372,8 @@ models = {
     "rv_transformer": RealValuedTransformer,
     "cv_transformer": ComplexTransformer, 
     "s4_ssm": lambda **kwargs: create_ssm_model("s4", **kwargs),
-    "s4_ssm_final": lambda **kwargs: sarSSMFinal(**kwargs)
+    "s4_ssm_final": lambda **kwargs: sarSSMFinal(**kwargs),
+    "s4_ssm_recurrent_minimal": lambda **kwargs: stepCompreSSM(**kwargs)
 }
 
 def create_sar_complex_transformer(
@@ -519,6 +520,9 @@ def get_model_from_configs(
             activation_function=activation_function,
             **{k: v for k, v in kwargs.items() if k not in ['output_dim', 'dropout', 'use_pos_encoding', 'complex_valued', 'preprocess', 'use_selectivity']}
         )
+    elif name == "s4_ssm_recurrent_minimal":
+        # bare-bones recurrent ssm with only stepped inference
+        model = stepCompreSSM()
     else:
         raise ValueError(f"Invalid model name: {name}")
     return model
