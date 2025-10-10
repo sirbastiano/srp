@@ -646,12 +646,11 @@ class TrainSSM(TrainerBase):
             out = self.wrapper(x_preprocessed)
         else:
             if self.step_mode:
-                self.model.setup_step()
-                state = None
+                state = self.model.setup_step()
                 for t in range(x_preprocessed.shape[1]):
                     xt = x_preprocessed[:, t:t+1, :]  # (B, 1, C)
                     print(f"Input to step: {xt.shape}")
-                    out_step, state = self.model.step(xt, state)
+                    out_step, state = self.model(xt, state)
                     if t == 0:
                         out = out_step
                     else:

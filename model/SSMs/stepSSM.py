@@ -90,7 +90,7 @@ class stepCompreSSM(nn.Module):
 
         return u, state
 
-    def default_state(self, batch_size):
+    def setup_step(self, batch_size):
         states = []
         for ssm in self.ssm:
             layer_state = torch.zeros(batch_size, self.h, self.n // self.h, dtype=torch.complex64)
