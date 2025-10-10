@@ -1,3 +1,12 @@
+'''
+stepSSM
+
+This file contains code for the most simplified stepped sar compression algorithm without any extra settings
+
+This code will also be the base for the QAT version of the model
+'''
+
+
 import logging
 from functools import partial
 import math
@@ -11,7 +20,6 @@ from einops import rearrange, repeat
 import opt_einsum as oe
 
 contract = oe.contract
-
 
 class stepSSM(nn.Module):
     def __init__(
@@ -57,7 +65,6 @@ class stepCompreSSM(nn.Module):
         self.n = 8
         self.num_layers = 4
 
-
         # position embedding mixing
         self.fc1 = nn.Linear(3, 2)
 
@@ -72,9 +79,7 @@ class stepCompreSSM(nn.Module):
     def forward(self, u, state):
 
         if state == None:
-            # create a list of 0 states for each of the ssm layers
-            print(f"No state detected! Creating new empty state")
-            state = [torch.zeros(*batch_shape, self.h, self.n, dtype=cfloat) for ssm in self.ssm]
+            print(f"No state detected!")
 
         u = self.fc1(u)
 
@@ -84,3 +89,10 @@ class stepCompreSSM(nn.Module):
         u = self.fc2(u)
 
         return u, state
+
+    def default_state(self, batch_size):
+        states = []
+        for ssm in self.ssm:
+            layer_state = torch.zeros(batch_size, self.h, self.n // self.h, dtype=torch.complex64)
+            states.append(layer_state)
+        return states
