@@ -14,7 +14,7 @@ training:
   patience: 40
   delta: 0.00001
   weight_decay: 0.0001
-  num_epochs: 300
+  num_epochs: 3
   lr: 0.0005  # Lower learning rate for distillation
   scheduler_type: "cosine"
   loss_fn: "complex_mse"
