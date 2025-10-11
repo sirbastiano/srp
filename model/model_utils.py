@@ -16,7 +16,7 @@
 
 from model.transformers.rv_transformer import RealValuedTransformer  # your import
 from model.transformers.cv_transformer import ComplexTransformer
-from model.SSMs.SSM import sarSSM, sarSSMFinal, S4D, stepCompreSSM
+from model.SSMs.SSM import sarSSM, sarSSMFinal, S4D
 import torch
 import torch.nn as nn
 from typing import Optional, Dict, Any

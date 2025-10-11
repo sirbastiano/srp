@@ -12,9 +12,11 @@ import yaml
 import torch
 import torch.nn as nn
 from pathlib import Path
+from datetime import datetime
 import logging
 import pytorch_lightning as pl
-from lightning.pytorch.loggers import TensorBoardLogger
+from lightning.pytorch.loggers import TensorBoardLogger, WandbLogger
+import wandb
 from typing import Dict, Any, Optional
 
 # Import dataloader components
@@ -141,31 +143,50 @@ def create_dataloaders(config: Dict[str, Any]) -> tuple:
 
 
 
-def setup_logging(save_dir: str, model_name: str) -> tuple:
-    """Setup logging and create logger."""
-    save_dir = Path(save_dir)
-    save_dir.mkdir(parents=True, exist_ok=True)
+def setup_logging(
+    out_file: str = 'training.log', 
+    model_name: str = 'model', 
+    exp_dir: str = './results', 
+    use_wandb: bool = True, 
+    wandb_project: str = 'ssm4sar', 
+    wandb_entity: Optional[str] = None, 
+    wandb_tags: List[str] = ['training'], 
+    config: Optional[Dict[str, Any]] = None,
+    sweep_id: Optional[str] = None
+) -> tuple:
+    """Enhanced logging setup with sweep support."""
     
-    # Setup TensorBoard logger
-    tb_logger = TensorBoardLogger(
-        save_dir=str(save_dir),
-        name=model_name,
-        version=None
-    )
+    if use_wandb:
+        if sweep_id:
+            # If we're in a sweep, wandb.init will be called by the sweep agent
+            run_name = f'{model_name}_{exp_dir}_{datetime.now().strftime("%Y%m%d_%H%M%S")}_{sweep_id}'
+        else:
+            run_name = f'{model_name}_{exp_dir}_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+        tb_logger = WandbLogger(
+            project=wandb_project,
+            entity=wandb_entity,
+            name=run_name,
+            tags=wandb_tags,
+            config=config
+        )
+    else: 
+        tb_logger = TensorBoardLogger(save_dir=exp_dir, name=model_name)
     
-    # Setup Python logging
-    log_file = save_dir / 'training.log'
+    log_file = os.path.join(exp_dir, out_file)
+    log_dir = os.path.dirname(log_file)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir, exist_ok=True)
+    
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s',
-        handlers=[
+        handlers=[  
             logging.FileHandler(log_file),
             logging.StreamHandler()
         ]
     )
     
-    logger = logging.getLogger(__name__)
-    return tb_logger, logger
+    return tb_logger, logging.getLogger(__name__)
 
 
 def main():
@@ -228,7 +249,8 @@ def main():
         scheduler_type=training_config.get('scheduler_type', 'cosine'),
         lr=training_config.get('lr', 1e-4),
         real=True,
-        step_mode=True # Enable step mode for quantization-aware training
+        step_mode=True, # Enable step mode for quantization-aware training,
+        input_dim=model.input_dim
     )
     
     # Create PyTorch Lightning trainer

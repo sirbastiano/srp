@@ -349,7 +349,7 @@ def get_full_image_and_prediction(
             stop = True
             batch_size = input_batch.shape[0]
             max_patch_idx = 0
-            for patch_idx in range(batch_size):
+            for patch_idx in range(batch_size+1):
                 if batch_idx * batch_size + patch_idx - removed_positions == len(coords):
                     stop = True
                     break
@@ -437,11 +437,12 @@ def get_full_image_and_prediction(
                 assert gt_patch.shape == pred_patch.shape, f"Prediction patch has a different size than original patch. Original patch shape: {gt_patch.shape}, prediction patch shape: {pred_patch.shape}"
 
                 ph, pw = gt_patch.shape
+                # print(f"Patch shape: (ph, pw)=({ph}, {pw})")
                 # if h - x_to < 0 and w - y_to < 0:
                 #     print(f"Stopping further processing -- patch at (x, y)=({x_to}, {y_to}) is out of bounds for array of shape {gt_full.shape}")
                 #     stop = True
                 #     break
-                actual_ph = min(ph, h- x_to)
+                actual_ph = min(ph, h - x_to) 
                 actual_pw = min(pw, w - y_to)
                 # Place patch in the correct location
                 # print(f"Trying to put sample from (x, y)=({x_to}, {y_to}) with shapes (h, w)=({actual_ph}, {actual_pw}) to array with full shape={gt_full.shape}") 

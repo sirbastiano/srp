@@ -359,18 +359,18 @@ class TrainerBase(pl.LightningModule):
     
     def test_step(self, batch, batch_idx):
         x, y = batch
-        print(f"Test batch {batch_idx}: ")
-        print(f"x={x}, ")
-        print(f"y={y}")
+        # print(f"Test batch {batch_idx}: ")
+        # print(f"x={x}, ")
+        # print(f"y={y}")
         output = self.forward(x, y)
                 
         y_np = y.cpu().numpy() #.squeeze()
         output_np = output.cpu().numpy() #.squeeze()
         y_np, output_np = self.preprocess_output_and_prediction_before_comparison(y_np, output_np)
         for i in range(y_np.shape[0]):
-            gt_patch = self.test_dataloader().dataset.get_patch_visualization(y_np[i], self.train_dataloader().dataset.level_to, vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=True)
+            gt_patch = self.test_dataloader().dataset.get_patch_visualization(y_np[i], self.train_dataloader().dataset.level_to, vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False)
             #print(f"Ground truth patch with index {idx} has shape: {gt_patch.shape}, while reconstructed ground truth patch has dimension {gt_patch.shape}")
-            pred_patch = self.test_dataloader().dataset.get_patch_visualization(output_np[i], self.train_dataloader().dataset.level_to, vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=True)
+            pred_patch = self.test_dataloader().dataset.get_patch_visualization(output_np[i], self.train_dataloader().dataset.level_to, vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False)
             gt_patch, pred_patch = self.preprocess_output_and_prediction_before_comparison(gt_patch, pred_patch)
             m = compute_metrics(gt_patch, pred_patch)
             self.test_metrics.append(m)
@@ -380,19 +380,12 @@ class TrainerBase(pl.LightningModule):
         return loss
     def on_test_end(self):
         avg_metrics = average_metrics(self.test_metrics)
-        self.test_metrics = []
         self.log_metrics(avg_metrics, 'test_metrics', on_step=False, on_epoch=True, prog_bar=False)
-
-        avg_psnr = sum(m['psnr_raw_vs_focused'] or 0 for m in self.test_metrics) / len(self.test_metrics)
-        avg_pslr = sum(m['pslr_focused'] or 0 for m in self.test_metrics) / len(self.test_metrics)
-        summary = {
-            'avg_psnr_raw_vs_focused': avg_psnr,
-            'avg_pslr_focused': avg_pslr,
-            'num_samples': len(self.test_metrics),
-            'val_losses': self.val_losses
-        }
+        self.show_example(self.test_dataloader, window=((1000, 1000), (2000, 2000)), vminmax=(1000, 6000), figsize=(20, 6), metrics_save_path=f"metrics_{self.current_epoch}.json", img_save_path=f"test.png")
+        avg_metrics['num_samples'] = len(self.test_metrics)
+        avg_metrics['val_losses'] = self.val_losses
         metrics_path = os.path.join(self.base_save_dir, self.metrics_file_name)
-        save_metrics(summary, metrics_path)
+        save_metrics(avg_metrics, metrics_path)
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
@@ -500,6 +493,7 @@ class TrainSSM(TrainerBase):
             test_loader: SARDataloader,
             inference_loader: Optional[SARDataloader] = None,
             criterion: Callable = nn.MSELoss, 
+            input_dim: int = 3,
             mode: str = "parallel",
             scheduler_type: str = 'cosine',
             lr: float = 1e-4, 
@@ -525,6 +519,7 @@ class TrainSSM(TrainerBase):
             self.wrapper = None
         self.real = real
         self.step_mode = step_mode
+        self.input_dim = input_dim
         # self.logger = logging.getLogger(__name__)
         
         # # Count parameters and log model info
@@ -549,13 +544,21 @@ class TrainSSM(TrainerBase):
             if x.shape[-1] >= 2:
                 complex_part = x[..., 0]  # (B, L) - complex values
                 horizontal_pos = x[..., 1].imag  # (B, L) - horizontal position (take imag part)
-                
+                vertical_pos = x[..., 1].real  # (B, L) - vertical position (take real part)
                 # Convert complex to (real, imag, horizontal_pos)
                 real_part = complex_part.real  # (B, L)
                 imag_part = complex_part.imag  # (B, L)
                 
-                # Stack to create (B, L, 3)
-                student_input = torch.stack([real_part, imag_part, horizontal_pos], dim=-1)
+                if self.input_dim == 2:
+                    # Stack to create (B, L, 2)
+                    student_input = torch.stack([real_part, imag_part], dim=-1)
+                elif self.input_dim == 3: 
+                    # Stack to create (B, L, 3)
+                    student_input = torch.stack([real_part, imag_part, horizontal_pos], dim=-1)
+                else:
+                    # Stack to create (B, L, 4)
+                    student_input = torch.stack([real_part, imag_part, vertical_pos, horizontal_pos], dim=-1)
+
             else:
                 # If only complex values, add zero horizontal position
                 complex_part = x[..., 0] if x.shape[-1] > 0 else x.squeeze(-1)
@@ -642,6 +645,8 @@ class TrainSSM(TrainerBase):
         #        else:
         #             out = self.model(x_preprocessed, y_preprocessed)
         # else:
+        
+
         if self.wrapper is not None:
             out = self.wrapper(x_preprocessed)
         else:
@@ -710,7 +715,8 @@ def get_training_loop_by_model_name(
         scheduler_type: str = 'cosine', 
         num_epochs: int = 250, 
         logger: Optional[pl.loggers.Logger] = None, 
-        device_no: int= 0
+        device_no: int= 0, 
+        input_dim: int = 3
     ) -> Tuple[TrainerBase, pl.Trainer]:
 
     if model_name == 'cv_transformer':
@@ -748,7 +754,8 @@ def get_training_loop_by_model_name(
             criterion=get_loss_function(loss_fn_name),
             mode=mode,
             scheduler_type=scheduler_type,
-            real=('final' in model_name.lower())
+            real=('final' in model_name.lower()), 
+            input_dim=input_dim
         )
     else:
         raise ValueError(f"Unsupported model type: {model_name}")

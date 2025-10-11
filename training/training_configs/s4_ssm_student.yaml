@@ -7,7 +7,7 @@ data_dir: "/Data/sar_focusing"
 # Student Model configuration (customizable for different compression levels)
 model:
   name: "s4_ssm_final"
-  input_dim: 3      
+  input_dim: 3     
   model_dim: 2      
   state_dim: 8      
   output_dim: 2    
@@ -23,7 +23,7 @@ training:
   num_epochs: 300
   lr: 0.0005  # Lower learning rate for distillation
   scheduler_type: "cosine"
-  loss_fn: "complex_mse"
+  loss_fn: "polarimetric"
   save_dir: "./results/s4_ssm_distilled"
   mode: "parallel"
   wraper: false
@@ -93,7 +93,7 @@ dataloader:
     
   inference: 
     batch_size: 32
-    samples_per_prod: 5000
+    samples_per_prod: 50000
     patch_order: "row"
     max_products: 1
     filters: {

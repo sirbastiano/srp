@@ -749,14 +749,6 @@ class SARZarrDataset(Dataset):
                 y_range = LazyCoordinateRange(y_min, y_max - stride_y + 1, stride_y)
                 x_range = LazyCoordinateRange(x_min, x_max - stride_x + 1, stride_x)
 
-        elif self.patch_mode == "parabolic":
-            a = self.parabola_a
-            max_offset = int(np.ceil(a * (pw // 2) ** 2))
-            y_min, y_max = self.buffer[0], h - ph - self.buffer[0]
-            x_min = self.buffer[1] + max_offset
-            x_max = w - self.buffer[1] - max_offset        
-            y_range = LazyCoordinateRange(y_min, y_max + 1, stride_y)
-            x_range = LazyCoordinateRange(x_min, x_max + 1, stride_x)
         else:
             raise ValueError(f"Unknown patch_mode {self.patch_mode}")
         

@@ -721,7 +721,9 @@ class sarSSMFinal(nn.Module):
         self.num_layers = num_layers
         self.ssm = nn.ModuleList()
         self.state_dim = state_dim
-        
+        self.input_dim = input_dim
+        self.model_dim = model_dim
+        self.output_dim = output_dim
 
         # position embedding mixing
         self.fc1 = nn.Linear(input_dim, model_dim)

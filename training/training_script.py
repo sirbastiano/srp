@@ -503,6 +503,7 @@ def train_single_config(
             inference_loader=inference_loader,
             loss_fn_name=loss_fn,
             logger=tb_logger,
+            input_dim=model.input_dim,
             **training_cfg  # Pass all training config parameters as kwargs
         )
         
