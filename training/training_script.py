@@ -28,7 +28,7 @@ import wandb
 from lightning.pytorch.loggers import TensorBoardLogger, WandbLogger
 
 from dataloader.dataloader import SampleFilter, get_sar_dataloader, SARTransform
-from model.model_utils import get_model_from_configs
+from model.model_utils import get_model_from_configs, create_model_with_pretrained
 from training.training_loops import get_training_loop_by_model_name
 
 
@@ -470,7 +470,10 @@ def train_single_config(
     
     # try:
     # Create model with all model config parameters
-    model = get_model_from_configs(**model_cfg)
+    if 'pretrained_path' in model_cfg and model_cfg['pretrained_path'] is not None and os.path.exists(model_cfg['pretrained_path']):
+        model = create_model_with_pretrained(model_cfg, pretrained_path=model_cfg['pretrained_path'], device=config['device'], start_key=model_cfg.get('start_key', 'model.'))
+    else:
+        model = get_model_from_configs(**model_cfg)
     text_logger.info(f"Created model: {model_cfg.get('name', 'Unknown')}")
     
     # Watch gradients if using WandB

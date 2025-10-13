@@ -15,6 +15,7 @@ from training.visualize import compute_metrics, save_metrics, average_metrics
 from sarpyx.utils.losses import get_loss_function
 from training.visualize import get_full_image_and_prediction, compute_metrics, display_inference_results, log_inference_to_wandb
 import pytorch_lightning as pl
+from pytorch_lightning.callbacks import EarlyStopping
 
 # Import wandb with fallback for gradient tracking
 try:
@@ -72,7 +73,7 @@ class TrainerBase(pl.LightningModule):
         self.warmup_epochs = warmup_epochs
         self.warmup_start_lr = warmup_start_lr
         self.weight_decay = weight_decay
-                # Initialize gradient tracking if wandb is available
+        # Initialize gradient tracking if wandb is available
         self.gradient_tracker = None
         self.global_step_count = 0
         if WANDB_AVAILABLE:
@@ -310,7 +311,7 @@ class TrainerBase(pl.LightningModule):
             gt_patch = self.train_dataloader().dataset.get_patch_visualization(y_np[i], self.train_dataloader().dataset.level_to, vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False)
             #print(f"Ground truth patch with index {idx} has shape: {gt_patch.shape}, while reconstructed ground truth patch has dimension {gt_patch.shape}")
             pred_patch = self.train_dataloader().dataset.get_patch_visualization(output_np[i], self.train_dataloader().dataset.level_to, vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False)
-            gt_patch, pred_patch = self.preprocess_output_and_prediction_before_comparison(gt_patch, pred_patch)
+            # gt_patch, pred_patch = self.preprocess_output_and_prediction_before_comparison(gt_patch, pred_patch)
             m = compute_metrics(gt_patch, pred_patch)
             # self.log_metrics(m, 'train_metrics', on_step=False, on_epoch=True, prog_bar=False)
             self.train_metrics.append(m)
@@ -336,7 +337,7 @@ class TrainerBase(pl.LightningModule):
             gt_patch = self.val_dataloader().dataset.get_patch_visualization(y_np[i], self.train_dataloader().dataset.level_to, vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False)
             #print(f"Ground truth patch with index {idx} has shape: {gt_patch.shape}, while reconstructed ground truth patch has dimension {gt_patch.shape}")
             pred_patch = self.val_dataloader().dataset.get_patch_visualization(output_np[i], self.train_dataloader().dataset.level_to, vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False)
-            gt_patch, pred_patch = self.preprocess_output_and_prediction_before_comparison(gt_patch, pred_patch)
+            # gt_patch, pred_patch = self.preprocess_output_and_prediction_before_comparison(gt_patch, pred_patch)
             m = compute_metrics(gt_patch, pred_patch)
             self.validation_metrics.append(m)
 
@@ -347,7 +348,7 @@ class TrainerBase(pl.LightningModule):
         self.log_metrics(avg_metrics, 'val_metrics', on_step=False, on_epoch=True, prog_bar=False)
 
         if self.inference_loader is not None:
-            self.show_example(self.inference_loader, window=((1000, 1000), (2000, 2000)), vminmax=(1000, 6000), figsize=(20, 6), metrics_save_path=f"metrics_{self.current_epoch}.json", img_save_path=f"val_{self.current_epoch}.png")
+            self.show_example(self.inference_loader, window=((1000, 1000), (2000, 2000)), vminmax='auto', figsize=(20, 6), metrics_save_path=f"metrics_{self.current_epoch}.json", img_save_path=f"val_{self.current_epoch}.png")
         if 'val_loss' in self.trainer.callback_metrics:
             self.save_checkpoint(epoch=self.current_epoch, optimizer=self.trainer.optimizers[0], scheduler=None)#, is_best=(self.trainer.callback_metrics['val_loss'] < self.best_val_loss), val_loss=self.trainer.callback_metrics['val_loss'])
             if self.trainer.callback_metrics['val_loss'] < self.best_val_loss:
@@ -371,7 +372,7 @@ class TrainerBase(pl.LightningModule):
             gt_patch = self.test_dataloader().dataset.get_patch_visualization(y_np[i], self.train_dataloader().dataset.level_to, vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False)
             #print(f"Ground truth patch with index {idx} has shape: {gt_patch.shape}, while reconstructed ground truth patch has dimension {gt_patch.shape}")
             pred_patch = self.test_dataloader().dataset.get_patch_visualization(output_np[i], self.train_dataloader().dataset.level_to, vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False)
-            gt_patch, pred_patch = self.preprocess_output_and_prediction_before_comparison(gt_patch, pred_patch)
+            # gt_patch, pred_patch = self.preprocess_output_and_prediction_before_comparison(gt_patch, pred_patch)
             m = compute_metrics(gt_patch, pred_patch)
             self.test_metrics.append(m)
 
@@ -381,7 +382,7 @@ class TrainerBase(pl.LightningModule):
     def on_test_end(self):
         avg_metrics = average_metrics(self.test_metrics)
         self.log_metrics(avg_metrics, 'test_metrics', on_step=False, on_epoch=True, prog_bar=False)
-        self.show_example(self.test_dataloader, window=((1000, 1000), (2000, 2000)), vminmax=(1000, 6000), figsize=(20, 6), metrics_save_path=f"metrics_{self.current_epoch}.json", img_save_path=f"test.png")
+        self.show_example(self.test_dataloader, window=((1000, 1000), (2000, 2000)), vminmax='auto', figsize=(20, 6), metrics_save_path=f"metrics_{self.current_epoch}.json", img_save_path=f"test.png")
         avg_metrics['num_samples'] = len(self.test_metrics)
         avg_metrics['val_losses'] = self.val_losses
         metrics_path = os.path.join(self.base_save_dir, self.metrics_file_name)
@@ -667,8 +668,8 @@ class TrainSSM(TrainerBase):
             out = self._convert_real_to_complex(out)
         return out
     def preprocess_output_and_prediction_before_comparison(self, target: torch.Tensor, output: torch.Tensor) -> Tuple[np.ndarray, np.ndarray]:
-        # print(f"Output shape: {output.shape}, dtype={output.dtype} iscomplex={torch.is_complex(output)}")
-        # print(f"Target shape: {target.shape}, dtype={target.dtype} iscomplex={torch.is_complex(target)}")
+        print(f"Output shape: {output.shape}, dtype={output.dtype} iscomplex={torch.is_complex(output) if isinstance(output, torch.Tensor) else np.iscomplexobj(output)}")
+        print(f"Target shape: {target.shape}, dtype={target.dtype} iscomplex={torch.is_complex(target) if isinstance(target, torch.Tensor) else np.iscomplexobj(target)}")
 
         if output.shape[-1] > 2:
             output = output[..., :2]
@@ -685,7 +686,12 @@ class TrainSSM(TrainerBase):
             output = output.squeeze(-1)
         if len(target.shape) > 3:
             target = target.squeeze(-1)
-
+        if not ((isinstance(target, torch.Tensor) and torch.is_complex(target)) or (isinstance(target, np.ndarray) and np.iscomplexobj(target))):
+            target = target[..., 0] + 1j * target[..., 1]
+        if not ((isinstance(output, torch.Tensor) and torch.is_complex(output)) or (isinstance(output, np.ndarray) and np.iscomplexobj(output))):
+            output = output[..., 0] + 1j * output[..., 1]
+        print(f"After processing - Output shape: {output.shape}, dtype={output.dtype} iscomplex={torch.is_complex(output) if isinstance(output, torch.Tensor) else np.iscomplexobj(output)}")
+        print(f"After processing - Target shape: {target.shape}, dtype={target.dtype} iscomplex={torch.is_complex(target) if isinstance(target, torch.Tensor) else np.iscomplexobj(target)}")
         return target, output
     def preprocess_sample(self, x: Union[torch.Tensor, np.ndarray], device: Union[str, torch.device]=None):   
         if device is None:
@@ -716,7 +722,9 @@ def get_training_loop_by_model_name(
         num_epochs: int = 250, 
         logger: Optional[pl.loggers.Logger] = None, 
         device_no: int= 0, 
-        input_dim: int = 3
+        input_dim: int = 3, 
+        patience: int = 50,
+        **kwargs  # Accept additional parameters to prevent TypeError
     ) -> Tuple[TrainerBase, pl.Trainer]:
 
     if model_name == 'cv_transformer':
@@ -759,12 +767,22 @@ def get_training_loop_by_model_name(
         )
     else:
         raise ValueError(f"Unsupported model type: {model_name}")
+    
+    # Create early stopping callback
+    early_stop_callback = EarlyStopping(
+        monitor='val_loss',
+        patience=patience,
+        verbose=True,
+        mode='min'
+    )
+    
     trainer = pl.Trainer(max_epochs=num_epochs,
                         logger=logger,
                         devices=[device_no],
                         fast_dev_run=False,
                         log_every_n_steps=1,
                         accelerator="gpu" if torch.cuda.is_available() else "cpu",
-                        enable_progress_bar=True
+                        enable_progress_bar=True,
+                        callbacks=[early_stop_callback]
                         )
     return lightning_model, trainer
