@@ -668,8 +668,8 @@ class TrainSSM(TrainerBase):
             out = self._convert_real_to_complex(out)
         return out
     def preprocess_output_and_prediction_before_comparison(self, target: torch.Tensor, output: torch.Tensor) -> Tuple[np.ndarray, np.ndarray]:
-        print(f"Output shape: {output.shape}, dtype={output.dtype} iscomplex={torch.is_complex(output) if isinstance(output, torch.Tensor) else np.iscomplexobj(output)}")
-        print(f"Target shape: {target.shape}, dtype={target.dtype} iscomplex={torch.is_complex(target) if isinstance(target, torch.Tensor) else np.iscomplexobj(target)}")
+        # print(f"Output shape: {output.shape}, dtype={output.dtype} iscomplex={torch.is_complex(output) if isinstance(output, torch.Tensor) else np.iscomplexobj(output)}")
+        # print(f"Target shape: {target.shape}, dtype={target.dtype} iscomplex={torch.is_complex(target) if isinstance(target, torch.Tensor) else np.iscomplexobj(target)}")
 
         if output.shape[-1] > 2:
             output = output[..., :2]
@@ -690,8 +690,8 @@ class TrainSSM(TrainerBase):
             target = target[..., 0] + 1j * target[..., 1]
         if not ((isinstance(output, torch.Tensor) and torch.is_complex(output)) or (isinstance(output, np.ndarray) and np.iscomplexobj(output))):
             output = output[..., 0] + 1j * output[..., 1]
-        print(f"After processing - Output shape: {output.shape}, dtype={output.dtype} iscomplex={torch.is_complex(output) if isinstance(output, torch.Tensor) else np.iscomplexobj(output)}")
-        print(f"After processing - Target shape: {target.shape}, dtype={target.dtype} iscomplex={torch.is_complex(target) if isinstance(target, torch.Tensor) else np.iscomplexobj(target)}")
+        # print(f"After processing - Output shape: {output.shape}, dtype={output.dtype} iscomplex={torch.is_complex(output) if isinstance(output, torch.Tensor) else np.iscomplexobj(output)}")
+        # print(f"After processing - Target shape: {target.shape}, dtype={target.dtype} iscomplex={torch.is_complex(target) if isinstance(target, torch.Tensor) else np.iscomplexobj(target)}")
         return target, output
     def preprocess_sample(self, x: Union[torch.Tensor, np.ndarray], device: Union[str, torch.device]=None):   
         if device is None:

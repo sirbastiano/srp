@@ -1728,7 +1728,7 @@ class KPatchSampler(Sampler):
                 print(f"Sampling {len(self.coords[Path(f)])} patches from file {f} took {elapsed:.2f} seconds.")
     def get_coords_from_store(self, zfile: Union[str, os.PathLike], window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]] = None):
         if self.dataset.get_samples_by_file(zfile) is not None and len(self.dataset.get_samples_by_file(zfile)) == 0:
-                print(f"Calculating patches for file {zfile}")
+                # print(f"Calculating patches for file {zfile}")
                 self.dataset.calculate_patches_from_store(Path(zfile), patch_order=self.patch_order, window=window)
         lazy_coords = self.dataset.get_samples_by_file(zfile)
         

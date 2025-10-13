@@ -31,7 +31,6 @@ except ImportError:
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from training.knowledge_distillation import setup_knowledge_distillation, create_distillation_config
 from training.training_script import load_config
 from model.model_utils import get_model_from_configs
 
@@ -272,7 +271,9 @@ def main():
             inference_loader=inference_loader,
             mode=student_config['training'].get('mode', 'parallel'),
             lr=student_config['training'].get('lr', 1e-4),
-            loss_fn_name=student_config['training'].get('loss_fn', 'complex_mse'),
+            gt_loss_fn_name=student_config['training'].get('gt_loss_fn', 'polarimetric'),
+            feature_loss_fn_name=student_config['training'].get('feature_loss_fn', 'complex_mse'),
+            input_dim=student_config['model'].get('input_dim', 4),
             **distillation_config
         )
         

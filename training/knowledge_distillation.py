@@ -28,12 +28,6 @@ from model.model_utils import get_model_from_configs
 from training.training_loops import TrainSSM
 from dataloader.dataloader import SARDataloader
 
-# Import progressive layer coupling
-# from pathlib import Path
-# import sys
-# sys.path.append(str(Path(__file__).parent.parent))
-# from progressive_layer_coupling import ProgressiveLayerCouplingLoss
-
 # Import distribution preserving distillation
 from training.distribution_preserving_distillation import DistributionPreservingLoss, DistributionStatisticsTracker
 
@@ -253,7 +247,8 @@ class KnowledgeDistillationLoss(nn.Module):
         alpha: float = 0.8,        # Increased from 0.5 to emphasize ground truth learning
         beta: float = 0.15,        # Reduced from 0.3 to reduce teacher dependency
         feature_matching: bool = True, 
-        loss_fn_name: str = "complex_mse"
+        gt_loss_fn_name: str = "complex_mse",
+        feature_loss_fn_name: str = "complex_mse"
     ):
         super().__init__()
         self.temperature = temperature
@@ -261,7 +256,8 @@ class KnowledgeDistillationLoss(nn.Module):
         self.beta = beta    # Weight for distillation loss
         self.gamma = 1.0 - alpha - beta  # Weight for feature matching
         self.feature_matching = feature_matching
-        self.mse_loss = get_loss_function(loss_fn_name) #nn.MSELoss()
+        self.gt_loss = get_loss_function(gt_loss_fn_name) #nn.MSELoss()
+        self.feature_loss = get_loss_function(feature_loss_fn_name) #nn.MSELoss()
         self.kl_div = nn.KLDivLoss(reduction='batchmean')
         
     def _preprocess_for_loss(self, output: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -316,7 +312,7 @@ class KnowledgeDistillationLoss(nn.Module):
         # Student loss (standard MSE with ground truth)
         # Preprocess outputs to ensure compatible shapes
         student_output_processed, ground_truth_processed = self._preprocess_for_loss(student_output, ground_truth)
-        student_loss = self.mse_loss(student_output_processed, ground_truth_processed)
+        student_loss = self.gt_loss(student_output_processed, ground_truth_processed)
         # Ensure student loss is real
         if torch.is_complex(student_loss):
             student_loss = student_loss.real
@@ -365,26 +361,9 @@ class KnowledgeDistillationLoss(nn.Module):
         else:
             teacher_output_adapted = teacher_output
         
-        # if torch.is_complex(student_output):
-        #     # For complex data, use magnitude-based distillation
-        #     teacher_mag = torch.abs(teacher_output_adapted)
-        #     student_mag = torch.abs(student_output)
-        #     # Preprocess before computing loss
-        #     teacher_mag_processed, student_mag_processed = self._preprocess_for_loss(teacher_mag, student_mag)
-        #     distillation_loss = self.mse_loss(student_mag_processed, teacher_mag_processed)
-            
-        #     # Also distill phase information
-        #     teacher_phase = torch.angle(teacher_output_adapted)
-        #     student_phase = torch.angle(student_output)
-        #     teacher_phase_processed, student_phase_processed = self._preprocess_for_loss(teacher_phase, student_phase)
-        #     phase_loss = self.mse_loss(student_phase_processed, teacher_phase_processed)
-        #     distillation_loss = distillation_loss + 0.5 * phase_loss
-        # else:
-        #     # For real-valued data
-        #     teacher_processed, student_processed = self._preprocess_for_loss(teacher_output_adapted, student_output)
-        #     distillation_loss = self.mse_loss(student_processed, teacher_processed)
+
         teacher_processed, student_processed = self._preprocess_for_loss(teacher_output_adapted, student_output)
-        distillation_loss = self.mse_loss(student_processed, teacher_processed)
+        distillation_loss = self.feature_loss(student_processed, teacher_processed)
         # Ensure distillation loss is real
         if torch.is_complex(distillation_loss):
             distillation_loss = distillation_loss.real
@@ -419,14 +398,14 @@ class KnowledgeDistillationLoss(nn.Module):
                         
                         # Preprocess features before computing loss
                         teacher_feat_processed, student_feat_processed = self._preprocess_for_loss(teacher_feat_adapted, student_features)
-                        feature_loss = self.mse_loss(student_feat_processed, teacher_feat_processed)
+                        feature_loss = self.feature_loss(student_feat_processed, teacher_feat_processed)
                         # Ensure feature loss is real
                         if torch.is_complex(feature_loss):
                             feature_loss = feature_loss.real
                 else:
                     # Preprocess features before computing loss
                     teacher_feat_processed, student_feat_processed = self._preprocess_for_loss(teacher_features, student_features)
-                    feature_loss = self.mse_loss(student_feat_processed, teacher_feat_processed)
+                    feature_loss = self.feature_loss(student_feat_processed, teacher_feat_processed)
                     # Ensure feature loss is real
                     if torch.is_complex(feature_loss):
                         feature_loss = feature_loss.real
@@ -475,7 +454,8 @@ class KnowledgeDistillationTrainer(TrainSSM):
         feature_matching: bool = True,
         freeze_teacher: bool = True,
         lr: float = 1e-4,
-        loss_fn_name: str = "complex_mse",
+        gt_loss_fn_name: str = 'complex_mse',
+        feature_loss_fn_name: str = 'complex_mse',
         curriculum_learning: bool = True,  # Enable curriculum learning to prevent mode collapse
         curriculum_epochs: int = 10,       # Number of epochs with pure student learning
         progressive_layers: bool = False,  # Enable progressive layer coupling
@@ -488,6 +468,7 @@ class KnowledgeDistillationTrainer(TrainSSM):
         moment_weight: float = 0.1,             # Moment matching weight
         confidence_weight: float = 0.05,        # Confidence calibration weight
         dynamic_temperature: bool = True,       # Enable adaptive temperature
+        input_dim: int = 4,
         **kwargs
     ):
         """
@@ -509,6 +490,7 @@ class KnowledgeDistillationTrainer(TrainSSM):
             feature_matching: Whether to include feature matching loss
             freeze_teacher: Whether to freeze teacher model weights
             lr: Learning rate
+            input_dim: Input data dimension for student(e.g., 4 for complex data with real and imag channels)
         """
         
         # Initialize parent with student model
@@ -521,7 +503,8 @@ class KnowledgeDistillationTrainer(TrainSSM):
             inference_loader=inference_loader,
             mode=mode,
             lr=lr,
-            criterion=get_loss_function(loss_fn_name)
+            criterion=get_loss_function(gt_loss_fn_name), 
+            input_dim=input_dim,
             #**kwargs
         )
         self.student_model = student_model
@@ -543,20 +526,26 @@ class KnowledgeDistillationTrainer(TrainSSM):
         self.stage_epochs = stage_epochs
         self.preserve_distribution = preserve_distribution
         
-        # Initialize distillation loss
+        # Initialize distillation loss - SIMPLIFIED TO MOST EFFECTIVE APPROACHES
         if progressive_layers:
-            print("Warning: Progressive layer coupling not implemented. Using standard knowledge distillation with progressive features.")
-            # Use standard knowledge distillation with progressive feature coupling
-            self.distillation_criterion = KnowledgeDistillationLoss(
-                temperature=temperature,
+            # Use progressive layer coupling - the method you want
+            from training.progressive_layer_coupling import ProgressiveLayerCouplingLoss
+            self.distillation_criterion = ProgressiveLayerCouplingLoss(
+                teacher_layers=teacher_layers,
+                student_layers=student_layers,
+                stage_epochs=stage_epochs,
                 alpha=alpha,
                 beta=beta,
-                feature_matching=feature_matching, 
-                loss_fn_name=loss_fn_name
+                gamma=1.0 - alpha - beta,
+                temperature=temperature,
+                loss_fn_name=gt_loss_fn_name
             )
-            self.progressive_layers = False  # We handle progressive features in the training loop
-        elif preserve_distribution:
-            # Use distribution-preserving knowledge distillation
+            print("✅ Progressive Layer Coupling enabled")
+            print(f"   Strategy: Layer-by-layer feature matching across {len(self.distillation_criterion.layer_couplings)} stages")
+            print(f"   Stage epochs: {stage_epochs}")
+            print(f"   Final stage: Ground truth only")
+        else:
+            # Use distribution-preserving knowledge distillation (most effective standard approach)
             self.distillation_criterion = DistributionPreservingLoss(
                 temperature=temperature,
                 alpha=alpha,
@@ -566,19 +555,12 @@ class KnowledgeDistillationTrainer(TrainSSM):
                 moment_weight=moment_weight,
                 confidence_weight=confidence_weight,
                 dynamic_temperature=dynamic_temperature,
-                loss_fn_name=loss_fn_name
+                loss_fn_name=gt_loss_fn_name
             )
-            self.progressive_layers = False
-        else:
-            # Use standard knowledge distillation
-            self.distillation_criterion = KnowledgeDistillationLoss(
-                temperature=temperature,
-                alpha=alpha,
-                beta=beta,
-                feature_matching=feature_matching, 
-                loss_fn_name=loss_fn_name
-            )
-            self.progressive_layers = False
+            print("✅ Distribution-preserving knowledge distillation enabled")
+            print(f"   Most effective for preventing mode collapse")
+        
+        self.preserve_distribution = preserve_distribution and not progressive_layers  # Don't mix strategies
         
         # Curriculum learning parameters
         self.curriculum_learning = curriculum_learning
@@ -608,7 +590,48 @@ class KnowledgeDistillationTrainer(TrainSSM):
         # Initialize layer projection modules for progressive feature coupling
         self._layer_projections = nn.ModuleDict()
         
+        # Initialize wandb logging
+        if WANDB_AVAILABLE:
+            try:
+                wandb.init(
+                    project="knowledge_distillation",
+                    name=f"kd_{Path(base_save_dir).name}",
+                    config={
+                        "temperature": temperature,
+                        "alpha": alpha,
+                        "beta": beta,
+                        "learning_rate": lr,
+                        "curriculum_learning": curriculum_learning,
+                        "curriculum_epochs": curriculum_epochs,
+                        "preserve_distribution": preserve_distribution,
+                        "variance_weight": variance_weight,
+                        "moment_weight": moment_weight,
+                        "confidence_weight": confidence_weight,
+                        "dynamic_temperature": dynamic_temperature,
+                        "progressive_layers": progressive_layers,
+                        "teacher_layers": teacher_layers,
+                        "student_layers": student_layers,
+                        "stage_epochs": stage_epochs,
+                        "feature_matching": feature_matching
+                    }
+                )
+                print("✅ Wandb logging initialized")
+            except Exception as e:
+                print(f"Warning: Failed to initialize wandb: {e}")
+        
         self.save_hyperparameters(ignore=['student_model', 'teacher_model'])
+    
+    def log_with_wandb(self, name: str, value, **kwargs):
+        """Log to both PyTorch Lightning and wandb"""
+        # Log to PyTorch Lightning
+        self.log(name, value, **kwargs)
+        
+        # Log to wandb if available
+        if WANDB_AVAILABLE:
+            try:
+                wandb.log({name: value}, step=self.global_step)
+            except Exception as e:
+                pass  # Silently continue if wandb logging fails
     
     def on_train_epoch_end(self):
         """Called at the end of each training epoch"""
@@ -623,23 +646,23 @@ class KnowledgeDistillationTrainer(TrainSSM):
             for model_type in ['student', 'teacher', 'ground_truth']:
                 if model_type in stats:
                     for stat_name, value in stats[model_type].items():
-                        self.log(f'distribution/{model_type}_{stat_name}', value, on_epoch=True)
+                        self.log_with_wandb(f'distribution/{model_type}_{stat_name}', value, on_epoch=True)
             
             # Log similarity metrics
             for sim_name, value in similarity.items():
-                self.log(f'distribution_similarity/{sim_name}', value, on_epoch=True)
+                self.log_with_wandb(f'distribution_similarity/{sim_name}', value, on_epoch=True)
             
             # Reset tracker for next epoch
             self.distribution_tracker.reset()
             
             # Log additional distribution preservation metrics if using distribution-preserving loss
             if hasattr(self.distillation_criterion, 'teacher_var_ema'):
-                self.log('distribution/teacher_var_ema', self.distillation_criterion.teacher_var_ema.item(), on_epoch=True)
-                self.log('distribution/student_var_ema', self.distillation_criterion.student_var_ema.item(), on_epoch=True)
+                self.log_with_wandb('distribution/teacher_var_ema', self.distillation_criterion.teacher_var_ema.item(), on_epoch=True)
+                self.log_with_wandb('distribution/student_var_ema', self.distillation_criterion.student_var_ema.item(), on_epoch=True)
                 
                 # Compute variance ratio (should be close to 1.0 for good distribution preservation)
                 var_ratio = self.distillation_criterion.student_var_ema / (self.distillation_criterion.teacher_var_ema + 1e-8)
-                self.log('distribution/variance_ratio', var_ratio.item(), on_epoch=True)
+                self.log_with_wandb('distribution/variance_ratio', var_ratio.item(), on_epoch=True)
         
     def _load_teacher_checkpoint(self):
         """Load teacher model from checkpoint"""
@@ -1196,6 +1219,7 @@ class KnowledgeDistillationTrainer(TrainSSM):
             total_feature_loss = total_feature_loss.real
         return total_feature_loss
     
+    
     def _update_curriculum_weights(self, current_epoch: int):
         """
         Update loss weights based on curriculum learning schedule
@@ -1228,9 +1252,9 @@ class KnowledgeDistillationTrainer(TrainSSM):
         
         # Log weight changes
         if hasattr(self, 'log'):
-            self.log('curriculum/alpha', alpha, on_step=False, on_epoch=True)
-            self.log('curriculum/beta', beta, on_step=False, on_epoch=True)
-            self.log('curriculum/gamma', gamma, on_step=False, on_epoch=True)
+            self.log_with_wandb('curriculum/alpha', alpha, on_step=False, on_epoch=True)
+            self.log_with_wandb('curriculum/beta', beta, on_step=False, on_epoch=True)
+            self.log_with_wandb('curriculum/gamma', gamma, on_step=False, on_epoch=True)
     def forward(self, x, device): 
         x_student = self.preprocess_sample(x, device=self.device)
         # Student uses real preprocessing (convert complex to real)
@@ -1256,19 +1280,25 @@ class KnowledgeDistillationTrainer(TrainSSM):
         if self.progressive_layers:
             # Progressive layer coupling approach
             # Student and teacher forward passes with different inputs
-            student_output_real = self.student_model(x_student)
+            student_output_real, student_features_list = self.extract_features(self.student_model, x_student, is_student=True)
+            
+            # Teacher forward pass (no gradients) with feature extraction using complex input
             with torch.no_grad():
-                teacher_output = self.teacher_model(x_teacher)
+                teacher_output, teacher_features_list = self.extract_features(self.teacher_model, x_teacher, is_student=False)
             
             # Convert student real output to complex for comparison
             student_output = self._convert_real_to_complex(student_output_real)
             
             y, student_output = self.preprocess_output_and_prediction_before_comparison(y, student_output)
             y, teacher_output = self.preprocess_output_and_prediction_before_comparison(y, teacher_output)
+            student_features_list, teacher_features_list = zip(*[self.preprocess_output_and_prediction_before_comparison(student_feat, teacher_feat) for student_feat, teacher_feat in zip(student_features_list, teacher_features_list)]) if student_features_list is not None else (None, None)
+
             # Compute progressive loss with models and input
             loss_dict = self.distillation_criterion(
                 student_output=student_output,
+                student_features_list=student_features_list,
                 teacher_output=teacher_output,
+                teacher_features_list=teacher_features_list,
                 ground_truth=y,
                 student_model=self.student_model,
                 teacher_model=self.teacher_model,
@@ -1276,9 +1306,9 @@ class KnowledgeDistillationTrainer(TrainSSM):
             )
             
             # Log progressive-specific metrics
-            self.log('progressive/stage', loss_dict['stage'], on_step=False, on_epoch=True)
-            self.log('progressive/num_layer_pairs', loss_dict['num_layer_pairs'], on_step=False, on_epoch=True)
-            self.log('progressive/adaptive_gamma', loss_dict['adaptive_gamma'], on_step=False, on_epoch=True)
+            self.log_with_wandb('progressive/stage', loss_dict['stage'], on_step=False, on_epoch=True)
+            self.log_with_wandb('progressive/num_layer_pairs', loss_dict['num_layer_pairs'], on_step=False, on_epoch=True)
+            self.log_with_wandb('progressive/adaptive_gamma', loss_dict['adaptive_gamma'], on_step=False, on_epoch=True)
             
         else:
             # Standard knowledge distillation approach
@@ -1307,7 +1337,9 @@ class KnowledgeDistillationTrainer(TrainSSM):
             # Compute standard distillation loss (without features)
             loss_dict = self.distillation_criterion(
                 student_output=student_output,
+                student_features_list=student_features_list,
                 teacher_output=teacher_output,
+                teacher_features_list=teacher_features_list,
                 ground_truth=y,
                 student_features=None,  # We handle features separately now
                 teacher_features=None
@@ -1325,13 +1357,13 @@ class KnowledgeDistillationTrainer(TrainSSM):
         # Log all loss components
         for loss_name, loss_value in loss_dict.items():
             if isinstance(loss_value, torch.Tensor):
-                self.log(f'train_{loss_name}', loss_value, on_step=True, on_epoch=True, prog_bar=True)
+                self.log_with_wandb(f'train_{loss_name}', loss_value, on_step=True, on_epoch=True, prog_bar=True)
         
         # Log progressive feature coupling metrics
         if student_features_list is not None and teacher_features_list is not None:
-            self.log('progressive/num_teacher_layers', len(teacher_features_list), on_step=False, on_epoch=True)
-            self.log('progressive/num_student_layers', len(student_features_list), on_step=False, on_epoch=True)
-            self.log('progressive/epoch_progress', min(self.current_epoch / max(getattr(self.hparams, 'num_epochs', 100) - 1, 1), 1.0), on_step=False, on_epoch=True)
+            self.log_with_wandb('progressive/num_teacher_layers', len(teacher_features_list), on_step=False, on_epoch=True)
+            self.log_with_wandb('progressive/num_student_layers', len(student_features_list), on_step=False, on_epoch=True)
+            self.log_with_wandb('progressive/epoch_progress', min(self.current_epoch / max(getattr(self.hparams, 'num_epochs', 100) - 1, 1), 1.0), on_step=False, on_epoch=True)
         
         # Track distribution statistics (if enabled)
         if self.distribution_tracker is not None:
@@ -1383,15 +1415,19 @@ class KnowledgeDistillationTrainer(TrainSSM):
         if self.progressive_layers:
             # Progressive layer coupling approach
             # Student and teacher forward passes
-            student_output = self.student_model(x)
-            with torch.no_grad():
-                teacher_output = self.teacher_model(x)
+            # student_output = self.student_model(x)
+            # with torch.no_grad():
+            #     teacher_output = self.teacher_model(x)
             y, student_output = self.preprocess_output_and_prediction_before_comparison(y, student_output)
             y, teacher_output = self.preprocess_output_and_prediction_before_comparison(y, teacher_output)
+            student_features_list, teacher_features_list = zip(*[self.preprocess_output_and_prediction_before_comparison(student_feat, teacher_feat) for student_feat, teacher_feat in zip(student_features_list, teacher_features_list)]) if student_features_list is not None else (None, None)
+
             # Compute progressive loss with models and input
             loss_dict = self.distillation_criterion(
                 student_output=student_output,
+                student_features_list=student_features_list,
                 teacher_output=teacher_output,
+                teacher_features_list=teacher_features_list,
                 ground_truth=y,
                 student_model=self.student_model,
                 teacher_model=self.teacher_model,
@@ -1399,9 +1435,9 @@ class KnowledgeDistillationTrainer(TrainSSM):
             )
             
             # Log progressive-specific metrics
-            self.log('progressive/stage', loss_dict['stage'], on_step=False, on_epoch=True)
-            self.log('progressive/num_layer_pairs', loss_dict['num_layer_pairs'], on_step=False, on_epoch=True)
-            self.log('progressive/adaptive_gamma', loss_dict['adaptive_gamma'], on_step=False, on_epoch=True)
+            self.log_with_wandb('progressive/stage', loss_dict['stage'], on_step=False, on_epoch=True)
+            self.log_with_wandb('progressive/num_layer_pairs', loss_dict['num_layer_pairs'], on_step=False, on_epoch=True)
+            self.log_with_wandb('progressive/adaptive_gamma', loss_dict['adaptive_gamma'], on_step=False, on_epoch=True)
             
         else:
             # Standard knowledge distillation approach
@@ -1423,11 +1459,15 @@ class KnowledgeDistillationTrainer(TrainSSM):
             
             y, student_output = self.preprocess_output_and_prediction_before_comparison(y, student_output)
             y, teacher_output = self.preprocess_output_and_prediction_before_comparison(y, teacher_output)
+            student_features_list, teacher_features_list = zip(*[self.preprocess_output_and_prediction_before_comparison(student_feat, teacher_feat) for student_feat, teacher_feat in zip(student_features_list, teacher_features_list)]) if student_features_list is not None else (None, None)
+
 
             # Compute distillation loss with aligned features
             loss_dict = self.distillation_criterion(
                 student_output=student_output,
+                student_features_list=student_features_list,
                 teacher_output=teacher_output,
+                teacher_features_list=teacher_features_list,
                 ground_truth=y,
                 student_features=None,  # We handle features separately now
                 teacher_features=None
@@ -1444,7 +1484,7 @@ class KnowledgeDistillationTrainer(TrainSSM):
         
         # Log validation losses
         for loss_name, loss_value in loss_dict.items():
-            self.log(f'val_{loss_name}', loss_value, on_step=False, on_epoch=True, prog_bar=True)
+            self.log_with_wandb(f'val_{loss_name}', loss_value, on_step=False, on_epoch=True, prog_bar=True)
             
         # Track distribution statistics for validation (if enabled)
         if self.distribution_tracker is not None:
@@ -1471,12 +1511,12 @@ class KnowledgeDistillationTrainer(TrainSSM):
         
         # Convert student real output to complex for comparison
         student_output = self._convert_real_to_complex(student_output_real)
-        
+        complexMSE = get_loss_function("complex_mse")()
         # Compute individual losses
-        student_mse = F.mse_loss(student_output, y)
-        teacher_mse = F.mse_loss(teacher_output, y)
-        student_teacher_mse = F.mse_loss(student_output, teacher_output)
-        
+        student_mse = complexMSE(student_output, y)
+        teacher_mse = complexMSE(teacher_output, y)
+        student_teacher_mse = complexMSE(student_output, teacher_output)
+
         # Log test metrics
         self.log('test_student_mse', student_mse, on_step=False, on_epoch=True)
         self.log('test_teacher_mse', teacher_mse, on_step=False, on_epoch=True)
@@ -1489,18 +1529,54 @@ class KnowledgeDistillationTrainer(TrainSSM):
         }
     
     def configure_optimizers(self):
-        """Configure optimizer only for student model parameters"""
+        """Configure optimizer with adaptive learning rate for knowledge distillation"""
+        # Use a lower initial learning rate during curriculum phase
+        base_lr = self.hparams.lr
+        
+        # Start with lower learning rate during curriculum phase
+        if self.curriculum_learning:
+            initial_lr = base_lr * 0.5  # Start with half the learning rate
+        else:
+            initial_lr = base_lr
+            
         optimizer = torch.optim.AdamW(
             self.student_model.parameters(),
-            lr=self.hparams.lr,
+            lr=initial_lr,
             weight_decay=getattr(self.hparams, 'weight_decay', 1e-4)
         )
         
         if hasattr(self.hparams, 'scheduler_type') and self.hparams.scheduler_type == 'cosine':
-            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-                optimizer,
-                T_max=getattr(self.hparams, 'num_epochs', 100)
-            )
+            # Learning rate scheduler with warmup
+            total_epochs = getattr(self.hparams, 'num_epochs', 100)
+            warmup_epochs = min(5, self.curriculum_epochs // 2) if self.curriculum_learning else 0
+            
+            if warmup_epochs > 0:
+                scheduler = torch.optim.lr_scheduler.SequentialLR(
+                    optimizer,
+                    schedulers=[
+                        # Warmup phase
+                        torch.optim.lr_scheduler.LinearLR(
+                            optimizer,
+                            start_factor=0.1,
+                            end_factor=1.0,
+                            total_iters=warmup_epochs
+                        ),
+                        # Main training phase
+                        torch.optim.lr_scheduler.CosineAnnealingLR(
+                            optimizer,
+                            T_max=total_epochs - warmup_epochs,
+                            eta_min=base_lr * 0.01
+                        )
+                    ],
+                    milestones=[warmup_epochs]
+                )
+            else:
+                scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                    optimizer,
+                    T_max=total_epochs,
+                    eta_min=base_lr * 0.01
+                )
+                
             return [optimizer], [scheduler]
         
         return optimizer
@@ -1542,281 +1618,14 @@ class KnowledgeDistillationTrainer(TrainSSM):
                 frequency=1
             )
     
-    # def training_step(self, batch, batch_idx):
-    #     """Training step with curriculum learning"""
-    #     # Update curriculum weights
-    #     self._update_curriculum_weights(self.current_epoch)
+    def on_train_end(self):
+        """Called when training ends"""
+        super().on_train_end() if hasattr(super(), 'on_train_end') else None
         
-    #     # Call the KnowledgeDistillationTrainer's own training_step logic
-    #     x, y = batch
-        
-    #     # Preprocess input data to ensure correct dtype
-    #     x = self.preprocess_sample(x, device=self.device)
-        
-    #     # Student forward pass with feature extraction
-    #     student_output, student_features = self.extract_features(self.student_model, x)
-        
-    #     # Teacher forward pass (no gradients) with feature extraction
-    #     with torch.no_grad():
-    #         teacher_output, teacher_features = self.extract_features(self.teacher_model, x)
-        
-    #     # Apply sophisticated feature alignment before computing distillation loss
-    #     if student_features is not None and teacher_features is not None:
-    #         teacher_features, student_features = self._align_features_for_distillation(
-    #             teacher_features, student_features
-    #         )
-        
-    #     # Compute distillation loss with aligned features
-    #     loss_dict = self.distillation_criterion(
-    #         student_output=student_output,
-    #         teacher_output=teacher_output,
-    #         ground_truth=y,
-    #         student_features=student_features,
-    #         teacher_features=teacher_features
-    #     )
-        
-    #     # If we have aligned features, use sophisticated multi-scale feature loss
-    #     if student_features is not None and teacher_features is not None:
-    #         sophisticated_feature_loss = self._compute_multi_scale_feature_loss(
-    #             teacher_features, student_features
-    #         )
-    #         # Replace the simple feature loss with sophisticated one
-    #         loss_dict['feature_loss'] = sophisticated_feature_loss
-    #         # Recompute total loss
-    #         loss_dict['total_loss'] = (
-    #             self.distillation_criterion.alpha * loss_dict['student_loss'] +
-    #             self.distillation_criterion.beta * loss_dict['distillation_loss'] +
-    #             self.distillation_criterion.gamma * sophisticated_feature_loss
-    #         )
-        
-    #     # Log training losses
-    #     for loss_name, loss_value in loss_dict.items():
-    #         self.log(loss_name, loss_value, on_step=False, on_epoch=True, prog_bar=True)
-        
-    #     # Log curriculum learning metrics for training
-    #     self.log('curriculum/alpha', self.distillation_criterion.alpha, on_step=False, on_epoch=True)
-    #     self.log('curriculum/beta', self.distillation_criterion.beta, on_step=False, on_epoch=True)
-    #     self.log('curriculum/gamma', self.distillation_criterion.gamma, on_step=False, on_epoch=True)
-        
-    #     # Update training step count for gradient logging
-    #     if hasattr(self, 'training_step_count'):
-    #         self.training_step_count += 1
-    #     else:
-    #         self.training_step_count = 1
-            
-    #     return loss_dict['total_loss']
-    
-    # def validation_step(self, batch, batch_idx):
-    #     """Validation step with curriculum learning"""
-    #     # Update curriculum weights (in case validation is called directly)
-    #     self._update_curriculum_weights(self.current_epoch)
-        
-    #     # Call the KnowledgeDistillationTrainer's own validation_step logic
-    #     x, y = batch
-        
-    #     # Preprocess input data to ensure correct dtype
-    #     x = self.preprocess_sample(x, device=self.device)
-        
-    #     # Student forward pass with feature extraction
-    #     student_output, student_features = self.extract_features(self.student_model, x)
-        
-    #     # Teacher forward pass (no gradients) with feature extraction
-    #     with torch.no_grad():
-    #         teacher_output, teacher_features = self.extract_features(self.teacher_model, x)
-        
-    #     # Apply sophisticated feature alignment before computing distillation loss
-    #     if student_features is not None and teacher_features is not None:
-    #         teacher_features, student_features = self._align_features_for_distillation(
-    #             teacher_features, student_features
-    #         )
-        
-    #     # Compute distillation loss with aligned features
-    #     loss_dict = self.distillation_criterion(
-    #         student_output=student_output,
-    #         teacher_output=teacher_output,
-    #         ground_truth=y,
-    #         student_features=student_features,
-    #         teacher_features=teacher_features
-    #     )
-        
-    #     # If we have aligned features, use sophisticated multi-scale feature loss
-    #     if student_features is not None and teacher_features is not None:
-    #         sophisticated_feature_loss = self._compute_multi_scale_feature_loss(
-    #             teacher_features, student_features
-    #         )
-    #         # Replace the simple feature loss with sophisticated one
-    #         loss_dict['feature_loss'] = sophisticated_feature_loss
-    #         # Recompute total loss
-    #         loss_dict['total_loss'] = (
-    #             self.distillation_criterion.alpha * loss_dict['student_loss'] +
-    #             self.distillation_criterion.beta * loss_dict['distillation_loss'] +
-    #             self.distillation_criterion.gamma * sophisticated_feature_loss
-    #         )
-        
-    #     # Log validation losses
-    #     for loss_name, loss_value in loss_dict.items():
-    #         self.log(f'val_{loss_name}', loss_value, on_step=False, on_epoch=True, prog_bar=True)
-        
-    #     # Log curriculum learning metrics
-    #     self.log('curriculum/alpha', self.distillation_criterion.alpha, on_step=False, on_epoch=True)
-    #     self.log('curriculum/beta', self.distillation_criterion.beta, on_step=False, on_epoch=True)
-    #     self.log('curriculum/gamma', self.distillation_criterion.gamma, on_step=False, on_epoch=True)
-        
-    #     return loss_dict['total_loss']
-
-
-def create_distillation_config(
-    teacher_config: Dict[str, Any],
-    student_modifications: Dict[str, Any]
-) -> Dict[str, Any]:
-    """
-    Create student model configuration based on teacher config with modifications
-    
-    Args:
-        teacher_config: Original teacher model configuration
-        student_modifications: Modifications to apply for student model
-        
-    Returns:
-        Student model configuration
-    """
-    import copy
-    student_config = copy.deepcopy(teacher_config)
-    
-    # Apply modifications
-    for key, value in student_modifications.items():
-        if key in student_config:
-            student_config[key] = value
-        else:
-            student_config[key] = value
-    
-    return student_config
-
-
-def setup_knowledge_distillation(
-    teacher_config_path: str,
-    teacher_checkpoint_path: str,
-    student_modifications: Dict[str, Any],
-    dataloader_config: Dict[str, Any],
-    training_config: Dict[str, Any],
-    save_dir: str = "./results/distillation"
-) -> Tuple[KnowledgeDistillationTrainer, pl.Trainer]:
-    """
-    Setup complete knowledge distillation pipeline
-    
-    Args:
-        teacher_config_path: Path to teacher model configuration
-        teacher_checkpoint_path: Path to teacher model checkpoint
-        student_modifications: Modifications for student model
-        dataloader_config: Dataloader configuration
-        training_config: Training configuration
-        save_dir: Directory to save results
-        
-    Returns:
-        Tuple of (distillation_trainer, pytorch_lightning_trainer)
-    """
-    import yaml
-    from training.training_script import create_dataloaders
-    
-    # Load teacher configuration
-    with open(teacher_config_path, 'r') as f:
-        teacher_full_config = yaml.safe_load(f)
-    
-    teacher_model_config = teacher_full_config['model']
-    
-    # Create student configuration
-    student_model_config = create_distillation_config(
-        teacher_model_config,
-        student_modifications
-    )
-    
-    print("Teacher Model Config:", teacher_model_config)
-    print("Student Model Config:", student_model_config)
-    
-    # Create models
-    teacher_model = get_model_from_configs(**teacher_model_config)
-    student_model = get_model_from_configs(**student_model_config)
-    
-    # Ensure models are created in float32 (not float64 or float16)
-    teacher_model = teacher_model.float()
-    student_model = student_model.float()
-    
-    print(f"Teacher model parameters: {sum(p.numel() for p in teacher_model.parameters()):,}")
-    print(f"Student model parameters: {sum(p.numel() for p in student_model.parameters()):,}")
-    
-    # Create dataloaders
-    train_loader, val_loader, test_loader, inference_loader = create_dataloaders(dataloader_config)
-    
-    # Create distillation trainer
-    distillation_trainer = KnowledgeDistillationTrainer(
-        student_model=student_model,
-        teacher_model=teacher_model,
-        teacher_checkpoint_path=teacher_checkpoint_path,
-        base_save_dir=save_dir,
-        train_loader=train_loader,
-        val_loader=val_loader,
-        test_loader=test_loader,
-        inference_loader=inference_loader,
-        **training_config
-    )
-    
-    # Create PyTorch Lightning trainer
-    from pytorch_lightning.loggers import TensorBoardLogger
-    from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
-    
-    # Initialize loggers
-    loggers = []
-    
-    # Always use TensorBoard logger
-    tb_logger = TensorBoardLogger(save_dir=save_dir, name="distillation")
-    loggers.append(tb_logger)
-    
-    # Add wandb logger if available
-    if WANDB_AVAILABLE:
-        try:
-            from pytorch_lightning.loggers import WandbLogger
-            wandb_logger = WandbLogger(
-                project="sarssm-knowledge-distillation",
-                name=f"distillation_{student_model_config.get('model_dim', 'unknown')}dim_{student_model_config.get('num_layers', 'unknown')}layers",
-                save_dir=save_dir,
-                config={
-                    "teacher_config": teacher_model_config,
-                    "student_config": student_model_config,
-                    "training_config": training_config,
-                    "dataloader_config": dataloader_config
-                }
-            )
-            loggers.append(wandb_logger)
-            print("✅ Wandb logger initialized for gradient tracking")
-        except Exception as e:
-            print(f"⚠️  Wandb logger initialization failed: {e}")
-    else:
-        print("⚠️  Wandb not available - using TensorBoard only")
-    
-    checkpoint_callback = ModelCheckpoint(
-        dirpath=os.path.join(save_dir, "checkpoints"),
-        filename="student-{epoch:02d}-{val_total_loss:.4f}",
-        monitor="val_total_loss",
-        mode="min",
-        save_top_k=3,
-        save_last=True
-    )
-    
-    early_stopping = EarlyStopping(
-        monitor="val_total_loss",
-        patience=training_config.get('patience', 20),
-        mode="min",
-        min_delta=training_config.get('delta', 1e-4)
-    )
-    
-    trainer = pl.Trainer(
-        max_epochs=training_config.get('num_epochs', 100),
-        logger=loggers,  # Use all available loggers
-        callbacks=[checkpoint_callback, early_stopping],
-        devices=1,
-        accelerator="gpu" if torch.cuda.is_available() else "cpu",
-        gradient_clip_val=1.0,
-        log_every_n_steps=50,
-        enable_progress_bar=True
-    )
-    
-    return distillation_trainer, trainer
+        # Close wandb if it was initialized
+        if WANDB_AVAILABLE:
+            try:
+                wandb.finish()
+                print("✅ Wandb logging finished")
+            except Exception as e:
+                print(f"Warning: Failed to finish wandb: {e}")

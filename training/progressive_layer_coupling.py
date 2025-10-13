@@ -60,79 +60,42 @@ class ProgressiveLayerCouplingLoss(nn.Module):
         
     def _define_layer_couplings(self) -> List[List[Tuple[int, int]]]:
         """
-        Define the progressive layer coupling strategy.
+        Define the progressive layer coupling strategy EXACTLY as requested:
+        
+        Stage 1: First S4D layer features only (Teacher[1] ↔ Student[1])
+        Stage 2: Second S4D layer features only (Teacher[2] ↔ Student[2]) 
+        Stage 3: Third S4D layer features only (Teacher[3] ↔ Student[3])
+        Stage 4: Fourth S4D layer features only (Teacher[4] ↔ Student[4])
+        Final Stage: Ground truth only (no feature matching)
         
         Returns:
             List of stages, each containing list of (teacher_idx, student_idx) tuples
         """
-        # Map semantically equivalent layers
-        # For 6-layer teacher and 4-layer student:
-        # - Early: Teacher[1] ↔ Student[1] (depth ~17% vs 25%)
-        # - Middle: Teacher[3] ↔ Student[2] (depth 50% vs 50%) 
-        # - Late: Teacher[5] ↔ Student[3] (depth 83% vs 75%)
+        # Create layer-by-layer coupling strategy
+        couplings = []
         
-        early_coupling = [(1, 1)]  # Early feature learning
-        middle_coupling = [(1, 1), (3, 2)]  # Add middle features
-        late_coupling = [(1, 1), (3, 2), (5, 3)]  # Add late features
+        # Individual layer stages (one layer pair at a time)
+        max_layers = min(self.teacher_layers, self.student_layers)
+        for layer_idx in range(1, max_layers + 1):  # Start from layer 1
+            couplings.append([(layer_idx, layer_idx)])
         
-        return [
-            early_coupling,   # Stage 0: Early layers only
-            middle_coupling,  # Stage 1: Early + middle layers
-            late_coupling,    # Stage 2: Early + middle + late layers
-            late_coupling     # Stage 3+: Full coupling (same as stage 2)
-        ]
+        # Final stage: Empty list means ground truth only, no feature matching
+        couplings.append([])
+        
+        print(f"📚 Progressive Layer Coupling Strategy:")
+        for i, stage_couples in enumerate(couplings):
+            if stage_couples:
+                layer_pairs = ", ".join([f"T{t}↔S{s}" for t, s in stage_couples])
+                print(f"   Stage {i+1} (epochs {i*self.stage_epochs}-{(i+1)*self.stage_epochs}): {layer_pairs}")
+            else:
+                print(f"   Stage {i+1} (epochs {i*self.stage_epochs}+): Ground truth only")
+        
+        return couplings
     
     def update_training_stage(self, current_epoch: int):
         """Update the current training stage based on epoch"""
         self.current_epoch = current_epoch
         self.current_stage = min(current_epoch // self.stage_epochs, len(self.layer_couplings) - 1)
-        
-    def extract_layer_features(self, model: nn.Module, x: torch.Tensor, layer_indices: List[int]) -> List[torch.Tensor]:
-        """
-        Extract features from specific layers of the model.
-        
-        Args:
-            model: The model to extract features from
-            x: Input tensor
-            layer_indices: List of layer indices to extract features from
-            
-        Returns:
-            List of feature tensors from specified layers
-        """
-        features = []
-        hooks = []
-        
-        def create_hook(layer_idx: int):
-            def hook_fn(module, input, output):
-                if isinstance(output, tuple):
-                    # S4D returns (output, state), we want the output
-                    features.append((layer_idx, output[0]))
-                else:
-                    features.append((layer_idx, output))
-            return hook_fn
-        
-        # Register hooks for specified layers
-        if hasattr(model, 'layers'):
-            for layer_idx in layer_indices:
-                if 0 <= layer_idx < len(model.layers):
-                    hook = model.layers[layer_idx].register_forward_hook(create_hook(layer_idx))
-                    hooks.append(hook)
-        
-        try:
-            # Forward pass
-            with torch.no_grad():
-                output = model(x)
-            
-            # Sort features by layer index and extract tensors
-            features.sort(key=lambda x: x[0])  # Sort by layer index
-            extracted_features = [feat[1] for feat in features]
-            
-            return extracted_features
-            
-        finally:
-            # Clean up hooks
-            for hook in hooks:
-                hook.remove()
     
     def align_feature_dimensions(self, student_feat: torch.Tensor, teacher_feat: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """
@@ -258,7 +221,9 @@ class ProgressiveLayerCouplingLoss(nn.Module):
     def forward(
         self,
         student_output: torch.Tensor,
+        student_features_list: List[torch.Tensor],
         teacher_output: torch.Tensor,
+        teacher_features_list: List[torch.Tensor],
         ground_truth: torch.Tensor,
         student_model: nn.Module,
         teacher_model: nn.Module,
@@ -281,46 +246,42 @@ class ProgressiveLayerCouplingLoss(nn.Module):
         # Get current stage layer couplings
         current_couplings = self.layer_couplings[self.current_stage]
         
-        # Extract teacher and student layer indices for current stage
-        teacher_indices = [t_idx for t_idx, s_idx in current_couplings]
-        student_indices = [s_idx for t_idx, s_idx in current_couplings]
-        
-        # Extract features from specified layers
-        student_features = self.extract_layer_features(student_model, input_tensor, student_indices)
-        teacher_features = self.extract_layer_features(teacher_model, input_tensor, teacher_indices)
-        
-        # 1. Student loss (ground truth)
+        # 1. Student loss (ground truth) - always present
         student_loss = self.mse_loss(student_output, ground_truth)
         
-        # 2. Distillation loss (teacher output) - handle complex tensors
+        # 2. Check if we're in the final stage (ground truth only)
+        if not current_couplings:  # Empty list means ground truth only
+            print(f"📚 Stage {self.current_stage + 1}: Ground truth only phase")
+            return {
+                'total_loss': student_loss,  # Only ground truth loss
+                'student_loss': student_loss,
+                'distillation_loss': torch.tensor(0.0, device=student_loss.device),
+                'feature_loss': torch.tensor(0.0, device=student_loss.device),
+                'stage': torch.tensor(self.current_stage, dtype=torch.float),
+                'num_layer_pairs': torch.tensor(0, dtype=torch.float),
+                'adaptive_gamma': torch.tensor(0.0, dtype=torch.float)
+            }
+        
+
+        
+        # 3. Distillation loss (teacher output) - handle complex tensors
         if teacher_output.is_complex() or student_output.is_complex():
-            # For complex outputs, use magnitude-based distillation
-            teacher_mag = teacher_output.abs() if teacher_output.is_complex() else teacher_output
-            student_mag = student_output.abs() if student_output.is_complex() else student_output
-            
-            # Apply softmax to magnitudes
-            teacher_soft = F.softmax(teacher_mag / self.temperature, dim=-1)
-            student_log_soft = F.log_softmax(student_mag / self.temperature, dim=-1)
-            distillation_loss = self.kl_div(student_log_soft, teacher_soft) * (self.temperature ** 2)
+            # For complex outputs, use MSE instead of KL divergence
+            distillation_loss = self.mse_loss(student_output, teacher_output)
         else:
             # Standard softmax for real-valued outputs
             teacher_soft = F.softmax(teacher_output / self.temperature, dim=-1)
             student_log_soft = F.log_softmax(student_output / self.temperature, dim=-1)
             distillation_loss = self.kl_div(student_log_soft, teacher_soft) * (self.temperature ** 2)
         
-        # 3. Progressive feature loss
-        feature_loss = self.compute_feature_loss(student_features, teacher_features)
+        # 4. Progressive feature loss (only for current layer pair)
+        feature_loss = self.compute_feature_loss(student_features_list, teacher_features_list)
         
-        # Combine losses with curriculum weighting
-        stage_factor = (self.current_stage + 1) / len(self.layer_couplings)
-        
-        # Gradually increase feature loss weight as we add more layers
-        adaptive_gamma = self.gamma * stage_factor
-        
+        # 5. Combine losses - focus on current layer features
         total_loss = (
             self.alpha * student_loss +
             self.beta * distillation_loss +
-            adaptive_gamma * feature_loss
+            self.gamma * feature_loss  # Fixed weight for single layer focus
         )
         
         return {
@@ -330,7 +291,7 @@ class ProgressiveLayerCouplingLoss(nn.Module):
             'feature_loss': feature_loss,
             'stage': torch.tensor(self.current_stage, dtype=torch.float),
             'num_layer_pairs': torch.tensor(len(current_couplings), dtype=torch.float),
-            'adaptive_gamma': torch.tensor(adaptive_gamma, dtype=torch.float)
+            'adaptive_gamma': torch.tensor(self.gamma, dtype=torch.float)
         }
 
 

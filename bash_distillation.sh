@@ -1,1 +1,14 @@
-python training/distillation_script.py --teacher_config training/training_configs/s4_ssm_complex_smaller_cols.yaml --teacher_checkpoint results/s4_ssm_smaller_cols/model_last.pth --student_config training/training_configs/s4_ssm_student.yaml --save_dir ./results/enhanced_distillation_final --preserve_distribution --temperature 3.0 --alpha 0.7 --beta 0.2 --variance_weight 0.2 --moment_weight 0.15 --confidence_weight 0.08 --dynamic_temperature --num_epochs 100 --learning_rate 1e-4
+python training/distillation_script.py \
+  --teacher_config training/training_configs/s4_ssm_complex_sweep.yaml \
+  --teacher_checkpoint results/s4_ssm_smaller_cols/last.ckpt \
+  --student_config training/training_configs/s4_ssm_student_new.yaml \
+  --save_dir ./results/progressive_layer_distillation \
+  --progressive_layers \
+  --teacher_layers 4 \
+  --student_layers 4 \
+  --stage_epochs 15 \
+  --temperature 1.5 \
+  --alpha 0.8 \
+  --beta 0.1 \
+  --num_epochs 100 \
+  --learning_rate 1e-4
