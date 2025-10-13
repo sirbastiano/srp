@@ -1,7 +1,7 @@
 # Configuration for S4 SSM Training
 
 # Data directory
-data_dir: "/Data_large/marine/PythonProjects/SAR/sarpyx/data"
+data_dir: "/Data/sar_focusing"
 
 # Model configuration
 model:
@@ -37,7 +37,7 @@ device: "cuda"
 
 # Dataloader configuration
 dataloader:
-  data_dir: "/Data_large/marine/PythonProjects/SAR/sarpyx/data"
+  data_dir: "/Data/sar_focusing"
   level_from: "rc"
   level_to: "az"
   num_workers: 0

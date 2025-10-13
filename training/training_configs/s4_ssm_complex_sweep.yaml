@@ -2,7 +2,7 @@
 # This file demonstrates how to set up parameter sweeps for hyperparameter optimization
 
 # Data directory
-data_dir: "/Data_large/marine/PythonProjects/SAR/sarpyx/data"
+data_dir: "/Data/sar_focusing"
 
 # Model configuration
 model:
@@ -18,6 +18,8 @@ model:
   complex_valued: true
   use_selectivity: false
   activation_function: 'relu'
+  pretrained_path: "./results/s4_ssm_smaller_cols/last.ckpt"
+  start_key: "model." # Key prefix to load weights from checkpoint
 
 # Training configuration
 training:
@@ -49,7 +51,7 @@ device: "cuda"
 
 # Dataloader configuration
 dataloader:
-  data_dir: "/Data_large/marine/PythonProjects/SAR/sarpyx/data"
+  data_dir: "/Data/sar_focusing"
   level_from: "rc"
   level_to: "az"
   num_workers: 0
@@ -96,7 +98,7 @@ dataloader:
     patch_order: "row"
     max_products: 1
     filters:
-      years: [2023]
+      years: [2025]
 
 # Transform configuration
 transforms:

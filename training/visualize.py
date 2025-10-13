@@ -285,7 +285,7 @@ def get_full_image_and_prediction(
     # max_samples_per_prod = dataset._samples_per_prod
     # coords = coords[:max_samples_per_prod]
     coords = dataloader.get_coords_from_zfile(zfile, window=show_window)
-
+    # print(f"Calculated coordinates for zfile {zfile}: {coords}")
     # Get patch and image shapes
     ph, pw = dataset.get_patch_size(zfile)
     sh, sw = dataset.get_whole_sample_shape(zfile)
@@ -325,7 +325,7 @@ def get_full_image_and_prediction(
     gt_full = np.zeros((h, w), dtype=np.complex64)
     pred_full = np.zeros((h, w), dtype=np.complex64)
     input_full = np.zeros((h, w), dtype=np.complex64) if return_input else None
-    count_map = np.zeros((h, w), dtype=np.int32)
+    count_map = np.ones((h, w), dtype=np.int32)
     #positions = dataloader.get_coords_from_zfile(zfile, window=show_window)
     
     #print(f"Dataloader dimension: {len(dataloader)}")
@@ -353,11 +353,11 @@ def get_full_image_and_prediction(
                 if batch_idx * batch_size + patch_idx - removed_positions == len(coords):
                     stop = True
                     break
-                #print(f"Batch index={batch_idx}, patch index={patch_idx}, removed positions={removed_positions}")
+                # print(f"Batch index={batch_idx}, patch index={patch_idx}, removed positions={removed_positions}")
                 x, y = coords[batch_idx * batch_size + patch_idx - removed_positions]
                 x_to = x - show_window[0][0] #dataset.buffer[1]
                 y_to = y - show_window[0][1] #dataset.buffer[0]
-                if x_to >= h or y_to >= w:
+                if x_to > h or y_to > w:
                     # Remove the corresponding patch from the batch by masking out this index
                     input_batch = torch.cat([input_batch[:patch_idx], input_batch[patch_idx+1:]], dim=0)
                     output_batch = torch.cat([output_batch[:patch_idx], output_batch[patch_idx+1:]], dim=0)
@@ -438,24 +438,24 @@ def get_full_image_and_prediction(
 
                 ph, pw = gt_patch.shape
                 # print(f"Patch shape: (ph, pw)=({ph}, {pw})")
-                # if h - x_to < 0 and w - y_to < 0:
-                #     print(f"Stopping further processing -- patch at (x, y)=({x_to}, {y_to}) is out of bounds for array of shape {gt_full.shape}")
-                #     stop = True
-                #     break
+                if h - x_to < 0 and w - y_to < 0:
+                    print(f"Stopping further processing -- patch at (x, y)=({x_to}, {y_to}) is out of bounds for array of shape {gt_full.shape}")
+                    stop = True
+                    break
                 actual_ph = min(ph, h - x_to) 
                 actual_pw = min(pw, w - y_to)
                 # Place patch in the correct location
-                # print(f"Trying to put sample from (x, y)=({x_to}, {y_to}) with shapes (h, w)=({actual_ph}, {actual_pw}) to array with full shape={gt_full.shape}") 
+                # print(f"Trying to put sample from (x, y)=({x}, {y}) to (x, y)=({x_to}, {y_to}) with shapes (h, w)=({actual_ph}, {actual_pw}) to array with full shape={gt_full.shape}") 
                 if actual_ph > 0 and actual_pw > 0 and x_to + actual_ph <= gt_full.shape[0] and y_to + actual_pw <= gt_full.shape[1]:
-                    gt_full[x_to:x_to+actual_ph, y_to:y_to+actual_pw] += gt_patch[:actual_ph, :actual_pw]
-                    pred_full[x_to:x_to+actual_ph, y_to:y_to+actual_pw] += pred_patch[:actual_ph, :actual_pw]
+                    gt_full[x_to:x_to+actual_ph, y_to:y_to+actual_pw] += gt_patch[:actual_ph, :actual_pw] * count_map[x_to:x_to+actual_ph, y_to:y_to+actual_pw] 
+                    pred_full[x_to:x_to+actual_ph, y_to:y_to+actual_pw] += pred_patch[:actual_ph, :actual_pw] * count_map[x_to:x_to+actual_ph, y_to:y_to+actual_pw] 
                     if return_input:
-                        input_full[x_to:x_to+actual_ph, y_to:y_to+actual_pw] += input_patch[:actual_ph, :actual_pw]
+                        input_full[x_to:x_to+actual_ph, y_to:y_to+actual_pw] += input_patch[:actual_ph, :actual_pw] * count_map[x_to:x_to+actual_ph, y_to:y_to+actual_pw]
                 # else:
                 #     print(f"Skipping patch at (x, y)=({x_to}, {y_to}) with shape ({actual_ph}, {actual_pw}) -- out of bounds for array of shape {gt_full.shape}")
                 # gt_full[x_to:x_to+actual_ph, y_to:y_to+actual_pw] = gt_patch[:actual_ph, :actual_pw]
                 # pred_full[x_to:x_to+actual_ph, y_to:y_to+actual_pw] = pred_patch[:actual_ph, :actual_pw]
-                count_map[x_to:x_to+actual_ph, y_to:y_to+actual_pw] += 1
+                count_map[x_to:x_to+actual_ph, y_to:y_to+actual_pw] = 0
                 
             if stop:
                 #print(f"Stopping further processing -- all remaining patches are out of bounds for array of shape {gt_full.shape}")
@@ -506,11 +506,11 @@ def get_full_image_and_prediction(
         print("=====================================\n")
 
     # Average overlapping regions
-    mask = count_map > 0
-    gt_full[mask] /= count_map[mask]
-    pred_full[mask] /= count_map[mask]
-    if return_input:
-        input_full[mask] /= count_map[mask]
+    # mask = count_map > 0
+    # gt_full[mask] /= count_map[mask]
+    # pred_full[mask] /= count_map[mask]
+    # if return_input:
+    #     input_full[mask] /= count_map[mask]
 
     if dataset.verbose:
         print(f"Reconstructed image shape: {gt_full.shape}, prediction shape: {pred_full.shape}")

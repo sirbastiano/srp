@@ -23,7 +23,9 @@ training:
   num_epochs: 300
   lr: 0.0005  # Lower learning rate for distillation
   scheduler_type: "cosine"
-  loss_fn: "complex_mse"
+  loss_fn: "polarimetric"
+  gt_loss_fn: "complex_mse"
+  feature_loss_fn: "complex_mse"  
   save_dir: "./results/s4_ssm_distilled"
   mode: "parallel"
   wraper: false
@@ -97,7 +99,7 @@ dataloader:
     patch_order: "row"
     max_products: 1
     filters: {
-      "years": [2023],
+      "years": [2025],
       "polarizations": ["vv"]
     }
 

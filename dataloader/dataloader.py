@@ -507,7 +507,10 @@ class SARZarrDataset(Dataset):
         Returns:
             List[Tuple[int, int]]: List of (y, x) coordinates for patches in the specified Zarr file.
         """
-        return self._files.loc[self._files['full_name'] == Path(zfile)]['samples'].values[0]
+        try: 
+            return self._files.loc[self._files['full_name'] == Path(zfile)]['samples'].values[0]
+        except Exception:
+            return None
     def _set_samples_for_file(self, zfile: Union[str, os.PathLike], samples: List[Tuple[int,int]]):
         """
         Set the list of patch coordinates for a given Zarr file.
@@ -761,6 +764,8 @@ class SARZarrDataset(Dataset):
             zfile=zfile,
             dataset=self
         )
+        # print(f"Calculated {len(lazy_coords)} patches for file {zfile} with patch size {ph}x{pw}, buffer {self.buffer}, stride {self.stride}, in mode {self.patch_mode}")
+        # print(f"Y range: {y_range.start} to {y_range.stop} with step {y_range.step}, X range: {x_range.start} to {x_range.stop} with step {x_range.step}")
         self._set_samples_for_file(zfile, lazy_coords)
 
     def reorder_samples(self, zfile: os.PathLike, patch_order: str = "row") -> 'LazyCoordinateGenerator':
@@ -1708,7 +1713,10 @@ class KPatchSampler(Sampler):
             rng.shuffle(files)
         for f in files:
             # Mark patches as loaded for this file
-            self.dataset.calculate_patches_from_store(f, patch_order=self.patch_order)
+
+            if self.dataset.get_samples_by_file(f) is not None and len(self.dataset.get_samples_by_file(f)) == 0:
+                print(f"Calculating patches for file {f}")
+                self.dataset.calculate_patches_from_store(f, patch_order=self.patch_order)
             self.coords[Path(f)] = self.get_coords_from_store(f)
             t0 = time.time()
             for y, x in self.coords[Path(f)]:
@@ -1719,7 +1727,9 @@ class KPatchSampler(Sampler):
             if self.verbose:
                 print(f"Sampling {len(self.coords[Path(f)])} patches from file {f} took {elapsed:.2f} seconds.")
     def get_coords_from_store(self, zfile: Union[str, os.PathLike], window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]] = None):
-        self.dataset.calculate_patches_from_store(Path(zfile), patch_order=self.patch_order, window=window)
+        if self.dataset.get_samples_by_file(zfile) is not None and len(self.dataset.get_samples_by_file(zfile)) == 0:
+                print(f"Calculating patches for file {zfile}")
+                self.dataset.calculate_patches_from_store(Path(zfile), patch_order=self.patch_order, window=window)
         lazy_coords = self.dataset.get_samples_by_file(zfile)
         
         # If samples_per_prod is specified, limit the coordinates

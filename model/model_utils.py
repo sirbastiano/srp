@@ -533,7 +533,8 @@ def load_pretrained_weights(
     checkpoint_path: str, 
     strict: bool = True,
     map_location: str = 'cpu',
-    verbose: bool = False
+    verbose: bool = False, 
+    start_key: str = 'model.'
 ) -> Dict[str, Any]:
     """
     Load pretrained weights into a model with comprehensive error handling.
@@ -544,6 +545,7 @@ def load_pretrained_weights(
         strict: Whether to strictly enforce that keys match
         map_location: Device to map tensors to
         verbose: Whether to print loading information
+        start_key: Prefix to strip from state dict keys if present
         
     Returns:
         Dictionary containing loading information and metadata
@@ -587,18 +589,14 @@ def load_pretrained_weights(
         # Preprocess state_dict to remove "model." prefix if present
         cleaned_state_dict = {}
         for key, value in state_dict.items():
-            if key.startswith('model.'):
-                new_key = key[6:]  # Remove "model." prefix (6 characters)
-                cleaned_state_dict[new_key] = value
-                if verbose:
-                    print(f"Renamed key: {key} -> {new_key}")
-            elif key.startswith('student_model.'):
-                new_key = key[14:]  # Remove "student_model." prefix (14 characters)
-                cleaned_state_dict[new_key] = value
-                if verbose:
-                    print(f"Renamed key: {key} -> {new_key}")
-            # else:
-            #     cleaned_state_dict[key] = value
+            if start_key is not None:
+                if key.startswith(start_key):
+                    new_key = key[len(start_key):]  # Remove start_key prefix
+                    cleaned_state_dict[new_key] = value
+                    if verbose:
+                        print(f"Renamed key: {key} -> {new_key}")
+            else:
+                cleaned_state_dict[key] = value
         
         missing_keys, unexpected_keys = model.load_state_dict(cleaned_state_dict, strict=strict)
         
@@ -637,7 +635,8 @@ def create_model_with_pretrained(
     model_config: Dict[str, Any],
     pretrained_path: Optional[str] = None,
     strict_loading: bool = True,
-    device: str = 'cpu'
+    device: str = 'cpu', 
+    start_key: Optional[str] = 'model.'
 ) -> nn.Module:
     """
     Create a model and optionally load pretrained weights.
@@ -661,7 +660,8 @@ def create_model_with_pretrained(
             model=model,
             checkpoint_path=pretrained_path,
             strict=strict_loading,
-            map_location=device
+            map_location=device, 
+            start_key=start_key
         )
         
         # Store loading info as model attribute for reference

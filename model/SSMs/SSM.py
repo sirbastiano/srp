@@ -584,14 +584,14 @@ class sarSSM(nn.Module):
             self.layer_output_projs = nn.ModuleList([
                 nn.Linear(model_dim*1, model_dim) for _ in range(num_layers)
             ])
-        if complex_valued:
-            self.norm = ComplexLayerNorm(model_dim)
-        else:
-            self.norm = nn.LayerNorm(model_dim)
-        if complex_valued:
-            self.dropout = ComplexDropout(dropout)
-        else:
-            self.dropout = nn.Dropout(dropout)
+        # if complex_valued:
+        #     self.norm = ComplexLayerNorm(model_dim)
+        # else:
+        #     self.norm = nn.LayerNorm(model_dim)
+        # if complex_valued:
+        #     self.dropout = ComplexDropout(dropout)
+        # else:
+        #     self.dropout = nn.Dropout(dropout)
         self.use_pos_encoding = use_pos_encoding
         if self.use_selectivity:
             if complex_valued:
