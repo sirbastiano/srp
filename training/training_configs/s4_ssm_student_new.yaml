@@ -97,7 +97,7 @@ dataloader:
     batch_size: 32
     samples_per_prod: 50000
     patch_order: "row"
-    max_products: 1
+    max_products: 10
     filters: {
       "years": [2025],
       "polarizations": ["vv"]

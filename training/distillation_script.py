@@ -31,7 +31,7 @@ except ImportError:
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from training.training_script import load_config
+from training.training_script import load_config, setup_logging
 from model.model_utils import get_model_from_configs
 
 
@@ -249,7 +249,7 @@ def main():
         from training.knowledge_distillation import KnowledgeDistillationTrainer
         from training.training_script import create_dataloaders
         import pytorch_lightning as pl
-        from pytorch_lightning.loggers import TensorBoardLogger
+        from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
         from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
         
         # Create dataloaders
@@ -278,7 +278,14 @@ def main():
         )
         
         # Setup PyTorch Lightning trainer
-        logger = TensorBoardLogger(save_dir=args.save_dir, name="distillation")
+        logger, text_logger = setup_logging(
+            model_name=student_config['model'].get('name', 'model'),
+            exp_dir=student_config['training'].get('save_dir', args.save_dir),
+            use_wandb=True,
+            wandb_project=student_config['training'].get('wandb_project', 'ssm4sar'),
+            wandb_entity=student_config['training'].get('wandb_entity', None),
+            wandb_tags=student_config['training'].get('wandb_tags', ['training']),
+        )
         
         checkpoint_callback = ModelCheckpoint(
             dirpath=os.path.join(args.save_dir, "checkpoints"),

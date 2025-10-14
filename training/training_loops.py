@@ -184,6 +184,10 @@ class TrainerBase(pl.LightningModule):
                 device="cuda", 
                 vminmax=vminmax
             )
+            metrics = compute_metrics(gt, pred)
+            with open(os.path.join(self.base_save_dir, metrics_save_path), 'w') as f:
+                json.dump(metrics, f)
+                
 
             display_inference_results(
                 input_data=input,
@@ -196,10 +200,7 @@ class TrainerBase(pl.LightningModule):
                 save_path=os.path.join(self.base_save_dir, img_save_path)
             )
             # gt, pred = self.preprocess_output_and_prediction_before_comparison(gt, pred)
-            metrics = compute_metrics(gt, pred)
-            with open(os.path.join(self.base_save_dir, metrics_save_path), 'w') as f:
-                json.dump(metrics, f)
-                
+
         except Exception as e:
             print(f"Visualization failed with error: {str(e)}")
             raise

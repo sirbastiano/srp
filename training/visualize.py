@@ -339,7 +339,7 @@ def get_full_image_and_prediction(
         'batch_memory_usage': [],
         'inference_memory_deltas': []
     }
-    
+    dataloader.filter_by_zfiles(zfile) #Make sure that only the selected file is plotted
     with torch.no_grad():
         removed_positions = 0
         for batch_idx, (input_batch, output_batch) in enumerate(dataloader):

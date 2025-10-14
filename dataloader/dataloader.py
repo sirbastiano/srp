@@ -1698,7 +1698,7 @@ class KPatchSampler(Sampler):
         self.verbose = verbose
         self.beginning = True
         self.coords: Dict[Path, List[Tuple[int, int]]] = {}
-
+        self.zfiles = None
     def __iter__(self):
         """
         Iterate over the dataset, yielding (file_idx, y, x) tuples for patch sampling.
@@ -1711,9 +1711,12 @@ class KPatchSampler(Sampler):
             print(files)
         if self.shuffle_files:
             rng.shuffle(files)
-        for f in files:
+        for idx, f in enumerate(files):
             # Mark patches as loaded for this file
-
+            if self.zfiles is not None and idx not in self.zfiles and f not in self.zfiles:
+                if self.verbose:
+                    print(f"Skipping file {f} as it's not in the filtered list.")
+                continue
             if self.dataset.get_samples_by_file(f) is not None and len(self.dataset.get_samples_by_file(f)) == 0:
                 print(f"Calculating patches for file {f}")
                 self.dataset.calculate_patches_from_store(f, patch_order=self.patch_order)
@@ -1743,6 +1746,17 @@ class KPatchSampler(Sampler):
         else:
             # Return the full lazy generator
             return lazy_coords
+    def filter_by_zfiles(self, zfiles: Union[List[Union[str, os.PathLike]], str, int]) -> None:
+        """
+        Filter the dataset to only include samples from the specified list of zarr files.
+        
+        Args:
+            zfiles (List[Union[str, os.PathLike]]): List of zarr file paths to include.
+        """
+        if isinstance(zfiles, (str, int, Path)):
+            zfiles = [zfiles]
+        self.zfiles = [Path(zf) if not isinstance(zf, (Path, int)) else zf for zf in zfiles]
+
     def __len__(self):
         """Return the total number of samples to be drawn by the sampler."""
         if self.beginning:
@@ -1764,6 +1778,16 @@ class SARDataloader(DataLoader):
         self.verbose = verbose
     def get_coords_from_zfile(self, zfile: Union[str, os.PathLike], window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]] = None) -> List[Tuple[int, int]]:
         return self.sampler.get_coords_from_store(zfile, window=window)
+    def filter_by_zfiles(self, zfiles: Union[List[Union[str, os.PathLike]], str, int]) -> None:
+        """
+        Filter the dataset to only include samples from the specified list of zarr files.
+        
+        Args:
+            zfiles (List[Union[str, os.PathLike]]): List of zarr file paths to include.
+        """
+        self.sampler.filter_by_zfiles(zfiles)
+        if self.verbose:
+            print(f"Filtered dataset to {len(self.dataset)} samples from {len(zfiles)} files.")
 
     
 
