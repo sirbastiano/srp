@@ -17,4 +17,4 @@
 
 #python training/training_script.py --config training/training_configs/s4_ssm_complex_sweep.yaml --sweep --parallel --max_workers 8
 
-python training/training_script.py --config training/training_configs/s4_ssm_complex_sweep.yaml --sweep --wandb_sweep --run_sweep_agent
+python training/training_script.py --config training/training_configs/s4_ssm_complex_sweep.yaml 

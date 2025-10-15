@@ -23,14 +23,14 @@ model:
 
 # Training configuration
 training:
-  patience: 50
+  patience: 20
   delta: 0.00001
   weight_decay: 0.001
-  epochs: 200
+  epochs: 80
   lr: 0.0001
   scheduler_type: "cosine"
-  loss_fn: "polarimetric"
-  save_dir: "./results/sweep_experiment"
+  loss_fn: "power"
+  save_dir: "./results/s4_ssm_power_loss"
   mode: "parallel"
   warmup_epochs: 3
   warmup_start_lr: 0.00001
@@ -41,8 +41,8 @@ training:
   #precision: "16-mixed"  # Mixed precision training for faster training and less memory
   
   # WandB configuration
-  wandb_project: "ssm4sar_sweep"
-  wandb_entity: "ms3"
+  wandb_project: "ssm4sar"
+  wandb_entity: "gabrieledaga01-universit-di-bologna"  # Updated to your entity
   # wandb_entity: "gabri"  # Comment out to use your default WandB entity
   wandb_tags: ["sweep", "hyperparameter_optimization", "s4_ssm"]
 
@@ -80,7 +80,7 @@ dataloader:
     batch_size: 32
     samples_per_prod: 500
     patch_order: "row"
-    max_products: 1
+    max_products: 5
     filters:
       years: [2024]
   
@@ -96,7 +96,7 @@ dataloader:
     batch_size: 32
     samples_per_prod: 10000
     patch_order: "row"
-    max_products: 1
+    max_products: 4
     filters:
       years: [2025]
 

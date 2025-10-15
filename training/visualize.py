@@ -56,7 +56,7 @@ def format_memory_stats(stats: Dict[str, float]) -> str:
     return " | ".join(parts)
 
 
-def plot_intensity_histograms(orig_gt, orig_pred, gt, pred, figsize=(20, 12), bins=100):
+def plot_intensity_histograms(orig_gt, orig_pred, gt, pred, figsize=(20, 12), bins=100, plot=True, return_figure=False, save=False, save_path=None) -> Optional[plt.Figure]:
     """
     Plot histograms of pixel intensities for original and processed data.
     Separate plots for real and imaginary components.
@@ -162,7 +162,19 @@ def plot_intensity_histograms(orig_gt, orig_pred, gt, pred, figsize=(20, 12), bi
                            verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
     
     plt.tight_layout()
-    plt.show()
+    
+    if plot:
+        plt.show()
+    if save:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path)
+        logging.info(f"Saved inference results to {save_path}")
+    
+    if return_figure:
+        return fig
+    else:
+        # Close the figure to prevent memory leaks when not returning it
+        plt.close(fig)
     
     # Print detailed statistics
     print("\n" + "="*60)

@@ -1718,7 +1718,7 @@ class KPatchSampler(Sampler):
                     print(f"Skipping file {f} as it's not in the filtered list.")
                 continue
             if self.dataset.get_samples_by_file(f) is not None and len(self.dataset.get_samples_by_file(f)) == 0:
-                print(f"Calculating patches for file {f}")
+                # print(f"Calculating patches for file {f}")
                 self.dataset.calculate_patches_from_store(f, patch_order=self.patch_order)
             self.coords[Path(f)] = self.get_coords_from_store(f)
             t0 = time.time()

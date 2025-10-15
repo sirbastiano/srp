@@ -3,7 +3,7 @@ import logging
 import torch
 from torch import device, nn, optim
 from torch.utils.data import DataLoader
-from typing import Tuple, Union
+from typing import Tuple, Union, Optional, Callable
 from tqdm import tqdm
 import os
 from typing import Optional, Callable, Union
@@ -11,7 +11,7 @@ from dataloader.dataloader import SARZarrDataset, get_sar_dataloader, SARDataloa
 from model.SSMs.SSM import OverlapSaveWrapper, WindowedOverlapWrapper
 from model.transformers.rv_transformer import RealValuedTransformer  
 from model.transformers.cv_transformer import ComplexTransformer
-from training.visualize import compute_metrics, save_metrics, average_metrics
+from training.visualize import compute_metrics, save_metrics, average_metrics, plot_intensity_histograms
 from sarpyx.utils.losses import get_loss_function
 from training.visualize import get_full_image_and_prediction, compute_metrics, display_inference_results, log_inference_to_wandb
 import pytorch_lightning as pl
@@ -173,22 +173,27 @@ class TrainerBase(pl.LightningModule):
             y_preprocessed = self.preprocess_sample(y, device)
         return self.model(x_preprocessed, y_preprocessed)
 
-    def show_example(self, loader: SARDataloader, window: Tuple[Tuple[int, int], Tuple[int, int]] = ((1000, 1000), (5000, 5000)), vminmax=(2000, 6000), figsize=(20, 6), metrics_save_path: str = "metrics.json", img_save_path: str = "test.png"):
+    def show_example(self, loader: SARDataloader, window: Tuple[Tuple[int, int], Tuple[int, int]] = ((1000, 1000), (5000, 5000)), vminmax=(2000, 6000), figsize=(20, 6), metrics_save_path: str = "metrics.json", img_save_path: str = "test.png", zfile: int=0):
         try:
-            gt, pred, input = get_full_image_and_prediction(
+            gt, pred, input, gt_original, pred_original = get_full_image_and_prediction(
                 dataloader=loader,
                 show_window=window,
-                zfile=0,
+                zfile=zfile,
                 inference_fn= self.forward,
                 return_input=True, 
                 device="cuda", 
-                vminmax=vminmax
+                vminmax=vminmax, 
+                return_original=True
             )
             metrics = compute_metrics(gt, pred)
             with open(os.path.join(self.base_save_dir, metrics_save_path), 'w') as f:
                 json.dump(metrics, f)
                 
-
+            # Ensure matplotlib backend is interactive for showing plots
+            import matplotlib
+            if matplotlib.get_backend() == 'Agg':
+                matplotlib.use('TkAgg')  # or another interactive backend
+            
             fig = display_inference_results(
                 input_data=input,
                 gt_data=gt,
@@ -197,32 +202,49 @@ class TrainerBase(pl.LightningModule):
                 vminmax=vminmax,  
                 show=True, 
                 save=True,
-                save_path=os.path.join(self.base_save_dir, img_save_path)
+                save_path=os.path.join(self.base_save_dir, img_save_path),
+                return_figure=True
             )
+            hist = plot_intensity_histograms(gt_original, pred_original, gt, pred, plot=False, return_figure=True, save=True, save_path=os.path.join(self.base_save_dir, f"hist_{img_save_path}"))
             
             # Log inference image to WandB if available
-            if WANDB_AVAILABLE and hasattr(self.logger, 'experiment'):
+            if WANDB_AVAILABLE and hasattr(self.logger, 'experiment') and fig is not None:
                 try:
                     import matplotlib.pyplot as plt
                     from PIL import Image
                     import io
                     
-                    # Convert to WandB image
-                    buf = io.BytesIO()
-                    fig.savefig(buf, format='png', dpi=150, bbox_inches='tight')
-                    buf.seek(0)
-                    img = Image.open(buf)
+                    # Convert inference comparison to WandB image
+                    buf1 = io.BytesIO()
+                    fig.savefig(buf1, format='png', dpi=150, bbox_inches='tight')
+                    buf1.seek(0)
+                    img = Image.open(buf1)
+
+                    # Convert histogram to WandB image
+                    buf2 = io.BytesIO()
+                    hist.savefig(buf2, format='png', dpi=150, bbox_inches='tight')
+                    buf2.seek(0)
+                    h_img = Image.open(buf2)
                     
                     # Log to WandB
                     self.logger.experiment.log({
-                        "inference_visualization": wandb.Image(img, caption=f"Epoch {self.current_epoch}"),
+                        "inference_comparison": wandb.Image(img, caption=f"Epoch {self.current_epoch}"),
+                        "histogram": wandb.Image(h_img, caption=f"Epoch {self.current_epoch}"),
                         "epoch": self.current_epoch
                     })
                     
-                    plt.close(fig)
-                    buf.close()
+                    buf1.close()
+                    buf2.close()
                 except Exception as e:
                     pass  # Fail silently to not interrupt training
+                finally:
+                    # Close figures only after WandB logging is complete
+                    if fig is not None:
+                        import matplotlib.pyplot as plt
+                        plt.close(fig)
+                    if hist is not None:
+                        import matplotlib.pyplot as plt
+                        plt.close(hist)
             
             # gt, pred = self.preprocess_output_and_prediction_before_comparison(gt, pred)
 
@@ -374,7 +396,8 @@ class TrainerBase(pl.LightningModule):
         self.log_metrics(avg_metrics, 'val_metrics', on_step=False, on_epoch=True, prog_bar=False)
 
         if self.inference_loader is not None:
-            self.show_example(self.inference_loader, window=((1000, 1000), (2000, 2000)), vminmax='auto', figsize=(20, 6), metrics_save_path=f"metrics_{self.current_epoch}.json", img_save_path=f"val_{self.current_epoch}.png")
+            for idx in range(len(self.inference_loader.dataset.get_files())):
+                self.show_example(self.inference_loader, window=((1000, 1000), (2000, 2000)), vminmax='auto', figsize=(20, 6), metrics_save_path=f"metrics_{self.current_epoch}_{idx}.json", img_save_path=f"val_{self.current_epoch}_{idx}.png", zfile=idx)
         if 'val_loss' in self.trainer.callback_metrics:
             self.save_checkpoint(epoch=self.current_epoch, optimizer=self.trainer.optimizers[0], scheduler=None)#, is_best=(self.trainer.callback_metrics['val_loss'] < self.best_val_loss), val_loss=self.trainer.callback_metrics['val_loss'])
             if self.trainer.callback_metrics['val_loss'] < self.best_val_loss:
