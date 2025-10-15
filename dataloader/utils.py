@@ -208,3 +208,88 @@ def parse_product_filename(filename: Union[str, os.PathLike]) -> dict:
         "samples": [], 
         "acquisition_date": acquisition_date
     }
+
+def display_inference_results(input_data, gt_data, pred_data = None, figsize=(20, 6), vminmax=(0, 1000), show: bool=True, save: bool=True, save_path: str="./visualizations/", return_figure: bool=False):
+    """
+    Display input, ground truth, and prediction in a 3-column grid.
+    
+    Args:
+        input_data: Input data from the dataset
+        gt_data: Ground truth data
+        pred_data: Model prediction
+        figsize: Figure size
+        vminmax: Value range for visualization
+    """
+    # Convert tensors to numpy if needed
+    if hasattr(input_data, 'numpy'):
+        input_data = input_data.cpu().numpy()
+    if hasattr(gt_data, 'numpy'):
+        gt_data = gt_data.cpu().numpy()
+    if pred_data is not None and hasattr(pred_data, 'numpy'):
+        pred_data = pred_data.cpu().numpy()
+    
+    # Function to get magnitude visualization (similar to get_sample_visualization)
+    def get_magnitude_vis(data, vminmax):
+        if np.iscomplexobj(data):
+            magnitude = np.abs(data)
+        else:
+            magnitude = data
+        
+        if vminmax == 'auto':
+            vmin, vmax = np.percentile(magnitude, [2, 98])
+        elif isinstance(vminmax, tuple):
+            vmin, vmax = vminmax
+        else:
+            vmin, vmax = np.min(magnitude), np.max(magnitude)
+        
+        return magnitude, vmin, vmax
+    
+    # Prepare visualizations
+    imgs = []
+    
+    # Input data
+    img, vmin, vmax = get_magnitude_vis(input_data, vminmax)
+    imgs.append({'name': 'Input (RCMC)', 'img': img, 'vmin': vmin, 'vmax': vmax})
+    
+    # Ground truth
+    img, vmin, vmax = get_magnitude_vis(gt_data, vminmax)
+    imgs.append({'name': 'Ground Truth (AZ)', 'img': img, 'vmin': vmin, 'vmax': vmax})
+    
+    # Prediction
+    if pred_data is not None:
+        img, vmin, vmax = get_magnitude_vis(pred_data, vminmax)
+        imgs.append({'name': 'Prediction (AZ)', 'img': img, 'vmin': vmin, 'vmax': vmax})
+    
+    # Create the plot
+    n_axes = 3 if pred_data is not None else 2
+    fig, axes = plt.subplots(1, n_axes, figsize=figsize)
+
+    for i in range(n_axes):
+        im = axes[i].imshow(
+            imgs[i]['img'],
+            aspect='auto',
+            cmap='viridis',
+            vmin=imgs[i]['vmin'],
+            vmax=imgs[i]['vmax']
+        )
+        
+        axes[i].set_title(f"{imgs[i]['name']}")
+        axes[i].set_xlabel('Range')
+        axes[i].set_ylabel('Azimuth')
+        
+        # Add colorbar
+        cbar = plt.colorbar(im, ax=axes[i], fraction=0.046, pad=0.04)
+        cbar.ax.tick_params(labelsize=8)
+        
+        # Set equal aspect ratio
+        axes[i].set_aspect('equal', adjustable='box')
+    
+    plt.tight_layout()
+    if show:
+        plt.show()
+    if save:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path)
+        logging.info(f"Saved inference results to {save_path}")
+    if return_figure:
+        return fig

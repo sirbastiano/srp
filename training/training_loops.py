@@ -189,7 +189,7 @@ class TrainerBase(pl.LightningModule):
                 json.dump(metrics, f)
                 
 
-            display_inference_results(
+            fig = display_inference_results(
                 input_data=input,
                 gt_data=gt,
                 pred_data=pred,
@@ -199,6 +199,31 @@ class TrainerBase(pl.LightningModule):
                 save=True,
                 save_path=os.path.join(self.base_save_dir, img_save_path)
             )
+            
+            # Log inference image to WandB if available
+            if WANDB_AVAILABLE and hasattr(self.logger, 'experiment'):
+                try:
+                    import matplotlib.pyplot as plt
+                    from PIL import Image
+                    import io
+                    
+                    # Convert to WandB image
+                    buf = io.BytesIO()
+                    fig.savefig(buf, format='png', dpi=150, bbox_inches='tight')
+                    buf.seek(0)
+                    img = Image.open(buf)
+                    
+                    # Log to WandB
+                    self.logger.experiment.log({
+                        "inference_visualization": wandb.Image(img, caption=f"Epoch {self.current_epoch}"),
+                        "epoch": self.current_epoch
+                    })
+                    
+                    plt.close(fig)
+                    buf.close()
+                except Exception as e:
+                    pass  # Fail silently to not interrupt training
+            
             # gt, pred = self.preprocess_output_and_prediction_before_comparison(gt, pred)
 
         except Exception as e:

@@ -56,7 +56,133 @@ def format_memory_stats(stats: Dict[str, float]) -> str:
     return " | ".join(parts)
 
 
+def plot_intensity_histograms(orig_gt, orig_pred, gt, pred, figsize=(20, 12), bins=100):
+    """
+    Plot histograms of pixel intensities for original and processed data.
+    Separate plots for real and imaginary components.
+    """
+    # Convert to numpy if needed
+    if hasattr(orig_gt, 'numpy'):
+        orig_gt = orig_gt.cpu().numpy()
+    if hasattr(orig_pred, 'numpy'):
+        orig_pred = orig_pred.cpu().numpy()
+    if hasattr(gt, 'numpy'):
+        gt = gt.cpu().numpy()
+    if hasattr(pred, 'numpy'):
+        pred = pred.cpu().numpy()
+    
+    # Create subplots: 2 rows (original vs processed) x 2 cols (real vs imaginary)
+    fig, axes = plt.subplots(2, 2, figsize=figsize)
+    
+    real_data_orig = np.concatenate([
+        orig_gt.real.flatten(), orig_pred.real.flatten()
+    ])
+    real_data_denorm = np.concatenate([
+        gt.real.flatten(), pred.real.flatten()
+    ])
+    imag_data_orig = np.concatenate([
+        orig_gt.imag.flatten(), orig_pred.imag.flatten()
+    ])
+    imag_data_denorm = np.concatenate([
+        gt.imag.flatten(), pred.imag.flatten()
+    ])
+    
+    real_range_orig = (np.min(real_data_orig), np.max(real_data_orig))
+    imag_range_orig = (np.min(imag_data_orig), np.max(imag_data_orig))
+    real_range_denorm = (np.min(real_data_denorm), np.max(real_data_denorm))
+    imag_range_denorm = (np.min(imag_data_denorm), np.max(imag_data_denorm))
+    
+    # Plot 1: Original data histograms - Real component
+    axes[0, 0].hist(orig_gt.real.flatten(), bins=bins, alpha=0.7, label='Original GT (Real)', 
+                    color='blue', density=True, range=real_range_orig)
+    axes[0, 0].hist(orig_pred.real.flatten(), bins=bins, alpha=0.7, label='Original Pred (Real)', 
+                    color='red', density=True, range=real_range_orig)
+    axes[0, 0].set_title('Original Data - Real Component')
+    axes[0, 0].set_xlabel('Pixel Intensity')
+    axes[0, 0].set_ylabel('Density')
+    axes[0, 0].legend()
+    axes[0, 0].grid(True, alpha=0.3)
+    axes[0, 0].set_xlim(real_range_orig)
+    
+    # Plot 2: Original data histograms - Imaginary component
+    axes[0, 1].hist(orig_gt.imag.flatten(), bins=bins, alpha=0.7, label='Original GT (Imag)', 
+                    color='blue', density=True, range=imag_range_orig)
+    axes[0, 1].hist(orig_pred.imag.flatten(), bins=bins, alpha=0.7, label='Original Pred (Imag)', 
+                    color='red', density=True, range=imag_range_orig)
+    axes[0, 1].set_title('Original Data - Imaginary Component')
+    axes[0, 1].set_xlabel('Pixel Intensity')
+    axes[0, 1].set_ylabel('Density')
+    axes[0, 1].legend()
+    axes[0, 1].grid(True, alpha=0.3)
+    axes[0, 1].set_xlim(imag_range_orig)
+      # Explicitly set x-axis limits
+
+    # Plot 3: Processed data histograms - Real component
+    axes[1, 0].hist(gt.real.flatten(), bins=bins, alpha=0.7, label='Processed GT (Real)', 
+                    color='green', density=True, range=real_range_denorm)
+    axes[1, 0].hist(pred.real.flatten(), bins=bins, alpha=0.7, label='Processed Pred (Real)', 
+                    color='orange', density=True, range=real_range_denorm)
+    axes[1, 0].set_title('Processed Data - Real Component')
+    axes[1, 0].set_xlabel('Pixel Intensity')
+    axes[1, 0].set_ylabel('Density')
+    axes[1, 0].legend()
+    axes[1, 0].grid(True, alpha=0.3)
+    axes[1, 0].set_xlim(real_range_denorm)
+    
+    # Plot 4: Processed data histograms - Imaginary component
+    axes[1, 1].hist(gt.imag.flatten(), bins=bins, alpha=0.7, label='Processed GT (Imag)', 
+                    color='green', density=True, range=imag_range_denorm)
+    axes[1, 1].hist(pred.imag.flatten(), bins=bins, alpha=0.7, label='Processed Pred (Imag)', 
+                    color='orange', density=True, range=imag_range_denorm)
+    axes[1, 1].set_title('Processed Data - Imaginary Component')
+    axes[1, 1].set_xlabel('Pixel Intensity')
+    axes[1, 1].set_ylabel('Density')
+    axes[1, 1].legend()
+    axes[1, 1].grid(True, alpha=0.3)
+    axes[1, 1].set_xlim(imag_range_denorm)
+    
+    # Add statistics text
+    for i, (data_gt, data_pred, title_suffix) in enumerate([
+        (orig_gt, orig_pred, "Original"),
+        (gt, pred, "Processed")
+    ]):
+        for j, component in enumerate(['real', 'imag']):
+            if component == 'real':
+                gt_comp, pred_comp = data_gt.real, data_pred.real
+            else:
+                gt_comp, pred_comp = data_gt.imag, data_pred.imag
+            
+            # Calculate statistics
+            gt_mean, gt_std = np.mean(gt_comp), np.std(gt_comp)
+            pred_mean, pred_std = np.mean(pred_comp), np.std(pred_comp)
+            
+            # Add stats text box
+            stats_text = f'GT: μ={gt_mean:.2f}, σ={gt_std:.2f}\nPred: μ={pred_mean:.2f}, σ={pred_std:.2f}'
+            axes[i, j].text(0.02, 0.98, stats_text, transform=axes[i, j].transAxes, 
+                           verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+    
+    plt.tight_layout()
+    plt.show()
+    
+    # Print detailed statistics
+    print("\n" + "="*60)
+    print("DETAILED STATISTICS")
+    print("="*60)
+    
+    for data_name, data_gt, data_pred in [("Original", orig_gt, orig_pred), ("Processed", gt, pred)]:
+        print(f"\n{data_name} Data:")
+        print("-" * 30)
         
+        for comp_name, gt_comp, pred_comp in [("Real", data_gt.real, data_pred.real), 
+                                              ("Imaginary", data_gt.imag, data_pred.imag)]:
+            print(f"\n{comp_name} Component:")
+            print(f"  GT    - Mean: {np.mean(gt_comp):8.4f}, Std: {np.std(gt_comp):8.4f}, "
+                  f"Min: {np.min(gt_comp):8.4f}, Max: {np.max(gt_comp):8.4f}")
+            print(f"  Pred  - Mean: {np.mean(pred_comp):8.4f}, Std: {np.std(pred_comp):8.4f}, "
+                  f"Min: {np.min(pred_comp):8.4f}, Max: {np.max(pred_comp):8.4f}")
+            print(f"  Diff  - Mean: {np.mean(gt_comp.squeeze() - pred_comp.squeeze()):8.4f}, "
+                  f"Std: {np.std(gt_comp.squeeze() - pred_comp.squeeze()):8.4f}")
+
 def log_inference_to_wandb(input_data, gt_data, pred_data, logger, step_or_epoch, figsize=(20, 6), vminmax=(0, 1000), save_path: str="./visualizations/inference.png"):
     """
     Create inference visualization and log it to W&B.
@@ -102,7 +228,7 @@ def log_inference_to_wandb(input_data, gt_data, pred_data, logger, step_or_epoch
     buf.close()
 
         
-def display_inference_results(input_data, gt_data, pred_data, figsize=(20, 6), vminmax=(0, 1000), show: bool=True, save: bool=True, save_path: str="./visualizations/", return_figure: bool=False):
+def display_inference_results(input_data, gt_data, pred_data = None, figsize=(20, 6), vminmax=(0, 1000), show: bool=True, save: bool=True, save_path: str="./visualizations/", return_figure: bool=False):
     """
     Display input, ground truth, and prediction in a 3-column grid.
     
@@ -118,7 +244,7 @@ def display_inference_results(input_data, gt_data, pred_data, figsize=(20, 6), v
         input_data = input_data.cpu().numpy()
     if hasattr(gt_data, 'numpy'):
         gt_data = gt_data.cpu().numpy()
-    if hasattr(pred_data, 'numpy'):
+    if pred_data is not None and hasattr(pred_data, 'numpy'):
         pred_data = pred_data.cpu().numpy()
     
     # Function to get magnitude visualization (similar to get_sample_visualization)
@@ -149,13 +275,15 @@ def display_inference_results(input_data, gt_data, pred_data, figsize=(20, 6), v
     imgs.append({'name': 'Ground Truth (AZ)', 'img': img, 'vmin': vmin, 'vmax': vmax})
     
     # Prediction
-    img, vmin, vmax = get_magnitude_vis(pred_data, vminmax)
-    imgs.append({'name': 'Prediction (AZ)', 'img': img, 'vmin': vmin, 'vmax': vmax})
+    if pred_data is not None:
+        img, vmin, vmax = get_magnitude_vis(pred_data, vminmax)
+        imgs.append({'name': 'Prediction (AZ)', 'img': img, 'vmin': vmin, 'vmax': vmax})
     
     # Create the plot
-    fig, axes = plt.subplots(1, 3, figsize=figsize)
-    
-    for i in range(3):
+    n_axes = 3 if pred_data is not None else 2
+    fig, axes = plt.subplots(1, n_axes, figsize=figsize)
+
+    for i in range(n_axes):
         im = axes[i].imshow(
             imgs[i]['img'],
             aspect='auto',
@@ -306,7 +434,7 @@ def get_full_image_and_prediction(
             stride_width=stride_x,
             concatenate_patches=True,
             concat_axis=dataset.concat_axis,
-            batch_size =batch_size
+            batch_size=batch_size
         )
     else:
         h, w = show_window[1][0] - show_window[0][0], show_window[1][1] - show_window[0][1]

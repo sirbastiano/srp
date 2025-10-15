@@ -18,8 +18,8 @@ model:
   complex_valued: true
   use_selectivity: false
   activation_function: 'relu'
-  pretrained_path: "./results/s4_ssm_smaller_cols/last.ckpt"
-  start_key: "model." # Key prefix to load weights from checkpoint
+  # pretrained_path: "./results/s4_ssm_smaller_cols/last.ckpt"
+  # start_key: "model." # Key prefix to load weights from checkpoint
 
 # Training configuration
 training:
@@ -29,7 +29,7 @@ training:
   epochs: 200
   lr: 0.0001
   scheduler_type: "cosine"
-  loss_fn: "complex_mse"
+  loss_fn: "polarimetric"
   save_dir: "./results/sweep_experiment"
   mode: "parallel"
   warmup_epochs: 3
@@ -105,10 +105,10 @@ transforms:
   normalize: true
   complex_valued: true
   normalization_type: "minmax"
-  rc_min: -2000
-  rc_max: 2000
-  gt_min: -2000
-  gt_max: 2000
+  rc_min: -6000
+  rc_max: 6000
+  gt_min: -6000
+  gt_max: 6000
 
 
 # Parameter sweep configuration
@@ -130,7 +130,7 @@ sweep:
   #"dataloader.patch_size": [[4000, 1], [6000, 1], [8000, 1]]
   
   # Loss function sweep
-  "training.loss_fn": ['log_magnitude', 'polarimetric', 'power'] #['split_real_imag', 'polar', 'robust_complex', 'log_magnitude', 'symmetry', 'polarimetric', 'power', 'speckle_nll', 'complex_tv', 'gradient_matching', 'phase_smoothness', 'gan']
+  # "training.loss_fn": ['log_magnitude', 'polarimetric', 'power'] #['split_real_imag', 'polar', 'robust_complex', 'log_magnitude', 'symmetry', 'polarimetric', 'power', 'speckle_nll', 'complex_tv', 'gradient_matching', 'phase_smoothness', 'gan']
 
 
 # Alternative sweep configuration using WandB distribution syntax
