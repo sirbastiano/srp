@@ -162,7 +162,8 @@ def psnr_amplitude(ref: np.ndarray, pred: np.ndarray) -> float:
     return float(psnr)
 
 
-def ssim_amplitude(ref: np.ndarray, pred: np.ndarray, window_size: int = 7) -> float:
+def ssim_amplitude(ref: np.ndarray, pred: np.ndarray, window_size: int = 7, 
+                   return_components: bool = False) -> Union[float, Tuple[float, float, float, float]]:
     """
     Compute SSIM between two complex SAR images using their amplitudes.
     
@@ -175,9 +176,12 @@ def ssim_amplitude(ref: np.ndarray, pred: np.ndarray, window_size: int = 7) -> f
         ref: Reference complex SAR image array
         pred: Predicted complex SAR image array  
         window_size: Size of local window for computing statistics
+        return_components: If True, returns individual SSIM components
         
     Returns:
-        Mean SSIM value (0 to 1). Higher values indicate better structural similarity.
+        If return_components=False: Mean SSIM value (0 to 1)
+        If return_components=True: Tuple of (ssim, luminance, contrast, structure)
+        Higher values indicate better structural similarity.
         
     Raises:
         AssertionError: If input arrays have different shapes
@@ -200,11 +204,21 @@ def ssim_amplitude(ref: np.ndarray, pred: np.ndarray, window_size: int = 7) -> f
     c1 = (0.01 * x.max())**2
     c2 = (0.03 * x.max())**2
     
-    # SSIM formula
-    ssim_map = ((2*mu_x*mu_y + c1) * (2*sigma_xy + c2)) / \
-               ((mu_x**2 + mu_y**2 + c1) * (sigma_x2 + sigma_y2 + c2))
+    # SSIM components
+    luminance = (2 * mu_x * mu_y + c1) / (mu_x**2 + mu_y**2 + c1)
+    contrast = (2 * np.sqrt(np.maximum(sigma_x2, 0)) * np.sqrt(np.maximum(sigma_y2, 0)) + c2) / (sigma_x2 + sigma_y2 + c2)
+    structure = (sigma_xy + c2/2) / (np.sqrt(np.maximum(sigma_x2, 0)) * np.sqrt(np.maximum(sigma_y2, 0)) + c2/2)
     
-    return float(ssim_map.mean())
+    # SSIM formula
+    ssim_map = luminance * contrast * structure
+    
+    if return_components:
+        return (float(ssim_map.mean()), 
+                float(luminance.mean()), 
+                float(contrast.mean()), 
+                float(structure.mean()))
+    else:
+        return float(ssim_map.mean())
 
 
 def amplitude_correlation(ref: np.ndarray, pred: np.ndarray) -> float:
@@ -458,7 +472,8 @@ def evaluate_sar_metrics(ref: np.ndarray, pred: np.ndarray,
         # Return default metrics for invalid data (common with partial downloads)
         return {
             'mse': float('inf'), 'rmse': float('inf'), 'psnr_db': 0.0,
-            'ssim': 0.0, 'amplitude_correlation': 0.0,
+            'ssim': 0.0, 'ssim_luminance': 0.0, 'ssim_contrast': 0.0, 'ssim_structure': 0.0,
+            'amplitude_correlation': 0.0,
             'phase_mae_rad': float('inf'), 'phase_rmse_rad': float('inf'),
             'phase_mae_deg': float('inf'), 'phase_rmse_deg': float('inf'),
             'complex_coherence': 0.0, 'phase_coherence': 0.0,
@@ -471,12 +486,12 @@ def evaluate_sar_metrics(ref: np.ndarray, pred: np.ndarray,
         mse_val = mse_complex(ref, pred)
         rmse_val = rmse_complex(ref, pred)
         psnr_val = psnr_amplitude(ref, pred)
-        ssim_val = ssim_amplitude(ref, pred, window_size)
+        ssim_val, luminance_val, contrast_val, structure_val = ssim_amplitude(ref, pred, window_size, return_components=True)
         corr_val = amplitude_correlation(ref, pred)
     except (ValueError, ZeroDivisionError, RuntimeError) as e:
         # Handle errors from corrupted/incomplete data
         mse_val = rmse_val = float('inf')
-        psnr_val = ssim_val = corr_val = 0.0
+        psnr_val = ssim_val = luminance_val = contrast_val = structure_val = corr_val = 0.0
     
     # Phase accuracy metrics
     try:
@@ -505,6 +520,9 @@ def evaluate_sar_metrics(ref: np.ndarray, pred: np.ndarray,
         'rmse': rmse_val,
         'psnr_db': psnr_val,
         'ssim': ssim_val,
+        'ssim_luminance': luminance_val,
+        'ssim_contrast': contrast_val,
+        'ssim_structure': structure_val,
         'amplitude_correlation': corr_val,
         
         # Phase accuracy
