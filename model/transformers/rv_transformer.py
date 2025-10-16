@@ -21,164 +21,201 @@ class PositionalEncoding(nn.Module):
 
 class RealValuedTransformer(nn.Module):
     """
-    A Transformer-based model for processing real-valued sequential data.
+    A Transformer-based model for SAR focusing that works with row/column sequences.
+    Optimized for compressing raw SAR data and focusing it with a decoder.
+    
     Args:
-        seq_len (int): Length of input sequences.
-        input_dim (int, optional): Dimensionality of input features. Default is 1.
-        model_dim (int, optional): Dimensionality of the transformer model. Default is 64.
-        num_layers (int, optional): Number of layers in both encoder and decoder. Default is 4.
-        num_heads (int, optional): Number of attention heads in each layer. Default is 4.
-        ff_dim (int, optional): Dimensionality of the feedforward network. Default is 128.
-        dropout (float, optional): Dropout rate applied in transformer layers. Default is 0.1.
-    Attributes:
-        input_proj (nn.Linear): Linear layer to project input to model dimension.
-        output_proj (nn.Linear): Linear layer to project model output back to input dimension.
-        encoder (nn.TransformerEncoder): Transformer encoder module.
-        decoder (nn.TransformerDecoder): Transformer decoder module.
-    Methods:
-        forward(src, tgt=None):
-            Forward pass through the model.
-            Args:
-                src (Tensor): Source input tensor of shape [batch_size, input_dim, seq_len].
-                tgt (Tensor, optional): Target input tensor for autoregressive decoding.
-            Returns:
-                Tensor: Output tensor of shape [batch_size, input_dim, seq_len].
-            Notes:
-                - In "parallel" mode, decoding is performed in one shot.
-                - In autoregressive mode, target input is required for step-wise decoding.
+        input_dim (int): Dimensionality of input features (typically 2 for real/imag or 3 with pos encoding)
+        model_dim (int): Dimensionality of the transformer model (embedding size)
+        num_layers (int): Number of layers in both encoder and decoder
+        num_heads (int): Number of attention heads in each layer
+        ff_dim (int): Dimensionality of the feedforward network
+        dropout (float): Dropout rate applied in transformer layers
+        mode (str): Processing mode ("parallel" or "autoregressive")
+        max_seq_len (int): Maximum sequence length for positional encoding
+        compression_ratio (float): Ratio for compressing the sequence length
     """
 
     def __init__(
             self, 
-            input_dim:int=2, 
-            model_dim:int=1000, 
-            num_layers:int=4, 
-            num_heads:int=4, 
-            ff_dim:int=128, 
-            dropout:float=0.1, 
+            input_dim: int = 2, 
+            model_dim: int = 64, 
+            num_layers: int = 4, 
+            num_heads: int = 8, 
+            ff_dim: int = 256, 
+            dropout: float = 0.1, 
             mode: str = "parallel", 
+            max_seq_len: int = 5000,
+            compression_ratio: float = 0.1,
             verbose: bool = False
         ):
         super().__init__()
-        self.input_proj = nn.Linear(input_dim, model_dim)
-        self.output_proj = nn.Linear(model_dim, input_dim)
+        
+        # Store configuration
+        self.input_dim = input_dim
+        self.model_dim = model_dim
         self.mode = mode
         self.verbose = verbose
-
-        #self.pos_enc = PositionalEncoding(model_dim, max_len=seq_len)
-
+        self.compression_ratio = compression_ratio
+        self.compressed_dim = max(int(model_dim * compression_ratio), 32)
+        
+        # Input/output projections
+        self.input_proj = nn.Linear(input_dim, model_dim)
+        self.output_proj = nn.Linear(model_dim, input_dim)
+        
+        # Positional encoding
+        self.pos_enc = PositionalEncoding(model_dim, max_len=max_seq_len)
+        
+        # Encoder for compression
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=model_dim,
             nhead=num_heads,
             dim_feedforward=ff_dim,
             dropout=dropout,
-            batch_first=True
+            batch_first=True,
+            norm_first=True  # Pre-norm for better stability
         )
         self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
-
+        
+        # Compression layer - reduces sequence length
+        self.compressor = nn.Sequential(
+            nn.Linear(model_dim, self.compressed_dim),
+            nn.GELU(),
+            nn.Dropout(dropout)
+        )
+        
+        # Decoder for reconstruction
         decoder_layer = nn.TransformerDecoderLayer(
             d_model=model_dim,
             nhead=num_heads,
             dim_feedforward=ff_dim,
             dropout=dropout,
-            batch_first=True
+            batch_first=True,
+            norm_first=True
         )
         self.decoder = nn.TransformerDecoder(decoder_layer, num_layers=num_layers)
-        self.register_parameter('query_embedding', nn.Parameter(torch.randn(5000, model_dim) * 0.1))
+        
+        # Learnable query embeddings for decoding
+        self.register_parameter('query_embedding', nn.Parameter(torch.randn(max_seq_len, model_dim) * 0.02))
+        
+        # Expansion layer - restores from compressed representation
+        self.expander = nn.Sequential(
+            nn.Linear(self.compressed_dim, model_dim),
+            nn.GELU(),
+            nn.Dropout(dropout)
+        )
+        
+        # Initialize weights
+        self._init_weights()
+    
+    def _init_weights(self):
+        """Initialize weights with proper scaling."""
+        for module in self.modules():
+            if isinstance(module, nn.Linear):
+                nn.init.xavier_uniform_(module.weight, gain=1.0)
+                if module.bias is not None:
+                    nn.init.zeros_(module.bias)
+    
+    def get_parameter_count(self):
+        """Calculate total parameters and provide breakdown."""
+        total_params = sum(p.numel() for p in self.parameters())
+        trainable_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
+        
+        breakdown = {
+            "input_proj": sum(p.numel() for p in self.input_proj.parameters()),
+            "output_proj": sum(p.numel() for p in self.output_proj.parameters()),
+            "encoder": sum(p.numel() for p in self.encoder.parameters()),
+            "decoder": sum(p.numel() for p in self.decoder.parameters()),
+            "compressor": sum(p.numel() for p in self.compressor.parameters()),
+            "expander": sum(p.numel() for p in self.expander.parameters()),
+            "query_embedding": self.query_embedding.numel(),
+            "pos_encoding": self.pos_enc.pe.numel(),
+        }
+        
+        return {
+            "total_params": total_params,
+            "trainable_params": trainable_params,
+            "breakdown": breakdown,
+            "memory_mb": total_params * 4 / (1024 * 1024),  # Assuming float32
+        }
 
-    def preprocess_input_shape(self, x):
+    def preprocess_input(self, x):
         """
-        Preprocess input tensor to handle various input shapes.
-        
-        Cases handled:
-        1. [B, T, 1, C] -> [B, T, C] (remove singleton dimension)
-        2. [B, T, N, C] -> [B, N, T*C] (treat each of N vectors as sequence elements)
-        3. [B, T, C] -> [B, T, C] (no change needed)
-        
-        Args:
-            x: Input tensor
-            
-        Returns:
-            Processed tensor of shape [B, seq_len, features]
+        Preprocess input to handle SAR data format.
+        Expected: [batch_size, seq_len, input_dim] where seq_len=1000 for rows
         """
         if self.verbose:
-            print(f"Original input shape: {x.shape}")
+            print(f"Input shape: {x.shape}")
         
+        # Handle different input shapes
         if len(x.shape) == 4:
-            batch_size, vector_len, num_vectors, channels = x.shape
-            
-            if num_vectors == 1:
-                # Case 1: [B, T, 1, C] -> [B, T, C]
+            # [B, seq_len, 1, channels] -> [B, seq_len, channels]
+            if x.shape[2] == 1:
                 x = x.squeeze(2)
-                if self.verbose:
-                    print(f"Removed singleton dimension: {x.shape}")
             else:
-                # Case 2: [B, 1000, 79, 3] -> [B, 79, 1000*3]
-                # Treat each of the 79 vectors as a sequence element
-                # Each element has 1000*3=3000 features
-                x = x.permute(0, 2, 1, 3)  # [B, 79, 1000, 3]
-                pos_embedding = x[..., -2:]
-                x = x[..., :-2]
-                
-                x = x + pos_embedding
-                x = x.contiguous().view(batch_size, num_vectors, vector_len * (channels - 2))
-                if self.verbose:
-                    print(f"Reshaped to sequence format: {x.shape}")
+                # [B, rows, cols, channels] -> [B, rows, cols*channels] (flatten spatial)
+                batch_size, rows, cols, channels = x.shape
+                x = x.view(batch_size, rows, cols * channels)
         
-        elif len(x.shape) == 3:
-            # Case 3: [B, T, C] - already correct
-            if self.verbose:
-                print(f"Shape already correct: {x.shape}")
-
-        else:
-            raise ValueError(f"Unsupported input shape: {x.shape}. Expected 3D or 4D tensor.")
+        # Ensure we have the right input dimension
+        assert x.shape[-1] == self.input_dim, f"Expected input_dim={self.input_dim}, got {x.shape[-1]}"
+        
         return x
 
-    def process_output_shape(self, output, original_shape):
+    def forward(self, x, y=None):
         """
-        Process output tensor to restore original structure.
+        Forward pass for SAR focusing.
         
         Args:
-            output: Output tensor of shape [B, seq_len, features]
-            original_shape: Original input shape for reference
+            x: Input tensor [batch_size, seq_len, input_dim] 
+            y: Optional target for teacher forcing (not used in parallel mode)
             
         Returns:
-            Processed tensor matching original structure
+            Output tensor [batch_size, seq_len, input_dim]
         """
-        if self.verbose:
-            print(f"Processing output shape: {output.shape}")
+        # Preprocess input
+        x = self.preprocess_input(x)
+        batch_size, seq_len, _ = x.shape
         
-        if len(original_shape) == 4:
-            batch_size, vector_len, num_vectors, channels = original_shape
-            current_batch, seq_len, features = output.shape
-            
-            if seq_len == num_vectors and features == vector_len * channels:
-                # Reshape back to [B, 1000, 79, 3]
-                output = output.view(batch_size, num_vectors, vector_len, channels)
-                output = output.permute(0, 2, 1, 3)  # [B, 1000, 79, 3]
-                #output = output[..., :2]
-                if self.verbose:
-                    print(f"Restored original structure: {output.shape}")
-            else:
-                # Fallback: add singleton dimension
-                output = output.unsqueeze(2)
-                if features == vector_len * (channels - 2):
-                    output = output.view(batch_size, num_vectors, vector_len, (channels-2))
-                else:
-                    output = output.view(batch_size, num_vectors, vector_len, -1) 
-                output = output.permute(0, 2, 1, 3)  # [B, 1000, 79, 2]
-                #output = output[..., :2]
-                if self.verbose:
-                    print(f"Added singleton dimension: {output.shape}")
-
-        elif len(original_shape) == 3:
-            # Keep as is for 3D inputs
-            if self.verbose:
-                print(f"Keeping 3D output: {output.shape}")
-
-        return output
-
-    def _autoregressive_inference(self, memory):
+        if self.verbose:
+            print(f"Processing sequence of length {seq_len}")
+        
+        # 1. Project to model dimension
+        x_proj = self.input_proj(x)  # [B, seq_len, model_dim]
+        
+        # 2. Add positional encoding
+        x_pos = self.pos_enc(x_proj)
+        
+        # 3. Encode to compressed representation
+        encoded = self.encoder(x_pos)  # [B, seq_len, model_dim]
+        
+        # 4. Compress sequence (create bottleneck)
+        compressed = self.compressor(encoded)  # [B, seq_len, compressed_dim]
+        
+        # 5. Take mean or max pooling to create fixed-size representation
+        # This creates the "tiny embedding" you requested
+        if hasattr(self, 'pooling_type') and self.pooling_type == 'max':
+            pooled = torch.max(compressed, dim=1, keepdim=True)[0]  # [B, 1, compressed_dim]
+        else:
+            pooled = torch.mean(compressed, dim=1, keepdim=True)  # [B, 1, compressed_dim]
+        
+        # 6. Expand back to model dimension
+        expanded = self.expander(pooled)  # [B, 1, model_dim]
+        
+        # 7. Decode using learned queries
+        queries = self.query_embedding[:seq_len].unsqueeze(0).expand(batch_size, -1, -1)  # [B, seq_len, model_dim]
+        
+        # Use compressed representation as memory for decoder
+        decoded = self.decoder(queries, expanded.expand(-1, seq_len, -1))  # [B, seq_len, model_dim]
+        
+        # 8. Project back to input dimension
+        output = self.output_proj(decoded)  # [B, seq_len, input_dim]
+        
+        if self.verbose:
+            print(f"Output shape: {output.shape}")
+            print(f"Compression ratio achieved: {pooled.shape[1] / seq_len:.3f}")
+        
+        return output    def _autoregressive_inference(self, memory):
         """
         Autoregressive inference: generate target sequence step by step.
         
