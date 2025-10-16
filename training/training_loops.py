@@ -186,7 +186,14 @@ class TrainerBase(pl.LightningModule):
                 return_original=True
             )
             metrics = compute_metrics(gt, pred)
-            with open(os.path.join(self.base_save_dir, metrics_save_path), 'w') as f:
+            
+            # Create unique filenames including zfile ID to avoid overwriting
+            base_name = os.path.splitext(img_save_path)[0]
+            ext = os.path.splitext(img_save_path)[1] or '.png'
+            unique_img_path = f"{base_name}_file{zfile}{ext}"
+            unique_metrics_path = f"{os.path.splitext(metrics_save_path)[0]}_file{zfile}.json"
+            
+            with open(os.path.join(self.base_save_dir, unique_metrics_path), 'w') as f:
                 json.dump(metrics, f)
                 
             # Ensure matplotlib backend is interactive for showing plots
@@ -202,10 +209,10 @@ class TrainerBase(pl.LightningModule):
                 vminmax=vminmax,  
                 show=True, 
                 save=True,
-                save_path=os.path.join(self.base_save_dir, img_save_path),
+                save_path=os.path.join(self.base_save_dir, unique_img_path),
                 return_figure=True
             )
-            hist = plot_intensity_histograms(gt_original, pred_original, gt, pred, plot=False, return_figure=True, save=True, save_path=os.path.join(self.base_save_dir, f"hist_{img_save_path}"))
+            hist = plot_intensity_histograms(gt_original, pred_original, gt, pred, plot=False, return_figure=True, save=True, save_path=os.path.join(self.base_save_dir, f"hist_{unique_img_path}"))
             
             # Log inference image to WandB if available
             if WANDB_AVAILABLE and hasattr(self.logger, 'experiment') and fig is not None:
@@ -226,12 +233,19 @@ class TrainerBase(pl.LightningModule):
                     buf2.seek(0)
                     h_img = Image.open(buf2)
                     
-                    # Log to WandB
-                    self.logger.experiment.log({
-                        "inference_comparison": wandb.Image(img, caption=f"Epoch {self.current_epoch}"),
-                        "histogram": wandb.Image(h_img, caption=f"Epoch {self.current_epoch}"),
-                        "epoch": self.current_epoch
-                    })
+                    # Prepare WandB logging dict with images and metrics
+                    wandb_log_dict = {
+                        f"inference_comparison_file{zfile}": wandb.Image(img, caption=f"Epoch {self.current_epoch}, File {zfile}"),
+                        f"histogram_file{zfile}": wandb.Image(h_img, caption=f"Epoch {self.current_epoch}, File {zfile}"),
+                        "epoch": self.current_epoch,
+                    }
+                    
+                    # Add inference metrics to WandB logging with unique keys
+                    for metric_name, metric_value in metrics.items():
+                        wandb_log_dict[f"inference_{metric_name}_file{zfile}"] = metric_value
+                    
+                    # Log everything to WandB
+                    self.logger.experiment.log(wandb_log_dict)
                     
                     buf1.close()
                     buf2.close()
@@ -331,9 +345,28 @@ class TrainerBase(pl.LightningModule):
             return False
     def on_train_start(self):
         self.resume_from_checkpoint(self.resume_from, self.trainer.optimizers[0], None)
-    def log_metrics(self, metrics:dict, prefix: str, on_step: bool=False, on_epoch: bool=True, prog_bar: bool=False):
+    def log_metrics(self, metrics: dict, prefix: str, on_step: bool = False, on_epoch: bool = True, prog_bar: bool = False):
+        """Log metrics to both PyTorch Lightning and WandB"""
         for key, value in metrics.items():
+            # Log to PyTorch Lightning
             self.log(f"{prefix}_{key}", value, on_step=on_step, on_epoch=on_epoch, prog_bar=prog_bar)
+        
+        # Also log directly to WandB if available
+        if WANDB_AVAILABLE and hasattr(self.logger, 'experiment'):
+            try:
+                # Prepare metrics dict for WandB
+                wandb_metrics = {f"{prefix}_{key}": value for key, value in metrics.items()}
+                
+                # Add step/epoch info for proper x-axis
+                if on_step and not on_epoch:
+                    wandb_metrics['step'] = self.global_step
+                elif on_epoch:
+                    wandb_metrics['epoch'] = self.current_epoch
+                
+                # Log to WandB
+                self.logger.experiment.log(wandb_metrics)
+            except Exception as e:
+                pass  # Fail silently to not interrupt training
     def preprocess_output_and_prediction_before_comparison(self, target: torch.Tensor, output: torch.Tensor) -> Tuple[np.ndarray, np.ndarray]:
         if output.shape[-1] > 2:
             output = output[..., :-2]
@@ -350,7 +383,9 @@ class TrainerBase(pl.LightningModule):
         #print(f"Output from model: {output}")
         #print(f"Ground truth: {y}")
         loss = self.compute_loss(output, y)
-        self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True)
+        
+        # Log training loss properly 
+        self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
         
         y_np = y.detach().cpu().numpy() #.squeeze()
         output_np = output.detach().cpu().numpy() #.squeeze()
@@ -374,8 +409,9 @@ class TrainerBase(pl.LightningModule):
         x, y = batch
         output = self.forward(x, y)
         loss = self.compute_loss(output, y)
-        self.val_losses.append(loss.item())
-        self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True)
+        
+        # Log validation loss properly
+        self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True)
         
         y_np = y.cpu().numpy() #.squeeze()
         output_np = output.cpu().numpy() #.squeeze()
