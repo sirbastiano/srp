@@ -321,7 +321,7 @@ def create_dataloader_from_config(data_dir, dataloader_cfg, split_cfg, transform
     """Create a dataloader from base config and split-specific config (same as original)."""
     base_config = {
         'data_dir': data_dir,
-        'level_from': dataloader_cfg.get('level_from', 'rcmc'),
+        'level_from': dataloader_cfg.get('level_from', 'rc'),
         'level_to': dataloader_cfg.get('level_to', 'az'),
         'num_workers': dataloader_cfg.get('num_workers', 0),  # Default to 0 to prevent worker crashes
         'patch_mode': dataloader_cfg.get('patch_mode', 'rectangular'),

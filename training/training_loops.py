@@ -7,10 +7,8 @@ from typing import Tuple, Union, Optional, Callable
 from tqdm import tqdm
 import os
 from typing import Optional, Callable, Union
-from dataloader.dataloader import SARZarrDataset, get_sar_dataloader, SARDataloader
-from model.SSMs.SSM import OverlapSaveWrapper, WindowedOverlapWrapper
-from model.transformers.rv_transformer import RealValuedTransformer  
-from model.transformers.cv_transformer import ComplexTransformer
+from dataloader.dataloader import SARDataloader
+from model.SSMs.SSM import OverlapSaveWrapper
 from training.visualize import compute_metrics, save_metrics, average_metrics, plot_intensity_histograms
 from sarpyx.utils.losses import get_loss_function
 from training.visualize import get_full_image_and_prediction, compute_metrics, display_inference_results, log_inference_to_wandb
@@ -149,33 +147,60 @@ class TrainerBase(pl.LightningModule):
         return self._test_loader
 
     def compute_loss(self, target: torch.Tensor, output: torch.Tensor):
+        # print(f"Before preprocessing - Target shape: {target.shape}, Output shape: {output.shape}")
         target, output = self.preprocess_output_and_prediction_before_comparison(target, output)
+        # print(f"After preprocessing - Target shape: {target.shape}, Output shape: {output.shape}")
         return self.criterion_fn(output, target)
     def preprocess_sample(self, x: Union[np.ndarray, torch.Tensor], device: Union[str, torch.device]):                
         if isinstance(x, np.ndarray):
             x = torch.from_numpy(x)
+        
+        # If model expects complex input (input_proj weight is complex), convert stacked real/imag channels to complex tensor
+        try:
+            model_input_proj = getattr(self.model, 'input_proj', None)
+            expects_complex = False
+            if model_input_proj is not None:
+                # Check dtype of the linear layer weights
+                weight = getattr(model_input_proj, 'weight', None)
+                if weight is not None:
+                    expects_complex = weight.dtype in (torch.complex64, torch.complex128)
+            
+            if expects_complex and isinstance(x, torch.Tensor) and x.dtype in (torch.float32, torch.float64):
+                # If tensor has last dimension == 2 (real, imag stacked), convert to complex
+                if x.ndim >= 1 and x.shape[-1] == 2:
+                    real = x[..., 0]
+                    imag = x[..., 1]
+                    x = torch.complex(real, imag)
+                # If data is single-channel real and model expects complex, treat imaginary part as zeros
+                elif x.ndim >= 1 and x.shape[-1] == 1:
+                    real = x[..., 0]
+                    imag = torch.zeros_like(real)
+                    x = torch.complex(real, imag)
+        except Exception as e:
+            # If anything goes wrong, fall back to original tensor
+            pass
+        
         return x.to(device)
     def forward(self, x: Union[np.ndarray, torch.Tensor], y: Optional[Union[np.ndarray, torch.Tensor]]=None, device: Union[str, torch.device]="cuda") -> torch.Tensor:
         """
-        Forward pass through the model.
+        Forward pass through the model for autoencoder reconstruction.
         Args:
-            x: Input tensor
-            y: Target tensor
+            x: Input tensor to be reconstructed
+            y: Not used in autoencoder mode (kept for compatibility)
         Returns:
-            Model output tensor
+            Reconstructed tensor (should match input dimensions)
         """
         if device is None:
             device = self.device
         x_preprocessed = self.preprocess_sample(x, device)
-        if y is None:
-            y_preprocessed = None
-        else:
-            y_preprocessed = self.preprocess_sample(y, device)
-        return self.model(x_preprocessed, y_preprocessed)
+        
+        # AUTOENCODER MODE: Only pass input, model should reconstruct it
+        # No target/ground truth needed during forward pass
+        return self.model(x_preprocessed)
 
     def show_example(self, loader: SARDataloader, window: Tuple[Tuple[int, int], Tuple[int, int]] = ((1000, 1000), (5000, 5000)), vminmax=(2000, 6000), figsize=(20, 6), metrics_save_path: str = "metrics.json", img_save_path: str = "test.png", zfile: int=0):
         try:
-            gt, pred, input, gt_original, pred_original = get_full_image_and_prediction(
+            gt, pred, input = get_full_image_and_prediction(
                 dataloader=loader,
                 show_window=window,
                 zfile=zfile,
@@ -183,7 +208,7 @@ class TrainerBase(pl.LightningModule):
                 return_input=True, 
                 device="cuda", 
                 vminmax=vminmax, 
-                return_original=True
+                return_original=False
             )
             metrics = compute_metrics(gt, pred)
             
@@ -210,9 +235,11 @@ class TrainerBase(pl.LightningModule):
                 show=True, 
                 save=True,
                 save_path=os.path.join(self.base_save_dir, unique_img_path),
-                return_figure=True
+                return_figure=True, 
+                level_from=loader.dataset.level_from.upper(),
+                level_to=loader.dataset.level_to.upper()
             )
-            hist = plot_intensity_histograms(gt_original, pred_original, gt, pred, plot=False, return_figure=True, save=True, save_path=os.path.join(self.base_save_dir, f"hist_{unique_img_path}"))
+            hist = plot_intensity_histograms(gt, pred, plot=False, return_figure=True, save=True, save_path=os.path.join(self.base_save_dir, f"hist_{unique_img_path}"))
             
             # Log inference image to WandB if available
             if WANDB_AVAILABLE and hasattr(self.logger, 'experiment') and fig is not None:
@@ -376,28 +403,41 @@ class TrainerBase(pl.LightningModule):
             target = target[..., :-2]
         elif target.shape[-1] == 2 and np.iscomplex(target.dtype):
             target = target[..., :-1]
-        return target, output
+        return target.squeeze(), output.squeeze()
     def training_step(self, batch, batch_idx):
         x, y = batch
-        output = self.forward(x, y)  
-        #print(f"Output from model: {output}")
-        #print(f"Ground truth: {y}")
-        loss = self.compute_loss(output, y)
+        
+        # AUTOENCODER MODE: Use input (x) as reconstruction target
+        # The model should learn to compress and reconstruct the input
+        # First preprocess the input to match what the model expects
+        x_preprocessed = self.preprocess_sample(x, self.device)
+        output = self.model(x_preprocessed)
+        
+        # Use the preprocessed input as the reconstruction target to match model output shape
+        reconstruction_target = x_preprocessed
+        loss = self.compute_loss(output, reconstruction_target)
         
         # Log training loss properly 
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
         
-        y_np = y.detach().cpu().numpy() #.squeeze()
-        output_np = output.detach().cpu().numpy() #.squeeze()
-        y_np, output_np = self.preprocess_output_and_prediction_before_comparison(y_np, output_np)
-        for i in range(y_np.shape[0]):
-            gt_patch = self.train_dataloader().dataset.get_patch_visualization(y_np[i], self.train_dataloader().dataset.level_to, vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False)
-            #print(f"Ground truth patch with index {idx} has shape: {gt_patch.shape}, while reconstructed ground truth patch has dimension {gt_patch.shape}")
-            pred_patch = self.train_dataloader().dataset.get_patch_visualization(output_np[i], self.train_dataloader().dataset.level_to, vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False)
-            # gt_patch, pred_patch = self.preprocess_output_and_prediction_before_comparison(gt_patch, pred_patch)
+        # Compute metrics for reconstruction quality
+        x_np = x.detach().cpu().numpy()
+        output_np = output.detach().cpu().numpy()
+        x_np, output_np = self.preprocess_output_and_prediction_before_comparison(x_np, output_np)
+        
+        for i in range(x_np.shape[0]):
+            # Compare reconstruction to original input
+            gt_patch = self.train_dataloader().dataset.get_patch_visualization(
+                x_np[i], self.train_dataloader().dataset.level_from, 
+                vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False
+            )
+            pred_patch = self.train_dataloader().dataset.get_patch_visualization(
+                output_np[i], self.train_dataloader().dataset.level_from, 
+                vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False
+            )
             m = compute_metrics(gt_patch, pred_patch)
-            # self.log_metrics(m, 'train_metrics', on_step=False, on_epoch=True, prog_bar=False)
             self.train_metrics.append(m)
+        
         return loss
     def on_train_epoch_end(self):
         super().on_train_epoch_end()
@@ -407,20 +447,33 @@ class TrainerBase(pl.LightningModule):
         
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        output = self.forward(x, y)
-        loss = self.compute_loss(output, y)
+        
+        # AUTOENCODER MODE: Use input as reconstruction target
+        # First preprocess the input to match what the model expects
+        x_preprocessed = self.preprocess_sample(x, self.device)
+        output = self.model(x_preprocessed)
+        
+        # Use the preprocessed input as the reconstruction target to match model output shape
+        reconstruction_target = x_preprocessed
+        loss = self.compute_loss(output, reconstruction_target)
         
         # Log validation loss properly
         self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True)
         
-        y_np = y.cpu().numpy() #.squeeze()
-        output_np = output.cpu().numpy() #.squeeze()
+        x_np = x.cpu().numpy()
+        output_np = output.cpu().numpy()
         
-        y_np, output_np = self.preprocess_output_and_prediction_before_comparison(y_np, output_np)
-        for i in range(y_np.shape[0]):
-            gt_patch = self.val_dataloader().dataset.get_patch_visualization(y_np[i], self.train_dataloader().dataset.level_to, vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False)
-            #print(f"Ground truth patch with index {idx} has shape: {gt_patch.shape}, while reconstructed ground truth patch has dimension {gt_patch.shape}")
-            pred_patch = self.val_dataloader().dataset.get_patch_visualization(output_np[i], self.train_dataloader().dataset.level_to, vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False)
+        x_np, output_np = self.preprocess_output_and_prediction_before_comparison(x_np, output_np)
+        for i in range(x_np.shape[0]):
+            # Compare reconstruction to original input
+            gt_patch = self.val_dataloader().dataset.get_patch_visualization(
+                x_np[i], self.train_dataloader().dataset.level_from, 
+                vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False
+            )
+            pred_patch = self.val_dataloader().dataset.get_patch_visualization(
+                output_np[i], self.train_dataloader().dataset.level_from, 
+                vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False
+            )
             # gt_patch, pred_patch = self.preprocess_output_and_prediction_before_comparison(gt_patch, pred_patch)
             m = compute_metrics(gt_patch, pred_patch)
             self.validation_metrics.append(m)
@@ -461,7 +514,7 @@ class TrainerBase(pl.LightningModule):
             m = compute_metrics(gt_patch, pred_patch)
             self.test_metrics.append(m)
 
-        loss = self.criterion(output, y)
+        loss = self.criterion_fn(output, y)
         self.log('test_loss', loss, on_step=False, on_epoch=True, prog_bar=True)
         return loss
     def on_test_end(self):
@@ -509,13 +562,41 @@ class TrainRVTransformer(TrainerBase):
             output = output[..., :-2]
         if target.shape[-1] > 2:
             target = target[..., :-2]
-        return target, output
+        return target.squeeze(), output.squeeze()
 
     def preprocess_sample(self, x: torch.Tensor, device: Union[str, torch.device]):    
         if device is None:
             device = self.device
         if isinstance(x, np.ndarray):
             x = torch.from_numpy(x)
+        
+        # If model expects complex input (input_proj weight is complex), convert stacked real/imag channels to complex tensor
+        try:
+            model_input_proj = getattr(self.model, 'input_proj', None)
+            expects_complex = False
+            if model_input_proj is not None:
+                # Check dtype of the linear layer weights
+                weight = getattr(model_input_proj, 'weight', None)
+                if weight is not None:
+                    expects_complex = weight.dtype in (torch.complex64, torch.complex128)
+            
+            if expects_complex and isinstance(x, torch.Tensor) and x.dtype in (torch.float32, torch.float64):
+                # If tensor has last dimension == 2 (real, imag stacked), convert to complex
+                if x.ndim >= 1 and x.shape[-1] == 2:
+                    real = x[..., 0]
+                    imag = x[..., 1]
+                    x = torch.complex(real, imag)
+                # If data is single-channel real and model expects complex, treat imaginary part as zeros
+                elif x.ndim >= 1 and x.shape[-1] == 1:
+                    real = x[..., 0]
+                    imag = torch.zeros_like(real)
+                    x = torch.complex(real, imag)
+                # If already complex, just move to device
+                return x.to(device)
+        except Exception:
+            # If anything goes wrong, fall back to original behavior
+            pass
+        
         return x.float().to(device)
         
         
@@ -558,10 +639,24 @@ class TrainCVTransformer(TrainRVTransformer):
             x = x.to(device).float()
         return x
     def preprocess_output_and_prediction_before_comparison(self, target, output):
-        if output.shape[-1] > 2:
-            output = output[..., :-2]
-        if target.shape[-1] > 2:
-            target = target[..., :-2]
+        # Handle numpy arrays by converting to tensors first
+        if isinstance(target, np.ndarray):
+            target = torch.from_numpy(target)
+        if isinstance(output, np.ndarray):
+            output = torch.from_numpy(output)
+            
+        # Ensure both tensors are on the same device
+        if hasattr(target, 'device') and hasattr(output, 'device'):
+            if target.device != output.device:
+                target = target.to(output.device)
+        
+        # Convert complex tensors to real tensors with real/imag channels
+        if torch.is_complex(target):
+            target = torch.stack([target.real, target.imag], dim=-1)
+        
+        if torch.is_complex(output):
+            output = torch.stack([output.real, output.imag], dim=-1)
+        
         return target, output
 
 class TrainSSM(TrainerBase):
@@ -809,10 +904,11 @@ def get_training_loop_by_model_name(
         device_no: int= 0, 
         input_dim: int = 3, 
         patience: int = 50,
+        use_masked_reconstruction: bool = False,  # New parameter for masked reconstruction
         **kwargs  # Accept additional parameters to prevent TypeError
     ) -> Tuple[TrainerBase, pl.Trainer]:
 
-    if model_name == 'cv_transformer':
+    if model_name == 'cv_transformer' or 'spatial_cv_transformer' in model_name:
         lightning_model = TrainCVTransformer(
             base_save_dir=str(save_dir),
             model=model,
