@@ -49,6 +49,16 @@ class ComplexDropout(nn.Module):
         else:
             return self.dropout(x)
         
+def init_weights_uniform(module, gain=0.05, bias=0.5):
+    if isinstance(module, nn.Linear) or isinstance(module, ComplexLinear):
+        if hasattr(module, 'W_real'):
+            nn.init.normal_(module.W_real.weight, mean=0.0, std=gain)
+            nn.init.normal_(module.W_imag.weight, mean=0.0, std=gain)
+            nn.init.constant_(module.W_real.bias, bias)
+            nn.init.constant_(module.W_imag.bias, bias)
+        else:
+            nn.init.normal_(module.weight, mean=0.0, std=gain)
+            nn.init.constant_(module.bias, bias)
 class ComplexLayerNorm(nn.Module):
     def __init__(self, normalized_shape, eps=1e-5, elementwise_affine=True):
         super().__init__()
@@ -128,6 +138,21 @@ def LinearActivation(
 """ HiPPO utilities """
 
 def random_dplr(N, H=1, scaling='inverse', real_scale=1.0, imag_scale=1.0):
+    """
+    Generate random DPLR (Diagonal Plus Low-Rank) SSM parameters.
+    
+    Args:
+        N: State dimension
+        H: Number of heads
+        scaling: Initialization strategy for imaginary part
+            - 'inverse': HiPPO-based (default, can cause large values)
+            - 'linear': Linear spacing (more stable)
+            - 'log': Logarithmic spacing (RECOMMENDED for SAR)
+            - 'sqrt': Square root spacing (moderate stability)
+            - 'random': Random initialization
+        real_scale: Scale factor for real part
+        imag_scale: Scale factor for imaginary part
+    """
     dtype = torch.cfloat
 
     pi = torch.tensor(np.pi)
@@ -139,9 +164,19 @@ def random_dplr(N, H=1, scaling='inverse', real_scale=1.0, imag_scale=1.0):
         imag_part = torch.randn(H, N//2)
     elif scaling == 'linear':
         imag_part = pi * imag_part
+    elif scaling == 'log':
+        # Logarithmic spacing - MORE STABLE for SAR
+        # Avoids extremely large values at high frequencies
+        imag_part = pi * torch.log1p(imag_part)
+    elif scaling == 'sqrt':
+        # Square root spacing - MODERATE stability
+        imag_part = pi * torch.sqrt(imag_part.float())
     elif scaling == 'inverse': # Based on asymptotics of the default HiPPO matrix
+        # WARNING: Can create very large imaginary parts
         imag_part = 1/pi * N * (N/(1+2*imag_part)-1)
-    else: raise NotImplementedError
+    else: 
+        raise NotImplementedError(f"Unknown scaling: {scaling}. Use 'inverse', 'linear', 'log', 'sqrt', or 'random'")
+    
     imag_part = imag_scale * imag_part
     w = -real_part + 1j * imag_part
 
@@ -360,7 +395,9 @@ class S4D(nn.Module):
         self.channels = channels
         self.transposed = transposed
         self.complex = complex
-        self.D = nn.Parameter(torch.randn(channels, self.h))
+        # FIXED: Better initialization for skip connection D
+        # Small positive values to avoid suppressing SSM output
+        self.D = nn.Parameter(torch.randn(channels, self.h) * 0.1 + 0.1)
 
         if self.bidirectional:
             channels *= 2
@@ -427,6 +464,7 @@ class S4D(nn.Module):
         #     y = y[..., :L]
 
         # Compute D term in state space equation - essentially a skip connection
+        y_ssm = y
         y = y + contract('bhl,ch->bchl', u, self.D)
 
         # Reshape to flatten channels
@@ -436,9 +474,10 @@ class S4D(nn.Module):
 
         if not self.transposed: y = y.transpose(-1, -2)
 
-        y = self.output_linear(y)
+        y_out = self.output_linear(y)
+        
 
-        return y, None
+        return y_out, None
 
     def setup_step(self):
         self.kernel.setup_step()
@@ -464,6 +503,10 @@ class S4D(nn.Module):
             y = self.output_linear(y.unsqueeze(-1)).squeeze(-1)
         else:
             y = self.output_linear(y)
+        
+        # Apply learnable output gain
+        y = y * self.output_gain
+        
         y = y.unsqueeze(1) 
         return y, next_state
 
@@ -515,7 +558,9 @@ class sarSSM(nn.Module):
         use_positional_as_token=False,
         preprocess=True,
         activation_function='relu',
-        use_selectivity=True
+        use_selectivity=True,
+        output_gain=10.0,  # NEW: Learnable output amplification to fix amplitude collapse
+        use_skip_connection=True,  # NEW: Optional skip connection for better gradient flow
     ):
         """
         sarSSM: Sequence State Model for Synthetic Aperture Radar (SAR) Data
@@ -564,6 +609,8 @@ class sarSSM(nn.Module):
         self.model_dim = model_dim
         self.preprocess = preprocess
         self.use_selectivity = use_selectivity
+        self.use_skip_connection = use_skip_connection
+        
         # Input projection: project input_dim to state_dim
         if complex_valued:
             self.input_proj = ComplexLinear(input_dim, model_dim)
@@ -571,6 +618,15 @@ class sarSSM(nn.Module):
         else:
             self.input_proj = nn.Linear(input_dim, model_dim)
             self.output_proj = nn.Linear(model_dim, output_dim)
+        
+        # NEW: Learnable output gain to compensate for amplitude suppression
+        self.output_gain = nn.Parameter(torch.tensor(output_gain))
+        
+        # NEW: Optional skip connection from input to output (helps preserve amplitude)
+        if self.use_skip_connection and input_dim == output_dim:
+            self.skip_scale = nn.Parameter(torch.tensor(0.1))  # Small initial skip weight
+        else:
+            self.skip_scale = None
 
         self.layers = nn.ModuleList([
             S4D(d_model=model_dim, d_state=state_dim, dropout=dropout, transposed=True, activation=activation_function, complex=complex_valued)
@@ -679,6 +735,18 @@ class sarSSM(nn.Module):
         # h = self.norm(h)
         # h = self.dropout(h)
         out = self.output_proj(h)  # (B,L,output_dim)
+        
+        # NEW: Apply learnable output gain to fix amplitude collapse
+        out = out * self.output_gain
+        
+        # NEW: Add skip connection if enabled (helps preserve input amplitude)
+        if self.skip_scale is not None:
+            # x is original input: (B, L, input_dim)
+            # out is output: (B, L, output_dim)
+            # Only add skip if dimensions match
+            if x.shape[-1] == out.shape[-1]:
+                out = out + self.skip_scale * x
+        
         if extract_features:
             return out, feats
         else:

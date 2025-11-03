@@ -97,6 +97,129 @@ class MSELoss(BaseLoss):
         return self._reduce(loss)
 
 
+class DistributionAwareMSELoss(BaseLoss):
+    """
+    Distribution-Aware MSE Loss that weights errors by local statistics.
+    
+    This loss normalizes the squared error by the target's variance, effectively
+    making the loss distribution-aware. It encourages the model to match both
+    the reconstruction quality AND the statistical distribution of the target.
+    
+    Formula:
+        For each pixel: loss = ((pred - target) / (sigma + eps))^2
+        Where sigma = sqrt(variance of target in the batch/patch)
+        
+    Alternatively (normalized version):
+        loss = ((pred - target) * (target - mean) / (variance + eps))^2
+    
+    This creates a weighted MSE where:
+    - Errors in high-variance regions are weighted less (natural variation)
+    - Errors in low-variance regions are weighted more (should be consistent)
+    - Implicitly encourages matching the distribution's shape
+    
+    Args:
+        normalization_mode (str): How to compute statistics
+            'batch': Use batch-level mean/variance (default)
+            'spatial': Use spatial (per-sample) mean/variance
+            'channel': Use per-channel statistics
+        use_standardization (bool): If True, uses (x - mean) / std weighting
+            If False, uses 1 / std weighting (simpler). Default: True
+        eps (float): Small constant for numerical stability. Default: 1e-6
+        reduction (str): Reduction method. Default: 'mean'
+    """
+    
+    def __init__(
+        self, 
+        normalization_mode: str = 'batch',
+        use_standardization: bool = True,
+        eps: float = 1e-6,
+        reduction: str = 'mean'
+    ) -> None:
+        super().__init__(reduction)
+        assert normalization_mode in ['batch', 'spatial', 'channel'], \
+            f"normalization_mode must be 'batch', 'spatial', or 'channel', got {normalization_mode}"
+        assert eps > 0, f'eps must be positive, got {eps}'
+        
+        self.normalization_mode = normalization_mode
+        self.use_standardization = use_standardization
+        self.eps = eps
+    
+    def forward(self, prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """
+        Compute distribution-aware MSE loss.
+        
+        Args:
+            prediction (torch.Tensor): Predicted values of shape (B, ..., C) or (B, ...)
+                Can be complex-valued or real-valued
+            target (torch.Tensor): Target values of same shape as prediction
+            
+        Returns:
+            torch.Tensor: Distribution-aware MSE loss
+        """
+        assert prediction.shape == target.shape, f'Shape mismatch: {prediction.shape} vs {target.shape}'
+        
+        # Convert complex to magnitude for statistics computation
+        if torch.is_complex(prediction):
+            pred_mag = prediction.abs()
+            target_mag = target.abs()
+        elif prediction.shape[-1] == 2:
+            # Assume last dim is [real, imag]
+            pred_mag = torch.sqrt(prediction[..., 0]**2 + prediction[..., 1]**2 + self.eps)
+            target_mag = torch.sqrt(target[..., 0]**2 + target[..., 1]**2 + self.eps)
+        else:
+            pred_mag = prediction
+            target_mag = target
+        
+        # Compute statistics based on normalization mode (using magnitudes)
+        if self.normalization_mode == 'batch':
+            # Statistics over entire batch (all dimensions)
+            mean_target = target_mag.mean()
+            var_target = target_mag.var()
+        elif self.normalization_mode == 'spatial':
+            # Statistics per sample (over spatial dimensions, keep batch separate)
+            if target_mag.dim() == 4:  # (B, C, H, W)
+                mean_target = target_mag.mean(dim=[2, 3], keepdim=True)
+                var_target = target_mag.var(dim=[2, 3], keepdim=True)
+            elif target_mag.dim() == 3:  # (B, L, C) or (B, H, W)
+                mean_target = target_mag.mean(dim=1, keepdim=True)
+                var_target = target_mag.var(dim=1, keepdim=True)
+            else:
+                # Fallback to batch statistics
+                mean_target = target_mag.mean()
+                var_target = target_mag.var()
+        elif self.normalization_mode == 'channel':
+            # Statistics per channel
+            if target_mag.dim() >= 2:
+                # Compute over all dims except batch and channel
+                reduce_dims = list(range(2, target_mag.dim()))
+                if len(reduce_dims) > 0:
+                    mean_target = target_mag.mean(dim=reduce_dims, keepdim=True)
+                    var_target = target_mag.var(dim=reduce_dims, keepdim=True)
+                else:
+                    mean_target = target_mag.mean(dim=1, keepdim=True)
+                    var_target = target_mag.var(dim=1, keepdim=True)
+            else:
+                mean_target = target_mag.mean()
+                var_target = target_mag.var()
+        
+        std_target = torch.sqrt(var_target + self.eps)
+        
+        # Compute squared error (on magnitudes)
+        squared_error = (pred_mag - target_mag) ** 2
+        
+        if self.use_standardization:
+            # Weight by standardized target: (x - mean) / std
+            # This emphasizes matching the distribution shape
+            target_normalized = (target_mag - mean_target) / std_target
+            weighted_error = squared_error * target_normalized ** 2
+        else:
+            # Weight by inverse variance: 1 / std^2
+            # Simpler, focuses on relative error magnitude
+            weighted_error = squared_error / (var_target + self.eps)
+        
+        return self._reduce(weighted_error)
+
+
 class MAELoss(BaseLoss):
     """
     Mean Absolute Error loss.
@@ -221,6 +344,29 @@ class ComplexMSELoss(BaseLoss):
         loss = torch.abs(diff) ** 2
         return self._reduce(loss)
 
+class ComplexMAELoss(BaseLoss):
+    """
+    Mean Absolute Error loss for complex-valued tensors.
+
+    Args:
+        reduction (str): Reduction method. Default: 'mean'
+    """
+
+    def forward(self, prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """
+        Compute MAE loss for complex tensors.
+
+        Args:
+            prediction (torch.Tensor): Predicted complex values of shape (N, ...)
+            target (torch.Tensor): Target complex values of shape (N, ...)
+        """
+        assert prediction.shape == target.shape, f'Shape mismatch: {prediction.shape} vs {target.shape}'
+        assert prediction.is_complex(), 'Prediction tensor must be complex'
+        assert target.is_complex(), 'Target tensor must be complex'
+
+        diff = prediction - target
+        loss = torch.abs(diff)
+        return self._reduce(loss)
 
 class PhaseLoss(BaseLoss):
     """
@@ -912,6 +1058,1041 @@ class CompositeLoss(BaseLoss):
                 loss_module.reduction = prev_reduction
             total = total + w * l
         return self._reduce(total)
+
+
+class MultiDomainSARLoss(BaseLoss):
+    """
+    Multi-domain loss for physics-aware SAR compression.
+    Combines spatial, frequency, phase, sparsity, rate, SSIM, perceptual, and edge losses.
+    
+    ENHANCED VERSION (Oct 2024): Added structure-preserving losses for better detail retention.
+    
+    Designed for use with PhysicsAwareSpatialTransformer model.
+    
+    Args:
+        spatial_weight: Weight for spatial domain loss (default: 1.0)
+        frequency_weight: Weight for frequency domain loss (default: 0.3)
+        phase_weight: Weight for phase consistency loss (default: 0.5)
+        sparsity_weight: Weight for sparsity penalty (default: 0.01)
+        rate_weight: Weight for rate penalty (default: 0.01)
+        ssim_weight: Weight for SSIM loss (default: 0.0)
+        perceptual_weight: Weight for perceptual loss (default: 0.0)
+        edge_weight: Weight for edge-preserving loss (default: 0.0)
+        reduction: Loss reduction method ('mean', 'sum', 'none')
+    """
+    def __init__(
+        self,
+        spatial_weight: float = 1.0,
+        frequency_weight: float = 0.3,
+        phase_weight: float = 0.5,
+        sparsity_weight: float = 0.01,
+        rate_weight: float = 0.01,
+        ssim_weight: float = 0.0,
+        perceptual_weight: float = 0.0,
+        edge_weight: float = 0.0,
+        reduction: str = 'mean'
+    ):
+        super().__init__(reduction=reduction)
+        self.spatial_weight = spatial_weight
+        self.frequency_weight = frequency_weight
+        self.phase_weight = phase_weight
+        self.sparsity_weight = sparsity_weight
+        self.rate_weight = rate_weight
+        self.ssim_weight = ssim_weight
+        self.perceptual_weight = perceptual_weight
+        self.edge_weight = edge_weight
+    
+    def complex_mse(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """Complex MSE: |pred - target|^2"""
+        return F.mse_loss(pred, target, reduction=self.reduction)
+    
+    def frequency_domain_loss(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """MSE in azimuth frequency domain."""
+        # Handle both complex tensor format [B, H, W, 2] and native complex
+        if pred.dtype in [torch.complex64, torch.complex128]:
+            pred_complex = pred
+            target_complex = target
+        else:
+            pred_complex = torch.complex(pred[..., 0], pred[..., 1])
+            target_complex = torch.complex(target[..., 0], target[..., 1])
+        
+        # FFT along azimuth (axis 1 for [B, H, W] or axis -2 for [B, ..., H, W])
+        pred_fft = torch.fft.fft(pred_complex, dim=-2)
+        target_fft = torch.fft.fft(target_complex, dim=-2)
+        
+        # MSE on magnitude
+        mag_loss = F.mse_loss(torch.abs(pred_fft), torch.abs(target_fft), reduction=self.reduction)
+        
+        return mag_loss
+    
+    def phase_consistency_loss(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """
+        Phase loss using complex inner product.
+        L = 1 - |<pred, target>| / (||pred|| ||target||)
+        """
+        # Handle format
+        if pred.dtype in [torch.complex64, torch.complex128]:
+            pred_complex = pred
+            target_complex = target
+        else:
+            pred_complex = torch.complex(pred[..., 0], pred[..., 1])
+            target_complex = torch.complex(target[..., 0], target[..., 1])
+        
+        # Flatten spatial dimensions for inner product
+        pred_flat = pred_complex.flatten(start_dim=-2)  # [B, ..., H*W]
+        target_flat = target_complex.flatten(start_dim=-2)
+        
+        # Complex inner product
+        inner_product = torch.sum(pred_flat * torch.conj(target_flat), dim=-1)
+        
+        # Norms
+        pred_norm = torch.sqrt(torch.sum(torch.abs(pred_flat)**2, dim=-1) + 1e-8)
+        target_norm = torch.sqrt(torch.sum(torch.abs(target_flat)**2, dim=-1) + 1e-8)
+        
+        # Normalized inner product (cosine similarity in complex space)
+        similarity = torch.abs(inner_product) / (pred_norm * target_norm + 1e-8)
+        
+        # Loss (1 - similarity)
+        loss = 1.0 - similarity
+        
+        if self.reduction == 'mean':
+            return loss.mean()
+        elif self.reduction == 'sum':
+            return loss.sum()
+        else:
+            return loss
+    
+    def ssim_loss(self, pred: torch.Tensor, target: torch.Tensor, window_size: int = 11) -> torch.Tensor:
+        """
+        Structural Similarity Index (SSIM) loss for structure preservation.
+        Computes SSIM on magnitude of complex data.
+        """
+        # Convert to magnitude
+        if pred.dtype in [torch.complex64, torch.complex128]:
+            pred_mag = torch.abs(pred)
+            target_mag = torch.abs(target)
+        else:
+            pred_mag = torch.sqrt(pred[..., 0]**2 + pred[..., 1]**2)
+            target_mag = torch.sqrt(target[..., 0]**2 + target[..., 1]**2)
+        
+        # Add channel dimension if needed [B, H, W] -> [B, 1, H, W]
+        if pred_mag.dim() == 3:
+            pred_mag = pred_mag.unsqueeze(1)
+            target_mag = target_mag.unsqueeze(1)
+        
+        # Compute SSIM using pytorch_msssim if available, else manual implementation
+        try:
+            from pytorch_msssim import ssim
+            ssim_val = ssim(pred_mag, target_mag, data_range=target_mag.max() - target_mag.min(), 
+                           size_average=True, win_size=window_size)
+            return 1.0 - ssim_val  # Convert to loss (lower is better)
+        except ImportError:
+            # Manual SSIM implementation
+            C1 = 0.01 ** 2
+            C2 = 0.03 ** 2
+            
+            mu_pred = F.avg_pool2d(pred_mag, window_size, stride=1, padding=window_size//2)
+            mu_target = F.avg_pool2d(target_mag, window_size, stride=1, padding=window_size//2)
+            
+            mu_pred_sq = mu_pred ** 2
+            mu_target_sq = mu_target ** 2
+            mu_pred_target = mu_pred * mu_target
+            
+            sigma_pred_sq = F.avg_pool2d(pred_mag ** 2, window_size, stride=1, padding=window_size//2) - mu_pred_sq
+            sigma_target_sq = F.avg_pool2d(target_mag ** 2, window_size, stride=1, padding=window_size//2) - mu_target_sq
+            sigma_pred_target = F.avg_pool2d(pred_mag * target_mag, window_size, stride=1, padding=window_size//2) - mu_pred_target
+            
+            ssim_map = ((2 * mu_pred_target + C1) * (2 * sigma_pred_target + C2)) / \
+                       ((mu_pred_sq + mu_target_sq + C1) * (sigma_pred_sq + sigma_target_sq + C2))
+            
+            return 1.0 - ssim_map.mean()
+    
+    def edge_preserving_loss(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """
+        Edge-preserving loss using gradient differences.
+        Ensures sharp edges are maintained after compression.
+        """
+        # Convert to magnitude
+        if pred.dtype in [torch.complex64, torch.complex128]:
+            pred_mag = torch.abs(pred)
+            target_mag = torch.abs(target)
+        else:
+            pred_mag = torch.sqrt(pred[..., 0]**2 + pred[..., 1]**2)
+            target_mag = torch.sqrt(target[..., 0]**2 + target[..., 1]**2)
+        
+        # Compute gradients
+        pred_grad_h = torch.abs(pred_mag[:, 1:, :] - pred_mag[:, :-1, :])
+        pred_grad_w = torch.abs(pred_mag[:, :, 1:] - pred_mag[:, :, :-1])
+        
+        target_grad_h = torch.abs(target_mag[:, 1:, :] - target_mag[:, :-1, :])
+        target_grad_w = torch.abs(target_mag[:, :, 1:] - target_mag[:, :, :-1])
+        
+        # L1 loss on gradients
+        loss_h = F.l1_loss(pred_grad_h, target_grad_h, reduction=self.reduction)
+        loss_w = F.l1_loss(pred_grad_w, target_grad_w, reduction=self.reduction)
+        
+        return (loss_h + loss_w) / 2.0
+    
+    def perceptual_loss(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """
+        Simple perceptual loss using multi-scale gradients.
+        Captures features at different scales for better detail preservation.
+        """
+        # Convert to magnitude
+        if pred.dtype in [torch.complex64, torch.complex128]:
+            pred_mag = torch.abs(pred)
+            target_mag = torch.abs(target)
+        else:
+            pred_mag = torch.sqrt(pred[..., 0]**2 + pred[..., 1]**2)
+            target_mag = torch.sqrt(target[..., 0]**2 + target[..., 1]**2)
+        
+        # Multi-scale feature extraction using pooling
+        scales = [1, 2, 4]
+        total_loss = 0.0
+        
+        for scale in scales:
+            if scale > 1:
+                pred_scaled = F.avg_pool2d(pred_mag.unsqueeze(1) if pred_mag.dim() == 3 else pred_mag, 
+                                          scale, stride=scale).squeeze(1)
+                target_scaled = F.avg_pool2d(target_mag.unsqueeze(1) if target_mag.dim() == 3 else target_mag,
+                                            scale, stride=scale).squeeze(1)
+            else:
+                pred_scaled = pred_mag
+                target_scaled = target_mag
+            
+            # Compute L1 loss at this scale
+            scale_loss = F.l1_loss(pred_scaled, target_scaled, reduction=self.reduction)
+            total_loss += scale_loss / scale  # Weight by scale
+        
+        return total_loss / len(scales)
+    
+    def forward(
+        self,
+        pred: torch.Tensor,
+        target: torch.Tensor,
+        aux_outputs: Optional[dict] = None
+    ) -> Union[torch.Tensor, Tuple[torch.Tensor, dict]]:
+        """
+        Compute multi-domain loss.
+        
+        Args:
+            pred: Predicted tensor [B, H, W, 2] or complex format
+            target: Ground truth tensor [B, H, W, 2] or complex format
+            aux_outputs: Optional dictionary with 'sparsity' and 'rate' from model
+        
+        Returns:
+            If aux_outputs is None: scalar loss
+            Otherwise: (loss, loss_dict) tuple with individual components
+        """
+        losses = {}
+        
+        # 1. Spatial domain loss
+        losses['spatial'] = self.complex_mse(pred, target) * self.spatial_weight
+        
+        # 2. Frequency domain loss
+        losses['frequency'] = self.frequency_domain_loss(pred, target) * self.frequency_weight
+        
+        # 3. Phase consistency
+        losses['phase'] = self.phase_consistency_loss(pred, target) * self.phase_weight
+        
+        # 4. SSIM loss (structure preservation - NEW)
+        if self.ssim_weight > 0:
+            losses['ssim'] = self.ssim_loss(pred, target) * self.ssim_weight
+        else:
+            losses['ssim'] = torch.tensor(0.0, device=pred.device)
+        
+        # 5. Edge-preserving loss (detail preservation - NEW)
+        if self.edge_weight > 0:
+            losses['edge'] = self.edge_preserving_loss(pred, target) * self.edge_weight
+        else:
+            losses['edge'] = torch.tensor(0.0, device=pred.device)
+        
+        # 6. Perceptual loss (multi-scale features - NEW)
+        if self.perceptual_weight > 0:
+            losses['perceptual'] = self.perceptual_loss(pred, target) * self.perceptual_weight
+        else:
+            losses['perceptual'] = torch.tensor(0.0, device=pred.device)
+        
+        # 7. Sparsity penalty (from auxiliary outputs)
+        if aux_outputs is not None and 'sparsity' in aux_outputs:
+            sparsity = aux_outputs['sparsity']
+            if isinstance(sparsity, torch.Tensor):
+                losses['sparsity'] = sparsity * self.sparsity_weight
+            else:
+                losses['sparsity'] = torch.tensor(0.0, device=pred.device)
+        else:
+            losses['sparsity'] = torch.tensor(0.0, device=pred.device)
+        
+        # 8. Rate penalty (from auxiliary outputs)
+        if aux_outputs is not None and 'rate' in aux_outputs:
+            rate = aux_outputs['rate']
+            if isinstance(rate, torch.Tensor):
+                losses['rate'] = rate.mean() if rate.dim() > 0 else rate * self.rate_weight
+            else:
+                losses['rate'] = torch.tensor(0.0, device=pred.device)
+        else:
+            losses['rate'] = torch.tensor(0.0, device=pred.device)
+        
+        # Total loss
+        total_loss = sum(losses.values())
+        losses['total'] = total_loss
+        
+        # Return format depends on whether we have aux_outputs
+        if aux_outputs is not None:
+            return total_loss, losses
+        else:
+            return total_loss
+
+
+
+class SARFocusingLoss(BaseLoss):
+    """
+    Comprehensive SAR focusing loss combining reconstruction, focus quality, 
+    distribution matching, and total variation.
+    
+    IMPROVED VERSION with better scaling and normalization for stable training.
+    
+    Full combined loss:
+        L = λ_rec * L_rec + λ_focus * L_focus + λ_dist * L_dist + λ_tv * L_tv
+    
+    where:
+        L_rec    = Reconstruction loss (L1, L2, or complex MSE to ground truth)
+        L_focus  = Focus quality metric (normalized variance, entropy, or contrast)
+        L_dist   = Distribution matching (statistical moments or histogram L1)
+        L_tv     = Total variation regularization (suppress speckle artifacts)
+    
+    Args:
+        lambda_rec (float): Weight for reconstruction loss. Default: 1.0
+        lambda_focus (float): Weight for focus quality. Default: 0.1
+        lambda_dist (float): Weight for distribution matching. Default: 0.5
+        lambda_tv (float): Weight for total variation. Default: 0.01
+        rec_loss_type (str): Type of reconstruction loss ('mse', 'mae', 'complex_mse'). Default: 'complex_mse'
+        focus_metric (str): Focus quality metric ('variance', 'entropy', 'contrast'). Default: 'contrast'
+        dist_metric (str): Distribution matching metric ('moments', 'histogram', 'none'). Default: 'moments'
+        use_tv (bool): Whether to use total variation regularization. Default: True
+        use_adaptive_weights (bool): Dynamically balance loss components. Default: True
+        reduction (str): Loss reduction method. Default: 'mean'
+    
+    Hyperparameter tips:
+        - λ_rec = 1.0 (baseline)
+        - λ_focus = 0.1-0.5 (higher than before due to normalization)
+        - λ_dist = 0.5-2.0 (distribution matching is now more important)
+        - λ_tv = 0.01-0.1 (can be higher due to magnitude-based computation)
+    """
+    
+    def __init__(
+        self,
+        lambda_rec: float = 1.0,
+        lambda_focus: float = 0.1,
+        lambda_dist: float = 0.5,
+        lambda_tv: float = 0.01,
+        rec_loss_type: str = 'complex_mse',
+        focus_metric: str = 'contrast',
+        dist_metric: str = 'moments',
+        use_tv: bool = True,
+        use_adaptive_weights: bool = True,
+        reduction: str = 'mean'
+    ):
+        super().__init__(reduction=reduction)
+        self.lambda_rec = lambda_rec
+        self.lambda_focus = lambda_focus
+        self.lambda_dist = lambda_dist
+        self.lambda_tv = lambda_tv
+        self.rec_loss_type = rec_loss_type
+        self.focus_metric = focus_metric
+        self.dist_metric = dist_metric
+        self.use_tv = use_tv
+        self.use_adaptive_weights = use_adaptive_weights
+        
+        # Running statistics for adaptive weighting
+        self.register_buffer('rec_scale', torch.tensor(1.0))
+        self.register_buffer('focus_scale', torch.tensor(1.0))
+        self.register_buffer('dist_scale', torch.tensor(1.0))
+        self.register_buffer('tv_scale', torch.tensor(1.0))
+        self.register_buffer('num_updates', torch.tensor(0))
+        
+        # Initialize reconstruction loss
+        if rec_loss_type == 'mse':
+            self.rec_loss = MSELoss(reduction=reduction)
+        elif rec_loss_type == 'mae':
+            self.rec_loss = MAELoss(reduction=reduction)
+        elif rec_loss_type == 'complex_mse':
+            self.rec_loss = ComplexMSELoss(reduction=reduction)
+            
+        elif rec_loss_type == 'complex_mae':
+            self.rec_loss = ComplexMAELoss(reduction=reduction)
+        elif rec_loss_type == 'distribution_aware_mse':
+            # NEW: Distribution-aware MSE that weights by target statistics
+            self.rec_loss = DistributionAwareMSELoss(
+                normalization_mode='batch',  # Use batch statistics
+                use_standardization=True,    # Weight by (x-mean)/std
+                eps=1e-6,
+                reduction=reduction
+            )
+        else:
+            raise ValueError(f"Unknown rec_loss_type: {rec_loss_type}. Options: 'mse', 'mae', 'complex_mse', 'distribution_aware_mse'")
+    
+    def reconstruction_loss(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """Forward-model reconstruction or L1/L2 to ground truth."""
+        return self.rec_loss(pred, target)
+    
+    def focus_quality_loss(self, pred: torch.Tensor) -> torch.Tensor:
+        """
+        Focus quality metric based on spatial concentration.
+        IMPROVED with better normalization for stable gradients.
+        
+        Methods:
+            - 'variance': Normalized centroid variance
+            - 'entropy': Normalized image entropy  
+            - 'contrast': Image contrast/sharpness (NEW - RECOMMENDED)
+        """
+        # Convert to magnitude if complex
+        if torch.is_complex(pred):
+            mag = pred.abs()
+        elif pred.shape[-1] == 2:
+            mag = torch.sqrt(pred[..., 0]**2 + pred[..., 1]**2 + 1e-8)
+        else:
+            mag = pred.abs()
+        
+        if self.focus_metric == 'variance':
+            # Normalized centroid variance
+            return self._normalized_centroid_variance(mag)
+        
+        elif self.focus_metric == 'entropy':
+            # Normalized image entropy
+            return self._normalized_entropy(mag)
+        
+        elif self.focus_metric == 'contrast':
+            # Image contrast - measures sharpness
+            # Maximize contrast = minimize negative contrast
+            return -self._image_contrast(mag)
+        
+        else:
+            raise ValueError(f"Unknown focus_metric: {self.focus_metric}")
+    
+    def _normalized_centroid_variance(self, mag: torch.Tensor) -> torch.Tensor:
+        """
+        Compute NORMALIZED variance of intensity around centroid.
+        Normalized by image size for scale-invariance.
+        """
+        if mag.dim() == 4:
+            mag = mag.mean(dim=1)
+        
+        B, H, W = mag.shape
+        
+        # Normalize to probability distribution
+        eps = 1e-8
+        mag_sum = mag.sum(dim=(-2, -1), keepdim=True) + eps
+        mag_norm = mag / mag_sum
+        
+        # Create normalized coordinate grids [0, 1]
+        y_coords = torch.linspace(0, 1, H, device=mag.device, dtype=mag.dtype).view(1, H, 1)
+        x_coords = torch.linspace(0, 1, W, device=mag.device, dtype=mag.dtype).view(1, 1, W)
+        
+        # Compute centroids
+        cy = (mag_norm * y_coords).sum(dim=(-2, -1))
+        cx = (mag_norm * x_coords).sum(dim=(-2, -1))
+        
+        # Compute normalized variance
+        var_y = (mag_norm * (y_coords - cy.view(B, 1, 1))**2).sum(dim=(-2, -1))
+        var_x = (mag_norm * (x_coords - cx.view(B, 1, 1))**2).sum(dim=(-2, -1))
+        
+        # Combined variance (already normalized to [0, 1] range)
+        variance = var_y + var_x
+        
+        if self.reduction == 'mean':
+            return variance.mean()
+        elif self.reduction == 'sum':
+            return variance.sum()
+        else:
+            return variance
+    
+    def _normalized_entropy(self, mag: torch.Tensor) -> torch.Tensor:
+        """
+        Compute NORMALIZED image entropy: H / log(N)
+        Normalized by maximum possible entropy for scale-invariance.
+        """
+        if mag.dim() == 4:
+            mag = mag.mean(dim=1)
+        
+        B, H, W = mag.shape
+        N = H * W
+        
+        # Normalize to probability distribution
+        eps = 1e-8
+        mag_norm = mag / (mag.sum(dim=(-2, -1), keepdim=True) + eps)
+        
+        # Compute entropy
+        entropy = -(mag_norm * torch.log(mag_norm + eps)).sum(dim=(-2, -1))
+        
+        # Normalize by maximum entropy (uniform distribution)
+        max_entropy = math.log(N)
+        normalized_entropy = entropy / max_entropy
+        
+        if self.reduction == 'mean':
+            return normalized_entropy.mean()
+        elif self.reduction == 'sum':
+            return normalized_entropy.sum()
+        else:
+            return normalized_entropy
+    
+    def _image_contrast(self, mag: torch.Tensor) -> torch.Tensor:
+        """
+        Compute image contrast using standard deviation normalized by mean.
+        Higher contrast = better focus.
+        
+        Contrast = std(I) / (mean(I) + eps)
+        """
+        if mag.dim() == 4:
+            mag = mag.mean(dim=1)
+        
+        # Flatten spatial dimensions
+        B = mag.shape[0]
+        mag_flat = mag.view(B, -1)
+        
+        eps = 1e-8
+        mean_val = mag_flat.mean(dim=1) + eps
+        std_val = mag_flat.std(dim=1) + eps
+        
+        # Normalized contrast (dimensionless)
+        contrast = std_val / mean_val
+        
+        # Return negative because we minimize loss (want to maximize contrast)
+        if self.reduction == 'mean':
+            return contrast.mean()
+        elif self.reduction == 'sum':
+            return contrast.sum()
+        else:
+            return contrast
+    
+    def _centroid_variance(self, mag: torch.Tensor) -> torch.Tensor:
+        """
+        Compute variance of intensity around centroid.
+        Lower variance indicates better focus.
+        """
+        # mag: (B, H, W) or (B, C, H, W)
+        if mag.dim() == 4:
+            # Average over channels if present
+            mag = mag.mean(dim=1)
+        
+        B, H, W = mag.shape
+        
+        # Normalize to probability distribution
+        eps = 1e-8
+        mag_norm = mag / (mag.sum(dim=(-2, -1), keepdim=True) + eps)
+        
+        # Create coordinate grids
+        y_coords = torch.arange(H, device=mag.device, dtype=mag.dtype).view(1, H, 1)
+        x_coords = torch.arange(W, device=mag.device, dtype=mag.dtype).view(1, 1, W)
+        
+        # Compute centroids
+        cy = (mag_norm * y_coords).sum(dim=(-2, -1))  # (B,)
+        cx = (mag_norm * x_coords).sum(dim=(-2, -1))  # (B,)
+        
+        # Compute variance around centroid
+        var_y = (mag_norm * (y_coords - cy.view(B, 1, 1))**2).sum(dim=(-2, -1))
+        var_x = (mag_norm * (x_coords - cx.view(B, 1, 1))**2).sum(dim=(-2, -1))
+        
+        variance = var_y + var_x
+        
+        if self.reduction == 'mean':
+            return variance.mean()
+        elif self.reduction == 'sum':
+            return variance.sum()
+        else:
+            return variance
+    
+    def _image_entropy(self, mag: torch.Tensor) -> torch.Tensor:
+        """
+        Compute image entropy: H = -sum(p * log(p))
+        Lower entropy indicates sharper focus.
+        """
+        if mag.dim() == 4:
+            mag = mag.mean(dim=1)
+        
+        # Normalize to probability distribution
+        eps = 1e-8
+        mag_norm = mag / (mag.sum(dim=(-2, -1), keepdim=True) + eps)
+        
+        # Compute entropy
+        entropy = -(mag_norm * torch.log(mag_norm + eps)).sum(dim=(-2, -1))
+        
+        if self.reduction == 'mean':
+            return entropy.mean()
+        elif self.reduction == 'sum':
+            return entropy.sum()
+        else:
+            return entropy
+    
+    def _image_kurtosis(self, mag: torch.Tensor) -> torch.Tensor:
+        """
+        Compute image kurtosis (fourth standardized moment).
+        Higher kurtosis indicates sharper peaks (better focus).
+        """
+        if mag.dim() == 4:
+            mag = mag.mean(dim=1)
+        
+        # Flatten spatial dimensions
+        B = mag.shape[0]
+        mag_flat = mag.view(B, -1)
+        
+        # Compute moments
+        mean = mag_flat.mean(dim=1, keepdim=True)
+        var = ((mag_flat - mean)**2).mean(dim=1, keepdim=True)
+        std = torch.sqrt(var + 1e-8)
+        
+        # Standardized fourth moment
+        kurtosis = (((mag_flat - mean) / std)**4).mean(dim=1)
+        
+        if self.reduction == 'mean':
+            return kurtosis.mean()
+        elif self.reduction == 'sum':
+            return kurtosis.sum()
+        else:
+            return kurtosis
+    
+    def distribution_matching_loss(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """
+        Distribution matching loss - IMPROVED for better gradients.
+        
+        Methods:
+            - 'moments': Match mean, std, skewness, kurtosis (RECOMMENDED)
+            - 'histogram': L1 distance between histograms
+            - 'none': Disable distribution matching
+        """
+        if self.dist_metric is None or self.dist_metric == 'none':
+            return torch.tensor(0.0, device=pred.device)
+        
+        if self.dist_metric == 'moments':
+            return self._statistical_moments_loss(pred, target)
+        
+        elif self.dist_metric == 'histogram':
+            return self._histogram_l1_loss(pred, target)
+        
+        elif self.dist_metric == 'mmd':
+            # Keep MMD as option but use simplified version
+            return self._simplified_mmd(pred, target)
+        
+        else:
+            raise ValueError(f"Unknown dist_metric: {self.dist_metric}")
+    
+    def _statistical_moments_loss(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """
+        Match statistical moments: mean, std, skewness, kurtosis.
+        This provides strong gradients and is computationally efficient.
+        """
+        # Convert to magnitude
+        if torch.is_complex(pred):
+            pred_mag = pred.abs()
+            target_mag = target.abs()
+        elif pred.shape[-1] == 2:
+            pred_mag = torch.sqrt(pred[..., 0]**2 + pred[..., 1]**2 + 1e-8)
+            target_mag = torch.sqrt(target[..., 0]**2 + target[..., 1]**2 + 1e-8)
+        else:
+            pred_mag = pred.abs()
+            target_mag = target.abs()
+        
+        # Flatten
+        B = pred_mag.shape[0]
+        pred_flat = pred_mag.view(B, -1)
+        target_flat = target_mag.view(B, -1)
+        
+        eps = 1e-8
+        
+        # First moment: mean
+        pred_mean = pred_flat.mean(dim=1)
+        target_mean = target_flat.mean(dim=1)
+        loss_mean = F.mse_loss(pred_mean, target_mean, reduction='none')
+        
+        # Second moment: standard deviation
+        pred_std = pred_flat.std(dim=1) + eps
+        target_std = target_flat.std(dim=1) + eps
+        loss_std = F.mse_loss(pred_std, target_std, reduction='none')
+        
+        # Third moment: skewness (optional, can be noisy)
+        pred_centered = pred_flat - pred_mean.unsqueeze(1)
+        target_centered = target_flat - target_mean.unsqueeze(1)
+        pred_skew = (pred_centered**3).mean(dim=1) / (pred_std**3 + eps)
+        target_skew = (target_centered**3).mean(dim=1) / (target_std**3 + eps)
+        loss_skew = F.mse_loss(pred_skew, target_skew, reduction='none')
+        
+        # Fourth moment: kurtosis
+        pred_kurt = (pred_centered**4).mean(dim=1) / (pred_std**4 + eps)
+        target_kurt = (target_centered**4).mean(dim=1) / (target_std**4 + eps)
+        loss_kurt = F.mse_loss(pred_kurt, target_kurt, reduction='none')
+        
+        # Weighted combination (mean and std are most important)
+        total_loss = 2.0 * loss_mean + 2.0 * loss_std + 0.5 * loss_skew + 0.5 * loss_kurt
+        
+        if self.reduction == 'mean':
+            return total_loss.mean()
+        elif self.reduction == 'sum':
+            return total_loss.sum()
+        else:
+            return total_loss
+    
+    def _histogram_l1_loss(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """
+        KDE-based distribution matching using Gaussian kernel density estimation.
+        
+        This is superior to raw histogram comparison because:
+        1. Provides smooth, continuous probability density estimates
+        2. More robust to bin placement and sample size
+        3. Better gradients for optimization
+        
+        Note: Requires sufficient samples (typically >100) for reliable KDE.
+              Works best with larger batch sizes or epoch-level aggregation.
+        """
+        # Convert to magnitude
+        if torch.is_complex(pred):
+            pred_mag = pred.abs()
+            target_mag = target.abs()
+        elif pred.shape[-1] == 2:
+            pred_mag = torch.sqrt(pred[..., 0]**2 + pred[..., 1]**2 + 1e-8)
+            target_mag = torch.sqrt(target[..., 0]**2 + target[..., 1]**2 + 1e-8)
+        else:
+            pred_mag = pred.abs()
+            target_mag = target.abs()
+        
+        # Flatten
+        B = pred_mag.shape[0]
+        pred_flat = pred_mag.view(B, -1)
+        target_flat = target_mag.view(B, -1)
+        
+        # Number of evaluation points for KDE
+        num_eval_points = 100
+        
+        total_loss = torch.tensor(0.0, device=pred.device)
+        
+        for b in range(B):
+            pred_samples = pred_flat[b]
+            target_samples = target_flat[b]
+            
+            # Automatic bandwidth selection using Scott's rule
+            # h = n^(-1/5) * std
+            n_pred = pred_samples.numel()
+            n_target = target_samples.numel()
+            
+            pred_std = pred_samples.std() + 1e-8
+            target_std = target_samples.std() + 1e-8
+            
+            # Scott's bandwidth (robust for near-Gaussian distributions)
+            h_pred = pred_std * (n_pred ** (-1/5))
+            h_target = target_std * (n_target ** (-1/5))
+            
+            # Use average bandwidth for fair comparison
+            h = (h_pred + h_target) / 2.0
+            
+            # Create evaluation grid covering both distributions
+            min_val = torch.min(pred_samples.min(), target_samples.min())
+            max_val = torch.max(pred_samples.max(), target_samples.max())
+            
+            # Add margin to avoid edge effects
+            margin = (max_val - min_val) * 0.1
+            eval_points = torch.linspace(min_val - margin, max_val + margin, 
+                                        num_eval_points, device=pred.device)
+            
+            # Compute KDE for prediction
+            # KDE(x) = (1/nh) * Σ K((x - x_i) / h)
+            # Using Gaussian kernel: K(u) = (1/√(2π)) * exp(-u²/2)
+            pred_kde = self._gaussian_kde(pred_samples, eval_points, h)
+            
+            # Compute KDE for target
+            target_kde = self._gaussian_kde(target_samples, eval_points, h)
+            
+            # L1 distance between KDEs (integrated over evaluation points)
+            # Approximate integral using trapezoidal rule
+            dx = (max_val - min_val + 2*margin) / num_eval_points
+            kde_diff = torch.abs(pred_kde - target_kde)
+            kde_l1 = kde_diff.sum() * dx
+            
+            total_loss += kde_l1
+        
+        if self.reduction == 'mean':
+            return total_loss / B
+        elif self.reduction == 'sum':
+            return total_loss
+        else:
+            return total_loss / B
+    
+    def _gaussian_kde(self, samples: torch.Tensor, eval_points: torch.Tensor, 
+                     bandwidth: torch.Tensor) -> torch.Tensor:
+        """
+        Compute Gaussian kernel density estimate at evaluation points.
+        
+        Args:
+            samples: Data samples [N]
+            eval_points: Points to evaluate KDE [M]
+            bandwidth: KDE bandwidth (scalar)
+        
+        Returns:
+            kde: Density estimates at eval_points [M]
+        """
+        # samples: [N], eval_points: [M]
+        # Compute distance matrix: [M, N]
+        # (eval_points[i] - samples[j]) for all i, j
+        
+        # Reshape for broadcasting
+        eval_points = eval_points.view(-1, 1)  # [M, 1]
+        samples = samples.view(1, -1)           # [1, N]
+        
+        # Squared distances / (2 * h²)
+        z = ((eval_points - samples) / bandwidth) ** 2 / 2.0  # [M, N]
+        
+        # Gaussian kernel: (1/√(2π)) * exp(-z)
+        gaussian_constant = 1.0 / torch.sqrt(torch.tensor(2.0 * 3.14159265359, device=samples.device))
+        kernel_values = gaussian_constant * torch.exp(-z)  # [M, N]
+        
+        # Sum over samples and normalize
+        n_samples = samples.shape[1]
+        kde = kernel_values.sum(dim=1) / (n_samples * bandwidth)  # [M]
+        
+        return kde
+    
+    def _simplified_mmd(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """
+        Simplified MMD using only mean embedding distance.
+        Much faster and more stable than full MMD.
+        """
+        # Convert to magnitude
+        if torch.is_complex(pred):
+            pred_mag = pred.abs()
+            target_mag = target.abs()
+        elif pred.shape[-1] == 2:
+            pred_mag = torch.sqrt(pred[..., 0]**2 + pred[..., 1]**2 + 1e-8)
+            target_mag = torch.sqrt(target[..., 0]**2 + target[..., 1]**2 + 1e-8)
+        else:
+            pred_mag = pred.abs()
+            target_mag = target.abs()
+        
+        # Flatten
+        B = pred_mag.shape[0]
+        pred_flat = pred_mag.view(B, -1)
+        target_flat = target_mag.view(B, -1)
+        
+        # Simple mean squared distance
+        mmd = ((pred_flat.mean(dim=1) - target_flat.mean(dim=1))**2).mean()
+        
+        return mmd
+    
+    def _maximum_mean_discrepancy(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """
+        Maximum Mean Discrepancy (MMD) between prediction and target distributions.
+        Uses kernel trick to measure distance between distributions.
+        """
+        # Convert to magnitude for distribution comparison
+        if torch.is_complex(pred):
+            pred_mag = pred.abs()
+            target_mag = target.abs()
+        elif pred.shape[-1] == 2:
+            pred_mag = torch.sqrt(pred[..., 0]**2 + pred[..., 1]**2)
+            target_mag = torch.sqrt(target[..., 0]**2 + target[..., 1]**2)
+        else:
+            pred_mag = pred.abs()
+            target_mag = target.abs()
+        
+        # Flatten to (B, N) where N is number of pixels
+        B = pred_mag.shape[0]
+        pred_flat = pred_mag.view(B, -1)
+        target_flat = target_mag.view(B, -1)
+        
+        # Sample subset for efficiency (use all if small enough)
+        max_samples = 1000
+        if pred_flat.shape[1] > max_samples:
+            indices = torch.randperm(pred_flat.shape[1], device=pred_flat.device)[:max_samples]
+            pred_flat = pred_flat[:, indices]
+            target_flat = target_flat[:, indices]
+        
+        # Compute kernel matrices
+        def kernel(x, y, bandwidth):
+            """Gaussian or Laplacian kernel."""
+            # x, y: (B, N)
+            xx = x.unsqueeze(2)  # (B, N, 1)
+            yy = y.unsqueeze(1)  # (B, 1, N)
+            diff = xx - yy  # (B, N, N)
+            
+            if self.mmd_kernel == 'gaussian':
+                return torch.exp(-diff**2 / (2 * bandwidth**2))
+            elif self.mmd_kernel == 'laplacian':
+                return torch.exp(-torch.abs(diff) / bandwidth)
+            else:
+                raise ValueError(f"Unknown kernel: {self.mmd_kernel}")
+        
+        # MMD^2 = E[k(x,x')] - 2*E[k(x,y)] + E[k(y,y')]
+        k_xx = kernel(pred_flat, pred_flat, self.mmd_bandwidth)
+        k_yy = kernel(target_flat, target_flat, self.mmd_bandwidth)
+        k_xy = kernel(pred_flat, target_flat, self.mmd_bandwidth)
+        
+        # Compute MMD (remove diagonal for unbiased estimate)
+        n = pred_flat.shape[1]
+        mmd = (k_xx.sum(dim=(1, 2)) - k_xx.diagonal(dim1=1, dim2=2).sum(dim=1)) / (n * (n - 1))
+        mmd += (k_yy.sum(dim=(1, 2)) - k_yy.diagonal(dim1=1, dim2=2).sum(dim=1)) / (n * (n - 1))
+        mmd -= 2 * k_xy.mean(dim=(1, 2))
+        
+        if self.reduction == 'mean':
+            return mmd.mean()
+        elif self.reduction == 'sum':
+            return mmd.sum()
+        else:
+            return mmd
+    
+    def _histogram_matching_loss(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """
+        Histogram matching loss: measures difference between histograms.
+        """
+        # Convert to magnitude
+        if torch.is_complex(pred):
+            pred_mag = pred.abs()
+            target_mag = target.abs()
+        elif pred.shape[-1] == 2:
+            pred_mag = torch.sqrt(pred[..., 0]**2 + pred[..., 1]**2)
+            target_mag = torch.sqrt(target[..., 0]**2 + target[..., 1]**2)
+        else:
+            pred_mag = pred.abs()
+            target_mag = target.abs()
+        
+        # Compute histograms
+        num_bins = 64
+        B = pred_mag.shape[0]
+        
+        # Flatten
+        pred_flat = pred_mag.view(B, -1)
+        target_flat = target_mag.view(B, -1)
+        
+        # Find common range
+        min_val = torch.min(torch.min(pred_flat.min(), target_flat.min()), torch.tensor(0.0, device=pred.device))
+        max_val = torch.max(pred_flat.max(), target_flat.max())
+        
+        # Compute histograms (simple binning)
+        hist_loss = torch.tensor(0.0, device=pred.device)
+        
+        for b in range(B):
+            pred_hist = torch.histc(pred_flat[b], bins=num_bins, min=min_val.item(), max=max_val.item())
+            target_hist = torch.histc(target_flat[b], bins=num_bins, min=min_val.item(), max=max_val.item())
+            
+            # Normalize
+            pred_hist = pred_hist / (pred_hist.sum() + 1e-8)
+            target_hist = target_hist / (target_hist.sum() + 1e-8)
+            
+            # L2 distance between histograms
+            hist_loss += ((pred_hist - target_hist)**2).sum()
+        
+        if self.reduction == 'mean':
+            return hist_loss / B
+        elif self.reduction == 'sum':
+            return hist_loss
+        else:
+            return hist_loss
+    
+    def total_variation_loss(self, pred: torch.Tensor) -> torch.Tensor:
+        """
+        Total variation regularization to suppress speckle artifacts.
+        Use small weight to avoid smearing point targets.
+        
+        Computes isotropic TV: sum(|grad_x| + |grad_y|)
+        """
+        if not self.use_tv:
+            return torch.tensor(0.0, device=pred.device)
+        
+        # Convert to magnitude for TV computation
+        if torch.is_complex(pred):
+            mag = pred.abs()
+        elif pred.shape[-1] == 2:
+            mag = torch.sqrt(pred[..., 0]**2 + pred[..., 1]**2)
+        else:
+            mag = pred.abs()
+        
+        # Compute spatial gradients
+        # mag: (B, H, W) or (B, C, H, W)
+        if mag.dim() == 4:
+            # Average over channels if present
+            mag = mag.mean(dim=1)
+        
+        # Gradients along height and width
+        grad_h = torch.abs(mag[:, 1:, :] - mag[:, :-1, :])
+        grad_w = torch.abs(mag[:, :, 1:] - mag[:, :, :-1])
+        
+        tv = grad_h.sum(dim=(-2, -1)) + grad_w.sum(dim=(-2, -1))
+        
+        if self.reduction == 'mean':
+            return tv.mean()
+        elif self.reduction == 'sum':
+            return tv.sum()
+        else:
+            return tv
+    
+    def forward(
+        self,
+        pred: torch.Tensor,
+        target: torch.Tensor,
+        return_components: bool = False
+    ) -> Union[torch.Tensor, Tuple[torch.Tensor, dict]]:
+        """
+        Compute combined SAR focusing loss with ADAPTIVE WEIGHTING.
+        
+        Args:
+            pred: Predicted focused SAR image
+            target: Ground truth (focused or reference)
+            return_components: If True, return dictionary with individual loss components
+        
+        Returns:
+            If return_components=False: scalar total loss
+            If return_components=True: (total_loss, loss_dict)
+        """
+        losses = {}
+        losses_raw = {}
+        
+        # Compute raw losses (unweighted)
+        rec_raw = self.reconstruction_loss(pred, target)
+        focus_raw = self.focus_quality_loss(pred)
+        dist_raw = self.distribution_matching_loss(pred, target)
+        tv_raw = self.total_variation_loss(pred)
+        
+        losses_raw['rec'] = rec_raw
+        losses_raw['focus'] = focus_raw
+        losses_raw['dist'] = dist_raw
+        losses_raw['tv'] = tv_raw
+        
+        # Adaptive weighting: normalize by running average of loss magnitudes
+        if self.use_adaptive_weights and self.training:
+            with torch.no_grad():
+                # Update running statistics
+                momentum = 0.1 if self.num_updates < 100 else 0.01
+                
+                self.rec_scale = (1 - momentum) * self.rec_scale + momentum * rec_raw.detach().abs()
+                self.focus_scale = (1 - momentum) * self.focus_scale + momentum * focus_raw.detach().abs()
+                self.dist_scale = (1 - momentum) * self.dist_scale + momentum * dist_raw.detach().abs()
+                self.tv_scale = (1 - momentum) * self.tv_scale + momentum * tv_raw.detach().abs()
+                
+                self.num_updates += 1
+            
+            # Normalize by running scale (prevents one loss from dominating)
+            eps = 1e-8
+            losses['rec'] = self.lambda_rec * rec_raw / (self.rec_scale + eps)
+            losses['focus'] = self.lambda_focus * focus_raw / (self.focus_scale + eps)
+            losses['dist'] = self.lambda_dist * dist_raw / (self.dist_scale + eps)
+            losses['tv'] = self.lambda_tv * tv_raw / (self.tv_scale + eps)
+        else:
+            # Standard weighting (no adaptation)
+            losses['rec'] = self.lambda_rec * rec_raw
+            losses['focus'] = self.lambda_focus * focus_raw
+            losses['dist'] = self.lambda_dist * dist_raw
+            losses['tv'] = self.lambda_tv * tv_raw
+        
+        # Total loss
+        total_loss = losses['rec'] + losses['focus'] + losses['dist'] + losses['tv']
+        losses['total'] = total_loss
+        
+        # Add raw values for logging
+        if return_components:
+            losses['rec_raw'] = rec_raw
+            losses['focus_raw'] = focus_raw
+            losses['dist_raw'] = dist_raw
+            losses['tv_raw'] = tv_raw
+            return total_loss, losses
+        else:
+            return total_loss
+
     
 def get_loss_function(loss_name: str, **kwargs) -> BaseLoss:
     """
@@ -952,6 +2133,8 @@ def get_loss_function(loss_name: str, **kwargs) -> BaseLoss:
         'gan': GANLoss,
         'feature': FeatureLoss,
         'composite': CompositeLoss,
+        'multi_domain_sar': MultiDomainSARLoss,  # Physics-aware multi-domain loss
+        'sar_focusing': SARFocusingLoss,  # Comprehensive SAR focusing loss
     }
     
     if loss_name.lower() not in loss_registry:

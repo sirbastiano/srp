@@ -15,8 +15,9 @@
 #   model = create_model_with_pretrained(config['model'], pretrained_path, device)
 
 from model.transformers.rv_transformer import RealValuedTransformer  # your import
-from model.transformers.cv_transformer import ComplexTransformer
-from model.SSMs.SSM import sarSSM, sarSSMFinal, S4D
+from model.transformers.cv_transformer import CVTransformer
+from model.transformers.spatial_transformer import create_spatial_vision_transformer
+from model.SSMs.SSM import init_weights_uniform, sarSSM, sarSSMFinal, S4D
 import torch
 import torch.nn as nn
 from typing import Optional, Dict, Any
@@ -55,24 +56,28 @@ class SARTransformerFactory:
                 num_layers=num_layers,
                 num_heads=num_heads,
                 ff_dim=ff_dim,
-                dropout=dropout
+                dropout=dropout,
+                mode=mode,
+                max_seq_len=5000,
+                compression_ratio=0.1,
+                verbose=False
             )
-            #model.mode = mode  # Set mode if needed
             return model
         else:
-            return ComplexTransformer(
-                dim=model_dim,
-                depth=depth,
-                num_tokens=num_tokens,
+            return CVTransformer(
+                input_dim=input_dim,
+                model_dim=model_dim,
+                num_layers=num_layers,
+                num_heads=num_heads,
+                ff_dim=ff_dim,
+                dropout=dropout,
+                mode=mode,
+                max_seq_len=5000,
+                compression_ratio=0.1,
                 causal=causal,
-                dim_head=dim_head,
-                heads=heads,
-                ff_mult=ff_mult,
                 complete_complex=complete_complex,
-                rotary=rotary,
                 flash_attn=flash_attn,
-                use_data_positions=False,  
-                pos_encoding_type='complex' 
+                verbose=False 
             )
 
 class SARSSMFactory:
@@ -302,7 +307,7 @@ class SARSSMFactory:
                 use_selectivity=use_selectivity,
                 activation_function=activation_function,
                 **kwargs
-            )
+            ) #.apply(lambda m: init_weights_uniform(m, gain=0.04, bias=0.2))
         else:
             # Use sarSSMFinal without selectivity (no residuals, cascade layers)
             return sarSSMFinal(
@@ -370,68 +375,12 @@ def create_ssm_model(
             
 models = {
     "rv_transformer": RealValuedTransformer,
-    "cv_transformer": ComplexTransformer, 
+    "cv_transformer": CVTransformer, 
     "s4_ssm": lambda **kwargs: create_ssm_model("s4", **kwargs),
     "s4_ssm_final": lambda **kwargs: sarSSMFinal(**kwargs),
     "s4_ssm_recurrent_minimal": lambda **kwargs: stepCompreSSM(**kwargs)
 }
 
-def create_sar_complex_transformer(
-    input_dim: int = 4,
-    model_dim: int = 64,
-    num_layers: int = 4,
-    num_heads: int = 8,
-    dim_head: int = 32,
-    ff_dim: int = 256,
-    dropout: float = 0.1,
-    use_data_positions: bool = True,
-    pos_encoding_type: str = 'complex',
-    complete_complex: bool = False,
-    mode: str = "parallel",
-    **kwargs
-):
-    """
-    Factory function to create a ComplexTransformer optimized for SAR data.
-    
-    Args:
-        input_dim: Input feature dimension (typically 4 for real, imag, pos_y, pos_x)
-        model_dim: Model hidden dimension
-        num_layers: Number of transformer layers
-        num_heads: Number of attention heads
-        dim_head: Dimension per attention head
-        ff_dim: Feed-forward hidden dimension
-        dropout: Dropout rate
-        use_data_positions: Whether to use positional encoding from input data
-        pos_encoding_type: Type of positional encoding ('complex', 'concat', 'add')
-        complete_complex: Whether to use full complex attention vs real-channel flattening
-        mode: Processing mode (for compatibility)
-        **kwargs: Additional arguments
-        
-    Returns:
-        Configured ComplexTransformer for SAR data processing
-    """
-    # Adjust transformer dimensions based on input configuration
-    if use_data_positions and input_dim >= 3:
-        # If we're using positional encoding from data, the actual data dimension
-        # is reduced (positions are handled separately)
-        data_dim = max(1, input_dim - 2) if input_dim > 2 else 1
-        transformer_dim = max(data_dim, model_dim // 4)  # Ensure reasonable minimum
-    else:
-        transformer_dim = input_dim if input_dim > 0 else model_dim
-    
-    return ComplexTransformer(
-        dim=transformer_dim,
-        depth=num_layers,
-        heads=num_heads,
-        dim_head=dim_head,
-        ff_mult=max(1, ff_dim // transformer_dim),
-        complete_complex=complete_complex,
-        rotary=(not use_data_positions),  # Use rotary only if not using data positions
-        flash_attn=kwargs.get('flash_attn', True),
-        causal=(mode == "autoregressive"),
-        use_data_positions=use_data_positions,
-        pos_encoding_type=pos_encoding_type
-    )
 
 def get_model_from_configs(
         name: str,
@@ -452,40 +401,28 @@ def get_model_from_configs(
         **kwargs
     ):
     if name == "cv_transformer":
-        # For complex-valued transformer, configure dimensions properly
-        # input_dim=4 (real, imag, pos_y, pos_x) maps to 2 complex features
-        # complex_dim = max(1, input_dim // 2) if input_dim > 2 else model_dim
-        
-        # Check if we have positional data in input
-        use_data_positions = kwargs.get('use_data_positions', True)  # Default to True for SAR data
-        pos_encoding_type = kwargs.get('pos_encoding_type', 'complex')  # Default encoding type
-        
-        # Adjust input dimension if using positional encoding from data
-        # if use_data_positions and input_dim >= 3:
-        #     # Assume last 2 dimensions are positions, so adjust dim for the complex transformer
-        #     actual_dim = input_dim - 2 if input_dim > 2 else input_dim
-        #     # For complex data, we typically have 1 complex value + 2 position dims
-        #     # So the transformer dim should be set appropriately
-        #     transformer_dim = max(1, actual_dim) if actual_dim > 0 else model_dim
-        # else:
-        #     transformer_dim = input_dim
-        transformer_dim = input_dim
-        
-        model = ComplexTransformer(
-            dim=transformer_dim,
-            depth=num_layers,
-            heads=num_heads,
-            dim_head=dim_head,
-            ff_mult=max(1, ff_dim // transformer_dim),
-            complete_complex=kwargs.get('complete_complex', False),  # Use real-channel flattening approach
-            rotary=(not use_data_positions),  # Use rotary only if not using data positions
-            flash_attn=kwargs.get('flash_attn', True),  # Use flash attention if available
-            causal=(mode == "autoregressive"),
-            use_data_positions=use_data_positions,
-            pos_encoding_type=pos_encoding_type,
-            #**{k: v for k, v in kwargs.items() if k not in ['complete_complex', 'flash_attn', 'use_data_positions', 'pos_encoding_type', 'dim']}
+
+        from model.transformers.cv_transformer import CVTransformer
+        model = CVTransformer(
+            input_dim=kwargs.get('input_dim', input_dim),
+            model_dim=kwargs.get('model_dim', model_dim),
+            num_layers=kwargs.get('num_layers', num_layers),
+            num_heads=kwargs.get('num_heads', num_heads),
+            ff_mult=kwargs.get('ff_mult', int(ff_dim // model_dim) if model_dim else 4),
+            window_size=kwargs.get('window_size', 128),
+            compressed_dim=kwargs.get('compressed_dim', max(32, int(model_dim // 8))),
+            latent_dim=kwargs.get('latent_dim', 16),
+            register_bank_size=kwargs.get('register_bank_size', 32),
+            quant_step=kwargs.get('quant_step', 0.25),
+            rvq_codes=kwargs.get('rvq_codes', 512),
+            rvq_stages=kwargs.get('rvq_stages', 2),
+            use_rvq=kwargs.get('use_rvq', True),
+            hann_len=kwargs.get('hann_len', 5000),
+            output_mode=kwargs.get('output_mode', 'complex')
         )
+
     elif name=="rv_transformer":
+        # New compression-based RealValuedTransformer implementation
         model = RealValuedTransformer(
             input_dim=input_dim,
             model_dim=model_dim,
@@ -493,8 +430,72 @@ def get_model_from_configs(
             num_heads=num_heads,
             ff_dim=ff_dim,
             dropout=dropout,
-            mode=mode  
+            mode=mode,
+            max_seq_len=kwargs.get('max_seq_len', 5000),
+            compression_ratio=kwargs.get('compression_ratio', 0.1),
+            verbose=kwargs.get('verbose', False)
         )
+    
+    elif name == "spatial_transformer":
+        # Spatial Vision Transformer for 2D data processing
+        model = create_spatial_vision_transformer(
+            input_channels=kwargs.get('input_channels', 2),
+            output_channels=kwargs.get('output_channels', 2),
+            embed_dim=kwargs.get('embed_dim', model_dim),
+            num_layers=kwargs.get('num_layers', num_layers),
+            num_heads=kwargs.get('num_heads', num_heads),
+            mlp_ratio=kwargs.get('mlp_ratio', 4.0),
+            patch_size=tuple(kwargs.get('patch_size', [50, 10])),
+            max_height=kwargs.get('max_height', 5000),
+            max_width=kwargs.get('max_width', 100),
+            dropout=kwargs.get('dropout', dropout),
+            # attention_dropout=kwargs.get('attention_dropout', dropout),
+            # pos_encoding_type=kwargs.get('pos_encoding_type', 'sinusoidal'),
+            output_mode=kwargs.get('output_mode', 'complex')
+        )
+    elif name=="physics_aware_transformer":
+        from model.transformers.spatial_transformer_enhanced import (
+            create_physics_aware_transformer,
+            PhysicsConfig,
+            CompressionConfig
+        )
+        
+        # Create physics configuration
+        physics_config = PhysicsConfig(
+            use_complex_layers=kwargs.get('use_complex_layers', True),
+            use_deep_unfolding=kwargs.get('use_deep_unfolding', True),
+            unfolding_iterations=kwargs.get('unfolding_iterations', 3),
+            use_sparsity_prior=kwargs.get('use_sparsity_prior', True),
+            sparsity_lambda=kwargs.get('sparsity_lambda', 0.01),
+            use_multi_domain_loss=kwargs.get('use_multi_domain_loss', True),
+            phase_loss_weight=kwargs.get('phase_loss_weight', 0.5),
+            frequency_loss_weight=kwargs.get('frequency_loss_weight', 0.3),
+        )
+        
+        # Create compression configuration
+        compression_config = CompressionConfig(
+            use_entropy_model=kwargs.get('use_entropy_model', True),
+            use_hyperprior=kwargs.get('use_hyperprior', True),
+            use_quantization=kwargs.get('use_quantization', True),
+            rate_lambda=kwargs.get('rate_lambda', 0.01),
+            num_distributions=kwargs.get('num_distributions', 4),
+        )
+        
+        # Create model using factory function with pre-configured objects
+        # Pass configs directly, not through individual flags
+        model = create_physics_aware_transformer(
+            patch_size=tuple(kwargs.get('patch_size', [100, 20])),
+            embed_dim=kwargs.get('embed_dim', model_dim),
+            num_layers=kwargs.get('num_layers', num_layers),
+            num_heads=kwargs.get('num_heads', num_heads),
+            mlp_ratio=kwargs.get('mlp_ratio', 2.0),
+            max_height=kwargs.get('max_height', 5000),
+            max_width=kwargs.get('max_width', 100),
+            dropout=kwargs.get('dropout', dropout),
+            physics_config=physics_config,
+            compression_config=compression_config,
+        )
+
     elif name in ["simple_ssm", "mamba_ssm", "s4_ssm", "ssm"]:
         # Standard sarSSM with selectivity - defaults to selectivity enabled
         model = create_ssm_model(
