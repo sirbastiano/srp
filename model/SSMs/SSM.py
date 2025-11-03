@@ -464,7 +464,6 @@ class S4D(nn.Module):
         #     y = y[..., :L]
 
         # Compute D term in state space equation - essentially a skip connection
-        y_ssm = y
         y = y + contract('bhl,ch->bchl', u, self.D)
 
         # Reshape to flatten channels
@@ -474,10 +473,9 @@ class S4D(nn.Module):
 
         if not self.transposed: y = y.transpose(-1, -2)
 
-        y_out = self.output_linear(y)
-        
+        y = self.output_linear(y)
 
-        return y_out, None
+        return y, None
 
     def setup_step(self):
         self.kernel.setup_step()
@@ -503,10 +501,6 @@ class S4D(nn.Module):
             y = self.output_linear(y.unsqueeze(-1)).squeeze(-1)
         else:
             y = self.output_linear(y)
-        
-        # Apply learnable output gain
-        y = y * self.output_gain
-        
         y = y.unsqueeze(1) 
         return y, next_state
 

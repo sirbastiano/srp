@@ -454,7 +454,7 @@ def get_model_from_configs(
             output_mode=kwargs.get('output_mode', 'complex')
         )
     elif name=="physics_aware_transformer":
-        from model.transformers.spatial_transformer_enhanced import (
+        from model.transformers.spatial_transformer import (
             create_physics_aware_transformer,
             PhysicsConfig,
             CompressionConfig
