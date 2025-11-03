@@ -17,8 +17,13 @@ import time
 import os
 import functools
 import math
+try:
+    from sklearn.cluster import KMeans
+    HAS_SKLEARN = True
+except ImportError:
+    HAS_SKLEARN = False
 
-from utils import get_chunk_name_from_coords, get_part_from_filename, get_sample_visualization, get_zarr_version, parse_product_filename
+from utils import get_chunk_name_from_coords, get_part_from_filename, get_sample_visualization, get_zarr_version, parse_product_filename, get_balanced_sample_files, SampleFilter
 from api import list_base_files_in_repo, list_repos_by_author
 from utils import minmax_normalize, minmax_inverse, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN
 from api import fetch_chunk_from_hf_zarr, download_metadata_from_product
@@ -194,107 +199,6 @@ class LazyCoordinateGenerator:
             return coords[index]
 
 
-class SampleFilter:
-    def __init__(self, parts: Optional[List[str]]=None, years: Optional[List[int]] = None, months: Optional[List[int]] = None, polarizations: Optional[List[str]] = None, stripmap_modes: Optional[List[int]] = None):
-        """
-        Initialize a filter for SAR dataset samples.
-
-        Args:
-            parts (List[str], optional): List of part names to include.
-            years (List[int], optional): List of years to include.
-            months (List[int], optional): List of months to include.
-            polarizations (List[str], optional): List of polarizations to include.
-            stripmap_modes (List[int], optional): List of stripmap modes to include.
-        """
-        """
-        Initialize the SampleFilter with optional filtering criteria.
-
-        Args:
-            years (List[int], optional): List of years to filter.
-            months (List[int], optional): List of months to filter.
-            polarizations (List[str], optional): List of polarizations to filter.
-            stripmap_modes (List[str], optional): List of stripmap modes to filter.
-        """
-        self.parts = parts if parts is not None else []
-        self.years = years if years is not None else []
-        self.months = months if months is not None else []
-        self.polarizations = polarizations if polarizations is not None else []
-        self.stripmap_modes = stripmap_modes if stripmap_modes is not None else []
-    def get_filter_dict(self) -> Dict[str, List[Union[int, str]]]:
-        """
-        Return the filter as a dictionary for use in dataset selection.
-
-        Returns:
-            dict: Dictionary of filter criteria.
-        """
-        """
-        Get the filter criteria as a dictionary.
-
-        Returns:
-            Dict[str, List[Union[int, str]]]: Dictionary with filter criteria.
-        """
-        filter_dict = {}
-        if self.parts:
-            filter_dict['part'] = self.parts
-        if self.years:
-            filter_dict['year'] = self.years
-        if self.months:
-            filter_dict['month'] = self.months
-        if self.polarizations:
-            filter_dict['polarization'] = self.polarizations
-        if self.stripmap_modes:
-            filter_dict['stripmap_mode'] = self.stripmap_modes
-        return filter_dict
-    def matches(self, record: dict) -> bool:
-        """
-        Check if a record matches the filter criteria.
-
-        Args:
-            record (dict): Metadata record to check.
-
-        Returns:
-            bool: True if record matches, False otherwise.
-        """
-        """
-        Check if a given record matches the filter criteria.
-
-        Args:
-            record (dict): Dictionary containing product metadata.
-        Returns:
-            bool: True if the record matches all specified criteria, False otherwise.
-        """
-        if self.years and record.get('year') not in self.years:
-            return False
-        if self.months and record.get('month') not in self.months:
-            return False
-        if self.polarizations and record.get('polarization') not in self.polarizations:
-            return False
-        if self.stripmap_modes and str(record.get('stripmap_mode')) not in self.stripmap_modes:
-            return False
-        if self.parts and record.get('part') not in self.parts:
-            return False
-        return True
-    def _filter_products(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply filtering criteria to a DataFrame of product metadata.
-        Args:
-            df (pd.DataFrame): DataFrame containing product metadata.
-        Returns:
-            pd.DataFrame: Filtered DataFrame.
-        """
-        mask = pd.Series([True] * len(df))
-        if len(self.years) > 0:
-            mask &= df["acquisition_date"].dt.year.isin(self.years)
-        if len(self.months) > 0:
-            mask &= df["acquisition_date"].dt.month.isin(self.months)
-        if len(self.stripmap_modes) > 0:
-            mask &= df["stripmap_mode"].isin(self.stripmap_modes)
-        if len(self.polarizations) > 0:
-            mask &= df["polarization"].isin(self.polarizations)
-        if len(self.parts) > 0:
-            mask &= df["part"].isin(self.parts)
-        return df[mask]
-
 class SARZarrDataset(Dataset):
     """
     PyTorch Dataset for loading SAR (Synthetic Aperture Radar) data patches from Zarr format archives.
@@ -388,7 +292,9 @@ class SARZarrDataset(Dataset):
         concatenate_patches: bool = False,  # wether to concatenate 1D patches into 2D patches (useful for transformers from rcmc to az)
         concat_axis: int = 1,               # Axis on which patches have to be concatenated: 0=vertical, 1=horizontal
         max_stripmap_modes: int = 6,
-        use_positional_as_token: bool = False
+        use_positional_as_token: bool = False,
+        use_balanced_sampling: bool = True,  # whether to use balanced sampling from dataset splits, 
+        split: str = "train"               # dataset split to use for balanced sampling
     ):
         self.data_dir = Path(data_dir)
         self.filters = filters if filters is not None else SampleFilter()
@@ -418,7 +324,8 @@ class SARZarrDataset(Dataset):
         self.concatenate_patches = concatenate_patches
         self.concat_axis = concat_axis
         self.use_positional_as_token = use_positional_as_token
-        
+        self.use_balanced_sampling = use_balanced_sampling
+        self.split = split
         
         self._patch: Dict[str, np.ndarray] = {
             self.level_from: np.array([0]),
@@ -543,15 +450,40 @@ class SARZarrDataset(Dataset):
                 self.remote_files[repo_name] = repo_files
             records = [r for r in (parse_product_filename(os.path.join(self.data_dir, part, f)) for part, files in self.remote_files.items() for f in files) if r is not None]
             print(f"Total files found in remote repository: {len(records)}")
-            self._files = self.filters._filter_products(pd.DataFrame(records))
+            df = pd.DataFrame(records)
         else:
             print(f"Files in local directory {self.data_dir}: {[f.name for f in sorted(self.data_dir.glob('*'))]}")
             records = [r for r in (parse_product_filename(f) for f in sorted(self.data_dir.glob("*"))) if r is not None]
-            self._files = self.filters._filter_products(pd.DataFrame(records))
+            df = pd.DataFrame(records)
+        # Drop records without acquisition_date and ensure datetime type
+        self._files = self.filters._filter_products(df)
         self._files.sort_values(by=['full_name'], inplace=True)
-        self._files = self._files.iloc[:self._max_products]
+        # Apply balanced sampling if enabled
+        if self.use_balanced_sampling:
+                balanced_files = get_balanced_sample_files(
+                    max_samples=self._max_products, 
+                    data_dir=self.data_dir,
+                    sample_filter=self.filters,
+                    config_path=str(self.data_dir),
+                    verbose=True,  # self.verbose
+                    split_type=self.split, 
+                    repos=self.filters.parts if self.filters.parts else ['PT1', 'PT2', 'PT3', 'PT4']
+                )
+                if balanced_files:
+                    # Filter the files to only include balanced selection
+                    balanced_paths = [Path(f) for f in balanced_files]
+                    self._files = self._files[self._files['full_name'].isin(balanced_paths)]
+                    if self.verbose:
+                        print(f"Applied balanced sampling: selected {len(self._files)} files from {len(balanced_files)} balanced candidates")
+                else:
+                    if self.verbose:
+                        print("Warning: Balanced sampling returned no files, falling back to standard selection")
+                    self._files = self._files.iloc[:self._max_products]
+        else:
+            self._files = self._files.iloc[:self._max_products]
         if self.verbose:
-            print(f"Selected only files:  {self._files}")
+            print(f"Selected files: {len(self._files)} total")
+            print(f"Files: {self._files['full_name'].tolist()}")
 
     def _append_file_to_stores(self, zfile: Union[str, os.PathLike]):
         """
@@ -1293,7 +1225,8 @@ class SARZarrDataset(Dataset):
         restore_complex: bool = None,
         prepare_for_plotting: bool = True,
         vminmax: Optional[Union[Tuple[float, float], str]] = 'auto',
-        plot_type: str = "magnitude"
+        plot_type: str = "magnitude", 
+        denormalize: bool = True,
         ) -> np.ndarray:
         """
         Convert a model-generated patch back to its original visualization format.
@@ -1346,7 +1279,7 @@ class SARZarrDataset(Dataset):
             #print(f"Patch shape before concatenation: {patch.shape}")
             patch = self._reverse_concatenation(patch, zfile=zfile)
         #print(f"Patch shape in the end: {patch.shape}")
-        if self.transform is not None:
+        if self.transform is not None and denormalize:
             patch = self.transform.inverse(patch, level)
         if prepare_for_plotting:
             patch, vmin, vmax = get_sample_visualization(data=patch, plot_type=plot_type, vminmax=vminmax)
@@ -1731,8 +1664,8 @@ class KPatchSampler(Sampler):
                 print(f"Sampling {len(self.coords[Path(f)])} patches from file {f} took {elapsed:.2f} seconds.")
     def get_coords_from_store(self, zfile: Union[str, os.PathLike], window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]] = None):
         if self.dataset.get_samples_by_file(zfile) is not None and len(self.dataset.get_samples_by_file(zfile)) == 0:
-                # print(f"Calculating patches for file {zfile}")
-                self.dataset.calculate_patches_from_store(Path(zfile), patch_order=self.patch_order, window=window)
+            # print(f"Calculating patches for file {zfile}")
+            self.dataset.calculate_patches_from_store(Path(zfile), patch_order=self.patch_order, window=window)
         lazy_coords = self.dataset.get_samples_by_file(zfile)
         
         # If samples_per_prod is specified, limit the coordinates
@@ -1773,7 +1706,7 @@ class KPatchSampler(Sampler):
 
 class SARDataloader(DataLoader):
     dataset: SARZarrDataset
-    def __init__(self, dataset: SARZarrDataset, batch_size: int, sampler: KPatchSampler,  num_workers: int = 2,  pin_memory: bool= True, verbose: bool = False):
+    def __init__(self, dataset: SARZarrDataset, batch_size: int, sampler: KPatchSampler,  num_workers: int = 2,  pin_memory: bool= False, verbose: bool = False):
         super().__init__(dataset, batch_size=batch_size, num_workers=num_workers, sampler=sampler, pin_memory=pin_memory)
         self.verbose = verbose
     def get_coords_from_zfile(self, zfile: Union[str, os.PathLike], window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]] = None) -> List[Tuple[int, int]]:
@@ -1819,7 +1752,11 @@ def get_sar_dataloader(
     samples_per_prod: int = 0,
     online: bool = True, 
     concatenate_patches: bool = False,
-    concat_axis: int = 0  # 0 for vertical, 1 for horizontal
+    concat_axis: int = 0,  # 0 for vertical, 1 for horizontal
+    geographic_clustering: bool = False,  # Enable geographic clustering
+    n_clusters: int = 10,  # Number of geographic clusters, 
+    use_balanced_sampling: bool = True, 
+    split: str = "train"
 ) -> SARDataloader:
     """
     Create and return a PyTorch DataLoader for SAR data using SARZarrDataset and KPatchSampler.
@@ -1849,6 +1786,9 @@ def get_sar_dataloader(
         samples_per_prod (int, optional): Number of patches per product. Defaults to 0 (all patches).
         online (bool, optional): If True, uses online data loading. Defaults to True.
         verbose (bool, optional): If True, prints additional info. Defaults to True.
+        geographic_clustering (bool, optional): If True, clusters data by geographic location. Defaults to False.
+        n_clusters (int, optional): Number of geographic clusters when clustering is enabled. Defaults to 10.
+        split (str, optional): Dataset split to use (e.g., "train", "val", "test"). Defaults to "train".
 
     Returns:
         SARDataloader: PyTorch DataLoader for the SAR dataset.
@@ -1877,7 +1817,9 @@ def get_sar_dataloader(
         samples_per_prod=samples_per_prod, 
         positional_encoding=positional_encoding, 
         concatenate_patches=concatenate_patches,
-        concat_axis=concat_axis
+        concat_axis=concat_axis, 
+        use_balanced_sampling=use_balanced_sampling,
+        split=split
     )
     sampler = KPatchSampler(
         dataset,
@@ -1891,7 +1833,7 @@ def get_sar_dataloader(
         batch_size=batch_size,
         sampler=sampler,
         num_workers=num_workers,
-        pin_memory=True,
+        pin_memory=False,
         verbose=verbose
     )
 

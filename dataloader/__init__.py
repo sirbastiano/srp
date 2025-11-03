@@ -21,7 +21,11 @@ def _import_with_fallback():
             SARZarrDataset,
             KPatchSampler,
             get_sar_dataloader, 
-            SARDataloader
+            SARDataloader, 
+            SampleFilter
+        )
+        from .location_utils import (
+            get_products_spatial_mapping
         )
         from .normalization import (
             SARTransform, 
@@ -46,8 +50,8 @@ def _import_with_fallback():
         )
         return (
             SARZarrDataset, SARTransform, NormalizationModule, ComplexNormalizationModule,
-            IdentityModule, BaseTransformModule, KPatchSampler, SARDataloader, get_sar_dataloader,
-            list_base_files_in_repo, fetch_chunk_from_hf_zarr, download_metadata_from_product,
+            IdentityModule, BaseTransformModule, KPatchSampler, SARDataloader, SampleFilter, get_sar_dataloader,
+            get_products_spatial_mapping, list_base_files_in_repo, fetch_chunk_from_hf_zarr, download_metadata_from_product,
             get_chunk_name_from_coords, get_sample_visualization, get_zarr_version,
             minmax_normalize, minmax_inverse, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN
         )
@@ -60,7 +64,11 @@ def _import_with_fallback():
                 SARZarrDataset,
                 KPatchSampler,
                 get_sar_dataloader,
-                SARDataloader
+                SARDataloader, 
+                SampleFilter
+            )
+            from dataloader.location_utils import (
+                get_products_spatial_mapping
             )
             from dataloader.normalization import (
                 SARTransform,
@@ -85,8 +93,8 @@ def _import_with_fallback():
             )
             return (
                 SARZarrDataset, SARTransform, NormalizationModule, ComplexNormalizationModule,
-                IdentityModule, BaseTransformModule, KPatchSampler, SARDataloader, get_sar_dataloader,
-                list_base_files_in_repo, fetch_chunk_from_hf_zarr, download_metadata_from_product,
+                IdentityModule, BaseTransformModule, KPatchSampler, SARDataloader, SampleFilter, get_sar_dataloader,
+                get_products_spatial_mapping, list_base_files_in_repo, fetch_chunk_from_hf_zarr, download_metadata_from_product,
                 get_chunk_name_from_coords, get_sample_visualization, get_zarr_version,
                 minmax_normalize, minmax_inverse, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN
             )
@@ -110,6 +118,12 @@ def _import_with_fallback():
                 sys.modules["utils"] = utils_module
                 spec_utils.loader.exec_module(utils_module)
                 
+                # Load location_utils
+                location_utils_path = current_dir / "location_utils.py"
+                spec_location_utils = importlib.util.spec_from_file_location("location_utils", location_utils_path)
+                location_utils_module = importlib.util.module_from_spec(spec_location_utils)
+                sys.modules["location_utils"] = location_utils_module
+                spec_location_utils.loader.exec_module(location_utils_module)
                 # Load api
                 spec_api = importlib.util.spec_from_file_location("api", api_path)
                 api_module = importlib.util.module_from_spec(spec_api)
@@ -136,7 +150,9 @@ def _import_with_fallback():
                     normalization_module.BaseTransformModule,
                     dataloader_module.KPatchSampler,
                     dataloader_module.SARDataloader,
+                    dataloader_module.SampleFilter,
                     dataloader_module.get_sar_dataloader,
+                    location_utils_module.get_products_spatial_mapping,
                     api_module.list_base_files_in_repo,
                     api_module.fetch_chunk_from_hf_zarr,
                     api_module.download_metadata_from_product,
@@ -156,8 +172,8 @@ def _import_with_fallback():
 # Import all modules
 try:
     (SARZarrDataset, SARTransform, NormalizationModule, ComplexNormalizationModule,
-     IdentityModule, BaseTransformModule, KPatchSampler, SARDataloader, get_sar_dataloader,
-     list_base_files_in_repo, fetch_chunk_from_hf_zarr, download_metadata_from_product,
+     IdentityModule, BaseTransformModule, KPatchSampler, SARDataloader, SampleFilter, get_sar_dataloader,
+     get_products_spatial_mapping, list_base_files_in_repo, fetch_chunk_from_hf_zarr, download_metadata_from_product,
      get_chunk_name_from_coords, get_sample_visualization, get_zarr_version,
      minmax_normalize, minmax_inverse, extract_stripmap_mode_from_filename, RC_MAX, RC_MIN, GT_MAX, GT_MIN) = _import_with_fallback()
 except ImportError as e:
@@ -181,6 +197,7 @@ __all__ = [
     'KPatchSampler',
     'get_sar_dataloader',
     'SARDataloader',
+    'SampleFilter',
     
     # Normalization and transformation modules
     'SARTransform', 
@@ -189,12 +206,15 @@ __all__ = [
     'IdentityModule',
     'BaseTransformModule',
     
+    
+    
     # API functions
     'list_base_files_in_repo',
     'fetch_chunk_from_hf_zarr', 
     'download_metadata_from_product',
     
     # Utility functions
+    'get_products_spatial_mapping',
     'get_chunk_name_from_coords',
     'get_sample_visualization',
     'get_zarr_version',

@@ -288,6 +288,7 @@ class SARTransform(nn.Module):
 class ZScoreNormalize(BaseTransformModule):
     """Z-score normalization: (x - mean) / std"""
     def __init__(self, mean=0.0, std=1.0, complex_valued=True):
+        super(ZScoreNormalize, self).__init__()
         self.mean = mean
         self.std = std
         self.complex_valued = complex_valued
@@ -300,6 +301,14 @@ class ZScoreNormalize(BaseTransformModule):
             return real_norm + 1j * imag_norm
         else:
             return (x - self.mean) / self.std
+    def inverse(self, x):
+        if self.complex_valued and np.iscomplexobj(x):
+            # Inverse normalize real and imaginary parts separately
+            real_inv = x.real * self.std + self.mean
+            imag_inv = x.imag * self.std + self.mean
+            return real_inv + 1j * imag_inv
+        else:
+            return x * self.std + self.mean
 
 class AdaptiveZScoreNormalize(BaseTransformModule):
     """Adaptive z-score normalization that computes statistics from data."""

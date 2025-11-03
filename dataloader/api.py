@@ -250,6 +250,7 @@ def download_file_from_hf(repo_id: str, filename: str, local_dir: Union[str, os.
                 original_tqdm_disable = os_module.environ.get('TQDM_DISABLE', '')
                 os_module.environ['TQDM_DISABLE'] = '1'
                 try:
+                    print(f"Trying to download file {filename} from repo {repo_id}")
                     downloaded_file = hf_hub_download(
                         repo_id=repo_id,
                         repo_type='dataset',
@@ -257,7 +258,7 @@ def download_file_from_hf(repo_id: str, filename: str, local_dir: Union[str, os.
                         force_download=False,
                         local_dir_use_symlinks=True,
                         local_dir=str(local_dir), 
-                        resume_download=True,
+                        resume_download=False,
                         local_files_only=False,
                     )
                 finally:

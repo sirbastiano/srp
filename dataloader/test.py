@@ -1,7 +1,10 @@
-from dataloader import SARDataloader, SARTransform, get_sar_dataloader, NormalizationModule
+from dataloader import SARDataloader, SARTransform, get_sar_dataloader, SampleFilter
 from utils import GT_MAX, GT_MIN, RC_MAX, RC_MIN
 import zarr
 import numpy as np
+
+filters = SampleFilter(years=[2023], polarizations=["hh"], stripmap_modes=[1, 2, 3], parts=["PT1", "PT3"])
+
 
 def test_concat_axes_vertical_multirow_visualization(transforms: SARTransform):
     patch_size = (1000, 100)
@@ -10,7 +13,7 @@ def test_concat_axes_vertical_multirow_visualization(transforms: SARTransform):
     batch_size = 16
     max_base_sample_size = (10000, 1000)
     dataloader = get_sar_dataloader(
-        data_dir="/Data/sar_focusing",
+        data_dir="/Data_large/marine/PythonProjects/SAR/sarpyx/data",
         level_from="rcmc",
         level_to="az",
         batch_size=batch_size,
@@ -34,21 +37,23 @@ def test_concat_axes_vertical_multirow_visualization(transforms: SARTransform):
         concatenate_patches = True, 
         concat_axis=0, 
         positional_encoding=True,
-        file_pattern="s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr" 
+        filters=filters
     )
     from pathlib import Path
     
     start_x, start_y = buffer
     end_x, end_y = buffer[0] + max_base_sample_size[0], buffer[1] + patch_size[1]
+    file = dataloader.dataset._files["full_name"].loc[0]
+
     for i, (x_batch, y_batch) in enumerate(dataloader):
         for sample_idx in range(len(x_batch)):
             sample_from, sample_to = x_batch[sample_idx], y_batch[sample_idx]
             print(f"Sample of index {sample_idx}")
-            #print(dataloader.dataset._samples_by_file[Path("/Data/sar_focusing/s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr")])
+            #print(dataloader.dataset._samples_by_file[Path("/Data_large/marine/PythonProjects/SAR/sarpyx/data/s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr")])
             #sample_from, sample_to = x_batch[0], y_batch[0]
-            # sample_from, sample_to = dataloader.dataset[("/Data/sar_focusing/s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr", 1000, 1000)]
+            # sample_from, sample_to = dataloader.dataset[("/Data_large/marine/PythonProjects/SAR/sarpyx/data/s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr", 1000, 1000)]
             restored_column = dataloader.dataset.get_patch_visualization(patch=sample_from, level=dataloader.dataset.level_from, restore_complex=True, prepare_for_plotting=False)#.flatten()
-            actual_column = zarr.open("/Data/sar_focusing/s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr", mode='r')[dataloader.dataset.level_from]
+            actual_column = zarr.open(file, mode='r')[dataloader.dataset.level_from]
             #print(f"Original column shape: {actual_column.shape}")
             if i != 0 or sample_idx != 0:
                 start_x = start_x + max_base_sample_size[0]
@@ -79,7 +84,7 @@ def test_concat_axes_vertical_multirow_visualization(transforms: SARTransform):
             print(f"✅ First test passed!!")
             max_index = 1000 #min(restored_column.shape[0], actual_column.shape[0])
             restored_column = dataloader.dataset.get_patch_visualization(patch=sample_to, level=dataloader.dataset.level_to, restore_complex=True, prepare_for_plotting=False)#.flatten()
-            actual_column = zarr.open("/Data/sar_focusing/s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr", mode='r')[dataloader.dataset.level_to]
+            actual_column = zarr.open(file, mode='r')[dataloader.dataset.level_to]
             #print(f"Original column shape: {actual_column.shape}")
             actual_column = actual_column[start_x:end_x, start_y:end_y]
             #assert restored_column.shape[0] == actual_column_shape, f"Shape mismatch at level {dataloader.dataset.level_to} at batch {i}: {restored_column.shape} vs {actual_column_shape}"
@@ -93,7 +98,7 @@ def test_concat_axes_vertical_visualization(transforms: SARTransform):
     stride = (300, 1)
     batch_size = 16
     dataloader = get_sar_dataloader(
-        data_dir="/Data/sar_focusing",
+        data_dir="/Data_large/marine/PythonProjects/SAR/sarpyx/data",
         level_from="rcmc",
         level_to="az",
         batch_size=batch_size,
@@ -116,14 +121,16 @@ def test_concat_axes_vertical_visualization(transforms: SARTransform):
         concatenate_patches = True, #True, 
         concat_axis=0, 
         positional_encoding= False, 
-       file_pattern="s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr" 
+        filters=filters
     )
+    file = dataloader.dataset._files["full_name"].loc[0]
+
     for i, (x_batch, y_batch) in enumerate(dataloader):
         for sample_idx, (sample_from, sample_to) in enumerate(zip(x_batch, y_batch)):
             #sample_from, sample_to = x_batch[0], y_batch[0]
-            # sample_from, sample_to = dataloader.dataset[("/Data/sar_focusing/s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr", 1000, 1000)]
-            restored_column = dataloader.dataset.get_patch_visualization(patch=sample_from, level=dataloader.dataset.level_from, restore_complex=True, prepare_for_plotting=False).flatten()
-            actual_column = zarr.open("/Data/sar_focusing/s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr", mode='r')[dataloader.dataset.level_from]
+            # sample_from, sample_to = dataloader.dataset[("/Data_large/marine/PythonProjects/SAR/sarpyx/data/s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr", 1000, 1000)]
+            restored_column = dataloader.dataset.get_patch_visualization(patch=sample_from, zfile=file, level=dataloader.dataset.level_from, restore_complex=True, prepare_for_plotting=False).flatten()
+            actual_column = zarr.open(file, mode='r')[dataloader.dataset.level_from]
             #print(f"Original column shape: {actual_column.shape}")
             actual_column = actual_column[1000:-1000, 1000+ i*batch_size + sample_idx]
             #print(f"Original column: {actual_column}")
@@ -139,7 +146,7 @@ def test_concat_axes_vertical_visualization(transforms: SARTransform):
             print(f"✅ First test passed!!")
             max_index = 1000 #min(restored_column.shape[0], actual_column.shape[0])
             restored_column = dataloader.dataset.get_patch_visualization(patch=sample_to, level=dataloader.dataset.level_to, restore_complex=True, prepare_for_plotting=False).flatten()
-            actual_column = zarr.open("/Data/sar_focusing/s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr", mode='r')[dataloader.dataset.level_to]
+            actual_column = zarr.open(file, mode='r')[dataloader.dataset.level_to]
             #print(f"Original column shape: {actual_column.shape}")
             actual_column = actual_column[1000:-1000, 1000 + i*batch_size + sample_idx]
             #assert restored_column.shape[0] == actual_column_shape, f"Shape mismatch at level {dataloader.dataset.level_to} at batch {i}: {restored_column.shape} vs {actual_column_shape}"
@@ -152,7 +159,7 @@ def test_original_axes_horizontal(transforms: SARTransform):
     buffer = (0, 0)
     stride = (1, 300)
     dataloader = get_sar_dataloader(
-        data_dir="/Data/sar_focusing",
+        data_dir="/Data_large/marine/PythonProjects/SAR/sarpyx/data",
         level_from="rcmc",
         level_to="az",
         batch_size=16,
@@ -175,13 +182,14 @@ def test_original_axes_horizontal(transforms: SARTransform):
         concatenate_patches = False, #True, 
         concat_axis=0, 
         positional_encoding= True, 
-       file_pattern="s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr" 
+        filters=filters
     )
     import numpy as np
-    
+    file = dataloader.dataset._files["full_name"].loc[0]
     # ===== FIRST TEST: level_from =====
     for i in range (3):
-        sample_from, sample_to = dataloader.dataset[("/Data/sar_focusing/s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr", i, 0)]
+
+        sample_from, sample_to = dataloader.dataset[(file, i, 0)]
         
         restored_column = dataloader.dataset.get_patch_visualization(
             patch=sample_from, 
@@ -190,8 +198,8 @@ def test_original_axes_horizontal(transforms: SARTransform):
             prepare_for_plotting=False
         ).squeeze(0)
         restored_column = restored_column.flatten()
-        
-        actual_column_from = zarr.open("/Data/sar_focusing/s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr", mode='r')[dataloader.dataset.level_from]
+
+        actual_column_from = zarr.open(file, mode='r')[dataloader.dataset.level_from]
         actual_column_from = actual_column_from[i, :]
         
         print(f"FIRST TEST - Original column shape: {actual_column_from.shape}, Restored column shape: {restored_column.shape}")
@@ -205,7 +213,7 @@ def test_original_axes_horizontal(transforms: SARTransform):
         print(f"✅ First test passed!!")
         
         # ===== SECOND TEST: level_to =====
-        actual_column_to = zarr.open("/Data/sar_focusing/s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr", mode='r')[dataloader.dataset.level_to]
+        actual_column_to = zarr.open(file, mode='r')[dataloader.dataset.level_to]
         actual_column_to = actual_column_to[i, :]
         
         restored_column_to = dataloader.dataset.get_patch_visualization(
@@ -231,7 +239,7 @@ def test_original_axes_vertical(transforms: SARTransform):
     buffer = (0, 0)
     stride = (300, 1)
     dataloader = get_sar_dataloader(
-        data_dir="/Data/sar_focusing",
+        data_dir="/Data_large/marine/PythonProjects/SAR/sarpyx/data",
         level_from="rcmc",
         level_to="az",
         batch_size=16,
@@ -254,13 +262,14 @@ def test_original_axes_vertical(transforms: SARTransform):
         concatenate_patches = False, #True, 
         concat_axis=0, 
         positional_encoding= True, 
-       file_pattern="s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr" 
+        filters=filters
     )
     import numpy as np
-    
+    file = dataloader.dataset._files["full_name"].loc[0]
+
     # ===== FIRST TEST: level_from =====
     for i in range (3):
-        sample_from, sample_to = dataloader.dataset[("/Data/sar_focusing/s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr", 0, i)]
+        sample_from, sample_to = dataloader.dataset[(file, 0, i)]
         
         restored_column = dataloader.dataset.get_patch_visualization(
             patch=sample_from, 
@@ -270,7 +279,7 @@ def test_original_axes_vertical(transforms: SARTransform):
         ).squeeze(1)
         restored_column = restored_column.flatten()
         
-        actual_column_from = zarr.open("/Data/sar_focusing/s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr", mode='r')[dataloader.dataset.level_from]
+        actual_column_from = zarr.open(file, mode='r')[dataloader.dataset.level_from]
         actual_column_from = actual_column_from[:, i]
         
         print(f"FIRST TEST - Original column shape: {actual_column_from.shape}, Restored column shape: {restored_column.shape}")
@@ -284,7 +293,7 @@ def test_original_axes_vertical(transforms: SARTransform):
         print(f"✅ First test passed!!")
         
         # ===== SECOND TEST: level_to =====
-        actual_column_to = zarr.open("/Data/sar_focusing/s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr", mode='r')[dataloader.dataset.level_to]
+        actual_column_to = zarr.open(file, mode='r')[dataloader.dataset.level_to]
         actual_column_to = actual_column_to[:, i]
         
         restored_column_to = dataloader.dataset.get_patch_visualization(
@@ -316,13 +325,13 @@ if __name__ == "__main__":
     )
     
     #np.set_printoptions(threshold=np.inf, linewidth=np.inf)
-    #test_original_axes_horizontal(transforms)
-    #test_original_axes_vertical(transforms)
-    #test_concat_axes_vertical_visualization(transforms)
+    test_original_axes_horizontal(transforms)
+    test_original_axes_vertical(transforms)
+    test_concat_axes_vertical_visualization(transforms)
     test_concat_axes_vertical_multirow_visualization(transforms)
     # def debug_dataset_processing(dataloader: SARDataloader):
     #     """Debug what transformations are being applied."""
-    #     zfile = "/Data/sar_focusing/s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr"
+    #     zfile = "/Data_large/marine/PythonProjects/SAR/sarpyx/data/s1a-s1-raw-s-hh-20230508t121142-20230508t121213-048442-05d3c0.zarr"
         
     #     print("=== DEBUGGING DATASET PROCESSING ===")
         
