@@ -68,6 +68,9 @@ def generate_sweep_configs(base_config: Dict[str, Any], sweep_params: Dict[str, 
         sweep_params: Dictionary with parameter sweeps in format:
                      {"training.lr": [1e-4, 1e-3, 1e-2], 
                       "model.dim": [64, 128, 256]}
+                     or
+                     {"training.lr": {"values": [1e-4, 1e-3, 1e-2]},
+                      "model.dim": {"values": [64, 128, 256]}}
     
     Returns:
         List of configuration dictionaries for each sweep combination
@@ -77,7 +80,16 @@ def generate_sweep_configs(base_config: Dict[str, Any], sweep_params: Dict[str, 
     
     # Parse sweep parameters
     param_keys = list(sweep_params.keys())
-    param_values = list(sweep_params.values())
+    param_values = []
+    
+    # Handle both list format and dict with 'values' key
+    for param_value in sweep_params.values():
+        if isinstance(param_value, dict) and 'values' in param_value:
+            param_values.append(param_value['values'])
+        elif isinstance(param_value, list):
+            param_values.append(param_value)
+        else:
+            param_values.append([param_value])
     
     # Generate all combinations
     combinations = list(itertools.product(*param_values))

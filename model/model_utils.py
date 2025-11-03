@@ -16,7 +16,7 @@
 
 from model.transformers.rv_transformer import RealValuedTransformer  # your import
 from model.transformers.cv_transformer import CVTransformer
-from model.transformers.spatial_transformer import create_spatial_vision_transformer
+from model.transformers.spatial_transformer import create_physics_aware_transformer
 from model.SSMs.SSM import init_weights_uniform, sarSSM, sarSSMFinal, S4D
 import torch
 import torch.nn as nn
@@ -438,7 +438,7 @@ def get_model_from_configs(
     
     elif name == "spatial_transformer":
         # Spatial Vision Transformer for 2D data processing
-        model = create_spatial_vision_transformer(
+        model = create_physics_aware_transformer(
             input_channels=kwargs.get('input_channels', 2),
             output_channels=kwargs.get('output_channels', 2),
             embed_dim=kwargs.get('embed_dim', model_dim),

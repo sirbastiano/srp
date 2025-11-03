@@ -52,15 +52,16 @@ training:
   loss_fn: "sar_focusing"  # Use comprehensive SAR focusing loss (IMPROVED VERSION)
   
   # SAR Focusing Loss Weights (OPTIMIZED with distribution-aware MSE + KDE)
-  lambda_rec: 1.0          # Reconstruction loss weight (baseline)
-  lambda_focus: 0.0        # Focus quality weight (disabled - not critical for 1D focusing)
-  lambda_dist: 5.0         # Distribution matching weight (KDE-based, requires batch_size >= 10)
+  lambda_rec: 0.3          # Reconstruction loss weight (baseline)
+  lambda_focus: 0.3       # Focus quality weight (disabled - not critical for 1D focusing)
+  lambda_dist: 0.4         # Distribution matching weight (KDE-based, requires batch_size >= 10)
   lambda_tv: 0.0           # Total variation weight (disabled for now)
   
   # SAR Focusing Loss Configuration (USING NEW KDE-BASED DISTRIBUTION MATCHING)
-  rec_loss_type: "focal"  # NEW: Distribution-aware MSE (weights by target statistics)
-                                            # Options: 'mse', 'mae', 'complex_mse', 'distribution_aware_mse'
-  focus_metric: "contrast"      # Focus quality metric: 'contrast', 'variance', 'entropy'
+  rec_loss_type: "complex_mse"  # Will be swept: complex_mse, huber, complex_mae, polarimetric
+                                # Options: 'mse', 'mae', 'complex_mse', 'complex_mae', 
+                                #          'distribution_aware_mse', 'huber', 'polarimetric'
+  focus_metric: "structure"     # Focus quality metric: 'contrast', 'variance', 'entropy', 'structure' (SSIM)
   dist_metric: "histogram"      # Distribution matching using KDE (Kernel Density Estimation)
                                 # NEW: Uses Gaussian KDE instead of raw histograms
                                 # Provides smooth probability density estimates
@@ -152,3 +153,8 @@ transforms:
   rc_std: 500
   gt_mean: 0
   gt_std: 500
+
+# Sweep parameters - sweep over reconstruction loss types
+_sweep_params:
+  training.rec_loss_type:
+    values: ["complex_mse", "huber", "complex_mae", "polarimetric"]

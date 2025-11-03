@@ -1418,7 +1418,6 @@ class SARFocusingLoss(BaseLoss):
             self.rec_loss = MAELoss(reduction=reduction)
         elif rec_loss_type == 'complex_mse':
             self.rec_loss = ComplexMSELoss(reduction=reduction)
-            
         elif rec_loss_type == 'complex_mae':
             self.rec_loss = ComplexMAELoss(reduction=reduction)
         elif rec_loss_type == 'distribution_aware_mse':
@@ -1429,14 +1428,18 @@ class SARFocusingLoss(BaseLoss):
                 eps=1e-6,
                 reduction=reduction
             )
+        elif rec_loss_type == 'huber':
+            self.rec_loss = HuberLoss(reduction=reduction)
+        elif rec_loss_type == 'polarimetric':
+            self.rec_loss = PolarimetricDecompositionLoss(reduction=reduction)
         else:
-            raise ValueError(f"Unknown rec_loss_type: {rec_loss_type}. Options: 'mse', 'mae', 'complex_mse', 'distribution_aware_mse'")
+            raise ValueError(f"Unknown rec_loss_type: {rec_loss_type}. Options: 'mse', 'mae', 'complex_mse', 'complex_mae', 'distribution_aware_mse', 'huber', 'polarimetric'")
     
     def reconstruction_loss(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         """Forward-model reconstruction or L1/L2 to ground truth."""
         return self.rec_loss(pred, target)
     
-    def focus_quality_loss(self, pred: torch.Tensor) -> torch.Tensor:
+    def focus_quality_loss(self, pred: torch.Tensor, target: torch.Tensor = None) -> torch.Tensor:
         """
         Focus quality metric based on spatial concentration.
         IMPROVED with better normalization for stable gradients.
@@ -1444,7 +1447,8 @@ class SARFocusingLoss(BaseLoss):
         Methods:
             - 'variance': Normalized centroid variance
             - 'entropy': Normalized image entropy  
-            - 'contrast': Image contrast/sharpness (NEW - RECOMMENDED)
+            - 'contrast': Image contrast/sharpness (RECOMMENDED)
+            - 'structure': Structural similarity (SSIM) - requires target
         """
         # Convert to magnitude if complex
         if torch.is_complex(pred):
@@ -1466,6 +1470,13 @@ class SARFocusingLoss(BaseLoss):
             # Image contrast - measures sharpness
             # Maximize contrast = minimize negative contrast
             return -self._image_contrast(mag)
+        
+        elif self.focus_metric == 'structure':
+            # Structural similarity using SSIM
+            # Requires target for comparison
+            if target is None:
+                raise ValueError("focus_metric='structure' requires target tensor")
+            return self._structure_similarity(pred, target)
         
         else:
             raise ValueError(f"Unknown focus_metric: {self.focus_metric}")
@@ -1564,6 +1575,34 @@ class SARFocusingLoss(BaseLoss):
             return contrast.sum()
         else:
             return contrast
+    
+    def _structure_similarity(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """
+        Compute structural similarity (SSIM) between prediction and target.
+        Higher SSIM = better structural preservation.
+        
+        Returns 1 - SSIM so that minimizing the loss maximizes SSIM.
+        """
+        # Convert to magnitude if complex
+        if torch.is_complex(pred):
+            pred_mag = pred.abs()
+        elif pred.shape[-1] == 2:
+            pred_mag = torch.sqrt(pred[..., 0]**2 + pred[..., 1]**2 + 1e-8)
+        else:
+            pred_mag = pred.abs()
+        
+        if torch.is_complex(target):
+            target_mag = target.abs()
+        elif target.shape[-1] == 2:
+            target_mag = torch.sqrt(target[..., 0]**2 + target[..., 1]**2 + 1e-8)
+        else:
+            target_mag = target.abs()
+        
+        # Use SSIM1DLoss for 1D signals (SAR focusing)
+        ssim_loss_fn = SSIM1DLoss(window_size=11, reduction=self.reduction)
+        
+        # SSIM1DLoss already returns 1 - SSIM
+        return ssim_loss_fn(pred_mag, target_mag)
     
     def _centroid_variance(self, mag: torch.Tensor) -> torch.Tensor:
         """
@@ -2044,7 +2083,7 @@ class SARFocusingLoss(BaseLoss):
         
         # Compute raw losses (unweighted)
         rec_raw = self.reconstruction_loss(pred, target)
-        focus_raw = self.focus_quality_loss(pred)
+        focus_raw = self.focus_quality_loss(pred, target if self.focus_metric == 'structure' else None)
         dist_raw = self.distribution_matching_loss(pred, target)
         tv_raw = self.total_variation_loss(pred)
         
