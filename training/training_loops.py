@@ -183,19 +183,19 @@ class TrainerBase(pl.LightningModule):
         return x.to(device)
     def forward(self, x: Union[np.ndarray, torch.Tensor], y: Optional[Union[np.ndarray, torch.Tensor]]=None, device: Union[str, torch.device]="cuda") -> torch.Tensor:
         """
-        Forward pass through the model for autoencoder reconstruction.
+        Forward pass through the model for SAR focusing.
         Args:
-            x: Input tensor to be reconstructed
-            y: Not used in autoencoder mode (kept for compatibility)
+            x: Input tensor (e.g., range-compressed data)
+            y: Target tensor (e.g., azimuth-focused data) - not used during forward pass
         Returns:
-            Reconstructed tensor (should match input dimensions)
+            Transformed tensor (should match target dimensions)
         """
         if device is None:
             device = self.device
         x_preprocessed = self.preprocess_sample(x, device)
         
-        # AUTOENCODER MODE: Only pass input, model should reconstruct it
-        # No target/ground truth needed during forward pass
+        # SAR FOCUSING MODE: Transform input to output domain
+        # The model transforms from level_from (e.g., RC) to level_to (e.g., AZ)
         return self.model(x_preprocessed)
 
     def show_example(self, loader: SARDataloader, window: Tuple[Tuple[int, int], Tuple[int, int]] = ((1000, 1000), (5000, 5000)), vminmax=(2000, 6000), figsize=(20, 6), metrics_save_path: str = "metrics.json", img_save_path: str = "test.png", zfile: int=0):
@@ -208,7 +208,7 @@ class TrainerBase(pl.LightningModule):
                 return_input=True, 
                 device="cuda", 
                 vminmax=vminmax, 
-                return_original=False
+                denormalize=False
             )
             metrics = compute_metrics(gt, pred)
             
@@ -226,6 +226,8 @@ class TrainerBase(pl.LightningModule):
             if matplotlib.get_backend() == 'Agg':
                 matplotlib.use('TkAgg')  # or another interactive backend
             
+            gt_denorm = loader.dataset.transform.inverse(gt, level=loader.dataset.level_to)
+            pred_denorm = loader.dataset.transform.inverse(pred, level=loader.dataset.level_to)
             fig = display_inference_results(
                 input_data=input,
                 gt_data=gt,
@@ -239,7 +241,7 @@ class TrainerBase(pl.LightningModule):
                 level_from=loader.dataset.level_from.upper(),
                 level_to=loader.dataset.level_to.upper()
             )
-            hist = plot_intensity_histograms(gt, pred, plot=False, return_figure=True, save=True, save_path=os.path.join(self.base_save_dir, f"hist_{unique_img_path}"))
+            hist = plot_intensity_histograms(gt, pred, gt_denorm, pred_denorm, plot=False, return_figure=True, save=True, save_path=os.path.join(self.base_save_dir, f"hist_{unique_img_path}"))
             
             # Log inference image to WandB if available
             if WANDB_AVAILABLE and hasattr(self.logger, 'experiment') and fig is not None:
@@ -407,15 +409,15 @@ class TrainerBase(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, y = batch
         
-        # AUTOENCODER MODE: Use input (x) as reconstruction target
-        # The model should learn to compress and reconstruct the input
-        # First preprocess the input to match what the model expects
+        # SAR FOCUSING MODE: Transform input (x) to match target (y)
+        # x: Range-compressed (RC) data
+        # y: Azimuth-focused (AZ) data - the ground truth we want to predict
         x_preprocessed = self.preprocess_sample(x, self.device)
+        y_preprocessed = self.preprocess_sample(y, self.device)
         output = self.model(x_preprocessed)
         
-        # Use the preprocessed input as the reconstruction target to match model output shape
-        reconstruction_target = x_preprocessed
-        loss = self.compute_loss(output, reconstruction_target)
+        # Use ground truth target (y) for loss computation
+        loss = self.compute_loss(output, y_preprocessed)
         
         # Log training loss properly 
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
@@ -425,14 +427,17 @@ class TrainerBase(pl.LightningModule):
         output_np = output.detach().cpu().numpy()
         x_np, output_np = self.preprocess_output_and_prediction_before_comparison(x_np, output_np)
         
-        for i in range(x_np.shape[0]):
-            # Compare reconstruction to original input
+        y_np = y.detach().cpu().numpy()
+        y_np, output_np = self.preprocess_output_and_prediction_before_comparison(y_np, output_np)
+        
+        for i in range(y_np.shape[0]):
+            # Compare prediction to ground truth target (y)
             gt_patch = self.train_dataloader().dataset.get_patch_visualization(
-                x_np[i], self.train_dataloader().dataset.level_from, 
+                y_np[i], self.train_dataloader().dataset.level_to, 
                 vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False
             )
             pred_patch = self.train_dataloader().dataset.get_patch_visualization(
-                output_np[i], self.train_dataloader().dataset.level_from, 
+                output_np[i], self.train_dataloader().dataset.level_to, 
                 vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False
             )
             m = compute_metrics(gt_patch, pred_patch)
@@ -448,30 +453,29 @@ class TrainerBase(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         x, y = batch
         
-        # AUTOENCODER MODE: Use input as reconstruction target
-        # First preprocess the input to match what the model expects
+        # SAR FOCUSING MODE: Transform input (x) to match target (y)
         x_preprocessed = self.preprocess_sample(x, self.device)
+        y_preprocessed = self.preprocess_sample(y, self.device)
         output = self.model(x_preprocessed)
         
-        # Use the preprocessed input as the reconstruction target to match model output shape
-        reconstruction_target = x_preprocessed
-        loss = self.compute_loss(output, reconstruction_target)
+        # Use ground truth target (y) for loss computation
+        loss = self.compute_loss(output, y_preprocessed)
         
         # Log validation loss properly
         self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True, sync_dist=True)
         
-        x_np = x.cpu().numpy()
+        y_np = y.cpu().numpy()
         output_np = output.cpu().numpy()
         
-        x_np, output_np = self.preprocess_output_and_prediction_before_comparison(x_np, output_np)
-        for i in range(x_np.shape[0]):
-            # Compare reconstruction to original input
+        y_np, output_np = self.preprocess_output_and_prediction_before_comparison(y_np, output_np)
+        for i in range(y_np.shape[0]):
+            # Compare prediction to ground truth target (y)
             gt_patch = self.val_dataloader().dataset.get_patch_visualization(
-                x_np[i], self.train_dataloader().dataset.level_from, 
+                y_np[i], self.train_dataloader().dataset.level_to, 
                 vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False
             )
             pred_patch = self.val_dataloader().dataset.get_patch_visualization(
-                output_np[i], self.train_dataloader().dataset.level_from, 
+                output_np[i], self.train_dataloader().dataset.level_to, 
                 vminmax=(4000, 4200), restore_complex=True, remove_positional_encoding=False
             )
             # gt_patch, pred_patch = self.preprocess_output_and_prediction_before_comparison(gt_patch, pred_patch)
@@ -514,7 +518,7 @@ class TrainerBase(pl.LightningModule):
             m = compute_metrics(gt_patch, pred_patch)
             self.test_metrics.append(m)
 
-        loss = self.criterion_fn(output, y)
+        loss = self.criterion_fn(output_np, y_np)
         self.log('test_loss', loss, on_step=False, on_epoch=True, prog_bar=True)
         return loss
     def on_test_end(self):

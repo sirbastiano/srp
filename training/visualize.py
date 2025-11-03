@@ -56,119 +56,203 @@ def format_memory_stats(stats: Dict[str, float]) -> str:
     return " | ".join(parts)
 
 
-def plot_intensity_histograms(orig_gt, orig_pred, gt, pred, figsize=(20, 12), bins=100, plot=True, return_figure=False, save=False, save_path=None) -> Optional[plt.Figure]:
+def plot_intensity_histograms(gt, pred, gt_denorm, pred_denorm, figsize=(20, 12), bins=100, plot=True, return_figure=False, save=False, save_path=None) -> Optional[plt.Figure]:
     """
-    Plot histograms of pixel intensities for original and processed data.
-    Separate plots for real and imaginary components.
+    Plot histograms of pixel intensities for complex SAR data.
+    Shows amplitude and phase distributions for ground truth and prediction.
     """
     # Convert to numpy if needed
-    if hasattr(orig_gt, 'numpy'):
-        orig_gt = orig_gt.cpu().numpy()
-    if hasattr(orig_pred, 'numpy'):
-        orig_pred = orig_pred.cpu().numpy()
     if hasattr(gt, 'numpy'):
         gt = gt.cpu().numpy()
     if hasattr(pred, 'numpy'):
         pred = pred.cpu().numpy()
     
-    # Create subplots: 2 rows (original vs processed) x 2 cols (real vs imaginary)
-    fig, axes = plt.subplots(2, 2, figsize=figsize)
+    # Extract amplitude (magnitude) and phase information
+    gt_amplitude = np.abs(gt)
+    pred_amplitude = np.abs(pred)
+    gt_phase = np.angle(gt)
+    pred_phase = np.angle(pred)
     
-    real_data_orig = np.concatenate([
-        orig_gt.real.flatten(), orig_pred.real.flatten()
-    ])
-    real_data_denorm = np.concatenate([
-        gt.real.flatten(), pred.real.flatten()
-    ])
-    imag_data_orig = np.concatenate([
-        orig_gt.imag.flatten(), orig_pred.imag.flatten()
-    ])
-    imag_data_denorm = np.concatenate([
-        gt.imag.flatten(), pred.imag.flatten()
-    ])
+    # Compute denormalized magnitudes (handle complex data properly)
+    gt_denorm_amplitude = np.abs(gt_denorm)
+    pred_denorm_amplitude = np.abs(pred_denorm)
+    gt_denorm_phase = np.angle(gt_denorm)
+    pred_denorm_phase = np.angle(pred_denorm)
     
-    real_range_orig = (np.min(real_data_orig), np.max(real_data_orig))
-    imag_range_orig = (np.min(imag_data_orig), np.max(imag_data_orig))
-    real_range_denorm = (np.min(real_data_denorm), np.max(real_data_denorm))
-    imag_range_denorm = (np.min(imag_data_denorm), np.max(imag_data_denorm))
+    # Remove NaN and Inf values to prevent histogram errors
+    gt_amplitude_clean = gt_amplitude[np.isfinite(gt_amplitude)]
+    pred_amplitude_clean = pred_amplitude[np.isfinite(pred_amplitude)]
+    gt_denorm_amplitude_clean = gt_denorm_amplitude[np.isfinite(gt_denorm_amplitude)]
+    pred_denorm_amplitude_clean = pred_denorm_amplitude[np.isfinite(pred_denorm_amplitude)]
     
-    # Plot 1: Original data histograms - Real component
-    axes[0, 0].hist(orig_gt.real.flatten(), bins=bins, alpha=0.7, label='Original GT (Real)', 
-                    color='blue', density=True, range=real_range_orig)
-    axes[0, 0].hist(orig_pred.real.flatten(), bins=bins, alpha=0.7, label='Original Pred (Real)', 
-                    color='red', density=True, range=real_range_orig)
-    axes[0, 0].set_title('Original Data - Real Component')
-    axes[0, 0].set_xlabel('Pixel Intensity')
+    magnitude_info = {
+        'gt': gt_amplitude,
+        'pred': pred_amplitude,
+        'gt_flat': gt_amplitude_clean.flatten(),
+        'pred_flat': pred_amplitude_clean.flatten(), 
+        'gt_denorm': gt_denorm_amplitude,
+        'pred_denorm': pred_denorm_amplitude,
+        'gt_denorm_flat': gt_denorm_amplitude_clean.flatten(),
+        'pred_denorm_flat': pred_denorm_amplitude_clean.flatten()
+    }
+    
+    phase_info = {
+        'gt': gt_phase,
+        'pred': pred_phase,
+        'gt_flat': gt_phase.flatten(),
+        'pred_flat': pred_phase.flatten(), 
+        'gt_denorm': gt_denorm_phase,
+        'pred_denorm': pred_denorm_phase,
+        'gt_denorm_flat': gt_denorm_phase.flatten(),
+        'pred_denorm_flat': pred_denorm_phase.flatten()
+    }
+    
+    # Create subplots: 2 rows x 2 cols (amplitude vs phase)
+    fig, axes = plt.subplots(4, 2, figsize=figsize)
+    
+    # Plot 1: Amplitude histograms
+    axes[0, 0].hist(magnitude_info['gt_flat'], bins=bins, alpha=0.7, label='GT Amplitude Normalized', 
+                    color='blue', density=True)
+    axes[0, 0].hist(magnitude_info['pred_flat'], bins=bins, alpha=0.7, label='Pred Amplitude Normalized', 
+                    color='red', density=True)
+    axes[0, 0].set_title('Amplitude Distribution Normalized')
+    axes[0, 0].set_xlabel('Amplitude')
     axes[0, 0].set_ylabel('Density')
     axes[0, 0].legend()
     axes[0, 0].grid(True, alpha=0.3)
-    axes[0, 0].set_xlim(real_range_orig)
     
-    # Plot 2: Original data histograms - Imaginary component
-    axes[0, 1].hist(orig_gt.imag.flatten(), bins=bins, alpha=0.7, label='Original GT (Imag)', 
-                    color='blue', density=True, range=imag_range_orig)
-    axes[0, 1].hist(orig_pred.imag.flatten(), bins=bins, alpha=0.7, label='Original Pred (Imag)', 
-                    color='red', density=True, range=imag_range_orig)
-    axes[0, 1].set_title('Original Data - Imaginary Component')
-    axes[0, 1].set_xlabel('Pixel Intensity')
+    # Plot 2: Phase histograms
+    axes[0, 1].hist(phase_info['gt_flat'], bins=bins, alpha=0.7, label='GT Phase Normalized', 
+                    color='blue', density=True)
+    axes[0, 1].hist(phase_info['pred_flat'], bins=bins, alpha=0.7, label='Pred Phase Normalized', 
+                    color='red', density=True)
+    axes[0, 1].set_title('Phase Distribution Normalized')
+    axes[0, 1].set_xlabel('Phase (radians)')
     axes[0, 1].set_ylabel('Density')
     axes[0, 1].legend()
     axes[0, 1].grid(True, alpha=0.3)
-    axes[0, 1].set_xlim(imag_range_orig)
-      # Explicitly set x-axis limits
+    axes[0, 1].set_xlim([-np.pi, np.pi])
 
-    # Plot 3: Processed data histograms - Real component
-    axes[1, 0].hist(gt.real.flatten(), bins=bins, alpha=0.7, label='Processed GT (Real)', 
-                    color='green', density=True, range=real_range_denorm)
-    axes[1, 0].hist(pred.real.flatten(), bins=bins, alpha=0.7, label='Processed Pred (Real)', 
-                    color='orange', density=True, range=real_range_denorm)
-    axes[1, 0].set_title('Processed Data - Real Component')
-    axes[1, 0].set_xlabel('Pixel Intensity')
+    # Plot 3: Real component histograms (normalized, cleaned)
+    gt_real_norm_clean = gt.real[np.isfinite(gt.real)].flatten()
+    pred_real_norm_clean = pred.real[np.isfinite(pred.real)].flatten()
+    
+    axes[1, 0].hist(gt_real_norm_clean, bins=bins, alpha=0.7, label='GT Real Normalized', 
+                    color='green', density=True)
+    axes[1, 0].hist(pred_real_norm_clean, bins=bins, alpha=0.7, label='Pred Real Normalized', 
+                    color='orange', density=True)
+    axes[1, 0].set_title('Real Component Distribution Normalized')
+    axes[1, 0].set_xlabel('Real Part')
     axes[1, 0].set_ylabel('Density')
     axes[1, 0].legend()
     axes[1, 0].grid(True, alpha=0.3)
-    axes[1, 0].set_xlim(real_range_denorm)
     
-    # Plot 4: Processed data histograms - Imaginary component
-    axes[1, 1].hist(gt.imag.flatten(), bins=bins, alpha=0.7, label='Processed GT (Imag)', 
-                    color='green', density=True, range=imag_range_denorm)
-    axes[1, 1].hist(pred.imag.flatten(), bins=bins, alpha=0.7, label='Processed Pred (Imag)', 
-                    color='orange', density=True, range=imag_range_denorm)
-    axes[1, 1].set_title('Processed Data - Imaginary Component')
-    axes[1, 1].set_xlabel('Pixel Intensity')
+    # Plot 4: Imaginary component histograms (normalized, cleaned)
+    gt_imag_norm_clean = gt.imag[np.isfinite(gt.imag)].flatten()
+    pred_imag_norm_clean = pred.imag[np.isfinite(pred.imag)].flatten()
+    
+    axes[1, 1].hist(gt_imag_norm_clean, bins=bins, alpha=0.7, label='GT Imaginary Normalized', 
+                    color='green', density=True)
+    axes[1, 1].hist(pred_imag_norm_clean, bins=bins, alpha=0.7, label='Pred Imaginary Normalized', 
+                    color='orange', density=True)
+    axes[1, 1].set_title('Imaginary Component Distribution Normalized')
+    axes[1, 1].set_xlabel('Imaginary Part')
     axes[1, 1].set_ylabel('Density')
     axes[1, 1].legend()
     axes[1, 1].grid(True, alpha=0.3)
-    axes[1, 1].set_xlim(imag_range_denorm)
+
+    # Plot 1: Amplitude histograms
+    axes[2, 0].hist(magnitude_info['gt_denorm_flat'], bins=bins, alpha=0.7, label='GT Amplitude', 
+                    color='blue', density=True)
+    axes[2, 0].hist(magnitude_info['pred_denorm_flat'], bins=bins, alpha=0.7, label='Pred Amplitude', 
+                    color='red', density=True)
+    axes[2, 0].set_title('Amplitude Distribution')
+    axes[2, 0].set_xlabel('Amplitude')
+    axes[2, 0].set_ylabel('Density')
+    axes[2, 0].legend()
+    axes[2, 0].grid(True, alpha=0.3)
+
+    # Plot 2: Phase histograms
+    axes[2, 1].hist(phase_info['gt_denorm_flat'], bins=bins, alpha=0.7, label='GT Phase', 
+                    color='blue', density=True)
+    axes[2, 1].hist(phase_info['pred_denorm_flat'], bins=bins, alpha=0.7, label='Pred Phase', 
+                    color='red', density=True)
+    axes[2, 1].set_title('Phase Distribution')
+    axes[2, 1].set_xlabel('Phase (radians)')
+    axes[2, 1].set_ylabel('Density')
+    axes[2, 1].legend()
+    axes[2, 1].grid(True, alpha=0.3)
+    axes[2, 1].set_xlim([-np.pi, np.pi])
+
+    # Plot 3: Real component histograms (denormalized, cleaned)
+    gt_denorm_real_hist = gt_denorm.real[np.isfinite(gt_denorm.real)].flatten()
+    pred_denorm_real_hist = pred_denorm.real[np.isfinite(pred_denorm.real)].flatten()
     
-    # Add statistics text
-    for i, (data_gt, data_pred, title_suffix) in enumerate([
-        (orig_gt, orig_pred, "Original"),
-        (gt, pred, "Processed")
-    ]):
-        for j, component in enumerate(['real', 'imag']):
-            if component == 'real':
-                gt_comp, pred_comp = data_gt.real, data_pred.real
-            else:
-                gt_comp, pred_comp = data_gt.imag, data_pred.imag
-            
-            # Calculate statistics
-            gt_mean, gt_std = np.mean(gt_comp), np.std(gt_comp)
-            pred_mean, pred_std = np.mean(pred_comp), np.std(pred_comp)
-            
-            # Add stats text box
-            stats_text = f'GT: μ={gt_mean:.2f}, σ={gt_std:.2f}\nPred: μ={pred_mean:.2f}, σ={pred_std:.2f}'
-            axes[i, j].text(0.02, 0.98, stats_text, transform=axes[i, j].transAxes, 
+    axes[3, 0].hist(gt_denorm_real_hist, bins=bins, alpha=0.7, label='GT Real', 
+                    color='green', density=True)
+    axes[3, 0].hist(pred_denorm_real_hist, bins=bins, alpha=0.7, label='Pred Real', 
+                    color='orange', density=True)
+    axes[3, 0].set_title('Real Component Distribution')
+    axes[3, 0].set_xlabel('Real Part')
+    axes[3, 0].set_ylabel('Density')
+    axes[3, 0].legend()
+    axes[3, 0].grid(True, alpha=0.3)
+    
+    # Plot 4: Imaginary component histograms (denormalized, cleaned)
+    gt_denorm_imag_hist = gt_denorm.imag[np.isfinite(gt_denorm.imag)].flatten()
+    pred_denorm_imag_hist = pred_denorm.imag[np.isfinite(pred_denorm.imag)].flatten()
+    
+    axes[3, 1].hist(gt_denorm_imag_hist, bins=bins, alpha=0.7, label='GT Imaginary', 
+                    color='green', density=True)
+    axes[3, 1].hist(pred_denorm_imag_hist, bins=bins, alpha=0.7, label='Pred Imaginary', 
+                    color='orange', density=True)
+    axes[3, 1].set_title('Imaginary Component Distribution')
+    axes[3, 1].set_xlabel('Imaginary Part')
+    axes[3, 1].set_ylabel('Density')
+    axes[3, 1].legend()
+    axes[3, 1].grid(True, alpha=0.3)
+
+    
+    # Add statistics text boxes
+    # Clean real/imaginary components for statistics (remove NaN/Inf)
+    gt_real_clean = gt.real[np.isfinite(gt.real)]
+    pred_real_clean = pred.real[np.isfinite(pred.real)]
+    gt_imag_clean = gt.imag[np.isfinite(gt.imag)]
+    pred_imag_clean = pred.imag[np.isfinite(pred.imag)]
+    
+    gt_denorm_real_clean = gt_denorm.real[np.isfinite(gt_denorm.real)]
+    pred_denorm_real_clean = pred_denorm.real[np.isfinite(pred_denorm.real)]
+    gt_denorm_imag_clean = gt_denorm.imag[np.isfinite(gt_denorm.imag)]
+    pred_denorm_imag_clean = pred_denorm.imag[np.isfinite(pred_denorm.imag)]
+    
+    components = [
+        ('Amplitude Normalized', magnitude_info['gt'], magnitude_info['pred']),
+        ('Phase Normalized', phase_info['gt'], phase_info['pred']),
+        ('Real Normalized', gt_real_clean, pred_real_clean),
+        ('Imaginary Normalized', gt_imag_clean, pred_imag_clean), 
+        ('Amplitude Denormalized', magnitude_info['gt_denorm'], magnitude_info['pred_denorm']),
+        ('Phase Denormalized', phase_info['gt_denorm'], phase_info['pred_denorm']),
+        ('Real Denormalized', gt_denorm_real_clean, pred_denorm_real_clean),
+        ('Imaginary Denormalized', gt_denorm_imag_clean, pred_denorm_imag_clean)
+    ]
+    
+    for idx, (comp_name, gt_comp, pred_comp) in enumerate(components):
+        row, col = divmod(idx, 2)
+        gt_mean, gt_std = np.mean(gt_comp), np.std(gt_comp)
+        pred_mean, pred_std = np.mean(pred_comp), np.std(pred_comp)
+        
+        stats_text = f'GT: μ={gt_mean:.3f}, σ={gt_std:.3f}\nPred: μ={pred_mean:.3f}, σ={pred_std:.3f}'
+        axes[row, col].text(0.02, 0.98, stats_text, transform=axes[row, col].transAxes, 
                            verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
     
     plt.tight_layout()
     
     if plot:
         plt.show()
-    if save:
+    if save and save_path:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         plt.savefig(save_path)
-        logging.info(f"Saved inference results to {save_path}")
+        logging.info(f"Saved histogram to {save_path}")
     
     if return_figure:
         return fig
@@ -178,22 +262,24 @@ def plot_intensity_histograms(orig_gt, orig_pred, gt, pred, figsize=(20, 12), bi
     
     # Print detailed statistics
     print("\n" + "="*60)
-    print("DETAILED STATISTICS")
+    print("COMPLEX SAR DATA STATISTICS")
     print("="*60)
     
-    for data_name, data_gt, data_pred in [("Original", orig_gt, orig_pred), ("Processed", gt, pred)]:
-        print(f"\n{data_name} Data:")
+    for comp_name, gt_comp, pred_comp in components:
+        print(f"\n{comp_name} Component:")
         print("-" * 30)
-        
-        for comp_name, gt_comp, pred_comp in [("Real", data_gt.real, data_pred.real), 
-                                              ("Imaginary", data_gt.imag, data_pred.imag)]:
-            print(f"\n{comp_name} Component:")
-            print(f"  GT    - Mean: {np.mean(gt_comp):8.4f}, Std: {np.std(gt_comp):8.4f}, "
-                  f"Min: {np.min(gt_comp):8.4f}, Max: {np.max(gt_comp):8.4f}")
-            print(f"  Pred  - Mean: {np.mean(pred_comp):8.4f}, Std: {np.std(pred_comp):8.4f}, "
-                  f"Min: {np.min(pred_comp):8.4f}, Max: {np.max(pred_comp):8.4f}")
-            print(f"  Diff  - Mean: {np.mean(gt_comp.squeeze() - pred_comp.squeeze()):8.4f}, "
-                  f"Std: {np.std(gt_comp.squeeze() - pred_comp.squeeze()):8.4f}")
+        print(f"  GT    - Mean: {np.mean(gt_comp):8.4f}, Std: {np.std(gt_comp):8.4f}, "
+              f"Min: {np.min(gt_comp):8.4f}, Max: {np.max(gt_comp):8.4f}")
+        print(f"  Pred  - Mean: {np.mean(pred_comp):8.4f}, Std: {np.std(pred_comp):8.4f}, "
+              f"Min: {np.min(pred_comp):8.4f}, Max: {np.max(pred_comp):8.4f}")
+        diff = gt_comp - pred_comp
+        print(f"  Diff  - Mean: {np.mean(diff):8.4f}, Std: {np.std(diff):8.4f}")
+    
+    # Return amplitude and phase info for further analysis if requested
+    if return_figure:
+        return fig
+    else:
+        return None
 
 def log_inference_to_wandb(input_data, gt_data, pred_data, logger, step_or_epoch, figsize=(20, 6), vminmax=(0, 1000), save_path: str="./visualizations/inference.png"):
     """
@@ -240,7 +326,7 @@ def log_inference_to_wandb(input_data, gt_data, pred_data, logger, step_or_epoch
     buf.close()
 
         
-def display_inference_results(input_data, gt_data, pred_data = None, figsize=(20, 6), vminmax=(0, 1000), show: bool=True, save: bool=True, save_path: str="./visualizations/", return_figure: bool=False):
+def display_inference_results(input_data, gt_data, pred_data = None, figsize=(20, 6), vminmax=(0, 1000), show: bool=True, save: bool=True, save_path: str="./visualizations/", return_figure: bool=False, level_from: str= "RCMC", level_to: str= "AZ") -> Optional[plt.Figure]:
     """
     Display input, ground truth, and prediction in a 3-column grid.
     
@@ -280,16 +366,16 @@ def display_inference_results(input_data, gt_data, pred_data = None, figsize=(20
     
     # Input data
     img, vmin, vmax = get_magnitude_vis(input_data, vminmax)
-    imgs.append({'name': 'Input (RCMC)', 'img': img, 'vmin': vmin, 'vmax': vmax})
+    imgs.append({'name': f'Input ({level_from.upper()})', 'img': img, 'vmin': vmin, 'vmax': vmax})
     
     # Ground truth
     img, vmin, vmax = get_magnitude_vis(gt_data, vminmax)
-    imgs.append({'name': 'Ground Truth (AZ)', 'img': img, 'vmin': vmin, 'vmax': vmax})
+    imgs.append({'name': f'Ground Truth ({level_to.upper()})', 'img': img, 'vmin': vmin, 'vmax': vmax})
     
     # Prediction
     if pred_data is not None:
         img, vmin, vmax = get_magnitude_vis(pred_data, vminmax)
-        imgs.append({'name': 'Prediction (AZ)', 'img': img, 'vmin': vmin, 'vmax': vmax})
+        imgs.append({'name': f'Prediction ({level_to.upper()})', 'img': img, 'vmin': vmin, 'vmax': vmax})
     
     # Create the plot
     n_axes = 3 if pred_data is not None else 2
@@ -391,7 +477,8 @@ def get_full_image_and_prediction(
     return_original: bool = False,
     vminmax: Union[Tuple[int, int], str] = 'auto', 
     device: Union[str, torch.device] = "cuda", 
-    verbose: bool = True
+    verbose: bool = True, 
+    denormalize: bool = True
 ) -> Union[Tuple[np.ndarray, np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray]]:
     """
     Given a file name or index, runs inference on the first max_samples_per_prod patches,
@@ -503,9 +590,9 @@ def get_full_image_and_prediction(
                     output_batch = torch.cat([output_batch[:patch_idx], output_batch[patch_idx+1:]], dim=0)
                     (x_rem, y_rem) = coords.pop(batch_idx * batch_size + patch_idx - removed_positions)
                     removed_positions +=1
-                    #print(f"Position ({x}, {y}): Removed position ({x_rem}, {y_rem}) mapped to ({x_to}, {y_to}) -- out of bounds for array of shape {gt_full.shape}")
+                    # print(f"Position ({x}, {y}) with index {patch_idx}: Removed position ({x_rem}, {y_rem}) mapped to ({x_to}, {y_to}) -- out of bounds for array of shape {gt_full.shape}")
                 else:
-                    #print(f"Position ({x}, {y}): Keeping position mapped to ({x_to}, {y_to})")
+                    # print(f"Position ({x}, {y}) with index {patch_idx}: Keeping position mapped to ({x_to}, {y_to})")
                     stop = False
                     max_patch_idx = patch_idx
                 
@@ -551,35 +638,33 @@ def get_full_image_and_prediction(
                 pred_batch = pred_batch.detach().cpu().numpy()
             
             batch_size = input_batch.shape[0]
-            for patch_idx in range(max_patch_idx):
+            # print(f"Will take {max_patch_idx} patches from batch {batch_idx} for reconstruction")
+            for patch_idx in range(min(batch_size, max_patch_idx+1)):
                 x, y = coords[batch_idx * batch_size + patch_idx]
                 x_to = x - dataset.buffer[1]
                 y_to = y - dataset.buffer[0]
-                gt_patch = dataset.get_patch_visualization(output_batch[patch_idx], dataset.level_to, vminmax=vminmax, restore_complex=True, remove_positional_encoding=False)
-                if len(gt_patch.shape) > 2:
+                gt_patch = dataset.get_patch_visualization(output_batch[patch_idx], dataset.level_to, vminmax=vminmax, restore_complex=True, remove_positional_encoding=False, plot_type="complex", denormalize=denormalize)
+                if len(gt_patch.shape) > 2 and gt_patch.shape[-1] == 1:
                     gt_patch = np.squeeze(gt_patch, -1)
                 #print(f"Ground truth patch with index {idx} has shape: {gt_patch.shape}, while reconstructed ground truth patch has dimension {gt_patch.shape}")
 
-                pred_patch = dataset.get_patch_visualization(pred_batch[patch_idx], dataset.level_to, vminmax=vminmax, restore_complex=True, remove_positional_encoding=False)
-                if len(pred_patch.shape) > 2:
+                pred_patch = dataset.get_patch_visualization(pred_batch[patch_idx], dataset.level_to, vminmax=vminmax, restore_complex=True, remove_positional_encoding=False, plot_type="complex", denormalize=denormalize)
+                if len(pred_patch.shape) > 2 and pred_patch.shape[-1] == 1:
                     pred_patch = np.squeeze(pred_patch, -1)
                 #print(f"Prediction with index {idx} has shape: {pred_patch.shape}, while reconstructed prediction patch has dimension {pred_patch.shape}")
+                
+                
                 if return_input:
-                    input_patch = dataset.get_patch_visualization(input_batch[patch_idx], dataset.level_from, vminmax=vminmax, restore_complex=True)
+                    input_patch = dataset.get_patch_visualization(input_batch[patch_idx], dataset.level_from, vminmax=vminmax, restore_complex=True, denormalize=denormalize)
                     if input_patch.ndim > 2:
                         if input_patch.shape[-1] == 1:
                             input_patch = np.squeeze(input_patch, -1)
                         elif input_patch.shape[-1] == 0:
                             input_patch = input_patch.reshape(input_patch.shape[:-1])
-                        else:
-                            raise ValueError(f"Input patch has unexpected shape {input_patch.shape}, cannot squeeze last dimension")
-
-                assert gt_patch.shape == pred_patch.shape, f"Prediction patch has a different size than original patch. Original patch shape: {gt_patch.shape}, prediction patch shape: {pred_patch.shape}"
 
                 ph, pw = gt_patch.shape
-                # print(f"Patch shape: (ph, pw)=({ph}, {pw})")
                 if h - x_to < 0 and w - y_to < 0:
-                    print(f"Stopping further processing -- patch at (x, y)=({x_to}, {y_to}) is out of bounds for array of shape {gt_full.shape}")
+                    # print(f"Stopping further processing -- patch at (x, y)=({x_to}, {y_to}) is out of bounds for array of shape {gt_full.shape}")
                     stop = True
                     break
                 actual_ph = min(ph, h - x_to) 
@@ -591,14 +676,9 @@ def get_full_image_and_prediction(
                     pred_full[x_to:x_to+actual_ph, y_to:y_to+actual_pw] += pred_patch[:actual_ph, :actual_pw] * count_map[x_to:x_to+actual_ph, y_to:y_to+actual_pw] 
                     if return_input:
                         input_full[x_to:x_to+actual_ph, y_to:y_to+actual_pw] += input_patch[:actual_ph, :actual_pw] * count_map[x_to:x_to+actual_ph, y_to:y_to+actual_pw]
-                # else:
-                #     print(f"Skipping patch at (x, y)=({x_to}, {y_to}) with shape ({actual_ph}, {actual_pw}) -- out of bounds for array of shape {gt_full.shape}")
-                # gt_full[x_to:x_to+actual_ph, y_to:y_to+actual_pw] = gt_patch[:actual_ph, :actual_pw]
-                # pred_full[x_to:x_to+actual_ph, y_to:y_to+actual_pw] = pred_patch[:actual_ph, :actual_pw]
                 count_map[x_to:x_to+actual_ph, y_to:y_to+actual_pw] = 0
                 
             if stop:
-                #print(f"Stopping further processing -- all remaining patches are out of bounds for array of shape {gt_full.shape}")
                 break
     if verbose:
         print(f"Total inference time for {out_batches} batches: {tot_inference_time:.2f} seconds")

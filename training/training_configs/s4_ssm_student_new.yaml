@@ -29,6 +29,7 @@ training:
   save_dir: "./results/s4_ssm_distilled"
   mode: "parallel"
   wraper: false
+  
 
 # Knowledge Distillation specific parameters
 distillation:
@@ -62,6 +63,8 @@ dataloader:
   concatenate_patches: false
   concat_axis: 0
   positional_encoding: true
+  use_balanced_sampling: false
+
   
   train: 
     batch_size: 32
@@ -94,7 +97,7 @@ dataloader:
     }
     
   inference: 
-    batch_size: 32
+    batch_size: 50
     samples_per_prod: 50000
     patch_order: "row"
     max_products: 10

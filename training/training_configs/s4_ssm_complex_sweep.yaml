@@ -13,41 +13,75 @@ model:
   state_dim: 512
   output_dim: 1
   num_layers: 4
-  dropout: 0.1
+  dropout: 0.05  # Reduced from 0.1 to prevent amplitude suppression
   use_pos_encoding: true
   complex_valued: true
   use_selectivity: false
-  activation_function: 'relu'
+  activation_function: 'identity'  # DISABLED activation to preserve amplitude range!
+                                    # ReLU was clipping negatives → destroying dynamic range
+                                    # With 4 layers, this compounds catastrophically
+                                    # Options: 'identity' (RECOMMENDED for SAR), 'tanh', 'gelu', 'relu' (AVOID!)
+  # S4D Initialization Strategy (IMPORTANT for amplitude matching)
+  scaling: 'log'  # Options: 'inverse' (default), 'linear', 'log' (RECOMMENDED), 'sqrt', 'random'
+  
+  # NEW: Amplitude preservation parameters (CRITICAL FIX for output scaling)
+  use_skip_connection: true  # Skip connection from input to output (preserves amplitude)
+  
   # pretrained_path: "./results/s4_ssm_smaller_cols/last.ckpt"
   # start_key: "model." # Key prefix to load weights from checkpoint
 
 # Training configuration
 training:
-  patience: 20
+  patience: 30
   delta: 0.00001
-  weight_decay: 0.001
-  epochs: 80
-  lr: 0.0001
+  weight_decay: 0.0001   # Reduced weight decay to prevent over-regularization
+  epochs: 100            # Increased epochs for better convergence
+  lr: 0.0005             # Increased learning rate for better exploration
   scheduler_type: "cosine"
-  loss_fn: "power"
-  save_dir: "./results/s4_ssm_power_loss"
+
+  save_dir: "./results/s4_ssm"
   mode: "parallel"
   warmup_epochs: 3
   warmup_start_lr: 0.00001
   
   # Enhanced training options for PyTorch Lightning
-  gradient_clip_val: 1.0  # Gradient clipping to prevent exploding gradients
-  accumulate_grad_batches: 1  # Gradient accumulation for large effective batch sizes
+  gradient_clip_val: 0.5  # Stricter gradient clipping to prevent instability
+  accumulate_grad_batches: 2  # Effective batch size of 128 (64*2)
   #precision: "16-mixed"  # Mixed precision training for faster training and less memory
+  
+  loss_fn: "sar_focusing"  # Use comprehensive SAR focusing loss (IMPROVED VERSION)
+  
+  # SAR Focusing Loss Weights (OPTIMIZED with distribution-aware MSE + KDE)
+  lambda_rec: 1.0          # Reconstruction loss weight (baseline)
+  lambda_focus: 0.0        # Focus quality weight (disabled - not critical for 1D focusing)
+  lambda_dist: 5.0         # Distribution matching weight (KDE-based, requires batch_size >= 10)
+  lambda_tv: 0.0           # Total variation weight (disabled for now)
+  
+  # SAR Focusing Loss Configuration (USING NEW KDE-BASED DISTRIBUTION MATCHING)
+  rec_loss_type: "focal"  # NEW: Distribution-aware MSE (weights by target statistics)
+                                            # Options: 'mse', 'mae', 'complex_mse', 'distribution_aware_mse'
+  focus_metric: "contrast"      # Focus quality metric: 'contrast', 'variance', 'entropy'
+  dist_metric: "histogram"      # Distribution matching using KDE (Kernel Density Estimation)
+                                # NEW: Uses Gaussian KDE instead of raw histograms
+                                # Provides smooth probability density estimates
+                                # IMPORTANT: Requires batch_size >= 10 for reliable KDE
+                                # Best with batch_size >= 20 for near-Gaussian distributions
+                                # Options: 'moments', 'histogram' (KDE), 'mmd', 'none'
+  use_tv: false                 # Disable total variation for now
+  use_adaptive_weights: false   # Disable adaptive weighting (manual control for debugging)
+
+  # Additional stability measures
+  gradient_clip_algorithm: "norm" 
+  check_val_every_n_epoch: 1     
   
   # WandB configuration
   wandb_project: "ssm4sar"
   wandb_entity: "gabrieledaga01-universit-di-bologna"  # Updated to your entity
-  # wandb_entity: "gabri"  # Comment out to use your default WandB entity
   wandb_tags: ["sweep", "hyperparameter_optimization", "s4_ssm"]
 
 # Device configuration
 device: "cuda"
+
 
 # Dataloader configuration
 dataloader:
@@ -60,93 +94,61 @@ dataloader:
   buffer: [1000, 1000]
   stride: [1000, 1]
   max_base_sample_size: [50000, 50000]
-  shuffle_files: false
+  shuffle_files: true
   concatenate_patches: false
   complex_valued: true
   save_samples: false
   online: true
   verbose: false
+  use_balanced_sampling: true
   
   # Split configurations
   train:
-    batch_size: 64
-    samples_per_prod: 5000
+    batch_size: 30
+    samples_per_prod: 3000
     patch_order: "row"
-    max_products: 10
-    filters:
-      years: [2023]
+    max_products: 8
+    filters: {
+      "polarizations": ["vv"],
+      "parts": ["PT1", "PT2", "PT4"]
+    }
+
   
   validation:
-    batch_size: 32
-    samples_per_prod: 500
+    batch_size: 30
+    samples_per_prod: 3000
     patch_order: "row"
     max_products: 5
-    filters:
-      years: [2024]
-  
+    filters: {
+      "polarizations": [ "vv"],
+      "parts": ["PT1", "PT2", "PT4"]
+    }
   test:
-    batch_size: 32
-    samples_per_prod: 500
+    batch_size: 30
+    samples_per_prod: 3000
     patch_order: "row"
-    max_products: 1
-    filters:
-      years: [2025]
+    max_products: 5
+    filters: {
+      "polarizations": ["vv"],
+      "parts": ["PT1", "PT2", "PT4"]
+    }
 
   inference:
-    batch_size: 32
+    batch_size: 25
     samples_per_prod: 10000
     patch_order: "row"
-    max_products: 4
-    filters:
-      years: [2025]
+    max_products: 5
+    filters: {
+      "polarizations": ["vv"],
+      "parts": ["PT1", "PT2", "PT4"]
+    }
 
 # Transform configuration
 transforms:
   normalize: true
   complex_valued: true
-  normalization_type: "minmax"
-  rc_min: -6000
-  rc_max: 6000
-  gt_min: -6000
-  gt_max: 6000
-
-
-# Parameter sweep configuration
-sweep:
-  # Training hyperparameters to sweep
-  #"training.lr": [0.0001, 0.0003, 0.001, 0.003]
-  #"training.weight_decay": [0.0001, 0.001, 0.01]
-  #"training.warmup_epochs": [3, 5, 10]
-  #"training.scheduler_type": ["cosine", "plateau"]
-  
-  # Model architecture parameters to sweep
-  #"model.model_dim": [32, 64, 128]
-  #"model.state_dim": [256, 512, 1024]
-  #"model.num_layers": [2, 4, 6]
-  #"model.dropout": [0.1, 0.2, 0.3]
-  
-  # Dataloader parameters to sweep
-  #"dataloader.train.batch_size": [8, 16, 32]
-  #"dataloader.patch_size": [[4000, 1], [6000, 1], [8000, 1]]
-  
-  # Loss function sweep
-  # "training.loss_fn": ['log_magnitude', 'polarimetric', 'power'] #['split_real_imag', 'polar', 'robust_complex', 'log_magnitude', 'symmetry', 'polarimetric', 'power', 'speckle_nll', 'complex_tv', 'gradient_matching', 'phase_smoothness', 'gan']
-
-
-# Alternative sweep configuration using WandB distribution syntax
-# sweep_wandb:
-#   method: "bayes"  # or "grid", "random"
-#   metric:
-#     name: "val_loss"
-#     goal: "minimize"
-#   parameters:
-#     "training.lr":
-#       distribution: "log_uniform_values"
-#       min: 0.0001
-#       max: 0.01
-#     "model.model_dim":
-#       values: [32, 64, 128, 256]
-#     "training.weight_decay":
-#       distribution: "log_uniform_values"  
-#       min: 0.0001
-#       max: 0.1
+  normalization_type: "zscore"  # Standardization (z-score normalization)
+  rc_mean: 0
+  rc_std: 500
+  gt_mean: 0
+  gt_std: 500

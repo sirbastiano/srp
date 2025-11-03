@@ -1,0 +1,211 @@
+# Configuration for Physics-Aware SAR Spatial Transformer Training
+# Based on state-of-the-art SAR compression with physics integration
+#
+# ============================================================================
+# RESIDUAL VECTOR QUANTIZATION (RVQ) MODE - Oct 31, 2024
+# ============================================================================
+# This configuration enables RVQ for DETAIL-PRESERVING compression!
+#
+# What is RVQ?
+# - Multi-stage quantization that iteratively quantizes residual errors
+# - Each stage captures finer details: x ≈ q₁ + q₂ + q₃ + q₄
+# - Inspired by SoundStream/EnCodec (state-of-the-art audio codecs)
+# - KEY BENEFIT: 10-20 dB better PSNR at same compression ratio!
+#
+# RVQ Configuration (see model.compression section below):
+# - num_rvq_quantizers: 4 stages (balanced quality/bitrate)
+# - rvq_codebook_size: 1024 codes per stage (high quality)
+# - rvq_commitment_weight: 0.25 (balanced encoder/codebook updates)
+# - Expected bitrate: 4 stages × log₂(1024) = 40 bits/token
+# - Expected compression: 4-8x with excellent detail preservation
+#
+# Tuning Guide:
+# - More stages (6-8) = higher quality, higher bitrate
+# - Fewer stages (2) = faster, lower quality
+# - Larger codebook (2048) = better quality, more memory
+# - Smaller codebook (512) = faster, acceptable quality
+#
+# Monitoring:
+# - Watch RVQ loss (should decrease steadily)
+# - Check codebook utilization per stage (should be >50%)
+# - Monitor compression ratio vs reconstruction quality
+#
+# PREVIOUS FIXES (Oct 2024 - Simplified for Convergence):
+# - FIXED: patch_size [100,20] evenly divides input [5000,100] (50x5 patches)
+# - Rebalanced loss weights for stability
+# - Increased LR: 0.0003→0.001 for faster convergence
+# - Focus on core losses: MSE + SSIM + Frequency + Edge + Phase
+# ============================================================================
+
+# Data directory
+data_dir: "/Data/sar_focusing"
+
+# Model configuration
+model:
+  name: "physics_aware_transformer"
+  variant: "PhysicsAwareSpatialTransformer"
+  
+  # Core transformer parameters
+  embed_dim: 384          # Embedding dimension (REDUCED from 512 for higher compression with detail preservation)
+  num_layers: 6           # Number of transformer encoder layers
+  num_heads: 8            # Number of attention heads
+  mlp_ratio: 3.0          # MLP expansion ratio (INCREASED from 2.0 for better feature learning)
+  patch_size: [100, 20]   # Spatial patch size [height, width] (5000/100=50, 100/20=5 - EXACT division)
+  max_height: 5000        # Maximum input height
+  max_width: 100          # Maximum input width
+  dropout: 0.05           # Dropout rate (INCREASED from 0.0 for better generalization)
+  
+  # Physics-aware processing configuration
+  use_complex_layers: true          # Use complex-valued neural networks (CVNNs)
+  use_deep_unfolding: true          # Enable deep unfolded SAR physics blocks
+  unfolding_iterations: 3           # Number of data consistency iterations (REDUCED from 4 for stability)
+  use_sparsity_prior: false         # Enable LISTA sparsity encoding (DISABLED - RVQ handles sparsity)
+  sparsity_lambda: 0.0              # Sparsity regularization weight (DISABLED with RVQ)
+  use_multi_domain_loss: true       # Enable multi-domain loss (spatial + frequency + phase)
+  phase_loss_weight: 0.1            # Weight for phase consistency loss (REDUCED for stability)
+  frequency_loss_weight: 0.2        # Weight for frequency domain loss (REDUCED for stability)
+  
+  # Compression configuration with RVQ (Residual Vector Quantization)
+  use_entropy_model: true           # Enable entropy modeling for compression (REQUIRED for RVQ)
+  use_hyperprior: false             # Use scale hyperprior (DISABLED - not needed with RVQ)
+  use_quantization: true            # Enable quantization-aware training (REQUIRED for RVQ)
+  use_residual_quantization: true   # NEW: Enable RVQ for detail preservation
+  num_rvq_quantizers: 4             # Number of RVQ stages (4 = good quality/bitrate tradeoff)
+  rvq_codebook_size: 1024           # Codebook size per stage (1024 = high quality)
+  rvq_commitment_weight: 0.25       # Balance between encoder and codebook updates
+  rate_lambda: 0.01                 # Rate-distortion tradeoff (controls compression level)
+  num_distributions: 4              # Number of mixture components (not used with RVQ)
+
+# Training configuration
+training:
+  patience: 30         # Early stopping patience
+  delta: 0.0001        # Minimum improvement threshold (INCREASED from 0.00001 for stability)
+  weight_decay: 0.0001 # L2 regularization
+  epochs: 300          # Maximum epochs
+  lr: 0.001            # Learning rate (INCREASED from 0.0003 for faster convergence)
+  scheduler_type: "cosine"
+  loss_fn: "multi_domain_sar"  # Use multi-domain SAR loss
+  save_dir: "./results/physics_aware_transformer"
+  mode: "parallel"
+  warmup_epochs: 10    # Warmup epochs (REDUCED from 15 for faster start)
+  warmup_start_lr: 0.0001  # Warmup start LR (INCREASED for faster warmup)
+  
+  # Physics-aware loss weights (used by MultiDomainSARLoss)
+  # OPTIMIZED for RVQ - includes compression rate control
+  spatial_weight: 1.0      # Weight for spatial domain loss (MSE baseline)
+  frequency_weight: 0.2    # Weight for frequency domain loss (spectrum matching)
+  phase_weight: 0.1        # Weight for phase consistency loss (phase preservation)
+  sparsity_weight: 0.0     # Weight for sparsity penalty (DISABLED - not needed with RVQ)
+  rate_weight: 0.01        # Weight for compression rate penalty (ENABLED for RVQ bitrate control)
+  rvq_loss_weight: 0.25    # Weight for RVQ quantization loss (automatically applied in loss function)
+  
+  # Structure preservation - OPTIMIZED for RVQ detail preservation
+  ssim_weight: 0.5         # Weight for SSIM loss (structural similarity)
+  perceptual_weight: 0.2   # Weight for perceptual loss (ENABLED to reduce blocking artifacts)
+  edge_weight: 0.1         # Weight for edge-preserving loss (fine detail preservation)
+  deblocking_weight: 0.3   # Weight for deblocking loss (penalize patch boundary discontinuities)
+
+# Device configuration
+device: "cuda"
+
+# Dataloader configuration
+dataloader:
+  data_dir: "/Data/sar_focusing"
+  level_from: "rc"
+  level_to: "az"
+  num_workers: 0
+  patch_mode: "rectangular"
+  patch_size: [5000, 100]
+  buffer: [1000, 1000]
+  stride: [5000, 100]
+  max_base_sample_size: [5000, 5000]
+  shuffle_files: false
+  complex_valued: false  # Use real-channel representation for spatial processing
+  save_samples: false
+  backend: "zarr"
+  verbose: false
+  cache_size: 1000
+  online: true
+  concatenate_patches: false
+  concat_axis: 0
+  positional_encoding: false
+  train: 
+      batch_size: 5
+      samples_per_prod: 50
+      patch_order: "row"
+      max_products: 10
+  validation: 
+    batch_size: 5
+    samples_per_prod: 10
+    patch_order: "row"
+    max_products: 10
+  test: 
+    batch_size: 5
+    samples_per_prod: 10
+    patch_order: "row"
+    max_products: 10
+  inference: 
+    batch_size: 5
+    samples_per_prod: 10
+    patch_order: "row"
+    max_products: 5
+transforms:
+  normalize: true
+  complex_valued: true
+  normalization_type: "zscore"  # Standardization (z-score normalization)
+  rc_mean: 0
+  rc_std: 500
+  gt_mean: 0
+  gt_std: 500
+# Logging configuration
+logging:
+  wandb:
+    project: "sar_focusing"
+    entity: null
+    name: "physics_aware_transformer_rvq_experiment"
+    tags: ["physics-aware", "transformer", "compression", "sar", "cvnn", "deep-unfolding", "rvq", "residual-quantization"]
+    notes: "Physics-Aware SAR Transformer with RVQ (Residual Vector Quantization) for detail-preserving compression. Uses 4-stage RVQ with 1024 codebooks for high-fidelity reconstruction."
+    log_freq: 10
+    log_images: true
+    log_model: false
+    # RVQ-specific logging
+    log_rvq_loss: true              # Log RVQ quantization loss
+    log_codebook_usage: true        # Log per-stage codebook utilization
+    log_compression_rate: true      # Log estimated bitrate
+  
+  checkpointing:
+    save_freq: 1
+    save_best: true
+    save_last: true
+    
+  visualization:
+    enabled: true
+    freq: 10
+    save_plots: true
+    plot_dir: "./results/physics_aware_transformer/plots"
+    max_samples: 5
+
+# Optimization settings
+optimization:
+  gradient_clipping: 1.0
+  accumulate_grad_batches: 1
+  mixed_precision: true
+  compile_model: false  # Set to true for PyTorch 2.0+
+
+  # Evaluation settings  
+evaluation:
+  metrics: ["mse", "mae", "ssim", "psnr", "phase_error", "compression_ratio", "rvq_codebook_utilization"]
+  eval_freq: 5
+  save_predictions: true
+  max_eval_samples: 50
+  
+  # Physics-aware evaluation metrics
+  compute_frequency_metrics: true   # Compute frequency domain metrics
+  compute_phase_metrics: true       # Compute phase consistency metrics
+  compute_sparsity_metrics: false   # DISABLED with RVQ (codebook sparsity tracked separately)
+  compute_compression_metrics: true # Compute compression ratio and rate
+  
+  # RVQ-specific evaluation
+  compute_rvq_metrics: true         # Compute RVQ-specific metrics
+  log_codebook_utilization: true    # Log per-stage codebook usage
+  log_rvq_reconstruction: true      # Log RVQ reconstruction quality per stage

@@ -25,12 +25,39 @@ import concurrent.futures
 from datetime import datetime
 from typing import Dict, Any, Optional, List, Union
 import wandb
+import pandas as pd
 from lightning.pytorch.loggers import TensorBoardLogger, WandbLogger
 
 from dataloader.dataloader import SampleFilter, get_sar_dataloader, SARTransform
 from model.model_utils import get_model_from_configs, create_model_with_pretrained
 from training.training_loops import get_training_loop_by_model_name
 
+def copy_split_csvs_to_results(train_files: pd.DataFrame, validation_files: pd.DataFrame, test_files: pd.DataFrame, save_dir: str) -> List[str]:
+    """
+    Copy the dataset split CSV files to the results directory for reproducibility.
+    
+    Args:
+        save_dir: Directory to save the CSV files
+        csv_dir: Directory containing the split CSV files (default: "balanced_samples")
+    
+    Returns:
+        Dictionary mapping split names to their copied file paths
+    """
+    os.makedirs(save_dir, exist_ok=True)
+    
+    # Define split CSV files
+    split_files = {
+        'train_products.csv': train_files,
+        'validation_products.csv': validation_files,
+        'test_products.csv': test_files
+    }
+
+    for split_name, df in split_files.items():
+        dest_path = os.path.join(save_dir, split_name)
+        df.to_csv(dest_path, index=False)
+        logging.info(f"Copied {split_name} split CSV to {dest_path}")
+
+    return [split_name for split_name in split_files.keys()]
 
 def generate_sweep_configs(base_config: Dict[str, Any], sweep_params: Dict[str, Any]) -> List[Dict[str, Any]]:
     """
@@ -176,9 +203,9 @@ def load_config(config_path: Path, args) -> Dict[str, Any]:
         config['dataloader']['transforms'] = config['transforms']
     
     # Ensure required sections exist
-    config.setdefault('model', {})
-    config.setdefault('training', {})
-    config.setdefault('dataloader', {})
+    # config.setdefault('model', {})
+    # config.setdefault('training', {})
+    # config.setdefault('dataloader', {})
     
     # Handle sweep configuration
     if 'sweep' in config:
@@ -186,58 +213,58 @@ def load_config(config_path: Path, args) -> Dict[str, Any]:
         config['_sweep_params'] = sweep_config
     
     # Set dataloader defaults (same as original)
-    dataloader_defaults = {
-        'level_from': 'rc',
-        'level_to': 'az', 
-        'num_workers': 0,
-        'patch_mode': 'rectangular',
-        'patch_size': [1000, 1],
-        'buffer': [1000, 1000],
-        'stride': [1000, 1],
-        'shuffle_files': False,
-        'complex_valued': True,
-        'save_samples': False,
-        'backend': 'zarr',
-        'verbose': False,
-        'cache_size': 1000,
-        'online': False,
-        'concatenate_patches': True,
-        'concat_axis': 0,
-        'positional_encoding': True
-    }
+    # dataloader_defaults = {
+    #     'level_from': 'rc',
+    #     'level_to': 'az', 
+    #     'num_workers': 0,
+    #     'patch_mode': 'rectangular',
+    #     'patch_size': [1000, 1],
+    #     'buffer': [1000, 1000],
+    #     'stride': [1000, 1],
+    #     'shuffle_files': False,
+    #     'complex_valued': True,
+    #     'save_samples': False,
+    #     'backend': 'zarr',
+    #     'verbose': False,
+    #     'cache_size': 1000,
+    #     'online': False,
+    #     'concatenate_patches': True,
+    #     'concat_axis': 0,
+    #     'positional_encoding': True
+    # }
     
-    for key, default_value in dataloader_defaults.items():
-        config['dataloader'].setdefault(key, default_value)
+    # for key, default_value in dataloader_defaults.items():
+    #     config['dataloader'].setdefault(key, default_value)
     
     # Set split defaults (same as original)
-    split_defaults = {
-        'train': {
-            'batch_size': config['training'].get('batch_size', 16),
-            'samples_per_prod': 1000,
-            'patch_order': 'row',
-            'max_products': 1,
-            'filters': {"years": [2023]}
-        },
-        'validation': {
-            'batch_size': config['training'].get('batch_size', 16),
-            'samples_per_prod': 500,
-            'patch_order': 'row',
-            'max_products': 1,
-            'filters': {"years": [2024]}
-        },
-        'test': {
-            'batch_size': max(1, config['training'].get('batch_size', 16) // 2),
-            'samples_per_prod': 200,
-            'patch_order': 'row',
-            'max_products': 1,
-            'filters': {"years": [2025]}
-        }
-    }
+    # split_defaults = {
+    #     'train': {
+    #         'batch_size': config['training'].get('batch_size', 16),
+    #         'samples_per_prod': 1000,
+    #         'patch_order': 'row',
+    #         'max_products': 1,
+    #         'filters': {"years": [2023]}
+    #     },
+    #     'validation': {
+    #         'batch_size': config['training'].get('batch_size', 16),
+    #         'samples_per_prod': 500,
+    #         'patch_order': 'row',
+    #         'max_products': 1,
+    #         'filters': {"years": [2024]}
+    #     },
+    #     'test': {
+    #         'batch_size': max(1, config['training'].get('batch_size', 16) // 2),
+    #         'samples_per_prod': 200,
+    #         'patch_order': 'row',
+    #         'max_products': 1,
+    #         'filters': {"years": [2025]}
+    #     }
+    # }
     
-    for split_name, split_config in split_defaults.items():
-        config['dataloader'].setdefault(split_name, {})
-        for key, default_value in split_config.items():
-            config['dataloader'][split_name].setdefault(key, default_value)
+    # for split_name, split_config in split_defaults.items():
+    #     config['dataloader'].setdefault(split_name, {})
+    #     for key, default_value in split_config.items():
+    #         config['dataloader'][split_name].setdefault(key, default_value)
     
     # Add transforms configuration if missing
     if 'transforms' not in config['dataloader']:
@@ -681,11 +708,121 @@ def run_parallel_training(
     return results
 
 
+def run_parallel_training_tmux(
+    configs: List[Dict[str, Any]], 
+    base_save_dir: str,
+    use_wandb: bool = True,
+    session_prefix: str = "sar_train"
+) -> List[str]:
+    """
+    Run training for multiple configurations in parallel using tmux sessions.
+    Each configuration gets its own tmux session with an independent terminal.
+    
+    Args:
+        configs: List of configuration dictionaries
+        base_save_dir: Base directory for saving results
+        use_wandb: Whether to use WandB logging
+        session_prefix: Prefix for tmux session names
+        
+    Returns:
+        List of tmux session names created
+    """
+    import subprocess
+    import tempfile
+    import yaml
+    
+    # Check if tmux is installed
+    try:
+        subprocess.run(['tmux', '-V'], capture_output=True, check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        print("❌ Error: tmux is not installed or not in PATH")
+        print("   Install tmux: sudo apt-get install tmux (Ubuntu/Debian)")
+        print("   Or use standard parallel training with --parallel flag")
+        return []
+    
+    print(f"🚀 Launching {len(configs)} training configurations in separate tmux sessions")
+    print(f"   Session prefix: {session_prefix}")
+    print(f"   Base save directory: {base_save_dir}")
+    
+    session_names = []
+    temp_config_files = []
+    
+    # Get the absolute path to the current script
+    script_path = os.path.abspath(__file__)
+    
+    for i, config in enumerate(configs):
+        # Create unique session name
+        session_name = f"{session_prefix}_{i:04d}"
+        session_names.append(session_name)
+        
+        # Save config to temporary file
+        temp_config_fd, temp_config_path = tempfile.mkstemp(suffix='.yaml', prefix=f'sweep_config_{i:04d}_')
+        temp_config_files.append(temp_config_path)
+        
+        with os.fdopen(temp_config_fd, 'w') as f:
+            yaml.dump(config, f, default_flow_style=False)
+        
+        # Build training command
+        run_id = f"sweep_{i:04d}"
+        cmd_parts = [
+            'python', script_path,
+            '--config', temp_config_path,
+            '--base_save_dir', base_save_dir,
+            '--run_id', run_id
+        ]
+        
+        if use_wandb:
+            cmd_parts.append('--use_wandb')
+        
+        cmd = ' '.join(cmd_parts)
+        
+        # Check if session already exists
+        check_session = subprocess.run(
+            ['tmux', 'has-session', '-t', session_name],
+            capture_output=True
+        )
+        
+        if check_session.returncode == 0:
+            print(f"⚠️  Warning: Session '{session_name}' already exists. Skipping.")
+            continue
+        
+        # Create new tmux session with training command
+        try:
+            subprocess.Popen(
+                ['tmux', 'new-session', '-d', '-s', session_name, cmd],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            print(f"✅ Created session: {session_name} (config {i+1}/{len(configs)})")
+        except Exception as e:
+            print(f"❌ Failed to create session {session_name}: {e}")
+    
+    print("\n" + "="*70)
+    print("🎯 Training sessions launched successfully!")
+    print("="*70)
+    print("\nUseful tmux commands:")
+    print("  • List all sessions:     tmux ls")
+    print("  • Attach to session:     tmux attach -t <session_name>")
+    print("  • Detach from session:   Ctrl+B then D")
+    print("  • Kill a session:        tmux kill-session -t <session_name>")
+    print("  • Kill all sessions:     tmux kill-server")
+    print("\nActive training sessions:")
+    for session_name in session_names:
+        print(f"  • {session_name}")
+    print("\nNote: Temporary config files will be cleaned up when sessions complete.")
+    print("="*70 + "\n")
+    
+    return session_names
+
+
 def main():
     """Enhanced main function with sweep and parallel support."""
     parser = argparse.ArgumentParser(description='Enhanced training with sweep and parallel support')
     parser.add_argument('--config', type=str, required=True, help='Path to configuration file')
     parser.add_argument('--save_dir', type=str, default="./results", help='Save directory override')
+    parser.add_argument('--base_save_dir', type=str, help='Base save directory for parallel runs')
+    parser.add_argument('--run_id', type=str, help='Run ID for parallel runs')
+    parser.add_argument('--use_wandb', action='store_true', help='Enable WandB logging')
     
     # Sweep options
     parser.add_argument('--sweep', action='store_true', help='Run parameter sweep')
@@ -697,6 +834,8 @@ def main():
     # Parallel options
     parser.add_argument('--parallel', action='store_true', help='Run configurations in parallel')
     parser.add_argument('--max_workers', type=int, help='Maximum parallel workers')
+    parser.add_argument('--use_tmux', action='store_true', help='Use tmux sessions for parallel training (one terminal per config)')
+    parser.add_argument('--tmux_prefix', type=str, default='sar_train', help='Prefix for tmux session names')
     
     # WandB options
     parser.add_argument('--wandb_project', type=str, default='ssm4sar', help='WandB project name')
@@ -706,6 +845,18 @@ def main():
     
     # Load configuration
     config = load_config(Path(args.config), args)
+    
+    # Check if this is a single training run called from tmux
+    if args.base_save_dir and args.run_id:
+        print(f"Running single training configuration: {args.run_id}")
+        result = train_single_config(
+            config=config,
+            base_save_dir=args.base_save_dir,
+            run_id=args.run_id,
+            use_wandb=args.use_wandb
+        )
+        print(f"Training completed: {result['status']}")
+        return
     
     # Check if we're joining an existing WandB sweep
     if args.sweep_id:
@@ -750,25 +901,40 @@ def main():
             
             if args.parallel:
                 # Run sweep configurations in parallel
-                results = run_parallel_training(
-                    configs=sweep_configs,
-                    base_save_dir=args.save_dir,
-                    max_workers=args.max_workers
-                )
-                
-                # Save sweep summary
-                sweep_summary = {
-                    'total_runs': len(results),
-                    'successful_runs': sum(1 for r in results if r['status'] == 'success'),
-                    'failed_runs': sum(1 for r in results if r['status'] == 'failed'),
-                    'results': results
-                }
-                
-                summary_path = os.path.join(args.save_dir, 'sweep_summary.json')
-                with open(summary_path, 'w') as f:
-                    json.dump(sweep_summary, f, indent=2)
-                
-                print(f"Parallel sweep completed. Summary saved to: {summary_path}")
+                if args.use_tmux:
+                    # Use tmux sessions for parallel training
+                    session_names = run_parallel_training_tmux(
+                        configs=sweep_configs,
+                        base_save_dir=args.save_dir,
+                        use_wandb=True,
+                        session_prefix=args.tmux_prefix
+                    )
+                    
+                    print(f"\n✅ Launched {len(session_names)} training sessions in tmux")
+                    print(f"   Monitor progress with: tmux ls")
+                    print(f"   Attach to a session: tmux attach -t <session_name>")
+                    
+                else:
+                    # Use ProcessPoolExecutor for parallel training
+                    results = run_parallel_training(
+                        configs=sweep_configs,
+                        base_save_dir=args.save_dir,
+                        max_workers=args.max_workers
+                    )
+                    
+                    # Save sweep summary
+                    sweep_summary = {
+                        'total_runs': len(results),
+                        'successful_runs': sum(1 for r in results if r['status'] == 'success'),
+                        'failed_runs': sum(1 for r in results if r['status'] == 'failed'),
+                        'results': results
+                    }
+                    
+                    summary_path = os.path.join(args.save_dir, 'sweep_summary.json')
+                    with open(summary_path, 'w') as f:
+                        json.dump(sweep_summary, f, indent=2)
+                    
+                    print(f"Parallel sweep completed. Summary saved to: {summary_path}")
                 
             else:
                 # Run sweep configurations sequentially

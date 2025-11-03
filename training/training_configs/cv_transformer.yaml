@@ -12,77 +12,123 @@ mode: "parallel"  # parallel, autoregressive, encoder_decoder, encoder_only
 # Model configuration
 model:
   name: "cv_transformer"
-  seq_len: 200  # Number of vertical patches (tokens in sequence)
-  input_dim: 1000 
-  model_dim: 512
-  num_layers: 6
+  output_mode: "complex"  # Output complex to preserve (5, 5000, 100, 2) shape
+  # Sequence and input dimensions
+  seq_len: 100
+  input_dim: 1
+  # The enhanced model parameters (requested)
+  model_dim: 256
+  num_layers: 4
   num_heads: 8
-  ff_dim: 2048
+  ff_mult: 4
+  window_size: 128
+  compressed_dim: 32
+  latent_dim: 16
+  register_bank_size: 32
+  quant_step: 0.25
+  rvq_codes: 512
+  rvq_stages: 2
+  use_rvq: true
+  hann_len: 5000
   dropout: 0.1
-  dim_head: 64
   pos_encoding_type: "complex"
 
 # Training configuration
 training:
-  patience: 20
-  delta: 0.001
-
-# Base save directory
-base_save_dir: "./results/cv_transformer_results"
+  patience: 30         # Increased patience
+  delta: 0.00001       # More reasonable improvement threshold
+  weight_decay: 0.001  # Increased for better regularization
+  epochs: 300          # More epochs for complex model
+  lr: 0.0001           # Increased learning rate
+  scheduler_type: "cosine"
+  loss_fn : "polarimetric"
+  save_dir: "./results/cv_transformer_mse"
+  mode: "parallel"
+  warmup_epochs: 0     # Longer warmup
+  warmup_start_lr: 0.00001
 
 # Device configuration
 device: "cuda"
 
 # Dataloader configuration
 dataloader:
-  level_from: "rcmc"
-  level_to: "az"
+  data_dir: "/Data/sar_focusing"
+  level_from: "rc"
+  level_to: "rcmc"
   num_workers: 0
   patch_mode: "rectangular"
-  patch_size: [1000, 100]  # Vertical patches: height=1000, width=1
+  patch_size: [5000, 100]
   buffer: [1000, 1000]
-  stride: [1000, 100]  # Stride for vertical patches
-  max_base_sample_size: [10000, 5000]
+  stride: [5000, 100]
+  max_base_sample_size: [5000, 5000]
   shuffle_files: false
-  complex_valued: true  # Load as complex values
+  complex_valued: true
   save_samples: false
   backend: "zarr"
   verbose: false
   cache_size: 1000
-  online: false
-  concatenate_patches: true  # Stack vertical patches into sequences
-  concat_axis: 0  # Vertical concatenation (axis=0)
-  positional_encoding: true  # Enable positional encoding
-  
-  # Training split
-  train:
-    batch_size: 1
-    samples_per_prod: 1
+  online: true
+  concatenate_patches: false
+  concat_axis: 0
+  positional_encoding: false
+  train: 
+    batch_size: 5
+    samples_per_prod: 50
     patch_order: "row"
-    max_products: 1
-    pattern: "*2023*.zarr"
-    
-  # Validation split  
-  validation:
-    batch_size: 16
-    samples_per_prod: 500
+    max_products: 5
+    filters: {
+      "years": [
+        2023,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
+  validation: 
+    batch_size: 5
+    samples_per_prod: 50
     patch_order: "row"
-    max_products: 1
-    pattern: "*2024*.zarr"
-    
-  # Test split
-  test:
-    batch_size: 8
-    samples_per_prod: 200
+    max_products: 5
+    filters: {
+      "years": [
+        2024,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
+  test: 
+    batch_size: 5
+    samples_per_prod: 50
     patch_order: "row"
-    max_products: 1
-    pattern: "*2025*.zarr"
+    max_products: 5
+    filters: {
+      "years": [
+        2025,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
+  inference: 
+    batch_size: 5
+    samples_per_prod: 100
+    patch_order: "row"
+    max_products: 5
+    filters: {
+      "years": [
+        2024,
+      ],
+      "polarizations": [
+        "vv",
+      ]
+    }
 
 # Transform configuration
 transforms:
   normalize: true
-  complex_valued: true  
-  rc_min: -3000.0    
-  rc_max: 3000.0     
-  gt_min: -12000.0   
-  gt_max: 12000.0     
+  complex_valued: true
+  rc_min: -6000
+  rc_max: 6000
+  gt_min: -6000
+  gt_max: 6000
