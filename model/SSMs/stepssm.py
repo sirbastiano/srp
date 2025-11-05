@@ -38,11 +38,14 @@ class RollingStats:
             delta2 = value - self.mean
             self.M2 += delta * delta2
 
-    def get_mean_std(self):
+    def get_scaling_factor(self):
         if self.n < 2:
             return self.mean, float('nan')
-        variance = self.M2 / (self.n - 1)
-        return self.mean, variance ** 0.5
+        std = (self.M2 / (self.n - 1)) ** 0.5
+        limit = max(self.mean - 3*std, self.mean + 3*std, key=abs)
+        sf = 127 / limit
+
+        return self.mean, std, sf
 
 class ssm_layer(nn.Module):
     def __init__(self):
@@ -82,7 +85,7 @@ class fc_layer(nn.Module):
         return (x @ self.weight.T) + self.bias
 
 class stepSSM(nn.Module):
-    def __init__(self)
+    def __init__(self):
         super(stepSSM, self).__init__()
 
         # model weights
@@ -107,7 +110,7 @@ class stepSSM(nn.Module):
             if isinstance(module, (fc_input_layer, ssm_layer, fc_layer)):
                 module.register_forward_hook(self.create_hook(name))
 
-    def forward(self, u, state):
+    def forward(self, x, state):
         x = self.fc1(x)
         x, state[0] = self.ssm2(x, state[0])
         x = self.act(x)
@@ -127,7 +130,7 @@ class stepSSM(nn.Module):
 
     def setup_step(self, batch_size):
         states = []
-        for ssm in self.ssm:
+        for _ in range(4):
             layer_state = torch.zeros(batch_size, 2, 4, dtype=torch.complex64)
             states.append(layer_state)
         return states
@@ -136,13 +139,13 @@ class stepSSM(nn.Module):
         rolling_list = []
         self.activation_stats[name] = rolling_list
 
-        def hook(self, module, input, output):
+        def hook(module, input, output):
             # Convert output to tuple
             outputs = output if isinstance(output, tuple) else (output,)
             # Initialize rolling stats for each output
-            while len(self.rolling_list) < len(outputs):
-                self.rolling_list.append(RollingStats())
-            for rolling, out in zip(self.rolling_list, outputs):
+            while len(rolling_list) < len(outputs):
+                rolling_list.append(RollingStats())
+            for rolling, out in zip(rolling_list, outputs):
                 rolling.update(out)
 
         return hook
