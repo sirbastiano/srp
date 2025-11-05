@@ -124,11 +124,11 @@ class qssm(nn.Module):
             fc3.sX should == ssm2.sY and fc3.sY == ssm4.sX"""
 
         # ssm4
-        accA = torch.round(self.weights["ssm4.A"]/self.weights["ssm4.sA"]).unsqueeze(0) @ state[0]
+        accA = torch.round(self.weights["ssm4.A"]/self.weights["ssm4.sA"]).unsqueeze(0) @ state[1]
         accB = torch.round(self.weights["ssm4.B"]/self.weights["ssm4.sB"]) @ x.unsqueeze(-1)
-        state[0] = torch.round(self.weights["ssm4.sA"]*accA + (self.weights["ssm4.sB"]*self.weights["ssm4.sX"]/self.weights["ssm4.sH"])*accB)
+        state[1] = torch.round(self.weights["ssm4.sA"]*accA + (self.weights["ssm4.sB"]*self.weights["ssm4.sX"]/self.weights["ssm4.sH"])*accB)
     
-        accC = (torch.round(self.weights["ssm4.C"]/self.weights["ssm4.sC"]) @ state[0].T).permute(1, 0, 2) # this is the updated state[0]
+        accC = (torch.round(self.weights["ssm4.C"]/self.weights["ssm4.sC"]) @ state[1].T).permute(1, 0, 2) # this is the updated state[1]
         accD = x.unsqueeze(-2) * torch.round(self.weights["ssm4.D"]/self.weights["ssm4.sD"])
         x = torch.round((2*(self.weights["ssm4.sC"] * self.weights["ssm4.sH"] / self.weights["ssm4.sY"]) * accC).real + ((self.weights["ssm4.sD"]*self.weights["ssm4.sX"]/self.weights["ssm4.sY"]) * accD))
 
@@ -141,11 +141,11 @@ class qssm(nn.Module):
         x = torch.round((self.weights["fc5.sW"]*self.weights["fc5.sX"]/self.weights["fc5.sY"]) * ((x @ torch.round(self.weights["fc5.weight"]/self.weights["fc5.sW"]).T) + torch.round(self.weights["fc5.bias"]/(self.weights["fc5.sX"]*self.weights["fc5.sW"]))))
 
         # ssm6
-        accA = torch.round(self.weights["ssm6.A"]/self.weights["ssm6.sA"]).unsqueeze(0) @ state[0]
+        accA = torch.round(self.weights["ssm6.A"]/self.weights["ssm6.sA"]).unsqueeze(0) @ state[2]
         accB = torch.round(self.weights["ssm6.B"]/self.weights["ssm6.sB"]) @ x.unsqueeze(-1)
-        state[0] = torch.round(self.weights["ssm6.sA"]*accA + (self.weights["ssm6.sB"]*self.weights["ssm6.sX"]/self.weights["ssm6.sH"])*accB)
+        state[2] = torch.round(self.weights["ssm6.sA"]*accA + (self.weights["ssm6.sB"]*self.weights["ssm6.sX"]/self.weights["ssm6.sH"])*accB)
     
-        accC = (torch.round(self.weights["ssm6.C"]/self.weights["ssm6.sC"]) @ state[0].T).permute(1, 0, 2) # this is the updated state[0]
+        accC = (torch.round(self.weights["ssm6.C"]/self.weights["ssm6.sC"]) @ state[2].T).permute(1, 0, 2) # this is the updated state[2]
         accD = x.unsqueeze(-2) * torch.round(self.weights["ssm6.D"]/self.weights["ssm6.sD"])
         x = torch.round((2*(self.weights["ssm6.sC"] * self.weights["ssm6.sH"] / self.weights["ssm6.sY"]) * accC).real + ((self.weights["ssm6.sD"]*self.weights["ssm6.sX"]/self.weights["ssm6.sY"]) * accD))
 
@@ -158,11 +158,11 @@ class qssm(nn.Module):
         x = torch.round((self.weights["fc7.sW"]*self.weights["fc7.sX"]/self.weights["fc7.sY"]) * ((x @ torch.round(self.weights["fc7.weight"]/self.weights["fc7.sW"]).T) + torch.round(self.weights["fc7.bias"]/(self.weights["fc7.sX"]*self.weights["fc7.sW"]))))
 
         # ssm8
-        accA = torch.round(self.weights["ssm8.A"]/self.weights["ssm8.sA"]).unsqueeze(0) @ state[0]
+        accA = torch.round(self.weights["ssm8.A"]/self.weights["ssm8.sA"]).unsqueeze(0) @ state[3]
         accB = torch.round(self.weights["ssm8.B"]/self.weights["ssm8.sB"]) @ x.unsqueeze(-1)
-        state[0] = torch.round(self.weights["ssm8.sA"]*accA + (self.weights["ssm8.sB"]*self.weights["ssm8.sX"]/self.weights["ssm8.sH"])*accB)
+        state[3] = torch.round(self.weights["ssm8.sA"]*accA + (self.weights["ssm8.sB"]*self.weights["ssm8.sX"]/self.weights["ssm8.sH"])*accB)
     
-        accC = (torch.round(self.weights["ssm8.C"]/self.weights["ssm8.sC"]) @ state[0].T).permute(1, 0, 2) # this is the updated state[0]
+        accC = (torch.round(self.weights["ssm8.C"]/self.weights["ssm8.sC"]) @ state[3].T).permute(1, 0, 2) # this is the updated state[3]
         accD = x.unsqueeze(-2) * torch.round(self.weights["ssm8.D"]/self.weights["ssm8.sD"])
         x = torch.round((2*(self.weights["ssm8.sC"] * self.weights["ssm8.sH"] / self.weights["ssm8.sY"]) * accC).real + ((self.weights["ssm8.sD"]*self.weights["ssm8.sX"]/self.weights["ssm8.sY"]) * accD))
 
