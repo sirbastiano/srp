@@ -101,85 +101,91 @@ class qssm(nn.Module):
         # quantize on input
         x = torch.round(x / self.weights["fc1.sX"]) # quantized input
         # fc1
-        x = torch.round((self.weights["fc1.sW"]*self.weights["fc1.sX"]/self.weights["fc1.sY"]) * ((self.weights["fc1.weight"]/self.weights["fc1.sW"] @ x) + torch.round(self.weights["fc1.bias"]/(self.weights["fc1.sX"]*self.weights["fc1.sW"]))))
+        x = torch.round((self.weights["fc1.sW"]*self.weights["fc1.sX"]/self.weights["fc1.sY"]) * ((torch.round(self.weights["fc1.weight"]/self.weights["fc1.sW"]) @ x) + torch.round(self.weights["fc1.bias"]/(self.weights["fc1.sX"]*self.weights["fc1.sW"]))))
         """ fc1.sW*fc1.sX / fc1.sY == M
             also, fc1.sY should = ssm2.sX """
         # ssm2
-        accA = torch.round((self.weights["ssm2.A"]/self.weights["ssm2.sA"]).unsqueeze(0) @ state[0])
-        accB = torch.round((self.weights["ssm2.B"]/self.weights["ssm2.sB"]) @ x.unsqueeze(-1))
-        state[0] = torch.round(self.weights["ssm2.sA"]*accA + (self.weights["ssm2.sB"]*self.weights["ssm2.sX"]/self.weights["ssm2.sH"]))
+        accA = torch.round(self.weights["ssm2.A"]/self.weights["ssm2.sA"]).unsqueeze(0) @ state[0]
+        accB = torch.round(self.weights["ssm2.B"]/self.weights["ssm2.sB"]) @ x.unsqueeze(-1)
+        state[0] = torch.round(self.weights["ssm2.sA"]*accA + (self.weights["ssm2.sB"]*self.weights["ssm2.sX"]/self.weights["ssm2.sH"])*accB)
     
-        accC = torch.round((self.weights["ssm2.C"]/self.weights["ssm2.sC"]) @ state[0].T).permute(1, 0, 2) # this is the updated state[0]
-        accD = torch.round(x.unsqueeze(-2) * (self.weights["ssm2.D"]/self.weights["ssm2.sD"]))
+        accC = (torch.round(self.weights["ssm2.C"]/self.weights["ssm2.sC"]) @ state[0].T).permute(1, 0, 2) # this is the updated state[0]
+        accD = x.unsqueeze(-2) * torch.round(self.weights["ssm2.D"]/self.weights["ssm2.sD"])
         x = torch.round((2*(self.weights["ssm2.sC"] * self.weights["ssm2.sH"] / self.weights["ssm2.sY"]) * accC).real + ((self.weights["ssm2.sD"]*self.weights["ssm2.sX"]/self.weights["ssm2.sY"]) * accD))
 
         del accA, accB, accC, accD
+
         # LeakyReLU
         x = self.act(u)
 
         # fc3
-        x = torch.round((self.weights["fc3.sW"]*self.weights["fc3.sX"]/self.weights["fc3.sY"]) * ((self.weights["fc3.weight"]/self.weights["fc3.sW"] @ x) + torch.round(self.weights["fc3.bias"]/(self.weights["fc3.sX"]*self.weights["fc3.sW"]))))
+        x = torch.round((self.weights["fc3.sW"]*self.weights["fc3.sX"]/self.weights["fc3.sY"]) * ((torch.round(self.weights["fc3.weight"]/self.weights["fc3.sW"]) @ x) + torch.round(self.weights["fc3.bias"]/(self.weights["fc3.sX"]*self.weights["fc3.sW"]))))
         """ fc3.sW*fc3.sX / fc3.sY == M 
             fc3.sX should == ssm2.sY and fc3.sY == ssm4.sX"""
 
         # ssm4
-        accA = torch.round((self.weights["ssm4.A"]/self.weights["ssm4.sA"]).unsqueeze(0) @ state[0])
-        accB = torch.round((self.weights["ssm4.B"]/self.weights["ssm4.sB"]) @ x.unsqueeze(-1))
-        state[0] = torch.round(self.weights["ssm4.sA"]*accA + (self.weights["ssm4.sB"]*self.weights["ssm4.sX"]/self.weights["ssm4.sH"]))
+        accA = torch.round(self.weights["ssm4.A"]/self.weights["ssm4.sA"]).unsqueeze(0) @ state[0]
+        accB = torch.round(self.weights["ssm4.B"]/self.weights["ssm4.sB"]) @ x.unsqueeze(-1)
+        state[0] = torch.round(self.weights["ssm4.sA"]*accA + (self.weights["ssm4.sB"]*self.weights["ssm4.sX"]/self.weights["ssm4.sH"])*accB)
     
-        accC = torch.round((self.weights["ssm4.C"]/self.weights["ssm4.sC"]) @ state[0].T).permute(1, 0, 2) # this is the updated state[0]
-        accD = torch.round(x.unsqueeze(-2) * (self.weights["ssm4.D"]/self.weights["ssm4.sD"]))
+        accC = (torch.round(self.weights["ssm4.C"]/self.weights["ssm4.sC"]) @ state[0].T).permute(1, 0, 2) # this is the updated state[0]
+        accD = x.unsqueeze(-2) * torch.round(self.weights["ssm4.D"]/self.weights["ssm4.sD"])
         x = torch.round((2*(self.weights["ssm4.sC"] * self.weights["ssm4.sH"] / self.weights["ssm4.sY"]) * accC).real + ((self.weights["ssm4.sD"]*self.weights["ssm4.sX"]/self.weights["ssm4.sY"]) * accD))
 
         del accA, accB, accC, accD
+
         # LeakyReLU
         x = self.act(u)
 
         # fc5
-        x = torch.round((self.weights["fc5.sW"]*self.weights["fc5.sX"]/self.weights["fc5.sY"]) * ((self.weights["fc5.weight"]/self.weights["fc5.sW"] @ x) + torch.round(self.weights["fc5.bias"]/(self.weights["fc5.sX"]*self.weights["fc5.sW"]))))
+        x = torch.round((self.weights["fc5.sW"]*self.weights["fc5.sX"]/self.weights["fc5.sY"]) * ((torch.round(self.weights["fc5.weight"]/self.weights["fc5.sW"]) @ x) + torch.round(self.weights["fc5.bias"]/(self.weights["fc5.sX"]*self.weights["fc5.sW"]))))
 
         # ssm6
-        accA = torch.round((self.weights["ssm6.A"]/self.weights["ssm6.sA"]).unsqueeze(0) @ state[0])
-        accB = torch.round((self.weights["ssm6.B"]/self.weights["ssm6.sB"]) @ x.unsqueeze(-1))
-        state[0] = torch.round(self.weights["ssm6.sA"]*accA + (self.weights["ssm6.sB"]*self.weights["ssm6.sX"]/self.weights["ssm6.sH"]))
+        accA = torch.round(self.weights["ssm6.A"]/self.weights["ssm6.sA"]).unsqueeze(0) @ state[0]
+        accB = torch.round(self.weights["ssm6.B"]/self.weights["ssm6.sB"]) @ x.unsqueeze(-1)
+        state[0] = torch.round(self.weights["ssm6.sA"]*accA + (self.weights["ssm6.sB"]*self.weights["ssm6.sX"]/self.weights["ssm6.sH"])*accB)
     
-        accC = torch.round((self.weights["ssm6.C"]/self.weights["ssm6.sC"]) @ state[0].T).permute(1, 0, 2) # this is the updated state[0]
-        accD = torch.round(x.unsqueeze(-2) * (self.weights["ssm6.D"]/self.weights["ssm6.sD"]))
+        accC = (torch.round(self.weights["ssm6.C"]/self.weights["ssm6.sC"]) @ state[0].T).permute(1, 0, 2) # this is the updated state[0]
+        accD = x.unsqueeze(-2) * torch.round(self.weights["ssm6.D"]/self.weights["ssm6.sD"])
         x = torch.round((2*(self.weights["ssm6.sC"] * self.weights["ssm6.sH"] / self.weights["ssm6.sY"]) * accC).real + ((self.weights["ssm6.sD"]*self.weights["ssm6.sX"]/self.weights["ssm6.sY"]) * accD))
 
-        del accA, accB, accC, accD 
+        del accA, accB, accC, accD
 
         # LeakyReLU
         x = self.act(u)
 
         # fc7
-        x = torch.round((self.weights["fc7.sW"]*self.weights["fc7.sX"]/self.weights["fc7.sY"]) * ((self.weights["fc7.weight"]/self.weights["fc7.sW"] @ x) + torch.round(self.weights["fc7.bias"]/(self.weights["fc7.sX"]*self.weights["fc7.sW"]))))
+        x = torch.round((self.weights["fc7.sW"]*self.weights["fc7.sX"]/self.weights["fc7.sY"]) * ((torch.round(self.weights["fc7.weight"]/self.weights["fc7.sW"]) @ x) + torch.round(self.weights["fc7.bias"]/(self.weights["fc7.sX"]*self.weights["fc7.sW"]))))
 
         # ssm8
-        accA = torch.round((self.weights["ssm8.A"]/self.weights["ssm8.sA"]).unsqueeze(0) @ state[0])
-        accB = torch.round((self.weights["ssm8.B"]/self.weights["ssm8.sB"]) @ x.unsqueeze(-1))
-        state[0] = torch.round(self.weights["ssm8.sA"]*accA + (self.weights["ssm8.sB"]*self.weights["ssm8.sX"]/self.weights["ssm8.sH"]))
+        accA = torch.round(self.weights["ssm8.A"]/self.weights["ssm8.sA"]).unsqueeze(0) @ state[0]
+        accB = torch.round(self.weights["ssm8.B"]/self.weights["ssm8.sB"]) @ x.unsqueeze(-1)
+        state[0] = torch.round(self.weights["ssm8.sA"]*accA + (self.weights["ssm8.sB"]*self.weights["ssm8.sX"]/self.weights["ssm8.sH"])*accB)
     
-        accC = torch.round((self.weights["ssm8.C"]/self.weights["ssm8.sC"]) @ state[0].T).permute(1, 0, 2) # this is the updated state[0]
-        accD = torch.round(x.unsqueeze(-2) * (self.weights["ssm8.D"]/self.weights["ssm8.sD"]))
+        accC = (torch.round(self.weights["ssm8.C"]/self.weights["ssm8.sC"]) @ state[0].T).permute(1, 0, 2) # this is the updated state[0]
+        accD = x.unsqueeze(-2) * torch.round(self.weights["ssm8.D"]/self.weights["ssm8.sD"])
         x = torch.round((2*(self.weights["ssm8.sC"] * self.weights["ssm8.sH"] / self.weights["ssm8.sY"]) * accC).real + ((self.weights["ssm8.sD"]*self.weights["ssm8.sX"]/self.weights["ssm8.sY"]) * accD))
 
-        del accA, accB, accC, accD 
+        del accA, accB, accC, accD
 
         # LeakyReLU
         x = self.act(u)
 
         # fc9
-        x = torch.round((self.weights["fc9.sW"]*self.weights["fc9.sX"]/self.weights["fc9.sY"]) * ((self.weights["fc9.weight"]/self.weights["fc9.sW"] @ x) + torch.round(self.weights["fc9.bias"]/(self.weights["fc9.sX"]*self.weights["fc9.sW"]))))
+        x = torch.round((self.weights["fc9.sW"]*self.weights["fc9.sX"]/self.weights["fc9.sY"]) * ((torch.round(self.weights["fc9.weight"]/self.weights["fc9.sW"]) @ x) + torch.round(self.weights["fc9.bias"]/(self.weights["fc9.sX"]*self.weights["fc9.sW"]))))
 
-       # fc10
-        x = torch.round((self.weights["fc10.sW"]*self.weights["fc10.sX"]/self.weights["fc10.sY"]) * ((self.weights["fc10.weight"]/self.weights["fc10.sW"] @ x) + torch.round(self.weights["fc10.bias"]/(self.weights["fc10.sX"]*self.weights["fc10.sW"]))))
+        # fc10
+        x = torch.round((self.weights["fc10.sW"]*self.weights["fc10.sX"]/self.weights["fc10.sY"]) * ((torch.round(self.weights["fc10.weight"]/self.weights["fc10.sW"]) @ x) + torch.round(self.weights["fc10.bias"]/(self.weights["fc10.sX"]*self.weights["fc10.sW"]))))
+
 
         # here x is a quantized output
         print(f"quantized x : {x}")
 
         # then we dequant to fp32 - this should be same/similar to output from original model
         x = x * self.weights["fc10.sY"]
+
+    def read_in_weights(self, address):
+        # TODO: fill in
 
 
 
