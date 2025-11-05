@@ -101,7 +101,7 @@ class qssm(nn.Module):
         # quantize on input
         x = torch.round(x / self.weights["fc1.sX"]) # quantized input
         # fc1
-        x = torch.round((self.weights["fc1.sW"]*self.weights["fc1.sX"]/self.weights["fc1.sY"]) * ((torch.round(self.weights["fc1.weight"]/self.weights["fc1.sW"]) @ x) + torch.round(self.weights["fc1.bias"]/(self.weights["fc1.sX"]*self.weights["fc1.sW"]))))
+        x = torch.round((self.weights["fc1.sW"]*self.weights["fc1.sX"]/self.weights["fc1.sY"]) * ((x @ torch.round(self.weights["fc1.weight"]/self.weights["fc1.sW"]).T) + torch.round(self.weights["fc1.bias"]/(self.weights["fc1.sX"]*self.weights["fc1.sW"]))))
         """ fc1.sW*fc1.sX / fc1.sY == M
             also, fc1.sY should = ssm2.sX """
         # ssm2
@@ -119,7 +119,7 @@ class qssm(nn.Module):
         x = self.act(u)
 
         # fc3
-        x = torch.round((self.weights["fc3.sW"]*self.weights["fc3.sX"]/self.weights["fc3.sY"]) * ((torch.round(self.weights["fc3.weight"]/self.weights["fc3.sW"]) @ x) + torch.round(self.weights["fc3.bias"]/(self.weights["fc3.sX"]*self.weights["fc3.sW"]))))
+        x = torch.round((self.weights["fc3.sW"]*self.weights["fc3.sX"]/self.weights["fc3.sY"]) * ((x @ torch.round(self.weights["fc3.weight"]/self.weights["fc3.sW"]).T) + torch.round(self.weights["fc3.bias"]/(self.weights["fc3.sX"]*self.weights["fc3.sW"]))))
         """ fc3.sW*fc3.sX / fc3.sY == M 
             fc3.sX should == ssm2.sY and fc3.sY == ssm4.sX"""
 
@@ -138,7 +138,7 @@ class qssm(nn.Module):
         x = self.act(u)
 
         # fc5
-        x = torch.round((self.weights["fc5.sW"]*self.weights["fc5.sX"]/self.weights["fc5.sY"]) * ((torch.round(self.weights["fc5.weight"]/self.weights["fc5.sW"]) @ x) + torch.round(self.weights["fc5.bias"]/(self.weights["fc5.sX"]*self.weights["fc5.sW"]))))
+        x = torch.round((self.weights["fc5.sW"]*self.weights["fc5.sX"]/self.weights["fc5.sY"]) * ((x @ torch.round(self.weights["fc5.weight"]/self.weights["fc5.sW"]).T) + torch.round(self.weights["fc5.bias"]/(self.weights["fc5.sX"]*self.weights["fc5.sW"]))))
 
         # ssm6
         accA = torch.round(self.weights["ssm6.A"]/self.weights["ssm6.sA"]).unsqueeze(0) @ state[0]
@@ -155,7 +155,7 @@ class qssm(nn.Module):
         x = self.act(u)
 
         # fc7
-        x = torch.round((self.weights["fc7.sW"]*self.weights["fc7.sX"]/self.weights["fc7.sY"]) * ((torch.round(self.weights["fc7.weight"]/self.weights["fc7.sW"]) @ x) + torch.round(self.weights["fc7.bias"]/(self.weights["fc7.sX"]*self.weights["fc7.sW"]))))
+        x = torch.round((self.weights["fc7.sW"]*self.weights["fc7.sX"]/self.weights["fc7.sY"]) * ((x @ torch.round(self.weights["fc7.weight"]/self.weights["fc7.sW"]).T) + torch.round(self.weights["fc7.bias"]/(self.weights["fc7.sX"]*self.weights["fc7.sW"]))))
 
         # ssm8
         accA = torch.round(self.weights["ssm8.A"]/self.weights["ssm8.sA"]).unsqueeze(0) @ state[0]
@@ -172,10 +172,10 @@ class qssm(nn.Module):
         x = self.act(u)
 
         # fc9
-        x = torch.round((self.weights["fc9.sW"]*self.weights["fc9.sX"]/self.weights["fc9.sY"]) * ((torch.round(self.weights["fc9.weight"]/self.weights["fc9.sW"]) @ x) + torch.round(self.weights["fc9.bias"]/(self.weights["fc9.sX"]*self.weights["fc9.sW"]))))
+        x = torch.round((self.weights["fc9.sW"]*self.weights["fc9.sX"]/self.weights["fc9.sY"]) * ((x @ torch.round(self.weights["fc9.weight"]/self.weights["fc9.sW"]).T) + torch.round(self.weights["fc9.bias"]/(self.weights["fc9.sX"]*self.weights["fc9.sW"]))))
 
         # fc10
-        x = torch.round((self.weights["fc10.sW"]*self.weights["fc10.sX"]/self.weights["fc10.sY"]) * ((torch.round(self.weights["fc10.weight"]/self.weights["fc10.sW"]) @ x) + torch.round(self.weights["fc10.bias"]/(self.weights["fc10.sX"]*self.weights["fc10.sW"]))))
+        x = torch.round((self.weights["fc10.sW"]*self.weights["fc10.sX"]/self.weights["fc10.sY"]) * ((x @ torch.round(self.weights["fc10.weight"]/self.weights["fc10.sW"]).T) + torch.round(self.weights["fc10.bias"]/(self.weights["fc10.sX"]*self.weights["fc10.sW"]))))
 
 
         # here x is a quantized output
