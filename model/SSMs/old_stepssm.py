@@ -42,10 +42,9 @@ class stepSSM(nn.Module):
 
 
     def forward(self, u, state):
-        next_state = contract("h n, b h n -> b h n", self.dA, state) \
-            + contract("h n, b h -> b h n", self.dB, u)
-        y = contract("c h n, b h n -> b c h", self.dC, next_state)
-
+        next_state = (self.dA.unsqueeze(0) * state) + (self.dB * u.unsqueeze(-1))
+        y = (self.dC.unsqueeze(1) * next_state.unsqueeze(0)).sum(-1).permute(1, 0, 2)
+        
         y, next_state = 2*y.real, next_state
 
         y = y.float()
