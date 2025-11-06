@@ -20,30 +20,36 @@ import opt_einsum as oe
 
 contract = oe.contract
 
-
 # class to record mean and std of activation data in a rolling manner as we perform inference
+# should also work for complex numbers (hidden states are complex activations, other inputs are non complex吧)
 class RollingStats:
     def __init__(self):
         self.n = 0
-        self.mean = 0.0
-        self.M2 = 0.0  # sum of squares of differences from the current mean
+        self.mean = torch.tensor(0+0j, dtype=torch.cfloat)
+        self.M2 = torch.tensor(0+0j, dtype=torch.cfloat) # sum of squares differences from the current mean
 
     def update(self, x):
         # x is a tensor of activations, flatten it
-        x = x.detach().cpu().float().view(-1)
+        x = x.detach().cpu().view(-1)
         for value in x:
             self.n += 1
             delta = value - self.mean
             self.mean += delta / self.n
             delta2 = value - self.mean
-            self.M2 += delta * delta2
+            self.M2 += delta * delta2.conj()
 
     def get_scaling_factor(self):
         if self.n < 2:
-            return self.mean, float('nan')
-        std = (self.M2 / (self.n - 1)) ** 0.5
+            return self.mean, float('nan'), float('nan')
+
+        std = (self.M2.real / (self.n - 1)) ** 0.5
+        low = self.mean - 3*std
+        high = self.mean + 3*std
+        limit_low = max(abs(low.real.item()), abs(low.imag.item()))
+        limit_high = max(abs(high.real.item()), abs(high.imag.item()))
         limit = max(self.mean - 3*std, self.mean + 3*std, key=abs)
-        sf = 127 / limit
+
+        sf = 127 / limit # i want this to break if the limit is exactly 0
 
         return self.mean, std, sf
 
@@ -149,6 +155,43 @@ class stepSSM(nn.Module):
                 rolling.update(out)
 
         return hook
+
+    def register_scale_factors(self):
+        for name, rolling_list in self.activation_stats.items():
+            for idx, rolling_stats in enumerate(rolling_list):
+                if rolling_stats.n < 2:
+                    print(f"Warning: Insufficient samples for {name} output {idx}")
+                    raise CustomError("Not enough statistics were collected for the activations")
+                
+                mean, std, sf = rolling_stats.get_scaling_factor()
+
+                # Register scale factor as buffer
+                buffer_name_sf = f"{name}_output{idx}_sf"
+                self.register_buffer(buffer_name_sf, torch.tensor(sf))
+
+    def write_model_weights(self):
+        '''Write the model weights to a dictionary for qssm to read in
+        We can calculate the scaling factors for the model weights in this function 
+        just before we write them to the dict'''
+
+
+
+
+    '''notes
+    Basically I need one function which is going to convert all of the statistics that have been gradually
+    accumulated into scaling factors and save them as buffers. Do saved buffers also get written to model weights- yes.
+
+    Then I need another function that is going to go through all the saved model weights and pick out scaling factors for them
+
+    Once I have done this maybe we need a function to save the model's weights.
+
+    And then I need a mapping that will map those weights to the weights that qssm is expecting to read in.
+    
+    The question is do I write the model write weights code as part of this model internally as a method or as part
+    of the outside script?
+    '''
+
+    
 
 
 
