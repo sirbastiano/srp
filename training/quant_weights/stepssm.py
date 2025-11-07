@@ -68,7 +68,7 @@ class ssm_layer(nn.Module):
         y, next_state = 2*y.real, next_state
         y = y.float()
         y = y + u.unsqueeze(-2) * self.D
-        y = rearrange(y, '...c h -> ... (c h)')
+        y = rearrange(y, '... c h -> ... (c h)')
         
         return y, next_state
 

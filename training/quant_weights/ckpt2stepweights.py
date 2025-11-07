@@ -16,6 +16,8 @@ model = sarSSM(num_layers=4, d_state=8, activation_function='leakyrelu')
 
 model.load_state_dict(model_dict)
 
+torch.save(model.state_dict(), 'sarSSM_weights.pth')
+
 _ = model.setup_step(1)
 
 print(model.state_dict())
