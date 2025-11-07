@@ -173,6 +173,8 @@ class stepSSM(nn.Module):
         '''Write the model weights to a dictionary for qssm to read in
         We can calculate the scaling factors for the model weights in this function 
         just before we write them to the dict'''
+        for param_tensor in model.state_dict():
+            print(f"{param_tensor}: {model.state_dict()[param_tensor].size()}")
 
 
 
