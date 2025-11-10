@@ -4,6 +4,9 @@
 # Data directory
 data_dir: "/home/zeshan/projects/sarSSM/data/maya4_data/validation"
 
+model: 
+  name: "stepssm"
+
 
 # TODO: do I still need these parameters?
 # Training configuration for knowledge distillation
@@ -66,7 +69,7 @@ dataloader:
     batch_size: 32
     samples_per_prod: 90000
     patch_order: "row"
-    max_products: 1
+    max_products: 6
     filters: {
       "years": [2024],
       "polarizations": ["hh"]
@@ -86,7 +89,7 @@ dataloader:
     batch_size: 32
     samples_per_prod: 90000
     patch_order: "row"
-    max_products: 1
+    max_products: 6
     filters: {
       "years": [2024],
       "polarizations": ["hh"]
