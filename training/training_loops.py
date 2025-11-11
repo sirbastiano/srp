@@ -218,6 +218,7 @@ class TrainerBase(pl.LightningModule):
             unique_img_path = f"{base_name}_file{zfile}{ext}"
             unique_metrics_path = f"{os.path.splitext(metrics_save_path)[0]}_file{zfile}.json"
             
+            # Save metrics to JSON
             with open(os.path.join(self.base_save_dir, unique_metrics_path), 'w') as f:
                 json.dump(metrics, f)
                 
@@ -226,46 +227,49 @@ class TrainerBase(pl.LightningModule):
             if matplotlib.get_backend() == 'Agg':
                 matplotlib.use('TkAgg')  # or another interactive backend
             
+            # Get denormalized data for histograms
             gt_denorm = loader.dataset.transform.inverse(gt, level=loader.dataset.level_to)
             pred_denorm = loader.dataset.transform.inverse(pred, level=loader.dataset.level_to)
-            fig = display_inference_results(
+            
+            # Import the new comprehensive visualization function
+            from training.visualize import create_comprehensive_visualization
+            
+            # Create comprehensive visualization with images, histograms, and metrics table
+            fig = create_comprehensive_visualization(
                 input_data=input,
                 gt_data=gt,
                 pred_data=pred,
-                figsize=figsize,
-                vminmax=vminmax,  
-                show=True, 
-                save=True,
-                save_path=os.path.join(self.base_save_dir, unique_img_path),
-                return_figure=True, 
+                gt_denorm=gt_denorm,
+                pred_denorm=pred_denorm,
+                metrics=metrics,
+                figsize=(20, 18),
+                vminmax=vminmax,
                 level_from=loader.dataset.level_from.upper(),
-                level_to=loader.dataset.level_to.upper()
+                level_to=loader.dataset.level_to.upper(),
+                bins=100
             )
-            hist = plot_intensity_histograms(gt, pred, gt_denorm, pred_denorm, plot=False, return_figure=True, save=True, save_path=os.path.join(self.base_save_dir, f"hist_{unique_img_path}"))
             
-            # Log inference image to WandB if available
+            # Save the comprehensive visualization
+            save_path = os.path.join(self.base_save_dir, unique_img_path)
+            fig.savefig(save_path, dpi=150, bbox_inches='tight')
+            logging.info(f"Saved comprehensive visualization to {save_path}")
+            
+            # Log to WandB if available
             if WANDB_AVAILABLE and hasattr(self.logger, 'experiment') and fig is not None:
                 try:
                     import matplotlib.pyplot as plt
                     from PIL import Image
                     import io
                     
-                    # Convert inference comparison to WandB image
-                    buf1 = io.BytesIO()
-                    fig.savefig(buf1, format='png', dpi=150, bbox_inches='tight')
-                    buf1.seek(0)
-                    img = Image.open(buf1)
-
-                    # Convert histogram to WandB image
-                    buf2 = io.BytesIO()
-                    hist.savefig(buf2, format='png', dpi=150, bbox_inches='tight')
-                    buf2.seek(0)
-                    h_img = Image.open(buf2)
+                    # Convert figure to WandB image
+                    buf = io.BytesIO()
+                    fig.savefig(buf, format='png', dpi=150, bbox_inches='tight')
+                    buf.seek(0)
+                    img = Image.open(buf)
                     
-                    # Prepare WandB logging dict with images and metrics
+                    # Prepare WandB logging dict with comprehensive visualization and metrics
                     wandb_log_dict = {
-                        f"inference_comparison_file{zfile}": wandb.Image(img, caption=f"Epoch {self.current_epoch}, File {zfile}"),
-                        f"histogram_file{zfile}": wandb.Image(h_img, caption=f"Epoch {self.current_epoch}, File {zfile}"),
+                        f"comprehensive_viz_file{zfile}": wandb.Image(img, caption=f"Epoch {self.current_epoch}, File {zfile}"),
                         "epoch": self.current_epoch,
                     }
                     
@@ -276,20 +280,19 @@ class TrainerBase(pl.LightningModule):
                     # Log everything to WandB
                     self.logger.experiment.log(wandb_log_dict)
                     
-                    buf1.close()
-                    buf2.close()
+                    buf.close()
                 except Exception as e:
-                    pass  # Fail silently to not interrupt training
+                    logging.warning(f"WandB logging failed: {str(e)}")
                 finally:
-                    # Close figures only after WandB logging is complete
+                    # Close figure only after WandB logging is complete
                     if fig is not None:
                         import matplotlib.pyplot as plt
                         plt.close(fig)
-                    if hist is not None:
-                        import matplotlib.pyplot as plt
-                        plt.close(hist)
-            
-            # gt, pred = self.preprocess_output_and_prediction_before_comparison(gt, pred)
+            else:
+                # Close figure if not logging to WandB
+                if fig is not None:
+                    import matplotlib.pyplot as plt
+                    plt.close(fig)
 
         except Exception as e:
             print(f"Visualization failed with error: {str(e)}")
@@ -903,14 +906,21 @@ def get_training_loop_by_model_name(
         loss_fn_name: str = "mse", 
         mode: str = 'parallel', 
         scheduler_type: str = 'cosine', 
-        num_epochs: int = 250, 
+        num_epochs: int = 250,
+        epochs: Optional[int] = None,  # Alternative name for num_epochs from YAML 
         logger: Optional[pl.loggers.Logger] = None, 
         device_no: int= 0, 
         input_dim: int = 3, 
         patience: int = 50,
         use_masked_reconstruction: bool = False,  # New parameter for masked reconstruction
+        check_val_every_n_epoch: int = 1,  # Validate every N epochs
+        val_check_interval: Optional[Union[int, float]] = None,  # Validate every N steps (or fraction of epoch)
         **kwargs  # Accept additional parameters to prevent TypeError
     ) -> Tuple[TrainerBase, pl.Trainer]:
+    
+    # Handle epochs vs num_epochs
+    if epochs is not None:
+        num_epochs = epochs
 
     if model_name == 'cv_transformer' or 'spatial_cv_transformer' in model_name:
         lightning_model = TrainCVTransformer(
@@ -948,26 +958,71 @@ def get_training_loop_by_model_name(
             mode=mode,
             scheduler_type=scheduler_type,
             real=('final' in model_name.lower()), 
-            input_dim=input_dim
+            input_dim=input_dim, 
+            step_mode=kwargs.get('step_mode', False)
         )
     else:
         raise ValueError(f"Unsupported model type: {model_name}")
     
+    # Debug: Print validation configuration
+    print(f"\n{'='*60}")
+    print(f"VALIDATION CONFIGURATION:")
+    print(f"  Epochs: {num_epochs} | Val every {check_val_every_n_epoch} epoch(s)")
+    print(f"  Train batches: {len(train_loader)} | Val batches: {len(val_loader)}")
+    print(f"  Train dataset files: {len(train_loader.dataset.get_files())}")
+    print(f"  Val dataset files: {len(val_loader.dataset.get_files())}")
+    print(f"  Train sampler length: {len(train_loader.sampler)}")
+    print(f"  Val sampler length: {len(val_loader.sampler)}")
+    print(f"{'='*60}\n")
+    
     # Create early stopping callback
+    # Use check_on_train_epoch_end=False to only check after validation runs
     early_stop_callback = EarlyStopping(
         monitor='val_loss',
         patience=patience,
         verbose=True,
-        mode='min'
+        mode='min',
+        check_on_train_epoch_end=False  # Only check after validation, not after every training epoch
     )
     
-    trainer = pl.Trainer(max_epochs=num_epochs,
-                        logger=logger,
-                        devices=[device_no],
-                        fast_dev_run=False,
-                        log_every_n_steps=1,
-                        accelerator="gpu" if torch.cuda.is_available() else "cpu",
-                        enable_progress_bar=True,
-                        callbacks=[early_stop_callback]
-                        )
+    # Build trainer configuration
+    trainer_kwargs = {
+        'max_epochs': num_epochs,
+        'logger': logger,
+        'devices': [device_no],
+        'fast_dev_run': False,
+        'log_every_n_steps': 1,
+        'accelerator': "gpu" if torch.cuda.is_available() else "cpu",
+        'enable_progress_bar': True,
+        'callbacks': [early_stop_callback],
+        'check_val_every_n_epoch': check_val_every_n_epoch,  # Run validation every N epochs  
+        'num_sanity_val_steps': 2,  # Run 2 validation steps as sanity check (we see this working)
+        'limit_val_batches': 15,  # FORCE limit to match actual available batches (was seeing 17)
+        'val_check_interval': 1.0,  # FORCE validation at end of every epoch (overrides check_val_every_n_epoch)
+    }
+    
+    # Add val_check_interval if specified (overrides check_val_every_n_epoch)
+    if val_check_interval is not None:
+        trainer_kwargs['val_check_interval'] = val_check_interval
+    
+    # Filter out any kwargs that might interfere with validation
+    # Remove training-specific parameters that shouldn't go to Trainer
+    excluded_keys = {
+        'lr', 'weight_decay', 'warmup_epochs', 'warmup_start_lr', 'mode',
+        'save_dir', 'loss_fn', 'lambda_rec', 'lambda_focus', 'lambda_dist',
+        'lambda_tv', 'rec_loss_type', 'focus_metric', 'dist_metric',
+        'use_tv', 'use_adaptive_weights', 'wandb_project', 'wandb_entity',
+        'wandb_tags', 'epochs', 'scheduler_type'
+    }
+    
+    # Add any valid Trainer kwargs that aren't excluded
+    for key, value in kwargs.items():
+        if key not in excluded_keys and key not in trainer_kwargs:
+            # Only add if it's a valid Trainer parameter
+            if key in ['gradient_clip_val', 'gradient_clip_algorithm', 'accumulate_grad_batches',
+                      'precision', 'max_steps', 'min_steps', 'limit_train_batches',
+                      'limit_val_batches', 'limit_test_batches']:
+                trainer_kwargs[key] = value
+    
+    trainer = pl.Trainer(**trainer_kwargs)
     return lightning_model, trainer
