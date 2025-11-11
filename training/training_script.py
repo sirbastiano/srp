@@ -378,7 +378,8 @@ def create_dataloader_from_config(data_dir, dataloader_cfg, split_cfg, transform
         'concat_axis': dataloader_cfg.get('concat_axis', 0),
         'positional_encoding': dataloader_cfg.get('positional_encoding', True),
         'transform': transforms,
-        'block_pattern': split_cfg.get('block_pattern', None)
+        'block_pattern': split_cfg.get('block_pattern', None), 
+        'use_balanced_sampling': dataloader_cfg.get('use_balanced_sampling', False)
     }
     
     split_config = {
@@ -853,6 +854,11 @@ def main():
     parser.add_argument('--wandb_project', type=str, default='ssm4sar', help='WandB project name')
     parser.add_argument('--wandb_entity', type=str, help='WandB entity name')
     
+    # PyTorch Lightning trainer arguments (for validation fix)
+    parser.add_argument('--limit_val_batches', type=int, help='Limit validation batches (fixes dataloader length mismatch)')
+    parser.add_argument('--val_check_interval', type=float, help='Validation check interval (1.0 = every epoch)')
+    parser.add_argument('--check_val_every_n_epoch', type=int, help='Run validation every N epochs')
+    
     args = parser.parse_args()
     
     # Load configuration
@@ -962,6 +968,14 @@ def main():
     
     else:
         # Single configuration training
+        # Add PyTorch Lightning trainer arguments to config
+        if args.limit_val_batches is not None:
+            config['training']['limit_val_batches'] = args.limit_val_batches
+        if args.val_check_interval is not None:
+            config['training']['val_check_interval'] = args.val_check_interval
+        if args.check_val_every_n_epoch is not None:
+            config['training']['check_val_every_n_epoch'] = args.check_val_every_n_epoch
+        
         result = train_single_config(
             config=config,
             base_save_dir=args.save_dir,
