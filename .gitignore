@@ -11,9 +11,13 @@ venv.bak/
 # *.yaml
 SSM4SAR
 wandb
-deimos
+deimos_notebooks
+training
 
 
+
+*.csv
+*.png
 hparams.yaml
 metrics_*.json
 results/
