@@ -25,7 +25,7 @@ ENV LD_LIBRARY_PATH ".:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server/:$
 ENV JAVA_HOME "/usr/lib/jvm/java-8-openjdk-amd64"
 
 # Download and install SNAP directly
-RUN wget -q https://download.esa.int/step/snap/11.0/installers/esa-snap_sentinel_linux-11.0.0.sh -O /tmp/snap_installer.sh && \
+RUN wget -q https://download.esa.int/step/snap/12.0/installers/esa-snap_all_linux-12.0.0.sh -O /tmp/snap_installer.sh && \
     chmod +x /tmp/snap_installer.sh && \
     /tmp/snap_installer.sh -q -dir /usr/local/snap && \
     rm /tmp/snap_installer.sh
@@ -48,7 +48,6 @@ RUN apt-get update && apt-get install -y \
     cmake \
     libc6-dev \
     curl \
-    tmux \
     && rm -rf /var/lib/apt/lists/*
 
 ENV LD_LIBRARY_PATH ".:$LD_LIBRARY_PATH"
@@ -65,20 +64,15 @@ COPY Makefile /workspace/
 COPY pdm.lock /workspace/
 COPY pyproject.toml /workspace/
 COPY sarpyx /workspace/sarpyx/
-COPY scripts_rel /workspace/scripts/
-COPY pyscripts_rel /workspace/pyscripts/
-COPY notebooks /workspace/notebooks/
-# Make sure the logs directory exists
-RUN mkdir -p /workspace/logs
 
 WORKDIR /workspace
 
 # Install the package and Jupyter
 RUN pip install pdm jupyter jupyterlab ipykernel
-RUN cd sarpyx && pdm install 
+RUN cd sarpyx && pdm install && pdm add lxml
 
 # Install sarpyx as a Jupyter kernel
-RUN python -m ipykernel install --user --name=sarpyx --display-name="SAR Python (sarpyx-11.0)"
+RUN python -m ipykernel install --user --name=sarpyx --display-name="SAR Python (sarpyx-12.0)"
 
 # Create a startup script
 RUN echo '#!/bin/bash\n\
