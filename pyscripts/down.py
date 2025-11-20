@@ -33,7 +33,7 @@ def main(args):
     download(
         s3_path=df.iloc[0]['S3Path'],  # Get the S3 path of the product,
         output_dir=args.output_dir, 
-        config_file='/Data_large/marine/PythonProjects/SAR/sarpyx/.s5cfg',
+        config_file='/workspace/.s5cfg',
     )
     sys.exit(0)
     

@@ -15,7 +15,7 @@
 
 
 <p align="center">
-    <img src="assets/sarpyx_logo.png" alt="sarpyx logo" width="1200"/>
+    <img src="src/sarpyx_logo.png" alt="sarpyx logo" width="1200"/>
 </p>
 
 
