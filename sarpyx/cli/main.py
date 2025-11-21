@@ -10,6 +10,10 @@ import sys
 from typing import List
 
 from .shipdet import main as shipdet_main
+from .decode import main as decode_main
+from .focus import main as focus_main
+from .unzip import main as unzip_main
+from .upload import main as upload_main
 
 
 def create_main_parser() -> argparse.ArgumentParser:
@@ -25,10 +29,18 @@ def create_main_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Available commands:
+  decode     Decode Sentinel-1 Level-0 products to zarr format
+  focus      Focus SAR data using Range-Doppler Algorithm
   shipdet    Ship detection using SNAP GPT engine
+  unzip      Extract SAR data from zip archives
+  upload     Upload data to Hugging Face Hub
   
 Examples:
+  sarpyx decode --input /path/to/file.dat --output /path/to/output
+  sarpyx focus --input /path/to/data.zarr --output /path/to/output
   sarpyx shipdet --product-path /path/to/S1A_*.SAFE --outdir /path/to/output
+  sarpyx unzip --input /path/to/file.zip --output /path/to/output
+  sarpyx upload --folder /path/to/folder --repo username/dataset-name
   
 For command-specific help:
   sarpyx <command> --help
@@ -48,17 +60,117 @@ For command-specific help:
         metavar='<command>'
     )
     
+    # Decode subcommand
+    decode_parser = subparsers.add_parser(
+        'decode',
+        help='Decode Sentinel-1 Level-0 products to zarr format',
+        description='Decode S1 L0 products (.dat files or .SAFE folders) to zarr format'
+    )
+    _add_decode_arguments(decode_parser)
+    
+    # Focus subcommand
+    focus_parser = subparsers.add_parser(
+        'focus',
+        help='Focus SAR data using Range-Doppler Algorithm',
+        description='Focus SAR data from zarr files using CoarseRDA processor'
+    )
+    _add_focus_arguments(focus_parser)
+    
     # Ship detection subcommand
     shipdet_parser = subparsers.add_parser(
         'shipdet',
         help='Ship detection using SNAP GPT engine',
         description='Detect ships in SAR data using adaptive thresholding and object discrimination'
     )
-    
-    # Add shipdet arguments
     _add_shipdet_arguments(shipdet_parser)
     
+    # Unzip subcommand
+    unzip_parser = subparsers.add_parser(
+        'unzip',
+        help='Extract SAR data from zip archives',
+        description='Extract zip files containing SAR data'
+    )
+    _add_unzip_arguments(unzip_parser)
+    
+    # Upload subcommand
+    upload_parser = subparsers.add_parser(
+        'upload',
+        help='Upload data to Hugging Face Hub',
+        description='Upload processed SAR data to Hugging Face Hub'
+    )
+    _add_upload_arguments(upload_parser)
+    
     return parser
+
+
+def _add_decode_arguments(parser: argparse.ArgumentParser) -> None:
+    """
+    Add arguments for the decode subcommand.
+    
+    Args:
+        parser: The subparser for decode command.
+    """
+    parser.add_argument(
+        '--input',
+        type=str,
+        required=True,
+        help='Path to .dat file or .SAFE folder'
+    )
+    parser.add_argument(
+        '--output',
+        type=str,
+        default='./decoded_data',
+        help='Output directory for decoded files (default: ./decoded_data)'
+    )
+    parser.add_argument(
+        '--verbose',
+        '-v',
+        action='store_true',
+        help='Enable verbose logging'
+    )
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help='Enable debug logging'
+    )
+
+
+def _add_focus_arguments(parser: argparse.ArgumentParser) -> None:
+    """
+    Add arguments for the focus subcommand.
+    
+    Args:
+        parser: The subparser for focus command.
+    """
+    parser.add_argument(
+        '--input',
+        type=str,
+        required=True,
+        help='Input zarr file path'
+    )
+    parser.add_argument(
+        '--output',
+        type=str,
+        default='./focused_data',
+        help='Output directory (default: ./focused_data)'
+    )
+    parser.add_argument(
+        '--slice-height',
+        type=int,
+        default=15000,
+        help='Slice height for processing (default: 15000)'
+    )
+    parser.add_argument(
+        '--verbose',
+        '-v',
+        action='store_true',
+        help='Enable verbose output'
+    )
+    parser.add_argument(
+        '--keep-tmp',
+        action='store_true',
+        help='Keep temporary files after processing'
+    )
 
 
 def _add_shipdet_arguments(parser: argparse.ArgumentParser) -> None:
@@ -171,6 +283,73 @@ def _add_shipdet_arguments(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def _add_unzip_arguments(parser: argparse.ArgumentParser) -> None:
+    """
+    Add arguments for the unzip subcommand.
+    
+    Args:
+        parser: The subparser for unzip command.
+    """
+    parser.add_argument(
+        '--input',
+        type=str,
+        required=True,
+        help='Path to zip file or directory containing zip files'
+    )
+    parser.add_argument(
+        '--output',
+        type=str,
+        default='./extracted_data',
+        help='Output directory for extracted files (default: ./extracted_data)'
+    )
+    parser.add_argument(
+        '--recursive',
+        '-r',
+        action='store_true',
+        help='Recursively search for zip files in subdirectories'
+    )
+    parser.add_argument(
+        '--verbose',
+        '-v',
+        action='store_true',
+        help='Enable verbose logging'
+    )
+
+
+def _add_upload_arguments(parser: argparse.ArgumentParser) -> None:
+    """
+    Add arguments for the upload subcommand.
+    
+    Args:
+        parser: The subparser for upload command.
+    """
+    parser.add_argument(
+        '--folder',
+        type=str,
+        required=True,
+        help='Path to the folder to upload'
+    )
+    parser.add_argument(
+        '--repo',
+        type=str,
+        required=True,
+        help='Repository ID in format username/repo-name'
+    )
+    parser.add_argument(
+        '--repo-type',
+        type=str,
+        default='dataset',
+        choices=['dataset', 'model', 'space'],
+        help='Type of repository (default: dataset)'
+    )
+    parser.add_argument(
+        '--verbose',
+        '-v',
+        action='store_true',
+        help='Enable verbose logging'
+    )
+
+
 def main() -> None:
     """
     Main entry point for sarpyx CLI.
@@ -184,21 +363,31 @@ def main() -> None:
         sys.exit(1)
     
     # Route to appropriate command handler
-    if args.command == 'shipdet':
-        # Modify sys.argv to make it look like shipdet was called directly
-        # This allows the shipdet main function to work correctly
-        original_argv = sys.argv.copy()
-        sys.argv = ['sarpyx-shipdet'] + [arg for arg in original_argv[2:]]
-        
-        try:
+    original_argv = sys.argv.copy()
+    
+    try:
+        if args.command == 'decode':
+            sys.argv = ['sarpyx-decode'] + [arg for arg in original_argv[2:]]
+            decode_main()
+        elif args.command == 'focus':
+            sys.argv = ['sarpyx-focus'] + [arg for arg in original_argv[2:]]
+            focus_main()
+        elif args.command == 'shipdet':
+            sys.argv = ['sarpyx-shipdet'] + [arg for arg in original_argv[2:]]
             shipdet_main()
-        except SystemExit as e:
-            sys.exit(e.code)
-        finally:
-            sys.argv = original_argv
-    else:
-        print(f'Unknown command: {args.command}', file=sys.stderr)
-        sys.exit(1)
+        elif args.command == 'unzip':
+            sys.argv = ['sarpyx-unzip'] + [arg for arg in original_argv[2:]]
+            unzip_main()
+        elif args.command == 'upload':
+            sys.argv = ['sarpyx-upload'] + [arg for arg in original_argv[2:]]
+            upload_main()
+        else:
+            print(f'Unknown command: {args.command}', file=sys.stderr)
+            sys.exit(1)
+    except SystemExit as e:
+        sys.exit(e.code)
+    finally:
+        sys.argv = original_argv
 
 
 if __name__ == '__main__':

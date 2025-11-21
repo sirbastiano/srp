@@ -10,7 +10,157 @@ This directory contains command-line interface tools for SARPyX, providing easy 
 sarpyx --help
 ```
 
-The main `sarpyx` command provides access to all CLI tools through subcommands.
+The main `sarpyx` command provides access to all CLI tools through subcommands:
+- `decode` - Decode Sentinel-1 Level-0 products to zarr format
+- `focus` - Focus SAR data using Range-Doppler Algorithm
+- `shipdet` - Ship detection using SNAP GPT engine
+- `unzip` - Extract SAR data from zip archives
+- `upload` - Upload data to Hugging Face Hub
+
+### Decode (`decode`)
+
+Decode Sentinel-1 Level-0 products (.dat files or .SAFE folders) to zarr format.
+
+#### Basic Usage
+
+```bash
+# Decode a single .dat file
+sarpyx decode --input /path/to/file.dat --output /path/to/output
+
+# Decode all .dat files in a .SAFE folder
+sarpyx decode --input /path/to/S1A_*.SAFE --output /path/to/output
+
+# Direct command (also available)
+sarpyx-decode --input /path/to/file.dat --output /path/to/output
+```
+
+#### Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `--input` | str | Required | Path to .dat file or .SAFE folder |
+| `--output` | str | ./decoded_data | Output directory for decoded files |
+| `--verbose` | bool | False | Enable verbose logging |
+| `--debug` | bool | False | Enable debug logging |
+
+### Focus (`focus`)
+
+Focus SAR data using the Range-Doppler Algorithm (CoarseRDA) processor.
+
+#### Basic Usage
+
+```bash
+# Focus a zarr file
+sarpyx focus --input /path/to/data.zarr --output /path/to/output
+
+# Direct command (also available)
+sarpyx-focus --input /path/to/data.zarr --output /path/to/output
+```
+
+#### Advanced Usage
+
+```bash
+# Focus with custom slice height and keep temporary files
+sarpyx focus \
+  --input /path/to/decoded_data.zarr \
+  --output /path/to/focused_output \
+  --slice-height 20000 \
+  --keep-tmp \
+  --verbose
+```
+
+#### Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `--input` | str | Required | Input zarr file path |
+| `--output` | str | ./focused_data | Output directory |
+| `--slice-height` | int | 15000 | Slice height for processing |
+| `--verbose` | bool | False | Enable verbose output |
+| `--keep-tmp` | bool | False | Keep temporary files after processing |
+
+### Unzip (`unzip`)
+
+Extract SAR data from zip archives.
+
+#### Basic Usage
+
+```bash
+# Extract a single zip file
+sarpyx unzip --input /path/to/file.zip --output /path/to/output
+
+# Extract all zip files in a directory
+sarpyx unzip --input /path/to/directory --output /path/to/output
+
+# Direct command (also available)
+sarpyx-unzip --input /path/to/file.zip --output /path/to/output
+```
+
+#### Advanced Usage
+
+```bash
+# Extract recursively from nested directories
+sarpyx unzip \
+  --input /path/to/directory \
+  --output /path/to/output \
+  --recursive \
+  --verbose
+```
+
+#### Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `--input` | str | Required | Path to zip file or directory containing zip files |
+| `--output` | str | ./extracted_data | Output directory for extracted files |
+| `--recursive` | bool | False | Recursively search for zip files in subdirectories |
+| `--verbose` | bool | False | Enable verbose logging |
+
+### Upload (`upload`)
+
+Upload processed SAR data to Hugging Face Hub.
+
+#### Basic Usage
+
+```bash
+# Upload a folder to a dataset repository
+sarpyx upload --folder /path/to/folder --repo username/dataset-name
+
+# Direct command (also available)
+sarpyx-upload --folder /path/to/folder --repo username/dataset-name
+```
+
+#### Advanced Usage
+
+```bash
+# Upload to a model repository
+sarpyx upload \
+  --folder /path/to/model \
+  --repo username/model-name \
+  --repo-type model \
+  --verbose
+```
+
+#### Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `--folder` | str | Required | Path to the folder to upload |
+| `--repo` | str | Required | Repository ID in format username/repo-name |
+| `--repo-type` | str | dataset | Type of repository (dataset, model, space) |
+| `--verbose` | bool | False | Enable verbose logging |
+
+#### Authentication
+
+You need to be authenticated with Hugging Face. Set up authentication:
+
+```bash
+# Option 1: Use CLI login
+huggingface-cli login
+
+# Option 2: Set environment variable
+export HF_TOKEN=your_token_here
+```
 
 ### Ship Detection (`shipdet`)
 
@@ -196,10 +346,83 @@ Ship detection outputs include:
 sarpyx --help
 
 # Command-specific help
+sarpyx decode --help
+sarpyx focus --help
 sarpyx shipdet --help
+sarpyx unzip --help
+sarpyx upload --help
 
 # Version information
 sarpyx --version
+```
+
+## Complete Workflow Examples
+
+### Example 1: Full Processing Pipeline (Level-0 to Focused SAR)
+
+```bash
+# Step 1: Extract zip file
+sarpyx unzip \
+  --input /data/S1A_RAW_20250531.zip \
+  --output /data/extracted \
+  --verbose
+
+# Step 2: Decode Level-0 data
+sarpyx decode \
+  --input /data/extracted/S1A_*.SAFE \
+  --output /data/decoded \
+  --verbose
+
+# Step 3: Focus the SAR data
+sarpyx focus \
+  --input /data/decoded/S1A_*.zarr \
+  --output /data/focused \
+  --verbose
+
+# Step 4: Upload to Hugging Face
+sarpyx upload \
+  --folder /data/focused \
+  --repo username/sar-focused-data \
+  --verbose
+```
+
+### Example 2: Ship Detection Workflow
+
+```bash
+# Step 1: Extract downloaded data
+sarpyx unzip --input /downloads/S1A_GRD.zip --output /data/extracted
+
+# Step 2: Run ship detection
+sarpyx shipdet \
+  --product-path /data/extracted/S1A_IW_GRDH_*.SAFE \
+  --outdir /data/shipdet_results \
+  --format GeoTIFF \
+  --polarizations VV VH \
+  --pfa 6.5 \
+  --verbose
+
+# Step 3: Upload results
+sarpyx upload \
+  --folder /data/shipdet_results \
+  --repo username/ship-detection-results \
+  --repo-type dataset
+```
+
+### Example 3: Batch Processing
+
+```bash
+# Process multiple zip files recursively
+sarpyx unzip --input /data/archives --output /data/extracted --recursive
+
+# Decode all .SAFE folders
+for safe_folder in /data/extracted/*.SAFE; do
+  sarpyx decode --input "$safe_folder" --output /data/decoded --verbose
+done
+
+# Focus all decoded files
+for zarr_file in /data/decoded/*.zarr; do
+  sarpyx focus --input "$zarr_file" --output /data/focused --verbose
+done
 ```
 
 ## Future Commands
