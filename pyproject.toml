@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sarpyx"
-version = "0.1.4"
+version = "0.1.5"
 description = "A swissknife for SAR processing."
 authors = [
     { name = "Roberto Del Prete", email = "roberto.delprete@esa.int" }
@@ -54,9 +54,7 @@ sarpyx-unzip = "sarpyx.cli.unzip:main"
 sarpyx-upload = "sarpyx.cli.upload:main"
 
 [tool.setuptools]
-packages = ["sarpyx"]
-
-
+packages = { find = {} }
 
 [tool.setuptools.package-data]
 "*" = ["*.csv", "*.json", "*.xml"]
