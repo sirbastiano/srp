@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:f7a74158438b5ddc4915677651d7a7aa286343d16ad806623d19f3d302722493"
+content_hash = "sha256:0addcef1fb01ad7ccfdb9f6fbce53366c9766178ee2817f764d8ce1f332dc007"
 
 [[metadata.targets]]
 requires_python = ">=3.11,<3.13"
@@ -1155,24 +1155,6 @@ files = [
 ]
 
 [[package]]
-name = "ipyleaflet"
-version = "0.20.0"
-requires_python = ">=3.8"
-summary = "A Jupyter widget for dynamic Leaflet maps"
-groups = ["default"]
-dependencies = [
-    "branca>=0.5.0",
-    "ipywidgets<9,>=7.6.0",
-    "jupyter-leaflet<0.21,>=0.20",
-    "traittypes<3,>=0.2.1",
-    "xyzservices>=2021.8.1",
-]
-files = [
-    {file = "ipyleaflet-0.20.0-py3-none-any.whl", hash = "sha256:b4c20ddc0b17d68e226cd3367ca2215a4db7e2b14374468c0eeaa54b53e4d173"},
-    {file = "ipyleaflet-0.20.0.tar.gz", hash = "sha256:098f317dd63c4bcac5176d5b78d40d5758c623f7cd013f0d0c9d7a70cefcdb34"},
-]
-
-[[package]]
 name = "ipython"
 version = "9.3.0"
 requires_python = ">=3.11"
@@ -1452,17 +1434,6 @@ dependencies = [
 files = [
     {file = "jupyter_events-0.12.0-py3-none-any.whl", hash = "sha256:6464b2fa5ad10451c3d35fabc75eab39556ae1e2853ad0c0cc31b656731a97fb"},
     {file = "jupyter_events-0.12.0.tar.gz", hash = "sha256:fc3fce98865f6784c9cd0a56a20644fc6098f21c8c33834a8d9fe383c17e554b"},
-]
-
-[[package]]
-name = "jupyter-leaflet"
-version = "0.20.0"
-requires_python = ">=3.8"
-summary = "ipyleaflet extensions for JupyterLab and Jupyter Notebook"
-groups = ["default"]
-files = [
-    {file = "jupyter_leaflet-0.20.0-py3-none-any.whl", hash = "sha256:2e27ce83647316424f04845e3a6af35e1ee44c177c318a145646b11f4afe0764"},
-    {file = "jupyter_leaflet-0.20.0.tar.gz", hash = "sha256:ad826dd7976a2b6d8b91d762c25a69a44f123b7b3bd1acaba236bd9af8e68cb4"},
 ]
 
 [[package]]
@@ -2544,18 +2515,18 @@ files = [
 
 [[package]]
 name = "phidown"
-version = "0.1.18"
+version = "0.1.23"
 requires_python = ">=3.9"
 summary = "A project using AWS services and dataset tools for Sentinel data"
 groups = ["default"]
 dependencies = [
-    "ipyleaflet>=0.19.2",
     "pandas>=1.5.2",
     "s5cmd",
+    "tqdm>=4.65.0",
 ]
 files = [
-    {file = "phidown-0.1.18-py3-none-any.whl", hash = "sha256:b6e4db9fe9560197061bd4bd61a636082128b3f371db192b9fc6173667b81adf"},
-    {file = "phidown-0.1.18.tar.gz", hash = "sha256:4160c05173400b617be9850d45b72e1ec5508ef012ea22d01d8cc974ddb26c1a"},
+    {file = "phidown-0.1.23-py3-none-any.whl", hash = "sha256:46181795c6546a7cb012e2e9ef8c8ea2cb9ca38e62dab5d57b2df183a3f31059"},
+    {file = "phidown-0.1.23.tar.gz", hash = "sha256:2dd127dc750af330cbdc32c5822c8efe4b73f7b4ce9eaf4181779818a85635ec"},
 ]
 
 [[package]]
@@ -3716,19 +3687,6 @@ groups = ["default"]
 files = [
     {file = "traitlets-5.14.3-py3-none-any.whl", hash = "sha256:b74e89e397b1ed28cc831db7aea759ba6640cb3de13090ca145426688ff1ac4f"},
     {file = "traitlets-5.14.3.tar.gz", hash = "sha256:9ed0579d3502c94b4b3732ac120375cda96f923114522847de4b3bb98b96b6b7"},
-]
-
-[[package]]
-name = "traittypes"
-version = "0.2.1"
-summary = "Scipy trait types"
-groups = ["default"]
-dependencies = [
-    "traitlets>=4.2.2",
-]
-files = [
-    {file = "traittypes-0.2.1-py2.py3-none-any.whl", hash = "sha256:1340af133810b6eee1a2eb2e988f862b0d12b6c2d16f282aaf3207b782134c2e"},
-    {file = "traittypes-0.2.1.tar.gz", hash = "sha256:be6fa26294733e7489822ded4ae25da5b4824a8a7a0e0c2dccfde596e3489bd6"},
 ]
 
 [[package]]

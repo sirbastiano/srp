@@ -22,7 +22,7 @@ dependencies = [
     "h5py",
     "numba",
     "jupyter",
-    "phidown>=0.1.18",
+    "phidown>=0.1.22",
     "rasterio>=1.4.3",
     "zarr>=3.0.8",
     "joblib>=1.5.1",

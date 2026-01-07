@@ -227,7 +227,6 @@ print(f"Totale operatori SNAP: {len(snap_operators)}")
 
 
 
-# ...existing code...
 
 def generate_operators_help():
     """
