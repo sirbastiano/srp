@@ -17,6 +17,7 @@ training
 
 
 *.csv
+*.txt
 
 
 hparams.yaml

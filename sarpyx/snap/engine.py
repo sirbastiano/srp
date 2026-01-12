@@ -1,121 +1,176 @@
+"""SNAP GPT (Graph Processing Tool) wrapper for SAR data processing.
+
+This module provides a Pythonic interface to ESA's SNAP GPT command-line tool,
+enabling automated processing of Synthetic Aperture Radar (SAR) data through
+various operators like calibration, terrain correction, and subsetting.
+"""
+
 import os
 import subprocess
 import warnings
-from pathlib import Path
-import urllib.request
 import zipfile
+from pathlib import Path
+from typing import List, Optional
+from urllib import request
 
-import pandas as pd
-
-from ..utils.io import delProd
-
-warnings.filterwarnings("ignore")
+warnings.filterwarnings('ignore')
 
 
 class GPT:
-    """A wrapper class for executing SNAP Graph Processing Tool (GPT) commands."""
+    """Wrapper class for executing SNAP Graph Processing Tool (GPT) commands.
+    
+    This class provides a high-level interface to SNAP's GPT command-line tool,
+    abstracting away the complexity of command construction and execution.
+    """
 
-    # Default GPT paths and parallelism for different OS
     GPT_PATHS = {
         'Ubuntu': '/home/<username>/ESA-STEP/snap/bin/gpt',
         'MacOS': '/Applications/snap/bin/gpt',
         'Windows': 'gpt.exe'
     }
     
-    DEFAULT_PARALLELISM = {
-        'Ubuntu': 16,
-        'MacOS': 8,
-        'Windows': 8
-    }
+ 
     
-    # Supported output formats for SNAP GPT processing
     OUTPUT_FORMATS = [
-        'PyRate export',                  # PyRate configuration format
-        'GeoTIFF+XML',                   # GeoTIFF with XML metadata
-        'JPEG2000',                      # JPEG2000 compressed format
-        'GDAL-BMP-WRITER',               # Windows Bitmap format
-        'NetCDF4-CF',                    # NetCDF4 Climate and Forecast conventions
-        'PolSARPro',                     # Polarimetric SAR data analysis format
-        'Snaphu',                        # Statistical-cost network-flow algorithm format
-        'Generic Binary BSQ',            # Band Sequential binary format
-        'CSV',                           # Comma-separated values format
-        'GDAL-GS7BG-WRITER',            # Golden Software 7 Binary Grid format
-        'GDAL-GTiff-WRITER',            # GDAL GeoTIFF writer
-        'GDAL-BT-WRITER',               # VTP .bt terrain format
-        'GeoTIFF-BigTIFF',              # BigTIFF format for large files
-        'GDAL-RMF-WRITER',              # Raster Matrix Format
-        'GDAL-KRO-WRITER',              # KOLOR Raw format
-        'GDAL-PNM-WRITER',              # Portable Anymap format
-        'Gamma',                         # Gamma Remote Sensing format
-        'GDAL-MFF-WRITER',              # Vexcel MFF format
-        'GeoTIFF',                       # Standard GeoTIFF format
-        'NetCDF4-BEAM',                  # NetCDF4 BEAM format
-        'GDAL-GTX-WRITER',              # NOAA .gtx vertical datum shift format
-        'GDAL-RST-WRITER',              # Idrisi Raster format
-        'GDAL-SGI-WRITER',              # SGI Image format
-        'ZNAP',                          # SNAP compressed format
-        'GDAL-GSBG-WRITER',             # Golden Software Binary Grid format
-        'ENVI',                          # ENVI header labeled raster format
-        'BEAM-DIMAP',                    # BEAM-DIMAP XML product format
-        'GDAL-HFA-WRITER',              # Erdas Imagine format
-        'GDAL-COG-WRITER',              # Cloud Optimized GeoTIFF format
-        'HDF5',                          # Hierarchical Data Format version 5
-        'GDAL-NITF-WRITER',             # National Imagery Transmission Format
-        'GDAL-SAGA-WRITER',             # SAGA GIS Binary format
-        'GDAL-ILWIS-WRITER',            # ILWIS Raster Map format
-        'JP2,JPG,PNG,BMP,GIF',          # Common image formats
-        'GDAL-PCIDSK-WRITER'            # PCI PCIDSK Database File format
-        ]
+        'PyRate export',
+        'GeoTIFF+XML',
+        'JPEG2000',
+        'GDAL-BMP-WRITER',
+        'NetCDF4-CF',
+        'PolSARPro',
+        'Snaphu',
+        'Generic Binary BSQ',
+        'CSV',
+        'GDAL-GS7BG-WRITER',
+        'GDAL-GTiff-WRITER',
+        'GDAL-BT-WRITER',
+        'GeoTIFF-BigTIFF',
+        'GDAL-RMF-WRITER',
+        'GDAL-KRO-WRITER',
+        'GDAL-PNM-WRITER',
+        'Gamma',
+        'GDAL-MFF-WRITER',
+        'GeoTIFF',
+        'NetCDF4-BEAM',
+        'GDAL-GTX-WRITER',
+        'GDAL-RST-WRITER',
+        'GDAL-SGI-WRITER',
+        'ZNAP',
+        'GDAL-GSBG-WRITER',
+        'ENVI',
+        'BEAM-DIMAP',
+        'GDAL-HFA-WRITER',
+        'GDAL-COG-WRITER',
+        'HDF5',
+        'GDAL-NITF-WRITER',
+        'GDAL-SAGA-WRITER',
+        'GDAL-ILWIS-WRITER',
+        'JP2,JPG,PNG,BMP,GIF',
+        'GDAL-PCIDSK-WRITER'
+    ]
+    
+    EXTENSIONS_MAP = {
+        'PyRate export': '.pyr',
+        'GeoTIFF+XML': '.tif',
+        'JPEG2000': '.jp2',
+        'GDAL-BMP-WRITER': '.bmp',
+        'NetCDF4-CF': '.nc',
+        'PolSARPro': '.psp',
+        'Snaphu': '.snaphu',
+        'Generic Binary BSQ': '.bsq',
+        'CSV': '.csv',
+        'GDAL-GS7BG-WRITER': '.gs7bg',
+        'GDAL-GTiff-WRITER': '.tif',
+        'GDAL-BT-WRITER': '.bt',
+        'GeoTIFF-BigTIFF': '.tif',
+        'GDAL-RMF-WRITER': '.rmf',
+        'GDAL-KRO-WRITER': '.kro',
+        'GDAL-PNM-WRITER': '.pnm',
+        'Gamma': '.gamma',
+        'GDAL-MFF-WRITER': '.mff',
+        'GeoTIFF': '.tif',
+        'NetCDF4-BEAM': '.nc',
+        'GDAL-GTX-WRITER': '.gtx',
+        'GDAL-RST-WRITER': '.rst',
+        'GDAL-SGI-WRITER': '.sgi',
+        'ZNAP': '.znap',
+        'GDAL-GSBG-WRITER': '.gsbg',
+        'ENVI': '.hdr',
+        'BEAM-DIMAP': '.dim',
+        'GDAL-HFA-WRITER': '.img',
+        'GDAL-COG-WRITER': '.tif',
+        'HDF5': '.h5',
+        'GDAL-NITF-WRITER': '.ntf',
+        'GDAL-SAGA-WRITER': '.sdat',
+        'GDAL-ILWIS-WRITER': '.mpl',
+        'JP2,JPG,PNG,BMP,GIF': '.jp2',
+        'GDAL-PCIDSK-WRITER': '.pix'
+    }
 
-    def __init__(self, product: str | Path, 
-        outdir: str | Path, 
+    def __init__(
+        self,
+        product: str | Path,
+        outdir: str | Path,
         format: str = 'BEAM-DIMAP',
-        gpt_path: str | None = "/usr/local/snap/bin/gpt", 
-        mode: str | None = None):
-        """
-        SNAP GPT processing engine.
+        gpt_path: Optional[str] = '/usr/local/snap/bin/gpt',
+        mode: Optional[str] = None,
+        memory: str = '64G',
+        parallelism: Optional[int] = 16,
+    ):
+        """Initialize SNAP GPT processing engine.
         
         Args:
-            product (str | Path): Path to the input SAR product file or directory.
-            outdir (str | Path): Output directory where processed results will be saved.
-            format (str, optional): Output format for processed data. Defaults to 'BEAM-DIMAP'.
-                Supported formats include 'BEAM-DIMAP' and 'GEOTIFF'.
-            gpt_path (str | None, optional): Path to the SNAP GPT executable. 
-                Defaults to "/usr/local/snap/bin/gpt".
-            mode (str | None, optional): Processing mode configuration. Defaults to None.
-        Attributes:
-        
-            prod_path (Path): Path object for the input product.
-            name (str): Stem name of the input product file.
-            format (str): Output format for processed data.
-            outdir (Path): Path object for the output directory.
-            mode (str | None): Processing mode configuration.
-            gpt_executable: Path to the validated GPT executable.
-            parallelism: Configured parallelism settings for processing.
-            current_cmd (list): List to store current command components.
+            product: Path to the input SAR product file or directory.
+            outdir: Output directory where processed results will be saved.
+            format: Output format for processed data. Defaults to 'BEAM-DIMAP'.
+            gpt_path: Path to the SNAP GPT executable.
+                Defaults to '/usr/local/snap/bin/gpt'.
+            mode: Processing mode configuration. Defaults to None.
+            
+        Raises:
+            AssertionError: If product path doesn't exist, format is unsupported,
+                or output directory is not specified.
         """
-        
         self.prod_path = Path(product)
-        assert self.prod_path.exists(), f"Product path does not exist: {self.prod_path}"
+        if not self.prod_path.exists():
+            raise FileNotFoundError(f'Product path does not exist: {self.prod_path}')
+        
         self.name = self.prod_path.stem
-        assert format in self.OUTPUT_FORMATS, f"Unsupported format: {format}. Supported formats are: {self.OUTPUT_FORMATS}"
+        
+        if format not in self.OUTPUT_FORMATS:
+            raise ValueError(
+                f'Unsupported format: {format}. '
+                f'Supported formats: {", ".join(self.OUTPUT_FORMATS)}'
+            )
         self.format = format
-        assert outdir, "Output directory must be specified"
+        
+        if not outdir:
+            raise ValueError('Output directory must be specified')
         self.outdir = Path(outdir)
+        self.outdir.mkdir(parents=True, exist_ok=True)
+        
         self.mode = mode
+        self.parallelism = parallelism
+        self.memory = memory
+        
         self.gpt_executable = self._get_gpt_executable(gpt_path)
-        self.parallelism = self._get_parallelism()
-        self.current_cmd = []
+        self.current_cmd: List[str] = []
 
-    def _get_gpt_executable(self, gpt_path: str | None = None) -> str:
-        """Determines the correct GPT executable path."""
+    def _get_gpt_executable(self, gpt_path: Optional[str] = None) -> str:
+        """Determine the correct GPT executable path.
+        
+        Args:
+            gpt_path: Explicit path to GPT executable.
+            
+        Returns:
+            Path to the GPT executable.
+        """
         if gpt_path:
             return gpt_path
         
         if self.mode and self.mode in self.GPT_PATHS:
             return self.GPT_PATHS[self.mode]
         
-        # Auto-detect based on OS
         if os.name == 'posix':
             for path in [self.GPT_PATHS['MacOS'], self.GPT_PATHS['Ubuntu']]:
                 if Path(path).exists():
@@ -126,88 +181,100 @@ class GPT:
         else:
             return 'gpt'
 
-    def _get_parallelism(self) -> int:
-        """Determines the parallelism level."""
-        if self.mode and self.mode in self.DEFAULT_PARALLELISM:
-            return self.DEFAULT_PARALLELISM[self.mode]
-        
-        # Auto-detect based on OS
-        if os.name == 'posix':
-            if Path(self.GPT_PATHS['MacOS']).exists():
-                return self.DEFAULT_PARALLELISM['MacOS']
-            return self.DEFAULT_PARALLELISM.get('Ubuntu', 6)
-        elif os.name == 'nt':
-            return self.DEFAULT_PARALLELISM['Windows']
-        else:
-            return 6
 
-    def _reset_command(self):
-        """Resets the command list for a new GPT operation."""
+
+    def _reset_command(self) -> None:
+        """Reset the command list for a new GPT operation."""
         self.current_cmd = [
             self.gpt_executable,
             f'-q {self.parallelism}',
-            '-x ', # TODO: virtual memory, auto add with checks
-            # '-c', # TODO: cache size, auto add with checks
+            f'-c {self.memory}',
+            '-x',
             '-e',
             f'-Ssource={self.prod_path.as_posix()}'
         ]
 
-    def _build_output_path(self, suffix: str) -> Path:
-        """Builds the output path for a processing step."""
-        base_name = self.outdir / f"{self.name}_{suffix}"
-        if self.format == 'GEOTIFF':
-            return base_name.with_suffix('.tif')
+    def _build_output_path(self, suffix: str, output_name: Optional[str] = None) -> Path:
+        """Build the output path for a processing step.
+        
+        Args:
+            suffix: Suffix to append to filename if output_name is not provided.
+            output_name: Custom output filename (without extension).
+                If None, uses '{self.name}_{suffix}' format.
+        
+        Returns:
+            Complete output path with appropriate extension.
+        """
+        if output_name:
+            base_name = self.outdir / output_name
         else:
-            return base_name.with_suffix('.dim')
+            base_name = self.outdir / f'{self.name}_{suffix}'
+        
+        # TODO: verify this
+        extension = self.EXTENSIONS_MAP.get(self.format, '')
+        return base_name.with_suffix(extension)
 
     def _execute_command(self) -> bool:
-        """Executes the currently built GPT command."""
+        """Execute the currently built GPT command.
+        
+        Returns:
+            True if command executed successfully, False otherwise.
+        """
         cmd_str = ' '.join(self.current_cmd)
-        print(f"Executing GPT command: {cmd_str}")
+        print(f'Executing GPT command: {cmd_str}')
         
         try:
             process = subprocess.run(
-                cmd_str, 
-                shell=True, 
-                check=True, 
-                capture_output=True, 
-                text=True, 
+                cmd_str,
+                shell=True,
+                check=True,
+                capture_output=True,
+                text=True,
                 timeout=3600
             )
             
             if process.stdout:
-                print("GPT Output:", process.stdout)
+                print(f'GPT Output: {process.stdout}')
             if process.stderr:
-                print("GPT Warnings:", process.stderr)
+                print(f'GPT Warnings: {process.stderr}')
             
-            print("Command executed successfully!")
+            print('Command executed successfully!')
             return True
             
         except subprocess.TimeoutExpired:
-            print("Error: GPT command timed out after 1 hour")
+            print('Error: GPT command timed out after 1 hour')
             return False
             
         except subprocess.CalledProcessError as e:
-            print(f"Error executing GPT command: {cmd_str}")
-            print(f"Return code: {e.returncode}")
+            print(f'Error executing GPT command: {cmd_str}')
+            print(f'Return code: {e.returncode}')
             if e.stdout:
-                print(f"Stdout: {e.stdout}")
+                print(f'Stdout: {e.stdout}')
             if e.stderr:
-                print(f"Stderr: {e.stderr}")
+                print(f'Stderr: {e.stderr}')
             return False
             
         except FileNotFoundError:
             print(f"Error: GPT executable '{self.gpt_executable}' not found!")
-            print("Ensure SNAP is installed and configured correctly.")
+            print('Ensure SNAP is installed and configured correctly.')
             return False
             
         except Exception as e:
-            print(f"Unexpected error during GPT execution: {type(e).__name__}: {e}")
+            print(f'Unexpected error during GPT execution: {type(e).__name__}: {e}')
             return False
 
-    def _call(self, suffix: str) -> str | None:
-        """Finalizes and executes the GPT command."""
-        output_path = self._build_output_path(suffix)
+    def _call(self, suffix: str, output_name: Optional[str] = None) -> Optional[str]:
+        """Finalize and execute the GPT command.
+        
+        Args:
+            suffix: Suffix for auto-generated filename.
+            output_name: Custom output filename (without extension).
+                Overrides auto-generated name.
+        
+        Returns:
+            Path to output file if successful, None otherwise.
+        """
+        output_path = self._build_output_path(suffix, output_name)
         self.current_cmd.extend([
             f'-t {output_path.as_posix()}',
             f'-f {self.format}'
@@ -216,84 +283,111 @@ class GPT:
         if self._execute_command():
             self.prod_path = output_path
             return output_path.as_posix()
-        else:
-            return None
+        return None
 
-    def ImportVector(self, vector_data: str | Path):
-        """Imports vector data into the product."""
+
+    # =============== OPERATORS =================
+
+    def import_vector(
+        self,
+        vector_data: str | Path,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Import vector data into the product.
+        
+        Args:
+            vector_data: Path to the shapefile or vector data.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to output product with imported vector, or None if failed.
+        """
         vector_path = Path(vector_data)
         
-        # Check if the shapefile exists
         if not vector_path.exists():
-            print(f"Shapefile not found: {vector_path}")
-            print("Downloading from Zenodo...")
+            print(f'Shapefile not found: {vector_path}')
+            print('Downloading from Zenodo...')
             
-            # Download and extract from Zenodo
-            zenodo_url = "https://zenodo.org/api/records/6992586/files-archive"
-            download_dir = Path.cwd() / "zenodo_download"
-            archive_path = download_dir / "zenodo_archive.zip"
+            zenodo_url = 'https://zenodo.org/api/records/6992586/files-archive'
+            download_dir = Path.cwd() / 'zenodo_download'
+            download_dir.mkdir(parents=True, exist_ok=True)
+            archive_path = download_dir / 'zenodo_archive.zip'
             
             try:
-                # Download the archive
-                urllib.request.urlretrieve(zenodo_url, archive_path)
-                print(f"Downloaded archive to: {archive_path}")
+                request.urlretrieve(zenodo_url, archive_path)
+                print(f'Downloaded archive to: {archive_path}')
                 
-                # Extract the archive
                 with zipfile.ZipFile(archive_path, 'r') as zip_ref:
                     zip_ref.extractall(download_dir)
-                print(f"Extracted archive to: {download_dir}")
+                print(f'Extracted archive to: {download_dir}')
                 
-                # Find shapefile in extracted contents
-                shp_files = list(download_dir.rglob("*.shp"))
+                shp_files = list(download_dir.rglob('*.shp'))
                 if shp_files:
-                    vector_path = shp_files[0]  # Use the first shapefile found
-                    print(f"Using shapefile: {vector_path}")
+                    vector_path = shp_files[0]
+                    print(f'Using shapefile: {vector_path}')
                 else:
-                    raise FileNotFoundError("No shapefile found in downloaded archive")
+                    raise FileNotFoundError('No shapefile found in downloaded archive')
                 
-                # Clean up the archive
                 archive_path.unlink()
                 
             except Exception as e:
-                print(f"Error downloading or extracting shapefile: {e}")
+                print(f'Error downloading or extracting shapefile: {e}')
                 return None
         
         self._reset_command()
-        self.current_cmd.append(f'Import-Vector -PseparateShapes=false -PvectorFile={vector_path.as_posix()}')
-        return self._call(suffix='SHP')
+        self.current_cmd.append(
+            f'Import-Vector -PseparateShapes=false '
+            f'-PvectorFile={vector_path.as_posix()}'
+        )
+        return self._call(suffix='SHP', output_name=output_name)
 
-    def LandMask(self, 
-            shoreline_extension: int = 300, 
-            geometry_name: str = "Buff_750", 
-            use_srtm: bool = True, 
-            invert_geometry: bool = True, 
-            land_mask: bool = False):
-        """Applies Land-Sea Masking using a predefined XML graph structure."""
+    def land_mask(
+        self,
+        shoreline_extension: int = 300,
+        geometry_name: str = 'Buff_750',
+        use_srtm: bool = True,
+        invert_geometry: bool = True,
+        land_mask: bool = False,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Apply Land-Sea Masking using a predefined XML graph structure.
         
+        Args:
+            shoreline_extension: Distance to extend shoreline in meters.
+            geometry_name: Name of the geometry to use for masking.
+            use_srtm: Use SRTM DEM for land/sea determination.
+            invert_geometry: Invert the geometry mask.
+            land_mask: Mask land (True) or sea (False) areas.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to masked output product, or None if failed.
+        """
         self._reset_command()
         suffix = 'LM'
-        output_path = self._build_output_path(suffix)
-        xml_path = self.outdir / f"{self.name}_landmask_graph.xml"
+        output_path = self._build_output_path(suffix, output_name)
+        xml_path = self.outdir / f'{self.name}_landmask_graph.xml'
 
-        # Determine product type if not already set
         if not hasattr(self, 'prod_type'):
             try:
-                self.prod_type = mode_identifier(self.prod_path.name)
-                print(f"Inferred product type: {self.prod_type}")
+                self.prod_type = _identify_product_type(self.prod_path.name)
+                print(f'Inferred product type: {self.prod_type}')
             except Exception as e:
-                print(f"Warning: Could not determine product type: {e}")
+                print(f'Warning: Could not determine product type: {e}')
                 self.prod_type = None
 
-        # Determine source band based on product type
-        if self.prod_type == "COSMO-SkyMed":
-            source_band = 'Intensity_null'
-        elif self.prod_type == "Sentinel-1":
-            source_band = 'Intensity_VH'
-        else:
-            print(f"Warning: Product type is '{self.prod_type}'. Using default source band 'Intensity_VH'.")
-            source_band = 'Intensity_VH'
+        source_band_map = {
+            'COSMO-SkyMed': 'Intensity_null',
+            'Sentinel-1': 'Intensity_VH'
+        }
+        source_band = source_band_map.get(self.prod_type or '', 'Intensity_VH')
+        
+        if self.prod_type not in source_band_map:
+            print(
+                f"Warning: Product type is '{self.prod_type}'. "
+                f"Using default source band 'Intensity_VH'."
+            )
 
-        # XML Graph Template
         graph_xml = f"""<graph id="Graph">
           <version>1.0</version>
           <node id="Read">
@@ -330,133 +424,215 @@ class GPT:
         </graph>"""
 
         try:
-            with open(xml_path, "w", encoding="utf-8") as f:
-                f.write(graph_xml)
-
+            xml_path.write_text(graph_xml, encoding='utf-8')
             self.current_cmd = [self.gpt_executable, xml_path.as_posix()]
 
             if self._execute_command():
                 self.prod_path = output_path
-                os.remove(xml_path)
+                xml_path.unlink(missing_ok=True)
                 return output_path.as_posix()
-            else:
-                return None
-
-        except Exception as e:
-            print(f"Error generating LandMask XML graph: {e}")
-            if xml_path.exists():
-                os.remove(xml_path)
             return None
 
-    def Calibration(self, Pols: list[str] = ['VV'], output_complex: bool = True):
-        """Applies radiometric calibration."""
-        self._reset_command()
-        pol_str = ','.join(Pols)
-        self.current_cmd.append(f'Calibration -PoutputImageInComplex={str(output_complex).lower()} -PselectedPolarisations={pol_str}')
-        return self._call(suffix='CAL')
+        except Exception as e:
+            print(f'Error generating LandMask XML graph: {e}')
+            xml_path.unlink(missing_ok=True)
+            return None
 
-    def Deburst(self, Pols: list[str] = ['VH']):
-        """Applies TOPSAR Debursting."""
-        self._reset_command()
-        pol_str = ','.join(Pols)
-        self.current_cmd.append(f'TOPSAR-Deburst -PselectedPolarisations={pol_str}')
-        return self._call(suffix='DEB')
-
-    def Multilook(self, nRgLooks: int, nAzLooks: int):
-        """Applies Multilooking."""
-        self._reset_command()
-        self.current_cmd.append(f'Multilook -PnRgLooks={nRgLooks} -PnAzLooks={nAzLooks}')
-        return self._call(suffix='ML')
-
-    def AdaptiveThresholding(self, background_window_m: float = 800, guard_window_m: float = 500, 
-                           target_window_m: float = 50, pfa: float = 6.5):
-        """Applies Adaptive Thresholding for object detection."""
-        self._reset_command()
-        self.current_cmd.append(f'AdaptiveThresholding -PbackgroundWindowSizeInMeter={background_window_m} -PguardWindowSizeInMeter={guard_window_m} -Ppfa={pfa} -PtargetWindowSizeInMeter={target_window_m}')
-        return self._call(suffix='AT')
-
-    def ObjectDiscrimination(self, min_target_m: float, max_target_m: float):
-        """Discriminates objects based on size."""
-        self._reset_command()
-        self.current_cmd.append(f'Object-Discrimination -PminTargetSizeInMeter={min_target_m} -PmaxTargetSizeInMeter={max_target_m}')
-        return self._call(suffix='OD')
-
-    def Subset(self, 
-               source_bands: list[str] | None = None,
-               tie_point_grids: list[str] | None = None,
-               region: str | None = None,
-               reference_band: str | None = None,
-               geo_region: str | None = None,
-               sub_sampling_x: int = 1,
-               sub_sampling_y: int = 1,
-               full_swath: bool = False,
-               vector_file: str | Path | None = None,
-               polygon_region: str | None = None,
-               copy_metadata: bool = False,
-               suffix: str = 'SUB'):
+    def calibration(
+        self,
+        pols: Optional[List[str]] = None,
+        output_complex: bool = True,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Apply radiometric calibration.
+        
+        Args:
+            pols: Polarizations to calibrate. If None, all polarizations are used.
+            output_complex: Output complex values.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to calibrated product, or None if failed.
         """
-        Creates a spatial and/or spectral subset of a data product.
+        self._reset_command()
+        
+        if pols is not None:
+            pol_str = ','.join(pols)
+            self.current_cmd.append(
+                f'Calibration -PoutputImageInComplex={str(output_complex).lower()} '
+                f'-PselectedPolarisations={pol_str}'
+            )
+        else:
+            self.current_cmd.append(
+                f'Calibration -PoutputImageInComplex={str(output_complex).lower()}'
+            )
+        
+        return self._call(suffix='CAL', output_name=output_name)
+
+    def deburst(
+        self,
+        pols: Optional[List[str]] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Apply TOPSAR Debursting.
+        
+        Args:
+            pols: Polarizations to deburst. If None, all channels are debursted.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to deburst product, or None if failed.
+        """
+        self._reset_command()
+        
+        if pols is not None:
+            pol_str = ','.join(pols)
+            self.current_cmd.append(f'TOPSAR-Deburst -PselectedPolarisations={pol_str}')
+        else:
+            self.current_cmd.append('TOPSAR-Deburst')
+        
+        return self._call(suffix='DEB', output_name=output_name)
+
+    def multilook(
+        self,
+        n_rg_looks: int,
+        n_az_looks: int,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Apply Multilooking.
+        
+        Args:
+            n_rg_looks: Number of range looks.
+            n_az_looks: Number of azimuth looks.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to multilooked product, or None if failed.
+        """
+        self._reset_command()
+        self.current_cmd.append(
+            f'Multilook -PnRgLooks={n_rg_looks} -PnAzLooks={n_az_looks}'
+        )
+        return self._call(suffix='ML', output_name=output_name)
+
+    def adaptive_thresholding(
+        self,
+        background_window_m: float = 800,
+        guard_window_m: float = 500,
+        target_window_m: float = 50,
+        pfa: float = 6.5,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Apply Adaptive Thresholding for object detection.
+        
+        Args:
+            background_window_m: Background window size in meters.
+            guard_window_m: Guard window size in meters.
+            target_window_m: Target window size in meters.
+            pfa: Probability of false alarm.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to thresholded product, or None if failed.
+        """
+        self._reset_command()
+        self.current_cmd.append(
+            f'AdaptiveThresholding '
+            f'-PbackgroundWindowSizeInMeter={background_window_m} '
+            f'-PguardWindowSizeInMeter={guard_window_m} '
+            f'-Ppfa={pfa} '
+            f'-PtargetWindowSizeInMeter={target_window_m}'
+        )
+        return self._call(suffix='AT', output_name=output_name)
+
+    def object_discrimination(
+        self,
+        min_target_m: float,
+        max_target_m: float,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Discriminate objects based on size.
+        
+        Args:
+            min_target_m: Minimum target size in meters.
+            max_target_m: Maximum target size in meters.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to discriminated product, or None if failed.
+        """
+        self._reset_command()
+        self.current_cmd.append(
+            f'Object-Discrimination '
+            f'-PminTargetSizeInMeter={min_target_m} '
+            f'-PmaxTargetSizeInMeter={max_target_m}'
+        )
+        return self._call(suffix='OD', output_name=output_name)
+
+    def subset(
+        self,
+        source_bands: Optional[List[str]] = None,
+        tie_point_grids: Optional[List[str]] = None,
+        region: Optional[str] = None,
+        reference_band: Optional[str] = None,
+        geo_region: Optional[str] = None,
+        sub_sampling_x: int = 1,
+        sub_sampling_y: int = 1,
+        full_swath: bool = False,
+        vector_file: Optional[str | Path] = None,
+        polygon_region: Optional[str] = None,
+        copy_metadata: bool = False,
+        suffix: str = 'SUB',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Create a spatial and/or spectral subset of a data product.
         
         This method allows extraction of specific bands, spatial regions, and subsetting
         based on pixel coordinates, geographical coordinates, or vector polygons.
         
         Args:
-            source_bands (list[str] | None, optional): The list of source bands to include.
-                If None, all bands are included. Defaults to None.
-            tie_point_grids (list[str] | None, optional): The list of tie-point grid names 
-                to include. Defaults to None.
-            region (str | None, optional): The subset region in pixel coordinates.
-                Use the format: 'x,y,width,height' (e.g., '100,200,500,500').
-                If not given, the entire scene is used. The 'geo_region' parameter 
-                has precedence. Defaults to None.
-            reference_band (str | None, optional): The band used to indicate the pixel 
-                coordinates. Defaults to None.
-            geo_region (str | None, optional): The subset region in geographical coordinates 
-                using WKT-format, e.g., 'POLYGON((lon1 lat1, lon2 lat2, ..., lon1 lat1))'.
-                If not given, the entire scene is used. This parameter has precedence over 
-                'region'. Defaults to None.
-            sub_sampling_x (int, optional): The pixel sub-sampling step in X (horizontal 
-                image direction). Defaults to 1 (no sub-sampling).
-            sub_sampling_y (int, optional): The pixel sub-sampling step in Y (vertical 
-                image direction). Defaults to 1 (no sub-sampling).
-            full_swath (bool, optional): Forces the operator to extend the subset region 
-                to the full swath. Defaults to False.
-            vector_file (str | Path | None, optional): The file from which the polygon 
-                is read. Defaults to None.
-            polygon_region (str | None, optional): The subset region in geographical 
-                coordinates using WKT-format. If not given, the geo_region or region 
-                is used. Defaults to None.
-            copy_metadata (bool, optional): Whether to copy the metadata of the source 
-                product. Defaults to False.
-            suffix (str, optional): Suffix for the output filename. Defaults to 'SUB'.
+            source_bands: List of source bands to include. If None, all bands are included.
+            tie_point_grids: List of tie-point grid names to include.
+            region: Subset region in pixel coordinates.
+                Format: 'x,y,width,height' (e.g., '100,200,500,500').
+            reference_band: Band used to indicate the pixel coordinates.
+            geo_region: Subset region in geographical coordinates using WKT-format.
+                e.g., 'POLYGON((lon1 lat1, lon2 lat2, ..., lon1 lat1))'.
+                This parameter has precedence over 'region'.
+            sub_sampling_x: Pixel sub-sampling step in X (horizontal direction).
+            sub_sampling_y: Pixel sub-sampling step in Y (vertical direction).
+            full_swath: Forces the operator to extend the subset region to the full swath.
+            vector_file: File from which the polygon is read.
+            polygon_region: Subset region in geographical coordinates using WKT-format.
+            copy_metadata: Whether to copy the metadata of the source product.
+            suffix: Suffix for the output filename.
+            output_name: Custom output filename (without extension).
         
         Returns:
-            str | None: Path to the subset output product, or None if failed.
+            Path to the subset output product, or None if failed.
         
         Examples:
             # Subset by pixel region
-            op.Subset(region='100,200,500,500', source_bands=['Amplitude_VV'])
+            gpt.subset(region='100,200,500,500', source_bands=['Amplitude_VV'])
             
             # Subset by geographic region
-            op.Subset(
+            gpt.subset(
                 geo_region='POLYGON((10.0 53.0, 11.0 53.0, 11.0 54.0, 10.0 54.0, 10.0 53.0))',
                 source_bands=['Intensity_VH', 'Intensity_VV']
             )
             
             # Subset using vector file
-            op.Subset(vector_file='aoi.shp', source_bands=['Sigma0_VV'])
+            gpt.subset(vector_file='aoi.shp', source_bands=['Sigma0_VV'])
         """
         self._reset_command()
         
         cmd_params = []
         
         if source_bands:
-            source_bands_str = ','.join(source_bands)
-            cmd_params.append(f'-PsourceBands={source_bands_str}')
+            cmd_params.append(f'-PsourceBands={",".join(source_bands)}')
         
         if tie_point_grids:
-            tie_point_grids_str = ','.join(tie_point_grids)
-            cmd_params.append(f'-PtiePointGrids={tie_point_grids_str}')
+            cmd_params.append(f'-PtiePointGrids={",".join(tie_point_grids)}')
         
         if region:
             cmd_params.append(f'-Pregion={region}')
@@ -465,7 +641,6 @@ class GPT:
             cmd_params.append(f'-PreferenceBand={reference_band}')
         
         if geo_region:
-            # Ensure proper quoting for WKT geometry
             cmd_params.append(f"-PgeoRegion='{geo_region}'")
         
         if sub_sampling_x != 1:
@@ -482,84 +657,86 @@ class GPT:
             cmd_params.append(f'-PvectorFile={vector_path.as_posix()}')
         
         if polygon_region:
-            # Ensure proper quoting for WKT polygon
             cmd_params.append(f"-PpolygonRegion='{polygon_region}'")
         
         cmd_params.append(f'-PcopyMetadata={str(copy_metadata).lower()}')
         
         self.current_cmd.append(f'Subset {" ".join(cmd_params)}')
-        return self._call(suffix=suffix)
+        return self._call(suffix=suffix, output_name=output_name)
 
-    def AatsrSST(self, dual: bool = True, dual_coefficients_file: str = 'AVERAGE_POLAR_DUAL_VIEW',
-                dual_mask_expression: str = '!cloud_flags_nadir.LAND and !cloud_flags_nadir.CLOUDY and !cloud_flags_nadir.SUN_GLINT and !cloud_flags_fward.LAND and !cloud_flags_fward.CLOUDY and !cloud_flags_fward.SUN_GLINT',
-                invalid_sst_value: float = -999.0, nadir: bool = True,
-                nadir_coefficients_file: str = 'AVERAGE_POLAR_SINGLE_VIEW',
-                nadir_mask_expression: str = '!cloud_flags_nadir.LAND and !cloud_flags_nadir.CLOUDY and !cloud_flags_nadir.SUN_GLINT'):
-        """
-        Computes sea surface temperature (SST) from (A)ATSR products.
+    def aatsr_sst(
+        self,
+        dual: bool = True,
+        dual_coefficients_file: str = 'AVERAGE_POLAR_DUAL_VIEW',
+        dual_mask_expression: str = (
+            '!cloud_flags_nadir.LAND and !cloud_flags_nadir.CLOUDY and '
+            '!cloud_flags_nadir.SUN_GLINT and !cloud_flags_fward.LAND and '
+            '!cloud_flags_fward.CLOUDY and !cloud_flags_fward.SUN_GLINT'
+        ),
+        invalid_sst_value: float = -999.0,
+        nadir: bool = True,
+        nadir_coefficients_file: str = 'AVERAGE_POLAR_SINGLE_VIEW',
+        nadir_mask_expression: str = (
+            '!cloud_flags_nadir.LAND and !cloud_flags_nadir.CLOUDY and '
+            '!cloud_flags_nadir.SUN_GLINT'
+        ),
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute sea surface temperature (SST) from (A)ATSR products.
+        
         This method processes ATSR (Along Track Scanning Radiometer) data to derive
         sea surface temperature using both dual-view and nadir-view algorithms.
+        
         Args:
-            dual (bool, optional): Enable dual-view SST processing. Defaults to True.
-            dual_coefficients_file (str, optional): Coefficients file for dual-view processing.
-                Defaults to 'AVERAGE_POLAR_DUAL_VIEW'.
-            dual_mask_expression (str, optional): Mask expression for dual-view processing
-                to exclude land, clouds, and sun glint pixels. Defaults to expression
-                excluding these conditions for both nadir and forward views.
-            invalid_sst_value (float, optional): Value assigned to invalid SST pixels.
-                Defaults to -999.0.
-            nadir (bool, optional): Enable nadir-view SST processing. Defaults to True.
-            nadir_coefficients_file (str, optional): Coefficients file for nadir-view processing.
-                Defaults to 'AVERAGE_POLAR_SINGLE_VIEW'.
-            nadir_mask_expression (str, optional): Mask expression for nadir-view processing
-                to exclude land, clouds, and sun glint pixels. Defaults to expression
-                excluding these conditions for nadir view only.
+            dual: Enable dual-view SST processing.
+            dual_coefficients_file: Coefficients file for dual-view processing.
+            dual_mask_expression: Mask expression for dual-view processing.
+            invalid_sst_value: Value assigned to invalid SST pixels.
+            nadir: Enable nadir-view SST processing.
+            nadir_coefficients_file: Coefficients file for nadir-view processing.
+            nadir_mask_expression: Mask expression for nadir-view processing.
+            output_name: Custom output filename (without extension).
+        
         Returns:
-            The result of the SST computation operation.
-        Note:
-            The method builds command parameters for the SNAP Aatsr.SST operator and
-            executes the processing chain with a 'SST' suffix.
+            Path to SST output product, or None if failed.
         """
         self._reset_command()
         
-        cmd_params = []
-        cmd_params.append(f'-Pdual={str(dual).lower()}')
-        cmd_params.append(f'-PdualCoefficientsFile={dual_coefficients_file}')
-        cmd_params.append(f'-PdualMaskExpression="{dual_mask_expression}"')
-        cmd_params.append(f'-PinvalidSstValue={invalid_sst_value}')
-        cmd_params.append(f'-Pnadir={str(nadir).lower()}')
-        cmd_params.append(f'-PnadirCoefficientsFile={nadir_coefficients_file}')
-        cmd_params.append(f'-PnadirMaskExpression="{nadir_mask_expression}"')
+        cmd_params = [
+            f'-Pdual={str(dual).lower()}',
+            f'-PdualCoefficientsFile={dual_coefficients_file}',
+            f'-PdualMaskExpression="{dual_mask_expression}"',
+            f'-PinvalidSstValue={invalid_sst_value}',
+            f'-Pnadir={str(nadir).lower()}',
+            f'-PnadirCoefficientsFile={nadir_coefficients_file}',
+            f'-PnadirMaskExpression="{nadir_mask_expression}"'
+        ]
         
         self.current_cmd.append(f'Aatsr.SST {" ".join(cmd_params)}')
-        return self._call(suffix='SST')
+        return self._call(suffix='SST', output_name=output_name)
 
-    def ApplyOrbitFile(self, orbit_type: str = 'Sentinel Precise (Auto Download)', 
-                       poly_degree: int = 3, continue_on_fail: bool = False):
-        """
-        Applies orbit file correction to SAR products.
+    def apply_orbit_file(
+        self,
+        orbit_type: str = 'Sentinel Precise (Auto Download)',
+        poly_degree: int = 3,
+        continue_on_fail: bool = False,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Apply orbit file correction to SAR products.
         
         This method updates the orbit state vectors in the product metadata using
         precise or restituted orbit files, improving geolocation accuracy.
         
         Args:
-            orbit_type (str, optional): Type of orbit file to apply. 
-                Defaults to 'Sentinel Precise (Auto Download)'.
-                Valid options:
-                - 'Sentinel Precise (Auto Download)'
-                - 'Sentinel Restituted (Auto Download)'
-                - 'DORIS Preliminary POR (ENVISAT)'
-                - 'DORIS Precise VOR (ENVISAT) (Auto Download)'
-                - 'DELFT Precise (ENVISAT, ERS1&2) (Auto Download)'
-                - 'PRARE Precise (ERS1&2) (Auto Download)'
-                - 'Kompsat5 Precise'
-            poly_degree (int, optional): Degree of polynomial for orbit interpolation.
-                Defaults to 3.
-            continue_on_fail (bool, optional): Continue processing if orbit file application fails.
-                Defaults to False.
+            orbit_type: Type of orbit file to apply.
+                Valid options include 'Sentinel Precise (Auto Download)',
+                'Sentinel Restituted (Auto Download)', etc.
+            poly_degree: Degree of polynomial for orbit interpolation.
+            continue_on_fail: Continue processing if orbit file application fails.
+            output_name: Custom output filename (without extension).
         
         Returns:
-            str | None: Path to the output product with applied orbit file, or None if failed.
+            Path to the output product with applied orbit file, or None if failed.
         """
         self._reset_command()
         self.current_cmd.append(
@@ -568,112 +745,86 @@ class GPT:
             f'-PpolyDegree={poly_degree} '
             f'-PcontinueOnFail={str(continue_on_fail).lower()}'
         )
-        return self._call(suffix='ORB')
+        return self._call(suffix='ORB', output_name=output_name)
 
-    def TerrainCorrection(self, 
-                         source_bands: list[str] | None = None,
-                         dem_name: str = 'SRTM 3Sec',
-                         external_dem_file: str | Path | None = None,
-                         external_dem_no_data_value: float = 0.0,
-                         external_dem_apply_egm: bool = True,
-                         dem_resampling_method: str = 'BILINEAR_INTERPOLATION',
-                         img_resampling_method: str = 'BILINEAR_INTERPOLATION',
-                         pixel_spacing_in_meter: float = 0.0,
-                         pixel_spacing_in_degree: float = 0.0,
-                         map_projection: str = 'WGS84(DD)', # 'GEOGCS["WGS84(DD)", DATUM["WGS84", SPHEROID["WGS84", 6378137.0, 298.257223563]], PRIMEM["Greenwich", 0.0], UNIT["degree", 0.017453292519943295], AXIS["Geodetic longitude", EAST], AXIS["Geodetic latitude", NORTH], AUTHORITY["EPSG","4326"]]',
-                         align_to_standard_grid: bool = False,
-                         standard_grid_origin_x: float = 0.0,
-                         standard_grid_origin_y: float = 0.0,
-                         nodata_value_at_sea: bool = False,
-                         save_dem: bool = False,
-                         save_lat_lon: bool = True,
-                         save_incidence_angle_from_ellipsoid: bool = False,
-                         save_local_incidence_angle: bool = True,
-                         save_projected_local_incidence_angle: bool = False,
-                         save_selected_source_band: bool = True,
-                         save_layover_shadow_mask: bool = False,
-                         output_complex: bool = True,
-                         apply_radiometric_normalization: bool = False,
-                         save_sigma_nought: bool = False,
-                         save_gamma_nought: bool = False,
-                         save_beta_nought: bool = False,
-                         incidence_angle_for_sigma0: str = 'Use projected local incidence angle from DEM',
-                         incidence_angle_for_gamma0: str = 'Use projected local incidence angle from DEM',
-                         aux_file: str = 'Latest Auxiliary File',
-                         external_aux_file: str | Path | None = None):
-        """
-        Applies terrain correction (orthorectification) to SAR products using Range-Doppler method.
+    def terrain_correction(
+        self,
+        source_bands: Optional[List[str]] = None,
+        dem_name: str = 'SRTM 3Sec',
+        external_dem_file: Optional[str | Path] = None,
+        external_dem_no_data_value: float = 0.0,
+        external_dem_apply_egm: bool = True,
+        dem_resampling_method: str = 'BILINEAR_INTERPOLATION',
+        img_resampling_method: str = 'BISINC_21_POINT_INTERPOLATION',
+        pixel_spacing_in_meter: float = 0.0,
+        pixel_spacing_in_degree: float = 0.0,
+        map_projection: str = 'WGS84(DD)',
+        align_to_standard_grid: bool = False,
+        standard_grid_origin_x: float = 0.0,
+        standard_grid_origin_y: float = 0.0,
+        nodata_value_at_sea: bool = False,
+        save_dem: bool = False,
+        save_lat_lon: bool = True,
+        save_incidence_angle_from_ellipsoid: bool = False,
+        save_local_incidence_angle: bool = True,
+        save_projected_local_incidence_angle: bool = False,
+        save_selected_source_band: bool = True,
+        save_layover_shadow_mask: bool = False,
+        output_complex: bool = True,
+        apply_radiometric_normalization: bool = False,
+        save_sigma_nought: bool = False,
+        save_gamma_nought: bool = True,
+        save_beta_nought: bool = False,
+        incidence_angle_for_sigma0: str = 'Use projected local incidence angle from DEM',
+        incidence_angle_for_gamma0: str = 'Use projected local incidence angle from DEM',
+        aux_file: str = 'Latest Auxiliary File',
+        external_aux_file: Optional[str | Path] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Apply terrain correction (orthorectification) using Range-Doppler method.
         
         This method corrects geometric distortions caused by topography and sensor geometry,
         projecting the SAR image onto a cartographic coordinate system using a DEM.
         
         Args:
-            source_bands (list[str] | None, optional): List of source bands to process. 
-                Defaults to None (all bands).
-            dem_name (str, optional): Digital elevation model name. Defaults to 'SRTM 3Sec'.
-            external_dem_file (str | Path | None, optional): Path to external DEM file. 
-                Defaults to None.
-            external_dem_no_data_value (float, optional): No data value for external DEM. 
-                Defaults to 0.0.
-            external_dem_apply_egm (bool, optional): Apply EGM96 geoid to external DEM. 
-                Defaults to True.
-            dem_resampling_method (str, optional): DEM resampling method. 
-                Defaults to 'BILINEAR_INTERPOLATION'.
-            img_resampling_method (str, optional): Image resampling method. 
-                Defaults to 'BILINEAR_INTERPOLATION'.
-            pixel_spacing_in_meter (float, optional): Output pixel spacing in meters. 
-                Defaults to 0.0 (automatic).
-            pixel_spacing_in_degree (float, optional): Output pixel spacing in degrees. 
-                Defaults to 0.0 (automatic).
-            map_projection (str, optional): Map projection in WKT format. 
-                Defaults to WGS84 geographic coordinates.
-            align_to_standard_grid (bool, optional): Align output to standard grid. 
-                Defaults to False.
-            standard_grid_origin_x (float, optional): X-coordinate of standard grid origin. 
-                Defaults to 0.0.
-            standard_grid_origin_y (float, optional): Y-coordinate of standard grid origin. 
-                Defaults to 0.0.
-            nodata_value_at_sea (bool, optional): Mask sea areas with no data value. 
-                Defaults to False.
-            save_dem (bool, optional): Save DEM band in output. Defaults to False.
-            save_lat_lon (bool, optional): Save latitude/longitude bands. Defaults to True.
-            save_incidence_angle_from_ellipsoid (bool, optional): Save incidence angle from ellipsoid. 
-                Defaults to False.
-            save_local_incidence_angle (bool, optional): Save local incidence angle. 
-                Defaults to True.
-            save_projected_local_incidence_angle (bool, optional): Save projected local incidence angle. 
-                Defaults to False.
-            save_selected_source_band (bool, optional): Save selected source bands. 
-                Defaults to True.
-            save_layover_shadow_mask (bool, optional): Save layover/shadow mask. 
-                Defaults to False.
-            output_complex (bool, optional): Output complex data. Defaults to True.
-            apply_radiometric_normalization (bool, optional): Apply radiometric normalization. 
-                Defaults to False.
-            save_sigma_nought (bool, optional): Save sigma nought band. Defaults to False.
-            save_gamma_nought (bool, optional): Save gamma nought band. Defaults to False.
-            save_beta_nought (bool, optional): Save beta nought band. Defaults to False.
-            incidence_angle_for_sigma0 (str, optional): Incidence angle type for sigma0. 
-                Defaults to 'Use projected local incidence angle from DEM'.
-            incidence_angle_for_gamma0 (str, optional): Incidence angle type for gamma0. 
-                Defaults to 'Use projected local incidence angle from DEM'.
-            aux_file (str, optional): Auxiliary file selection. 
-                Defaults to 'Latest Auxiliary File'.
-            external_aux_file (str | Path | None, optional): Path to external auxiliary file. 
-                Defaults to None.
+            source_bands: List of source bands to process. If None, all bands are processed.
+            dem_name: Digital elevation model name.
+            external_dem_file: Path to external DEM file.
+            external_dem_no_data_value: No data value for external DEM.
+            external_dem_apply_egm: Apply EGM96 geoid to external DEM.
+            dem_resampling_method: DEM resampling method.
+            img_resampling_method: Image resampling method.
+            pixel_spacing_in_meter: Output pixel spacing in meters (0 = automatic).
+            pixel_spacing_in_degree: Output pixel spacing in degrees (0 = automatic).
+            map_projection: Map projection in WKT format.
+            align_to_standard_grid: Align output to standard grid.
+            standard_grid_origin_x: X-coordinate of standard grid origin.
+            standard_grid_origin_y: Y-coordinate of standard grid origin.
+            nodata_value_at_sea: Mask sea areas with no data value.
+            save_dem: Save DEM band in output.
+            save_lat_lon: Save latitude/longitude bands.
+            save_incidence_angle_from_ellipsoid: Save incidence angle from ellipsoid.
+            save_local_incidence_angle: Save local incidence angle.
+            save_projected_local_incidence_angle: Save projected local incidence angle.
+            save_selected_source_band: Save selected source bands.
+            save_layover_shadow_mask: Save layover/shadow mask.
+            output_complex: Output complex data.
+            apply_radiometric_normalization: Apply radiometric normalization.
+            save_sigma_nought: Save sigma nought band.
+            save_gamma_nought: Save gamma nought band.
+            save_beta_nought: Save beta nought band.
+            incidence_angle_for_sigma0: Incidence angle type for sigma0.
+            incidence_angle_for_gamma0: Incidence angle type for gamma0.
+            aux_file: Auxiliary file selection.
+            external_aux_file: Path to external auxiliary file.
+            output_name: Custom output filename (without extension).
         
         Returns:
-            str | None: Path to the terrain-corrected output product, or None if failed.
+            Path to the terrain-corrected output product, or None if failed.
         """
         self._reset_command()
         
-        cmd_params = []
-        
-        if source_bands:
-            source_bands_str = ','.join(source_bands)
-            cmd_params.append(f'-PsourceBands={source_bands_str}')
-        
-        cmd_params.extend([
+        cmd_params = [
             f'-PdemName="{dem_name}"',
             f'-PexternalDEMNoDataValue={external_dem_no_data_value}',
             f'-PexternalDEMApplyEGM={str(external_dem_apply_egm).lower()}',
@@ -701,7 +852,10 @@ class GPT:
             f'-PincidenceAngleForSigma0="{incidence_angle_for_sigma0}"',
             f'-PincidenceAngleForGamma0="{incidence_angle_for_gamma0}"',
             f'-PauxFile="{aux_file}"'
-        ])
+        ]
+        
+        if source_bands:
+            cmd_params.insert(0, f'-PsourceBands={",".join(source_bands)}')
         
         if external_dem_file:
             cmd_params.append(f'-PexternalDEMFile={Path(external_dem_file).as_posix()}')
@@ -710,76 +864,66 @@ class GPT:
             cmd_params.append(f'-PexternalAuxFile={Path(external_aux_file).as_posix()}')
         
         self.current_cmd.append(f'Terrain-Correction {" ".join(cmd_params)}')
-        return self._call(suffix='TC')
+        return self._call(suffix='TC', output_name=output_name)
 
-    def Demodulate(self):
-        """
-        Performs demodulation and deramping of SLC data.
+    def demodulate(self, output_name: Optional[str] = None) -> Optional[str]:
+        """Perform demodulation and deramping of SLC data.
         
         This method removes the modulation and ramping applied to Single Look Complex (SLC)
         data during SAR processing, preparing the data for further interferometric or
         analysis operations.
         
+        Args:
+            output_name: Custom output filename (without extension).
+        
         Returns:
-            str | None: Path to the demodulated output product, or None if failed.
+            Path to the demodulated output product, or None if failed.
         """
         self._reset_command()
-        # Demodulate operator requires -SsourceProduct instead of -Ssource
         for i, cmd_part in enumerate(self.current_cmd):
             if cmd_part.startswith('-Ssource='):
                 self.current_cmd[i] = cmd_part.replace('-Ssource=', '-SsourceProduct=')
                 break
         self.current_cmd.append('Demodulate')
-        return self._call(suffix='DEMOD')
+        return self._call(suffix='DEMOD', output_name=output_name)
 
-    def Write(self, 
-              output_file: str | Path | None = None,
-              format_name: str | None = None,
-              clear_cache_after_row_write: bool = False,
-              delete_output_on_failure: bool = True,
-              write_entire_tile_rows: bool = False):
-        """
-        Writes a data product to a file with explicit control over write parameters.
+    def write(
+        self,
+        output_file: Optional[str | Path] = None,
+        format_name: Optional[str] = None,
+        clear_cache_after_row_write: bool = False,
+        delete_output_on_failure: bool = True,
+        write_entire_tile_rows: bool = False
+    ) -> Optional[str]:
+        """Write a data product to a file with explicit control over write parameters.
         
         This method provides direct access to the SNAP Write operator, allowing
         fine-grained control over the write process including caching behavior
         and tile row processing.
         
         Args:
-            output_file (str | Path | None, optional): The output file path. 
-                If None, uses the standard output path construction. Defaults to None.
-            format_name (str | None, optional): The output file format name. 
-                If None, uses the format specified in the GPT instance. Defaults to None.
-            clear_cache_after_row_write (bool, optional): If True, the internal tile cache 
-                is cleared after a tile row has been written. Only effective if 
-                write_entire_tile_rows is True. Defaults to False.
-            delete_output_on_failure (bool, optional): If True, all output files are 
-                deleted after a failed write operation. Defaults to True.
-            write_entire_tile_rows (bool, optional): If True, the write operation waits 
-                until an entire tile row is computed before writing. Defaults to False.
+            output_file: The output file path. If None, uses standard path construction.
+            format_name: The output file format name. If None, uses the instance format.
+            clear_cache_after_row_write: Clear internal tile cache after a tile row
+                has been written. Only effective if write_entire_tile_rows is True.
+            delete_output_on_failure: Delete all output files after a failed write operation.
+            write_entire_tile_rows: Wait until an entire tile row is computed before writing.
         
         Returns:
-            str | None: Path to the written output product, or None if failed.
+            Path to the written output product, or None if failed.
         """
         self._reset_command()
         
-        cmd_params = []
-        cmd_params.append(
-            f'-PclearCacheAfterRowWrite={str(clear_cache_after_row_write).lower()}'
-        )
-        cmd_params.append(
-            f'-PdeleteOutputOnFailure={str(delete_output_on_failure).lower()}'
-        )
-        cmd_params.append(
+        cmd_params = [
+            f'-PclearCacheAfterRowWrite={str(clear_cache_after_row_write).lower()}',
+            f'-PdeleteOutputOnFailure={str(delete_output_on_failure).lower()}',
             f'-PwriteEntireTileRows={str(write_entire_tile_rows).lower()}'
-        )
+        ]
         
-        # If output file is specified, use it; otherwise let _call handle it
         if output_file:
             output_path = Path(output_file)
             cmd_params.append(f'-Pfile={output_path.as_posix()}')
         
-        # If format is specified, use it; otherwise use instance format
         if format_name:
             cmd_params.append(f'-PformatName="{format_name}"')
         else:
@@ -788,191 +932,39 @@ class GPT:
         self.current_cmd.append(f'Write {" ".join(cmd_params)}')
         return self._call(suffix='WRITE')
 
+    # Legacy method names for backward compatibility
+    ImportVector = import_vector
+    LandMask = land_mask
+    Calibration = calibration
+    Deburst = deburst
+    Multilook = multilook
+    AdaptiveThresholding = adaptive_thresholding
+    ObjectDiscrimination = object_discrimination
+    Subset = subset
+    AatsrSST = aatsr_sst
+    ApplyOrbitFile = apply_orbit_file
+    TerrainCorrection = terrain_correction
+    Demodulate = demodulate
+    Write = write
 
 
-
-
-
-
-
-
-def _process_product_cfar(product_path: Path, mask_shp_path: Path, gpt_mode: str | None, 
-                         delete_intermediate: bool, pfa_thresholds: list[float]):
-    """Helper function to process a single product through the CFAR chain."""
-    out_dir = product_path.parent
-    try:
-        prod_type = mode_identifier(product_path.name)
-    except Exception as e:
-        print(f"Error determining product type for {product_path}: {e}")
-        return None, None
-
-    op = GPT(product=product_path.as_posix(), outdir=out_dir.as_posix(), mode=gpt_mode)
-    op.prod_type = prod_type
-
-    processed_products = []
-    prod_start_cfar = product_path.as_posix()
-
-    # Process based on product type
-    if prod_type == "Sentinel-1":
-        prod_deb = op.Deburst()
-        if not prod_deb:
-            return None, None
-        processed_products.append(Path(prod_deb))
-        
-        prod_cal = op.Calibration(Pols=['VH'])
-        if not prod_cal:
-            return None, None
-        processed_products.append(Path(prod_cal))
-        
-        prod_shp = op.ImportVector(vector_data=mask_shp_path)
-        if not prod_shp:
-            return None, None
-        processed_products.append(Path(prod_shp))
-        
-        prod_lm = op.LandMask()
-        if not prod_lm:
-            return None, None
-        processed_products.append(Path(prod_lm))
-        prod_start_cfar = prod_lm
-        
-        if delete_intermediate:
-            delProd(processed_products[1])
-            delProd(processed_products[2])
-
-    elif prod_type == "COSMO-SkyMed":
-        prod_ml = op.Multilook(nRgLooks=2, nAzLooks=2)
-        if not prod_ml:
-            return None, None
-        processed_products.append(Path(prod_ml))
-        
-        prod_cal = op.Calibration(Pols=['HH'])
-        if not prod_cal:
-            return None, None
-        processed_products.append(Path(prod_cal))
-        
-        prod_shp = op.ImportVector(vector_data=mask_shp_path)
-        if not prod_shp:
-            return None, None
-        processed_products.append(Path(prod_shp))
-        
-        prod_lm = op.LandMask()
-        if not prod_lm:
-            return None, None
-        processed_products.append(Path(prod_lm))
-        prod_start_cfar = prod_lm
-        
-        if delete_intermediate:
-            delProd(processed_products[0])
-            delProd(processed_products[1])
-            delProd(processed_products[2])
-
-    elif prod_type == "SAOCOM":
-        prod_shp = op.ImportVector(vector_data=mask_shp_path)
-        if not prod_shp:
-            return None, None
-        processed_products.append(Path(prod_shp))
-        
-        prod_lm = op.LandMask()
-        if not prod_lm:
-            return None, None
-        processed_products.append(Path(prod_lm))
-        prod_start_cfar = prod_lm
-        
-        if delete_intermediate:
-            delProd(processed_products[0])
-
-    # Process CFAR for each PFA threshold
-    last_successful_excel = None
-    for pfa in pfa_thresholds:
-        op_cfar = GPT(product=prod_start_cfar, outdir=out_dir.as_posix(), mode=gpt_mode)
-
-        at_params = {'pfa': pfa}
-        if prod_type == "COSMO-SkyMed":
-            at_params.update({'background_window_m': 650, 'guard_window_m': 400, 'target_window_m': 25})
-
-        prod_at = op_cfar.AdaptiveThresholding(**at_params)
-        if not prod_at:
-            continue
-
-        prod_od = op_cfar.ObjectDiscrimination(min_target_m=35, max_target_m=500)
-        if not prod_od:
-            if delete_intermediate:
-                delProd(prod_at)
-            continue
-
-        prod_od_path = Path(prod_od)
-        prod_od_data_dir = prod_od_path.with_suffix('.data')
-
-        try:
-            csv_files = list(prod_od_data_dir.glob('*.csv'))
-            ship_csv_path = next((f for f in csv_files if f.stem.lower().startswith('ship')), None)
-
-            if ship_csv_path:
-                ship_detections_df = pd.read_csv(ship_csv_path, header=1, sep='\t')
-                out_excel_path = out_dir / f"{product_path.stem}_pfa_{pfa}.xlsx"
-                ship_detections_df.to_excel(out_excel_path, index=False)
-                print(f'Saved ExcelFile to: {out_excel_path}')
-                last_successful_excel = out_excel_path.as_posix()
-            else:
-                print(f"No Ship detection CSV found for PFA {pfa}")
-
-        except Exception as e:
-            print(f"Error processing detection results for PFA {pfa}: {e}")
-        finally:
-            if delete_intermediate:
-                delProd(prod_at)
-                delProd(prod_od)
-
-    if delete_intermediate and Path(prod_start_cfar).exists() and prod_start_cfar != product_path.as_posix():
-        delProd(prod_start_cfar)
-
-    first_processed = processed_products[0].as_posix() if processed_products else product_path.as_posix()
-    return first_processed, last_successful_excel
-
-
-def CFAR(prod: str | Path, mask_shp_path: str | Path, mode: str | None = None, 
-         Thresh: list[float] | float = 12.5, DELETE: bool = False):
-    """
-    Performs Constant False Alarm Rate (CFAR) ship detection processing chain.
-
+def _identify_product_type(filename: str) -> str:
+    """Identify the product type based on filename.
+    
     Args:
-        prod: Path to the input SAR product file
-        mask_shp_path: Path to the shapefile used for land masking
-        mode: OS mode ('MacOS', 'Ubuntu', None) for GPT configuration
-        Thresh: A single PFA threshold or a list of PFA thresholds to test
-        DELETE: If True, delete intermediate processing files
-
+        filename: Name of the product file.
+    
     Returns:
-        Tuple[str | None, str | None]: Path to the first major processed product 
-                                       and path to the last generated Excel file
+        Product type string.
+    
+    Raises:
+        ValueError: If product type cannot be determined.
     """
-    product_path = Path(prod)
-    mask_path = Path(mask_shp_path)
-
-    if isinstance(Thresh, (int, float)):
-        pfa_thresholds = [float(Thresh)]
-    elif isinstance(Thresh, list):
-        pfa_thresholds = Thresh
-    else:
-        print("Warning: Invalid type for Thresh, using default [12.5]")
-        pfa_thresholds = [12.5]
-
-    return _process_product_cfar(
-        product_path=product_path,
-        mask_shp_path=mask_path,
-        gpt_mode=mode,
-        delete_intermediate=DELETE,
-        pfa_thresholds=pfa_thresholds
-    )
-
-
-def mode_identifier(filename: str) -> str:
-    """Identifies the product type based on filename."""
     if 'S1' in filename:
-        return "Sentinel-1"
+        return 'Sentinel-1'
     elif 'CSK' in filename:
-        return "COSMO-SkyMed"
+        return 'COSMO-SkyMed'
     elif 'SAO' in filename:
-        return "SAOCOM"
+        return 'SAOCOM'
     else:
-        raise ValueError(f"Unknown product type for file: {filename}")
+        raise ValueError(f'Unknown product type for file: {filename}')
