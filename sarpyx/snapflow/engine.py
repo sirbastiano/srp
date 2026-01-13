@@ -756,6 +756,93 @@ class GPT:
         self.current_cmd.append(f'AATSR.Ungrid {" ".join(cmd_params)}')
         return self._call(suffix='UNGRID', output_name=output_name)
 
+    def wind_field_estimation(
+        self,
+        source_bands: Optional[List[str]] = None,
+        window_size_in_km: float = 20.0,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Estimate wind speed and direction from SAR imagery.
+        
+        This method analyzes SAR backscatter patterns to estimate surface wind
+        fields over water bodies, particularly useful for oceanographic applications.
+        
+        Args:
+            source_bands: List of source bands to use for wind estimation.
+                If None, all available bands are used.
+            window_size_in_km: Window size for wind estimation in kilometers.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to wind field output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [f'-PwindowSizeInKm={window_size_in_km}']
+        
+        if source_bands:
+            cmd_params.insert(0, f'-PsourceBands={",".join(source_bands)}')
+        
+        self.current_cmd.append(f'Wind-Field-Estimation {" ".join(cmd_params)}')
+        return self._call(suffix='WIND', output_name=output_name)
+
+    def wdvi(
+        self,
+        red_source_band: Optional[str] = None,
+        nir_source_band: Optional[str] = None,
+        red_factor: float = 1.0,
+        nir_factor: float = 1.0,
+        slope_soil_line: float = 1.5,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute Weighted Difference Vegetation Index (WDVI).
+        
+        This method retrieves isovegetation lines parallel to the soil line,
+        where the soil line has an arbitrary slope and passes through the origin.
+        WDVI is particularly useful for vegetation monitoring and analysis.
+        
+        Args:
+            red_source_band: The red band for WDVI computation.
+                If None, operator will try to find the best fitting band.
+            nir_source_band: The near-infrared band for WDVI computation.
+                If None, operator will try to find the best fitting band.
+            red_factor: Multiplication factor for red band values.
+            nir_factor: Multiplication factor for NIR band values.
+            slope_soil_line: Slope of the soil line passing through origin.
+            resample_type: Resample method if bands differ in size.
+                Must be one of 'None', 'Lowest resolution', 'Highest resolution'.
+            upsampling: Interpolation method for upsampling to finer resolution.
+                Must be one of 'Nearest', 'Bilinear', 'Bicubic'.
+            downsampling: Aggregation method for downsampling to coarser resolution.
+                Must be one of 'First', 'Min', 'Max', 'Mean', 'Median'.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to WDVI output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredFactor={red_factor}',
+            f'-PnirFactor={nir_factor}',
+            f'-PslopeSoilLine={slope_soil_line}'
+        ]
+        
+        if red_source_band:
+            cmd_params.append(f'-PredSourceBand={red_source_band}')
+        
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+        
+        self.current_cmd.append(f'WdviOp {" ".join(cmd_params)}')
+        return self._call(suffix='WDVI', output_name=output_name)
+
     def apply_orbit_file(
         self,
         orbit_type: str = 'Sentinel Precise (Auto Download)',
@@ -989,6 +1076,8 @@ class GPT:
     Subset = subset
     AatsrSST = aatsr_sst
     AatsrUngrid = aatsr_ungrid
+    WindFieldEstimation = wind_field_estimation
+    Wdvi = wdvi
     ApplyOrbitFile = apply_orbit_file
     TerrainCorrection = terrain_correction
     Demodulate = demodulate
