@@ -178,8 +178,6 @@ class GPT:
         else:
             return 'gpt'
 
-
-
     def _reset_command(self) -> None:
         """Reset the command list for a new GPT operation."""
         self.current_cmd = [
@@ -859,6 +857,231 @@ class GPT:
         self.current_cmd.append(f'Subset {" ".join(cmd_params)}')
         return self._call(suffix=suffix, output_name=output_name)
 
+    def supervised_wishart_classification(
+        self,
+        training_dataset: str,
+        window_size: int = 5,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Perform supervised Wishart classification using provided training data."""
+        self._reset_command()
+        training_path = Path(training_dataset).as_posix()
+        self.current_cmd.append(
+            f'Supervised-Wishart-Classification '
+            f'-PtrainingDataSet={training_path} '
+            f'-PwindowSize={window_size}'
+        )
+        return self._call(suffix='WISH', output_name=output_name)
+
+    def subgraph(
+        self,
+        graph_file: str,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Encapsulate an existing graph via the SubGraph operator."""
+        graph_path = Path(graph_file)
+        if not graph_path.exists():
+            raise FileNotFoundError(f'{graph_path} does not exist')
+
+        self._reset_command()
+        self.current_cmd.append(f'SubGraph -PgraphFile={graph_path.as_posix()}')
+        return self._call(suffix='SUBG', output_name=output_name)
+
+    def statistics_op(
+        self,
+        source_products: Optional[List[str | Path]] = None,
+        source_product_paths: Optional[List[str]] = None,
+        shapefile: Optional[str | Path] = None,
+        feature_id: str = 'name',
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        output_shapefile: Optional[str | Path] = None,
+        output_ascii_file: Optional[str | Path] = None,
+        percentiles: Optional[List[int]] = None,
+        accuracy: int = 3,
+        write_data_types_separately: bool = False,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute statistics for the provided source products."""
+        self._reset_command()
+
+        products = source_products or [self.prod_path]
+        if not products:
+            raise ValueError('source_products must contain at least one product path')
+
+        source_products_str = ','.join(Path(p).as_posix() for p in products)
+        for i, cmd_part in enumerate(self.current_cmd):
+            if cmd_part.startswith('-Ssource='):
+                self.current_cmd[i] = f'-SsourceProducts={source_products_str}'
+                break
+
+        cmd_params = [
+            f'-Paccuracy={accuracy}',
+            f'-PwriteDataTypesSeparately={str(write_data_types_separately).lower()}'
+        ]
+
+        if source_product_paths:
+            cmd_params.append(f'-PsourceProductPaths={",".join(source_product_paths)}')
+
+        if shapefile:
+            cmd_params.append(f'-Pshapefile={Path(shapefile).as_posix()}')
+            cmd_params.append(f'-PfeatureId={feature_id}')
+
+        if start_date:
+            cmd_params.append(f'-PstartDate="{start_date}"')
+        if end_date:
+            cmd_params.append(f'-PendDate="{end_date}"')
+
+        if output_shapefile:
+            cmd_params.append(f'-PoutputShapefile={Path(output_shapefile).as_posix()}')
+        if output_ascii_file:
+            cmd_params.append(f'-PoutputAsciiFile={Path(output_ascii_file).as_posix()}')
+
+        if percentiles:
+            percentiles_str = ','.join(str(p) for p in percentiles)
+        else:
+            percentiles_str = '90,95'
+        cmd_params.append(f'-Ppercentiles={percentiles_str}')
+
+        self.current_cmd.append(f'StatisticsOp {" ".join(cmd_params)}')
+        return self._call(suffix='STAT', output_name=output_name)
+
+    def stamps_export(
+        self,
+        target_folder: str,
+        psi_format: bool = True,
+        source_product: Optional[str | Path] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Export StaMPS-compatible data products."""
+        self._reset_command()
+
+        product_path = Path(source_product or self.prod_path).as_posix()
+        for i, cmd_part in enumerate(self.current_cmd):
+            if cmd_part.startswith('-Ssource='):
+                self.current_cmd[i] = f'-SsourceProduct={product_path}'
+                break
+
+        target_folder_path = Path(target_folder)
+        target_folder_path.mkdir(parents=True, exist_ok=True)
+
+        self.current_cmd.append(
+            f'StampsExport -PtargetFolder={target_folder_path.as_posix()} '
+            f'-PpsiFormat={str(psi_format).lower()}'
+        )
+        return self._call(suffix='STMP', output_name=output_name)
+
+    def stack_split(
+        self,
+        target_folder: str = 'target',
+        format_name: str = 'BEAM-DIMAP',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Split the product into one file per band via Stack-Split."""
+        self._reset_command()
+
+        target_path = Path(target_folder)
+        target_path.mkdir(parents=True, exist_ok=True)
+
+        self.current_cmd.append(
+            f'Stack-Split '
+            f'-PtargetFolder={target_path.as_posix()} '
+            f'-PformatName="{format_name}"'
+        )
+        return self._call(suffix='SSPL', output_name=output_name)
+
+    def stack_averaging(
+        self,
+        statistic: str = 'Mean Average',
+        source_product: Optional[str | Path] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Run Stack-Averaging on the product with the desired statistic."""
+        self._reset_command()
+
+        product_path = Path(source_product or self.prod_path).as_posix()
+        for i, cmd_part in enumerate(self.current_cmd):
+            if cmd_part.startswith('-Ssource='):
+                self.current_cmd[i] = f'-SsourceProduct={product_path}'
+                break
+
+        self.current_cmd.append(
+            f'Stack-Averaging -Pstatistic="{statistic}"'
+        )
+        return self._call(suffix='STKAVG', output_name=output_name)
+
+    def spectral_angle_mapper(
+        self,
+        reference_bands: Optional[List[str]] = None,
+        thresholds: str = '0.0',
+        spectra: Optional[List[str]] = None,
+        hidden_spectra: Optional[List[str]] = None,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Classify the product using the Spectral Angle Mapper operator."""
+        self._reset_command()
+
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-Pthresholds="{thresholds}"'
+        ]
+
+        if reference_bands:
+            cmd_params.append(f'-PreferenceBands={",".join(reference_bands)}')
+
+        if spectra:
+            cmd_params.append(f'-Pspectra={",".join(spectra)}')
+
+        if hidden_spectra:
+            cmd_params.append(f'-PhiddenSpectra={",".join(hidden_spectra)}')
+
+        self.current_cmd.append(f'SpectralAngleMapperOp {" ".join(cmd_params)}')
+        return self._call(suffix='SAM', output_name=output_name)
+
+    def speckle_filter(
+        self,
+        source_bands: Optional[List[str]] = None,
+        filter_type: str = 'Lee Sigma',
+        filter_size_x: int = 3,
+        filter_size_y: int = 3,
+        damping_factor: int = 2,
+        en_l: float = 1.0,
+        estimate_enl: bool = False,
+        num_looks_str: str = '1',
+        sigma_str: str = '0.9',
+        window_size: str = '7x7',
+        target_window_size_str: str = '3x3',
+        an_size: int = 50,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Apply the Speckle-Filter operator with configurable parameters."""
+        self._reset_command()
+
+        cmd_params = [
+            f'-PanSize={an_size}',
+            f'-PdampingFactor={damping_factor}',
+            f'-Penl={en_l}',
+            f'-PestimateENL={str(estimate_enl).lower()}',
+            f'-Pfilter="{filter_type}"',
+            f'-PfilterSizeX={filter_size_x}',
+            f'-PfilterSizeY={filter_size_y}',
+            f'-PnumLooksStr={num_looks_str}',
+            f'-PsigmaStr={sigma_str}',
+            f'-PtargetWindowSizeStr="{target_window_size_str}"',
+            f'-PwindowSize="{window_size}"'
+        ]
+
+        if source_bands:
+            cmd_params.insert(0, f'-PsourceBands={",".join(source_bands)}')
+
+        self.current_cmd.append(f'Speckle-Filter {" ".join(cmd_params)}')
+        return self._call(suffix='SPKL', output_name=output_name)
+
     def aatsr_sst(
         self,
         dual: bool = True,
@@ -1089,6 +1312,27 @@ class GPT:
         
         self.current_cmd.append(f'Warp {" ".join(cmd_params)}')
         return self._call(suffix='WARP', output_name=output_name)
+
+    def srgr(
+        self,
+        source_bands: Optional[List[str]] = None,
+        interpolation_method: str = 'Linear interpolation',
+        warp_polynomial_order: int = 4,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Convert slant range to ground range using SRGR operator."""
+        self._reset_command()
+
+        cmd_params = [
+            f'-PinterpolationMethod="{interpolation_method}"',
+            f'-PwarpPolynomialOrder={warp_polynomial_order}'
+        ]
+
+        if source_bands:
+            cmd_params.insert(0, f'-PsourceBands={",".join(source_bands)}')
+
+        self.current_cmd.append(f'SRGR {" ".join(cmd_params)}')
+        return self._call(suffix='SRGR', output_name=output_name)
 
     def update_geo_reference(
         self,
@@ -1906,15 +2150,23 @@ class GPT:
     AdaptiveThresholding = adaptive_thresholding
     ObjectDiscrimination = object_discrimination
     Subset = subset
+    SupervisedWishartClassification = supervised_wishart_classification
+    StatisticsOp = statistics_op
+    SubGraph = subgraph
+    StampsExport = stamps_export
+    StackSplit = stack_split
     AatsrSST = aatsr_sst
     AatsrUngrid = aatsr_ungrid
     WindFieldEstimation = wind_field_estimation
     Wdvi = wdvi
     Warp = warp
+    SRGR = srgr
     UpdateGeoReference = update_geo_reference
     AddElevation = add_elevation
     ThreePassDInSAR = three_pass_dinsar
     TemporalPercentile = temporal_percentile
+    SpectralAngleMapperOp = spectral_angle_mapper
+    SpeckleFilter = speckle_filter
     Unmix = unmix
     Undersample = undersample
     Tsavi = tsavi
@@ -1929,6 +2181,7 @@ class GPT:
     Demodulate = demodulate
     Write = write
     TileWriter = tile_writer
+    StackAveraging = stack_averaging
 
 
 def _identify_product_type(filename: str) -> str:
