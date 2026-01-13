@@ -942,6 +942,48 @@ class GPT:
         self.current_cmd.append(f'Update-Geo-Reference {" ".join(cmd_params)}')
         return self._call(suffix='UGR', output_name=output_name)
 
+    def add_elevation(
+        self,
+        dem_name: str = 'SRTM 3Sec',
+        dem_resampling_method: str = 'BICUBIC_INTERPOLATION',
+        elevation_band_name: str = 'elevation',
+        external_dem_file: Optional[str | Path] = None,
+        external_dem_no_data_value: float = 0.0,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Add a DEM elevation band to the product.
+        
+        This method creates an elevation band from a specified DEM source and
+        appends it to the product for downstream processing.
+        
+        Args:
+            dem_name: The digital elevation model to use.
+                Must be one of 'ACE', 'ASTER 1sec GDEM', 'GETASSE30',
+                'SRTM 1Sec HGT', 'SRTM 3Sec'.
+            dem_resampling_method: DEM resampling method.
+            elevation_band_name: Name of the elevation band.
+            external_dem_file: Path to external DEM file.
+            external_dem_no_data_value: No data value for external DEM.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to output product with elevation band, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PdemName="{dem_name}"',
+            f'-PdemResamplingMethod={dem_resampling_method}',
+            f'-PexternalDEMNoDataValue={external_dem_no_data_value}',
+            f'-PelevationBandName="{elevation_band_name}"'
+        ]
+        
+        if external_dem_file:
+            cmd_params.append(f'-PexternalDEMFile={Path(external_dem_file).as_posix()}')
+        
+        self.current_cmd.append(f'AddElevation {" ".join(cmd_params)}')
+        return self._call(suffix='ELEV', output_name=output_name)
+
     def unmix(
         self,
         source_bands: Optional[List[str]] = None,
@@ -1639,6 +1681,7 @@ class GPT:
     Wdvi = wdvi
     Warp = warp
     UpdateGeoReference = update_geo_reference
+    AddElevation = add_elevation
     Unmix = unmix
     Undersample = undersample
     Tsavi = tsavi
