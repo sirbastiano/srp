@@ -50,7 +50,7 @@ from sarpyx.sla import SLAProcessor
 from sarpyx.utils import io as sarpyx_io
 from sarpyx.utils import viz as sarpyx_viz
 from sarpyx.science import indices
-from sarpyx.snap import engine as snap_engine
+from sarpyx.snapflow import engine as snap_engine
 
 # Optional GPU acceleration imports
 try:

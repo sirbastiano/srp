@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from sarpyx.snap.engine import GPT
+from sarpyx.snapflow.engine import GPT
 from .utils import (
     validate_path,
     create_output_directory,

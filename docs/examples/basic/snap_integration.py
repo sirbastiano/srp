@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 try:
-    from sarpyx.snap import GPT, SNAPProcessor
+    from sarpyx.snapflow import GPT, SNAPProcessor
     from sarpyx.utils import visualization
 except ImportError as e:
     print(f"Error importing SARPYX: {e}")

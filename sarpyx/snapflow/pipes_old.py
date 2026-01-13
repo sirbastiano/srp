@@ -1,5 +1,5 @@
 from pathlib import Path
-from sarpyx.snap.engine import GPT
+from sarpyx.snapflow.engine import GPT
 from sarpyx.snap.utils import delProd, mode_identifier
 import pandas as pd
 
