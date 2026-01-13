@@ -1125,6 +1125,54 @@ class GPT:
         self.current_cmd.append(f'TsaviOp {" ".join(cmd_params)}')
         return self._call(suffix='TSAVI', output_name=output_name)
 
+    def topsar_split(
+        self,
+        subswath: Optional[str] = None,
+        selected_polarisations: Optional[List[str]] = None,
+        first_burst_index: int = 1,
+        last_burst_index: int = 9999,
+        wkt_aoi: Optional[str] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Create a new product with only the selected subswath.
+        
+        This method splits Sentinel-1 TOPS data by subswath and/or burst,
+        useful for reducing processing time and focusing on specific areas of interest.
+        
+        Args:
+            subswath: The subswath to select (e.g., 'IW1', 'IW2', 'IW3').
+                If None, all subswaths are included.
+            selected_polarisations: List of polarisations to include.
+                If None, all polarisations are included.
+            first_burst_index: The first burst index to include (1-based).
+                Must be >= 1.
+            last_burst_index: The last burst index to include (1-based).
+                Must be >= 1.
+            wkt_aoi: WKT polygon to be used for selecting bursts.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to split output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PfirstBurstIndex={first_burst_index}',
+            f'-PlastBurstIndex={last_burst_index}'
+        ]
+        
+        if subswath:
+            cmd_params.insert(0, f'-Psubswath={subswath}')
+        
+        if selected_polarisations:
+            cmd_params.append(f'-PselectedPolarisations={",".join(selected_polarisations)}')
+        
+        if wkt_aoi:
+            cmd_params.append(f'-PwktAoi="{wkt_aoi}"')
+        
+        self.current_cmd.append(f'TOPSAR-Split {" ".join(cmd_params)}')
+        return self._call(suffix='SPLIT', output_name=output_name)
+
     def apply_orbit_file(
         self,
         orbit_type: str = 'Sentinel Precise (Auto Download)',
@@ -1365,6 +1413,7 @@ class GPT:
     Unmix = unmix
     Undersample = undersample
     Tsavi = tsavi
+    TopsarSplit = topsar_split
     ApplyOrbitFile = apply_orbit_file
     TerrainCorrection = terrain_correction
     Demodulate = demodulate
