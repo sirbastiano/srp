@@ -997,6 +997,71 @@ class GPT:
         self.current_cmd.append(f'Unmix {" ".join(cmd_params)}')
         return self._call(suffix='UNMIX', output_name=output_name)
 
+    def undersample(
+        self,
+        source_bands: Optional[List[str]] = None,
+        method: str = 'LowPass Filtering',
+        filter_size: str = '3x3',
+        sub_sampling_x: int = 2,
+        sub_sampling_y: int = 2,
+        output_image_by: str = 'Ratio',
+        target_image_height: int = 1000,
+        target_image_width: int = 1000,
+        width_ratio: float = 0.5,
+        height_ratio: float = 0.5,
+        range_spacing: float = 12.5,
+        azimuth_spacing: float = 12.5,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Undersample the dataset by reducing spatial resolution.
+        
+        This method reduces the spatial dimensions of SAR imagery through
+        sub-sampling or low-pass filtering, useful for reducing data volume
+        or matching different resolution products.
+        
+        Args:
+            source_bands: List of source bands to undersample. If None, all bands are processed.
+            method: Undersampling method to use.
+                Must be one of 'Sub-Sampling', 'LowPass Filtering'.
+            filter_size: Filter size for low-pass filtering.
+                Must be one of '3x3', '5x5', '7x7'.
+            sub_sampling_x: Sub-sampling factor in X direction.
+            sub_sampling_y: Sub-sampling factor in Y direction.
+            output_image_by: Method to determine output image size.
+                Must be one of 'Image Size', 'Ratio', 'Pixel Spacing'.
+            target_image_height: Row dimension of output image (pixels).
+            target_image_width: Column dimension of output image (pixels).
+            width_ratio: Width ratio of output/input images.
+            height_ratio: Height ratio of output/input images.
+            range_spacing: Range pixel spacing in meters.
+            azimuth_spacing: Azimuth pixel spacing in meters.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to undersampled output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-Pmethod="{method}"',
+            f'-PfilterSize={filter_size}',
+            f'-PsubSamplingX={sub_sampling_x}',
+            f'-PsubSamplingY={sub_sampling_y}',
+            f'-PoutputImageBy="{output_image_by}"',
+            f'-PtargetImageHeight={target_image_height}',
+            f'-PtargetImageWidth={target_image_width}',
+            f'-PwidthRatio={width_ratio}',
+            f'-PheightRatio={height_ratio}',
+            f'-PrangeSpacing={range_spacing}',
+            f'-PazimuthSpacing={azimuth_spacing}'
+        ]
+        
+        if source_bands:
+            cmd_params.insert(0, f'-PsourceBands={",".join(source_bands)}')
+        
+        self.current_cmd.append(f'Undersample {" ".join(cmd_params)}')
+        return self._call(suffix='UNDER', output_name=output_name)
+
     def apply_orbit_file(
         self,
         orbit_type: str = 'Sentinel Precise (Auto Download)',
@@ -1235,6 +1300,7 @@ class GPT:
     Warp = warp
     UpdateGeoReference = update_geo_reference
     Unmix = unmix
+    Undersample = undersample
     ApplyOrbitFile = apply_orbit_file
     TerrainCorrection = terrain_correction
     Demodulate = demodulate
