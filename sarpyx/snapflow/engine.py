@@ -2539,6 +2539,1397 @@ class GPT:
         self.current_cmd.append(f'TileWriter {" ".join(cmd_params)}')
         return self._call(suffix='TILES', output_name=output_name)
 
+    def band_maths(
+        self,
+        target_bands: Optional[List[dict]] = None,
+        variables: Optional[List[dict]] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Create a product with one or more bands using mathematical expressions.
+        
+        This method allows creating new bands based on mathematical expressions
+        applied to existing bands, enabling complex band arithmetic and transformations.
+        
+        Args:
+            target_bands: List of target band dictionaries. Each dict should contain:
+                - name (str): Band name
+                - type (str): Data type (e.g., 'float32')
+                - expression (str): Mathematical expression
+                - description (str, optional): Band description
+                - unit (str, optional): Band unit
+                - no_data_value (float, optional): NoData value
+            variables: List of variable dictionaries for use in expressions.
+                Each dict should contain:
+                - name (str): Variable name
+                - type (str): Data type
+                - value (str): Variable value
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to output product with computed bands, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = []
+        
+        # Note: Complex parameters like targetBands and variables are typically 
+        # better handled via XML graphs. For simple cases, consider using
+        # BandSelect or other operators.
+        
+        self.current_cmd.append(f'BandMaths {" ".join(cmd_params)}')
+        return self._call(suffix='BMTH', output_name=output_name)
+
+    def band_select(
+        self,
+        source_bands: Optional[List[str]] = None,
+        band_name_pattern: Optional[str] = None,
+        selected_polarisations: Optional[List[str]] = None,
+        selected_sub_images: Optional[List[str]] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Creates a new product with only selected bands.
+        
+        This method filters the product to include only specified bands,
+        reducing data size and focusing on relevant information.
+        
+        Args:
+            source_bands: List of source band names to include.
+            band_name_pattern: Band name regular expression pattern.
+            selected_polarisations: List of polarisations to select.
+            selected_sub_images: List of imagettes or sub-images to select.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to output product with selected bands, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = []
+        
+        if source_bands:
+            cmd_params.append(f'-PsourceBands={",".join(source_bands)}')
+        
+        if band_name_pattern:
+            cmd_params.append(f'-PbandNamePattern={band_name_pattern}')
+        
+        if selected_polarisations:
+            cmd_params.append(f'-PselectedPolarisations={",".join(selected_polarisations)}')
+        
+        if selected_sub_images:
+            cmd_params.append(f'-PselectedSubImages={",".join(selected_sub_images)}')
+        
+        self.current_cmd.append(f'BandSelect {" ".join(cmd_params)}')
+        return self._call(suffix='BSL', output_name=output_name)
+
+    def band_merge(
+        self,
+        source_products: Optional[List[str | Path]] = None,
+        source_bands: Optional[List[str]] = None,
+        geographic_error: float = 1.0e-5,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Allows copying raster data from any number of source products to a specified 'master' product.
+        
+        This method merges bands from multiple products into a single product,
+        useful for combining data from different sources.
+        
+        Args:
+            source_products: List of source product paths.
+            source_bands: List of source band names.
+            geographic_error: Maximum lat/lon error in degrees between products.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to merged output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [f'-PgeographicError={geographic_error}']
+        
+        if source_bands:
+            cmd_params.append(f'-PsourceBands={",".join(source_bands)}')
+        
+        self.current_cmd.append(f'BandMerge {" ".join(cmd_params)}')
+        return self._call(suffix='BMRG', output_name=output_name)
+
+    def coherence(
+        self,
+        coh_win_az: int = 10,
+        coh_win_rg: int = 10,
+        subtract_flat_earth_phase: bool = False,
+        srp_polynomial_degree: int = 5,
+        srp_number_points: int = 501,
+        orbit_degree: int = 3,
+        square_pixel: bool = True,
+        subtract_topographic_phase: bool = False,
+        dem_name: str = 'SRTM 3Sec',
+        external_dem_file: Optional[str | Path] = None,
+        external_dem_no_data_value: float = 0.0,
+        external_dem_apply_egm: bool = True,
+        tile_extension_percent: str = '100',
+        single_master: bool = True,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Estimate coherence from stack of coregistered images.
+        
+        This method computes interferometric coherence, a measure of correlation
+        between SAR images, essential for InSAR quality assessment.
+        
+        Args:
+            coh_win_az: Size of coherence estimation window in Azimuth direction.
+                Valid interval is (1, 90].
+            coh_win_rg: Size of coherence estimation window in Range direction.
+                Valid interval is (1, 90].
+            subtract_flat_earth_phase: Subtract flat earth phase.
+            srp_polynomial_degree: Order of 'Flat earth phase' polynomial.
+                Must be one of 1, 2, 3, 4, 5, 6, 7, 8.
+            srp_number_points: Number of points for the 'flat earth phase' polynomial estimation.
+                Must be one of 301, 401, 501, 601, 701, 801, 901, 1001.
+            orbit_degree: Degree of orbit (polynomial) interpolator.
+                Must be one of 1, 2, 3, 4, 5.
+            square_pixel: Use ground square pixel.
+            subtract_topographic_phase: Subtract topographic phase.
+            dem_name: The digital elevation model.
+            external_dem_file: Path to external DEM file.
+            external_dem_no_data_value: No data value for external DEM.
+            external_dem_apply_egm: Apply EGM96 geoid to external DEM.
+            tile_extension_percent: Define extension of tile for DEM simulation.
+            single_master: Single master mode.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to coherence output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PcohWinAz={coh_win_az}',
+            f'-PcohWinRg={coh_win_rg}',
+            f'-PsubtractFlatEarthPhase={str(subtract_flat_earth_phase).lower()}',
+            f'-PsrpPolynomialDegree={srp_polynomial_degree}',
+            f'-PsrpNumberPoints={srp_number_points}',
+            f'-PorbitDegree={orbit_degree}',
+            f'-PsquarePixel={str(square_pixel).lower()}',
+            f'-PsubtractTopographicPhase={str(subtract_topographic_phase).lower()}',
+            f'-PdemName="{dem_name}"',
+            f'-PexternalDEMNoDataValue={external_dem_no_data_value}',
+            f'-PexternalDEMApplyEGM={str(external_dem_apply_egm).lower()}',
+            f'-PtileExtensionPercent={tile_extension_percent}',
+            f'-PsingleMaster={str(single_master).lower()}'
+        ]
+        
+        if external_dem_file:
+            cmd_params.append(f'-PexternalDEMFile={Path(external_dem_file).as_posix()}')
+        
+        self.current_cmd.append(f'Coherence {" ".join(cmd_params)}')
+        return self._call(suffix='COH', output_name=output_name)
+
+    def interferogram(
+        self,
+        subtract_flat_earth_phase: bool = True,
+        srp_polynomial_degree: int = 5,
+        srp_number_points: int = 501,
+        orbit_degree: int = 3,
+        include_coherence: bool = True,
+        coh_win_az: int = 10,
+        coh_win_rg: int = 10,
+        square_pixel: bool = True,
+        subtract_topographic_phase: bool = False,
+        dem_name: str = 'SRTM 3Sec',
+        external_dem_file: Optional[str | Path] = None,
+        external_dem_no_data_value: float = 0.0,
+        external_dem_apply_egm: bool = True,
+        tile_extension_percent: str = '100',
+        output_flat_earth_phase: bool = False,
+        output_topo_phase: bool = False,
+        output_elevation: bool = False,
+        output_lat_lon: bool = False,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute interferograms from stack of coregistered S-1 images.
+        
+        This method generates interferometric phase from coregistered SAR image pairs,
+        essential for InSAR displacement and topography analysis.
+        
+        Args:
+            subtract_flat_earth_phase: Subtract flat earth phase.
+            srp_polynomial_degree: Order of 'Flat earth phase' polynomial.
+            srp_number_points: Number of points for polynomial estimation.
+            orbit_degree: Degree of orbit interpolator.
+            include_coherence: Include coherence estimation.
+            coh_win_az: Coherence window size in azimuth.
+            coh_win_rg: Coherence window size in range.
+            square_pixel: Use ground square pixel.
+            subtract_topographic_phase: Subtract topographic phase.
+            dem_name: The digital elevation model.
+            external_dem_file: Path to external DEM file.
+            external_dem_no_data_value: No data value for external DEM.
+            external_dem_apply_egm: Apply EGM96 geoid to external DEM.
+            tile_extension_percent: Tile extension for DEM simulation.
+            output_flat_earth_phase: Output flat earth phase band.
+            output_topo_phase: Output topographic phase band.
+            output_elevation: Output elevation band.
+            output_lat_lon: Output latitude/longitude bands.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to interferogram output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PsubtractFlatEarthPhase={str(subtract_flat_earth_phase).lower()}',
+            f'-PsrpPolynomialDegree={srp_polynomial_degree}',
+            f'-PsrpNumberPoints={srp_number_points}',
+            f'-PorbitDegree={orbit_degree}',
+            f'-PincludeCoherence={str(include_coherence).lower()}',
+            f'-PcohWinAz={coh_win_az}',
+            f'-PcohWinRg={coh_win_rg}',
+            f'-PsquarePixel={str(square_pixel).lower()}',
+            f'-PsubtractTopographicPhase={str(subtract_topographic_phase).lower()}',
+            f'-PdemName="{dem_name}"',
+            f'-PexternalDEMNoDataValue={external_dem_no_data_value}',
+            f'-PexternalDEMApplyEGM={str(external_dem_apply_egm).lower()}',
+            f'-PtileExtensionPercent={tile_extension_percent}',
+            f'-PoutputFlatEarthPhase={str(output_flat_earth_phase).lower()}',
+            f'-PoutputTopoPhase={str(output_topo_phase).lower()}',
+            f'-PoutputElevation={str(output_elevation).lower()}',
+            f'-PoutputLatLon={str(output_lat_lon).lower()}'
+        ]
+        
+        if external_dem_file:
+            cmd_params.append(f'-PexternalDEMFile={Path(external_dem_file).as_posix()}')
+        
+        self.current_cmd.append(f'Interferogram {" ".join(cmd_params)}')
+        return self._call(suffix='IFG', output_name=output_name)
+
+    def goldstein_phase_filtering(
+        self,
+        alpha: float = 1.0,
+        fft_size_string: str = '64',
+        window_size_string: str = '3',
+        use_coherence_mask: bool = False,
+        coherence_threshold: float = 0.2,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Phase filtering using Goldstein method.
+        
+        This method applies adaptive phase filtering to interferograms,
+        reducing noise while preserving phase features.
+        
+        Args:
+            alpha: Adaptive filter exponent. Valid interval is (0, 1].
+            fft_size_string: FFT size. Must be one of '32', '64', '128', '256'.
+            window_size_string: Window size. Must be one of '3', '5', '7'.
+            use_coherence_mask: Use coherence mask.
+            coherence_threshold: The coherence threshold. Valid interval is [0, 1].
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to filtered output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-Palpha={alpha}',
+            f'-PFFTSizeString={fft_size_string}',
+            f'-PwindowSizeString={window_size_string}',
+            f'-PuseCoherenceMask={str(use_coherence_mask).lower()}',
+            f'-PcoherenceThreshold={coherence_threshold}'
+        ]
+        
+        self.current_cmd.append(f'GoldsteinPhaseFiltering {" ".join(cmd_params)}')
+        return self._call(suffix='GPHS', output_name=output_name)
+
+    def back_geocoding(
+        self,
+        dem_name: str = 'SRTM 3Sec',
+        dem_resampling_method: str = 'BICUBIC_INTERPOLATION',
+        external_dem_file: Optional[str | Path] = None,
+        external_dem_no_data_value: float = 0.0,
+        resampling_type: str = 'BISINC_5_POINT_INTERPOLATION',
+        mask_out_area_without_elevation: bool = True,
+        output_range_azimuth_offset: bool = False,
+        output_deramp_demod_phase: bool = False,
+        disable_reramp: bool = False,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Bursts co-registration using orbit and DEM.
+        
+        This method performs coregistration of burst SAR data using precise
+        orbit information and DEM, essential for InSAR processing.
+        
+        Args:
+            dem_name: The digital elevation model.
+            dem_resampling_method: DEM resampling method.
+            external_dem_file: Path to external DEM file.
+            external_dem_no_data_value: No data value for external DEM.
+            resampling_type: Method for resampling slave grid onto master grid.
+            mask_out_area_without_elevation: Mask areas without elevation data.
+            output_range_azimuth_offset: Output range/azimuth offset bands.
+            output_deramp_demod_phase: Output deramp/demod phase band.
+            disable_reramp: Disable reramp operation.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to coregistered output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PdemName="{dem_name}"',
+            f'-PdemResamplingMethod={dem_resampling_method}',
+            f'-PexternalDEMNoDataValue={external_dem_no_data_value}',
+            f'-PresamplingType={resampling_type}',
+            f'-PmaskOutAreaWithoutElevation={str(mask_out_area_without_elevation).lower()}',
+            f'-PoutputRangeAzimuthOffset={str(output_range_azimuth_offset).lower()}',
+            f'-PoutputDerampDemodPhase={str(output_deramp_demod_phase).lower()}',
+            f'-PdisableReramp={str(disable_reramp).lower()}'
+        ]
+        
+        if external_dem_file:
+            cmd_params.append(f'-PexternalDEMFile={Path(external_dem_file).as_posix()}')
+        
+        self.current_cmd.append(f'Back-Geocoding {" ".join(cmd_params)}')
+        return self._call(suffix='BGEO', output_name=output_name)
+
+    def create_stack(
+        self,
+        master_bands: Optional[List[str]] = None,
+        source_bands: Optional[List[str]] = None,
+        resampling_type: str = 'NONE',
+        extent: str = 'Master',
+        initial_offset_method: str = 'Orbit',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Collocates two or more products based on their geo-codings.
+        
+        This method creates a stack by collocating multiple products,
+        essential for multi-temporal analysis.
+        
+        Args:
+            master_bands: List of master bands.
+            source_bands: List of source bands.
+            resampling_type: Method for resampling slave grid onto master grid.
+            extent: The output image extents. Must be one of 'Master', 'Minimum', 'Maximum'.
+            initial_offset_method: Method for computing initial offset.
+                Must be one of 'Orbit', 'Product Geolocation'.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to stack output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PresamplingType={resampling_type}',
+            f'-Pextent={extent}',
+            f'-PinitialOffsetMethod="{initial_offset_method}"'
+        ]
+        
+        if master_bands:
+            cmd_params.insert(0, f'-PmasterBands={",".join(master_bands)}')
+        
+        if source_bands:
+            cmd_params.insert(0, f'-PsourceBands={",".join(source_bands)}')
+        
+        self.current_cmd.append(f'CreateStack {" ".join(cmd_params)}')
+        return self._call(suffix='STCK', output_name=output_name)
+
+    def resample(
+        self,
+        reference_band: Optional[str] = None,
+        target_width: Optional[int] = None,
+        target_height: Optional[int] = None,
+        target_resolution: Optional[int] = None,
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        flag_downsampling: str = 'First',
+        resampling_preset: Optional[str] = None,
+        band_resamplings: Optional[str] = None,
+        resample_on_pyramid_levels: bool = True,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Resampling of a multi-size source product to a single-size target product.
+        
+        This method resamples bands to a common resolution, essential for
+        multi-sensor or multi-resolution data integration.
+        
+        Args:
+            reference_band: Name of reference band. All other bands resampled to match it.
+            target_width: Target width in pixels.
+            target_height: Target height in pixels.
+            target_resolution: Target resolution.
+            upsampling: Interpolation method for upsampling.
+                Must be one of 'Nearest', 'Bilinear', 'Bicubic'.
+            downsampling: Aggregation method for downsampling.
+                Must be one of 'First', 'Min', 'Max', 'Mean', 'Median'.
+            flag_downsampling: Aggregation method for flags.
+                Must be one of 'First', 'FlagAnd', 'FlagOr', 'FlagMedianAnd', 'FlagMedianOr'.
+            resampling_preset: Resampling preset name.
+            band_resamplings: Band-specific resampling settings.
+            resample_on_pyramid_levels: Increase performance for viewing.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to resampled output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PflagDownsampling={flag_downsampling}',
+            f'-PresampleOnPyramidLevels={str(resample_on_pyramid_levels).lower()}'
+        ]
+        
+        if reference_band:
+            cmd_params.insert(0, f'-PreferenceBand={reference_band}')
+        
+        if target_width is not None:
+            cmd_params.append(f'-PtargetWidth={target_width}')
+        
+        if target_height is not None:
+            cmd_params.append(f'-PtargetHeight={target_height}')
+        
+        if target_resolution is not None:
+            cmd_params.append(f'-PtargetResolution={target_resolution}')
+        
+        if resampling_preset:
+            cmd_params.append(f'-PresamplingPreset={resampling_preset}')
+        
+        if band_resamplings:
+            cmd_params.append(f'-PbandResamplings={band_resamplings}')
+        
+        self.current_cmd.append(f'Resample {" ".join(cmd_params)}')
+        return self._call(suffix='RSMP', output_name=output_name)
+
+    def linear_to_from_db(
+        self,
+        source_bands: Optional[List[str]] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Converts bands to/from dB.
+        
+        This method converts amplitude values between linear and decibel (dB) scale,
+        commonly used in SAR data analysis.
+        
+        Args:
+            source_bands: List of source bands to convert.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to converted output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = []
+        
+        if source_bands:
+            cmd_params.append(f'-PsourceBands={",".join(source_bands)}')
+        
+        self.current_cmd.append(f'LinearToFromdB {" ".join(cmd_params)}')
+        return self._call(suffix='DB', output_name=output_name)
+
+    def remove_grd_border_noise(
+        self,
+        selected_polarisations: Optional[List[str]] = None,
+        border_limit: int = 500,
+        trim_threshold: float = 0.5,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Mask no-value pixels for GRD product.
+        
+        This method removes border noise artifacts from Sentinel-1 GRD products,
+        improving data quality.
+        
+        Args:
+            selected_polarisations: List of polarisations to process.
+            border_limit: The border margin limit in pixels.
+            trim_threshold: The trim threshold.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to noise-removed output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PborderLimit={border_limit}',
+            f'-PtrimThreshold={trim_threshold}'
+        ]
+        
+        if selected_polarisations:
+            cmd_params.insert(0, f'-PselectedPolarisations={",".join(selected_polarisations)}')
+        
+        self.current_cmd.append(f'Remove-GRD-Border-Noise {" ".join(cmd_params)}')
+        return self._call(suffix='RBNX', output_name=output_name)
+
+    def collocate(
+        self,
+        source_product_paths: Optional[List[str]] = None,
+        reference_product_name: Optional[str] = None,
+        target_product_type: str = 'COLLOCATED',
+        copy_secondary_metadata: bool = False,
+        rename_reference_components: bool = True,
+        rename_secondary_components: bool = True,
+        reference_component_pattern: str = '${ORIGINAL_NAME}_M',
+        secondary_component_pattern: str = '${ORIGINAL_NAME}_S${SLAVE_NUMBER_ID}',
+        resampling_type: str = 'NEAREST_NEIGHBOUR',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Collocates two products based on their geo-codings.
+        
+        This method aligns multiple products to a common grid, enabling
+        direct pixel-by-pixel comparison and analysis.
+        
+        Args:
+            source_product_paths: Comma-separated list of source product paths.
+            reference_product_name: Name of the reference product.
+            target_product_type: Product type string for target product.
+            copy_secondary_metadata: Copy metadata from secondary products.
+            rename_reference_components: Rename reference components in target.
+            rename_secondary_components: Rename secondary components in target.
+            reference_component_pattern: Text pattern for renaming reference components.
+            secondary_component_pattern: Text pattern for renaming secondary components.
+            resampling_type: Method for resampling secondary grid onto reference grid.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to collocated output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PtargetProductType="{target_product_type}"',
+            f'-PcopySecondaryMetadata={str(copy_secondary_metadata).lower()}',
+            f'-PrenameReferenceComponents={str(rename_reference_components).lower()}',
+            f'-PrenameSecondaryComponents={str(rename_secondary_components).lower()}',
+            f'-PreferenceComponentPattern="{reference_component_pattern}"',
+            f'-PsecondaryComponentPattern="{secondary_component_pattern}"',
+            f'-PresamplingType={resampling_type}'
+        ]
+        
+        if source_product_paths:
+            cmd_params.insert(0, f'-PsourceProductPaths={",".join(source_product_paths)}')
+        
+        if reference_product_name:
+            cmd_params.insert(0, f'-PreferenceProductName="{reference_product_name}"')
+        
+        self.current_cmd.append(f'Collocate {" ".join(cmd_params)}')
+        return self._call(suffix='COLL', output_name=output_name)
+
+    def polarimetric_decomposition(
+        self,
+        decomposition: str = 'Sinclair Decomposition',
+        window_size: int = 5,
+        output_ha_alpha: bool = False,
+        output_beta_delta_gamma_lambda: bool = False,
+        output_alpha123: bool = False,
+        output_lambda123: bool = False,
+        output_touzi_param_set0: bool = False,
+        output_touzi_param_set1: bool = False,
+        output_touzi_param_set2: bool = False,
+        output_touzi_param_set3: bool = False,
+        output_huynen_param_set0: bool = True,
+        output_huynen_param_set1: bool = False,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Perform Polarimetric decomposition of a given product.
+        
+        This method applies various polarimetric decomposition techniques to
+        extract physical scattering mechanisms from polarimetric SAR data.
+        
+        Args:
+            decomposition: Decomposition method. Must be one of:
+                'Sinclair Decomposition', 'Pauli Decomposition', 
+                'Freeman-Durden Decomposition', 'Generalized Freeman-Durden Decomposition',
+                'Yamaguchi Decomposition', 'van Zyl Decomposition',
+                'H-A-Alpha Quad Pol Decomposition', 'H-Alpha Dual Pol Decomposition',
+                'Cloude Decomposition', 'Touzi Decomposition', 'Huynen Decomposition',
+                'Yang Decomposition', 'Krogager Decomposition', 'Cameron Decomposition',
+                'Model-free 3-component Decomposition', 'Model-free 4-component Decomposition',
+                'Model-Based Dual Pol Decomposition'.
+            window_size: The sliding window size. Valid interval is [1, 100].
+            output_ha_alpha: Output entropy, anisotropy, alpha.
+            output_beta_delta_gamma_lambda: Output beta, delta, gamma, lambda.
+            output_alpha123: Output alpha 1, 2, 3.
+            output_lambda123: Output lambda 1, 2, 3.
+            output_touzi_param_set0: Output psi, tau, alpha, phi.
+            output_touzi_param_set1: Output psi1, tau1, alpha1, phi1.
+            output_touzi_param_set2: Output psi2, tau2, alpha2, phi2.
+            output_touzi_param_set3: Output psi3, tau3, alpha3, phi3.
+            output_huynen_param_set0: Output 2A0_b, B0_plus_B, B0_minus_B.
+            output_huynen_param_set1: Output A0, B0, B, C, D, E, F, G, H.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to decomposed output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-Pdecomposition="{decomposition}"',
+            f'-PwindowSize={window_size}',
+            f'-PoutputHAAlpha={str(output_ha_alpha).lower()}',
+            f'-PoutputBetaDeltaGammaLambda={str(output_beta_delta_gamma_lambda).lower()}',
+            f'-PoutputAlpha123={str(output_alpha123).lower()}',
+            f'-PoutputLambda123={str(output_lambda123).lower()}',
+            f'-PoutputTouziParamSet0={str(output_touzi_param_set0).lower()}',
+            f'-PoutputTouziParamSet1={str(output_touzi_param_set1).lower()}',
+            f'-PoutputTouziParamSet2={str(output_touzi_param_set2).lower()}',
+            f'-PoutputTouziParamSet3={str(output_touzi_param_set3).lower()}',
+            f'-PoutputHuynenParamSet0={str(output_huynen_param_set0).lower()}',
+            f'-PoutputHuynenParamSet1={str(output_huynen_param_set1).lower()}'
+        ]
+        
+        self.current_cmd.append(f'Polarimetric-Decomposition {" ".join(cmd_params)}')
+        return self._call(suffix='PDEC', output_name=output_name)
+
+    def polarimetric_parameters(
+        self,
+        use_mean_matrix: bool = True,
+        window_size_x_str: str = '5',
+        window_size_y_str: str = '5',
+        output_span: bool = True,
+        output_pedestal_height: bool = False,
+        output_rvi: bool = False,
+        output_rfdi: bool = False,
+        output_csi: bool = False,
+        output_vsi: bool = False,
+        output_bmi: bool = False,
+        output_iti: bool = False,
+        output_hhvv_ratio: bool = False,
+        output_hhhv_ratio: bool = False,
+        output_vvvh_ratio: bool = False,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute general polarimetric parameters.
+        
+        This method extracts various polarimetric parameters from quad-pol
+        or dual-pol SAR data for analysis and interpretation.
+        
+        Args:
+            use_mean_matrix: Use mean coherency or covariance matrix.
+            window_size_x_str: Window size in X direction.
+                Must be one of '3', '5', '7', '9', '11', '13', '15', '17', '19'.
+            window_size_y_str: Window size in Y direction.
+                Must be one of '3', '5', '7', '9', '11', '13', '15', '17', '19'.
+            output_span: Output Span.
+            output_pedestal_height: Output pedestal height.
+            output_rvi: Output RVI.
+            output_rfdi: Output RFDI.
+            output_csi: Output CSI.
+            output_vsi: Output VSI.
+            output_bmi: Output BMI.
+            output_iti: Output ITI.
+            output_hhvv_ratio: Output Co-Pol HH/VV ratio.
+            output_hhhv_ratio: Output Cross-Pol HH/HV ratio.
+            output_vvvh_ratio: Output Cross-Pol VV/VH ratio.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to output product with polarimetric parameters, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PuseMeanMatrix={str(use_mean_matrix).lower()}',
+            f'-PwindowSizeXStr={window_size_x_str}',
+            f'-PwindowSizeYStr={window_size_y_str}',
+            f'-PoutputSpan={str(output_span).lower()}',
+            f'-PoutputPedestalHeight={str(output_pedestal_height).lower()}',
+            f'-PoutputRVI={str(output_rvi).lower()}',
+            f'-PoutputRFDI={str(output_rfdi).lower()}',
+            f'-PoutputCSI={str(output_csi).lower()}',
+            f'-PoutputVSI={str(output_vsi).lower()}',
+            f'-PoutputBMI={str(output_bmi).lower()}',
+            f'-PoutputITI={str(output_iti).lower()}',
+            f'-PoutputHHVVRatio={str(output_hhvv_ratio).lower()}',
+            f'-PoutputHHHVRatio={str(output_hhhv_ratio).lower()}',
+            f'-PoutputVVVHRatio={str(output_vvvh_ratio).lower()}'
+        ]
+        
+        self.current_cmd.append(f'Polarimetric-Parameters {" ".join(cmd_params)}')
+        return self._call(suffix='PPAR', output_name=output_name)
+
+    def offset_tracking(
+        self,
+        grid_azimuth_spacing: int = 40,
+        grid_range_spacing: int = 40,
+        registration_window_width: str = '128',
+        registration_window_height: str = '128',
+        x_corr_threshold: float = 0.1,
+        registration_oversampling: str = '16',
+        average_box_size: str = '5',
+        max_velocity: float = 5.0,
+        radius: int = 4,
+        resampling_type: str = 'BICUBIC_INTERPOLATION',
+        spatial_average: bool = True,
+        fill_holes: bool = True,
+        roi_vector: Optional[str] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Create velocity vectors from offset tracking.
+        
+        This method tracks pixel offsets between coregistered images to measure
+        surface displacement, useful for glacier flow and landslide monitoring.
+        
+        Args:
+            grid_azimuth_spacing: Output grid azimuth spacing in pixels.
+            grid_range_spacing: Output grid range spacing in pixels.
+            registration_window_width: Registration window width.
+                Must be one of '32', '64', '128', '256', '512', '1024', '2048'.
+            registration_window_height: Registration window height.
+                Must be one of '32', '64', '128', '256', '512', '1024', '2048'.
+            x_corr_threshold: The cross-correlation threshold.
+            registration_oversampling: Registration oversampling factor.
+                Must be one of '2', '4', '8', '16', '32', '64', '128', '256', '512'.
+            average_box_size: Average box size.
+                Must be one of '3', '5', '9', '11'.
+            max_velocity: Threshold for eliminating invalid GCPs.
+            radius: Radius for hole-filling.
+            resampling_type: Method for velocity interpolation.
+                Must be one of 'NEAREST_NEIGHBOUR', 'BILINEAR_INTERPOLATION',
+                'BICUBIC_INTERPOLATION', 'BISINC_5_POINT_INTERPOLATION', 'CUBIC_CONVOLUTION'.
+            spatial_average: Apply spatial averaging.
+            fill_holes: Fill holes in velocity field.
+            roi_vector: Region of interest vector.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to offset tracking output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PgridAzimuthSpacing={grid_azimuth_spacing}',
+            f'-PgridRangeSpacing={grid_range_spacing}',
+            f'-PregistrationWindowWidth={registration_window_width}',
+            f'-PregistrationWindowHeight={registration_window_height}',
+            f'-PxCorrThreshold={x_corr_threshold}',
+            f'-PregistrationOversampling={registration_oversampling}',
+            f'-PaverageBoxSize={average_box_size}',
+            f'-PmaxVelocity={max_velocity}',
+            f'-Pradius={radius}',
+            f'-PresamplingType={resampling_type}',
+            f'-PspatialAverage={str(spatial_average).lower()}',
+            f'-PfillHoles={str(fill_holes).lower()}'
+        ]
+        
+        if roi_vector:
+            cmd_params.append(f'-ProiVector={roi_vector}')
+        
+        self.current_cmd.append(f'Offset-Tracking {" ".join(cmd_params)}')
+        return self._call(suffix='OFST', output_name=output_name)
+
+    def ndvi(
+        self,
+        red_source_band: Optional[str] = None,
+        nir_source_band: Optional[str] = None,
+        red_factor: float = 1.0,
+        nir_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """The retrieves the Normalized Difference Vegetation Index (NDVI).
+        
+        This method calculates NDVI from optical imagery, a widely used
+        indicator of vegetation health and density.
+        
+        Args:
+            red_source_band: The red band for NDVI computation.
+                If not provided, the operator will try to find the best fitting band.
+            nir_source_band: The near-infrared band for NDVI computation.
+                If not provided, the operator will try to find the best fitting band.
+            red_factor: The value of the red source band is multiplied by this value.
+            nir_factor: The value of the NIR source band is multiplied by this value.
+            resample_type: If selected bands differ in size, the resample method used.
+                Must be one of 'None', 'Lowest resolution', 'Highest resolution'.
+            upsampling: Method for interpolation (upsampling to finer resolution).
+                Must be one of 'Nearest', 'Bilinear', 'Bicubic'.
+            downsampling: Method for aggregation (downsampling to coarser resolution).
+                Must be one of 'First', 'Min', 'Max', 'Mean', 'Median'.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to NDVI output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredFactor={red_factor}',
+            f'-PnirFactor={nir_factor}'
+        ]
+        
+        if red_source_band:
+            cmd_params.append(f'-PredSourceBand={red_source_band}')
+        
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+        
+        self.current_cmd.append(f'NdviOp {" ".join(cmd_params)}')
+        return self._call(suffix='NDVI', output_name=output_name)
+
+    def reproject(
+        self,
+        crs: Optional[str] = None,
+        wkt_file: Optional[str | Path] = None,
+        resampling: str = 'Nearest',
+        reference_pixel_x: Optional[float] = None,
+        reference_pixel_y: Optional[float] = None,
+        easting: Optional[float] = None,
+        northing: Optional[float] = None,
+        orientation: float = 0.0,
+        pixel_size_x: Optional[float] = None,
+        pixel_size_y: Optional[float] = None,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+        tile_size_x: Optional[int] = None,
+        tile_size_y: Optional[int] = None,
+        orthorectify: bool = False,
+        elevation_model_name: Optional[str] = None,
+        no_data_value: Optional[float] = None,
+        include_tie_point_grids: bool = True,
+        add_delta_bands: bool = False,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Reprojection of a source product to a target Coordinate Reference System.
+        
+        This method transforms geographic coordinates and resamples data to a
+        new projection, essential for data integration and standardization.
+        
+        Args:
+            crs: Target Coordinate Reference System in WKT or as authority code.
+                Examples: 'EPSG:4326', 'AUTO:42001' (UTM).
+            wkt_file: File containing target CRS in WKT format.
+            resampling: Resampling method for floating-point raster data.
+                Must be one of 'Nearest', 'Bilinear', 'Bicubic'.
+            reference_pixel_x: X-position of reference pixel.
+            reference_pixel_y: Y-position of reference pixel.
+            easting: Easting of reference pixel.
+            northing: Northing of reference pixel.
+            orientation: Orientation of output product in degrees.
+                Valid interval is [-360, 360].
+            pixel_size_x: Pixel size in X direction in CRS units.
+            pixel_size_y: Pixel size in Y direction in CRS units.
+            width: Width of target product.
+            height: Height of target product.
+            tile_size_x: Tile size in X direction.
+            tile_size_y: Tile size in Y direction.
+            orthorectify: Whether to orthorectify the source product.
+            elevation_model_name: Elevation model name for orthorectification.
+            no_data_value: Value used to indicate no-data.
+            include_tie_point_grids: Include tie-point grids in output.
+            add_delta_bands: Whether to add delta longitude and latitude bands.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to reprojected output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-Presampling={resampling}',
+            f'-Porientation={orientation}',
+            f'-Porthorectify={str(orthorectify).lower()}',
+            f'-PincludeTiePointGrids={str(include_tie_point_grids).lower()}',
+            f'-PaddDeltaBands={str(add_delta_bands).lower()}'
+        ]
+        
+        if crs:
+            cmd_params.insert(0, f'-Pcrs="{crs}"')
+        
+        if wkt_file:
+            cmd_params.insert(0, f'-PwktFile={Path(wkt_file).as_posix()}')
+        
+        if reference_pixel_x is not None:
+            cmd_params.append(f'-PreferencePixelX={reference_pixel_x}')
+        
+        if reference_pixel_y is not None:
+            cmd_params.append(f'-PreferencePixelY={reference_pixel_y}')
+        
+        if easting is not None:
+            cmd_params.append(f'-Peasting={easting}')
+        
+        if northing is not None:
+            cmd_params.append(f'-Pnorthing={northing}')
+        
+        if pixel_size_x is not None:
+            cmd_params.append(f'-PpixelSizeX={pixel_size_x}')
+        
+        if pixel_size_y is not None:
+            cmd_params.append(f'-PpixelSizeY={pixel_size_y}')
+        
+        if width is not None:
+            cmd_params.append(f'-Pwidth={width}')
+        
+        if height is not None:
+            cmd_params.append(f'-Pheight={height}')
+        
+        if tile_size_x is not None:
+            cmd_params.append(f'-PtileSizeX={tile_size_x}')
+        
+        if tile_size_y is not None:
+            cmd_params.append(f'-PtileSizeY={tile_size_y}')
+        
+        if elevation_model_name:
+            cmd_params.append(f'-PelevationModelName={elevation_model_name}')
+        
+        if no_data_value is not None:
+            cmd_params.append(f'-PnoDataValue={no_data_value}')
+        
+        self.current_cmd.append(f'Reproject {" ".join(cmd_params)}')
+        return self._call(suffix='REPR', output_name=output_name)
+
+    def polarimetric_matrices(
+        self,
+        matrix: str = 'T3',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Generate covariance or coherency matrix for given product.
+        
+        This operator creates polarimetric covariance or coherency matrices from
+        SAR data, which are fundamental for polarimetric decomposition and
+        classification operations.
+        
+        Args:
+            matrix: The covariance or coherency matrix type to generate.
+                Must be one of 'C2', 'C3', 'C4', 'T3', 'T4'.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to output product with generated matrix, or None if failed.
+        """
+        self._reset_command()
+        cmd_params = [f'-Pmatrix={matrix}']
+        self.current_cmd.append(f'Polarimetric-Matrices {" ".join(cmd_params)}')
+        return self._call(suffix='POLMAT', output_name=output_name)
+
+    def polarimetric_speckle_filter(
+        self,
+        filter: str = 'Refined Lee Filter',
+        filter_size: int = 5,
+        num_looks_str: str = '1',
+        window_size: str = '7x7',
+        target_window_size_str: str = '3x3',
+        an_size: int = 50,
+        sigma_str: str = '0.9',
+        search_window_size_str: str = '15',
+        patch_size_str: str = '5',
+        scale_size_str: str = '1',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Apply polarimetric speckle filtering for noise reduction.
+        
+        This operator reduces speckle noise in polarimetric SAR data using various
+        filtering methods while preserving polarimetric information and structural
+        features.
+        
+        Args:
+            filter: The speckle filter to apply.
+                Must be one of 'Box Car Filter', 'IDAN Filter', 'Refined Lee Filter',
+                'Improved Lee Sigma Filter'.
+            filter_size: The filter size. Valid range: (1, 100].
+            num_looks_str: Number of looks.
+                Must be one of '1', '2', '3', '4'.
+            window_size: The window size.
+                Must be one of '5x5', '7x7', '9x9', '11x11', '13x13', '15x15', '17x17'.
+            target_window_size_str: The target window size.
+                Must be one of '3x3', '5x5'.
+            an_size: The Adaptive Neighbourhood size. Valid range: (1, 200].
+            sigma_str: Sigma parameter.
+                Must be one of '0.5', '0.6', '0.7', '0.8', '0.9'.
+            search_window_size_str: The search window size.
+                Must be one of '3', '5', '7', '9', '11', '13', '15', '17', '19',
+                '21', '23', '25'.
+            patch_size_str: The patch size.
+                Must be one of '3', '5', '7', '9', '11'.
+            scale_size_str: The scale size.
+                Must be one of '0', '1', '2'.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to filtered output product, or None if failed.
+        """
+        self._reset_command()
+        cmd_params = [
+            f'-Pfilter="{filter}"',
+            f'-PfilterSize={filter_size}',
+            f'-PnumLooksStr={num_looks_str}',
+            f'-PwindowSize={window_size}',
+            f'-PtargetWindowSizeStr={target_window_size_str}',
+            f'-PanSize={an_size}',
+            f'-PsigmaStr={sigma_str}',
+            f'-PsearchWindowSizeStr={search_window_size_str}',
+            f'-PpatchSizeStr={patch_size_str}',
+            f'-PscaleSizeStr={scale_size_str}'
+        ]
+        self.current_cmd.append(f'Polarimetric-Speckle-Filter {" ".join(cmd_params)}')
+        return self._call(suffix='POLSPK', output_name=output_name)
+
+    def polarimetric_classification(
+        self,
+        classification: str = 'H Alpha Wishart',
+        window_size: int = 5,
+        max_iterations: int = 3,
+        num_initial_classes: int = 90,
+        num_final_classes: int = 15,
+        mixed_category_threshold: float = 0.5,
+        decomposition: str = 'Sinclair Decomposition',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Perform polarimetric classification of SAR data.
+        
+        This operator applies polarimetric classification algorithms to identify
+        different scattering mechanisms and land cover types based on polarimetric
+        properties.
+        
+        Args:
+            classification: The classification method to use.
+                Must be one of 'Cloude-Pottier', 'Cloude-Pottier Dual Pol',
+                'H Alpha Wishart', 'H Alpha Wishart Dual Pol',
+                'Freeman-Durden Wishart', 'General Wishart'.
+            window_size: The sliding window size. Valid range: (1, 100].
+            max_iterations: The maximum number of iterations. Valid range: [1, 100].
+            num_initial_classes: The initial number of classes. Valid range: [9, 1000].
+            num_final_classes: The desired number of classes. Valid range: [9, 100].
+            mixed_category_threshold: The threshold for classifying pixels to mixed
+                category. Valid range: (0, *).
+            decomposition: The polarimetric decomposition method.
+                Must be one of 'Sinclair Decomposition', 'Pauli Decomposition',
+                'Freeman-Durden Decomposition', 'Generalized Freeman-Durden Decomposition',
+                'Yamaguchi Decomposition', 'van Zyl Decomposition',
+                'H-A-Alpha Quad Pol Decomposition', 'Cloude Decomposition',
+                'Touzi Decomposition'.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to classified output product, or None if failed.
+        """
+        self._reset_command()
+        cmd_params = [
+            f'-Pclassification="{classification}"',
+            f'-PwindowSize={window_size}',
+            f'-PmaxIterations={max_iterations}',
+            f'-PnumInitialClasses={num_initial_classes}',
+            f'-PnumFinalClasses={num_final_classes}',
+            f'-PmixedCategoryThreshold={mixed_category_threshold}',
+            f'-Pdecomposition="{decomposition}"'
+        ]
+        self.current_cmd.append(f'Polarimetric-Classification {" ".join(cmd_params)}')
+        return self._call(suffix='POLCLS', output_name=output_name)
+
+    def read_product(
+        self,
+        file: str | Path,
+        format_name: Optional[str] = None,
+        source_bands: Optional[List[str]] = None,
+        source_masks: Optional[List[str]] = None,
+        pixel_region: Optional[str] = None,
+        geometry_region: Optional[str] = None,
+        vector_file: Optional[str | Path] = None,
+        polygon_region: Optional[str] = None,
+        use_advanced_options: bool = False,
+        copy_metadata: bool = True,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Read a data product from a given file location.
+        
+        This operator loads SAR data products from various formats and allows
+        subsetting during the read operation based on spatial regions or band selection.
+        
+        Args:
+            file: The file from which the data product is read.
+            format_name: An optional format name to specify the reader.
+            source_bands: List of source band names to read.
+            source_masks: List of source mask names to read.
+            pixel_region: Subset region in pixel coordinates (format: 'x,y,width,height').
+            geometry_region: Subset region in geographical coordinates using WKT-format.
+            vector_file: File from which the polygon geometry is read.
+            polygon_region: Subset region in geographical coordinates using WKT-format.
+            use_advanced_options: Whether to use advanced options for reading.
+            copy_metadata: Whether to copy the metadata of the source product.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to read output product, or None if failed.
+        """
+        self._reset_command()
+        
+        file_path = Path(file)
+        cmd_params = [f'-Pfile={file_path.as_posix()}']
+        
+        if format_name:
+            cmd_params.append(f'-PformatName={format_name}')
+        
+        if source_bands:
+            cmd_params.append(f'-PsourceBands={",".join(source_bands)}')
+        
+        if source_masks:
+            cmd_params.append(f'-PsourceMasks={",".join(source_masks)}')
+        
+        if pixel_region:
+            cmd_params.append(f'-PpixelRegion={pixel_region}')
+        
+        if geometry_region:
+            cmd_params.append(f"-PgeometryRegion='{geometry_region}'")
+        
+        if vector_file:
+            vector_path = Path(vector_file)
+            cmd_params.append(f'-PvectorFile={vector_path.as_posix()}')
+        
+        if polygon_region:
+            cmd_params.append(f"-PpolygonRegion='{polygon_region}'")
+        
+        cmd_params.append(f'-PuseAdvancedOptions={str(use_advanced_options).lower()}')
+        cmd_params.append(f'-PcopyMetadata={str(copy_metadata).lower()}')
+        
+        self.current_cmd.append(f'Read {" ".join(cmd_params)}')
+        return self._call(suffix='READ', output_name=output_name)
+
+    def merge_products(
+        self,
+        geographic_error: float = 1.0e-5,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Merge several source products using a master product as reference.
+        
+        This operator combines multiple products by aligning them to a master product
+        that provides the reference geo-information.
+        
+        Args:
+            geographic_error: Maximum lat/lon error in degrees between products.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to merged output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [f'-PgeographicError={geographic_error}']
+        
+        self.current_cmd.append(f'Merge {" ".join(cmd_params)}')
+        return self._call(suffix='MERGE', output_name=output_name)
+
+    def mosaic(
+        self,
+        combine: str = 'OR',
+        crs: str = 'EPSG:4326',
+        east_bound: float = 30.0,
+        north_bound: float = 75.0,
+        south_bound: float = 35.0,
+        west_bound: float = -15.0,
+        pixel_size_x: float = 0.05,
+        pixel_size_y: float = 0.05,
+        orthorectify: bool = False,
+        elevation_model_name: Optional[str] = None,
+        resampling: str = 'Nearest',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Create a mosaic from a set of source products.
+        
+        This operator creates a single mosaicked product from multiple input products,
+        aligning them to a common coordinate system and spatial resolution.
+        
+        Args:
+            combine: Specifies how conditions are combined. Must be 'OR' or 'AND'.
+            crs: The CRS of the target product (WKT or authority code).
+            east_bound: The eastern longitude. Valid range: [-180, 180].
+            north_bound: The northern latitude. Valid range: [-90, 90].
+            south_bound: The southern latitude. Valid range: [-90, 90].
+            west_bound: The western longitude. Valid range: [-180, 180].
+            pixel_size_x: Size of a pixel in X-direction in map units.
+            pixel_size_y: Size of a pixel in Y-direction in map units.
+            orthorectify: Whether the source product should be orthorectified.
+            elevation_model_name: Elevation model name for orthorectification.
+            resampling: Resampling method. Must be 'Nearest', 'Bilinear', or 'Bicubic'.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to mosaic output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-Pcombine={combine}',
+            f'-Pcrs="{crs}"',
+            f'-PeastBound={east_bound}',
+            f'-PnorthBound={north_bound}',
+            f'-PsouthBound={south_bound}',
+            f'-PwestBound={west_bound}',
+            f'-PpixelSizeX={pixel_size_x}',
+            f'-PpixelSizeY={pixel_size_y}',
+            f'-Porthorectify={str(orthorectify).lower()}',
+            f'-Presampling={resampling}'
+        ]
+        
+        if elevation_model_name:
+            cmd_params.append(f'-PelevationModelName={elevation_model_name}')
+        
+        self.current_cmd.append(f'Mosaic {" ".join(cmd_params)}')
+        return self._call(suffix='MOSAIC', output_name=output_name)
+
+    def flip(
+        self,
+        flip_type: str = 'Vertical',
+        source_bands: Optional[List[str]] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Flip a product horizontally, vertically, or both.
+        
+        This operator flips the spatial orientation of a product along the horizontal
+        and/or vertical axes.
+        
+        Args:
+            flip_type: The type of flip to apply.
+                Must be 'Horizontal', 'Vertical', or 'Horizontal and Vertical'.
+            source_bands: List of source bands to flip.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to flipped output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [f'-PflipType="{flip_type}"']
+        
+        if source_bands:
+            cmd_params.append(f'-PsourceBands={",".join(source_bands)}')
+        
+        self.current_cmd.append(f'Flip {" ".join(cmd_params)}')
+        return self._call(suffix='FLIP', output_name=output_name)
+
+    def image_filter(
+        self,
+        selected_filter_name: Optional[str] = None,
+        source_bands: Optional[List[str]] = None,
+        user_defined_kernel_file: Optional[str | Path] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Apply common image processing filters.
+        
+        This operator applies various image filtering operations including edge detection,
+        smoothing, sharpening, and custom kernel-based filters.
+        
+        Args:
+            selected_filter_name: The name of the filter to apply.
+            source_bands: List of source bands to filter.
+            user_defined_kernel_file: Path to file containing a user-defined kernel.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to filtered output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = []
+        
+        if selected_filter_name:
+            cmd_params.append(f'-PselectedFilterName={selected_filter_name}')
+        
+        if source_bands:
+            cmd_params.append(f'-PsourceBands={",".join(source_bands)}')
+        
+        if user_defined_kernel_file:
+            kernel_path = Path(user_defined_kernel_file)
+            cmd_params.append(f'-PuserDefinedKernelFile={kernel_path.as_posix()}')
+        
+        self.current_cmd.append(f'Image-Filter {" ".join(cmd_params)}')
+        return self._call(suffix='IMGFLT', output_name=output_name)
+
+    def convert_datatype(
+        self,
+        target_data_type: str = 'uint8',
+        target_scaling_str: str = 'Linear (between 95% clipped histogram)',
+        target_no_data_value: float = 0.0,
+        source_bands: Optional[List[str]] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Convert product data type.
+        
+        This operator converts the data type of bands in a product, with various
+        scaling options to map the original value range to the target data type.
+        
+        Args:
+            target_data_type: The target data type.
+                Must be one of 'int8', 'int16', 'int32', 'uint8', 'uint16',
+                'uint32', 'float32', 'float64'.
+            target_scaling_str: The scaling method for data type conversion.
+                Must be one of 'Truncate', 'Linear (slope and intercept)',
+                'Linear (between 95% clipped histogram)',
+                'Linear (peak clipped histogram)', 'Logarithmic'.
+            target_no_data_value: The no-data value for the target product.
+            source_bands: List of source bands to convert.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to converted output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PtargetDataType={target_data_type}',
+            f'-PtargetScalingStr="{target_scaling_str}"',
+            f'-PtargetNoDataValue={target_no_data_value}'
+        ]
+        
+        if source_bands:
+            cmd_params.append(f'-PsourceBands={",".join(source_bands)}')
+        
+        self.current_cmd.append(f'Convert-Datatype {" ".join(cmd_params)}')
+        return self._call(suffix='CVTDT', output_name=output_name)
+
+    def land_sea_mask(
+        self,
+        land_mask: bool = True,
+        use_srtm: bool = True,
+        geometry: Optional[str] = None,
+        invert_geometry: bool = False,
+        shoreline_extension: int = 0,
+        source_bands: Optional[List[str]] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Create a bitmask defining land versus ocean areas.
+        
+        This operator generates a mask to distinguish between land and sea areas,
+        using coastline data from SRTM or custom geometry.
+        
+        Args:
+            land_mask: If True, masks land areas; if False, masks sea areas.
+            use_srtm: Use SRTM water body data for land/sea determination.
+            geometry: Name of geometry to use for masking.
+            invert_geometry: Invert the geometry mask.
+            shoreline_extension: Distance in pixels to extend the shoreline.
+            source_bands: List of source bands to apply the mask to.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to masked output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PlandMask={str(land_mask).lower()}',
+            f'-PuseSRTM={str(use_srtm).lower()}',
+            f'-PinvertGeometry={str(invert_geometry).lower()}',
+            f'-PshorelineExtension={shoreline_extension}'
+        ]
+        
+        if geometry:
+            cmd_params.append(f'-Pgeometry={geometry}')
+        
+        if source_bands:
+            cmd_params.append(f'-PsourceBands={",".join(source_bands)}')
+        
+        self.current_cmd.append(f'Land-Sea-Mask {" ".join(cmd_params)}')
+        return self._call(suffix='LSMSK', output_name=output_name)
+
     # Legacy method names for backward compatibility
     ImportVector = import_vector
     LandMask = land_mask
@@ -2595,6 +3986,33 @@ class GPT:
     Write = write
     TileWriter = tile_writer
     StackAveraging = stack_averaging
+    BandMaths = band_maths
+    BandSelect = band_select
+    BandMerge = band_merge
+    Coherence = coherence
+    Interferogram = interferogram
+    GoldsteinPhaseFiltering = goldstein_phase_filtering
+    BackGeocoding = back_geocoding
+    CreateStack = create_stack
+    Resample = resample
+    LinearToFromdB = linear_to_from_db
+    RemoveGRDBorderNoise = remove_grd_border_noise
+    Collocate = collocate
+    PolarimetricDecomposition = polarimetric_decomposition
+    PolarimetricParameters = polarimetric_parameters
+    OffsetTracking = offset_tracking
+    Ndvi = ndvi
+    Reproject = reproject
+    PolarimetricMatrices = polarimetric_matrices
+    PolarimetricSpeckleFilter = polarimetric_speckle_filter
+    PolarimetricClassification = polarimetric_classification
+    ReadProduct = read_product
+    MergeProducts = merge_products
+    Mosaic = mosaic
+    Flip = flip
+    ImageFilter = image_filter
+    ConvertDatatype = convert_datatype
+    LandSeaMask = land_sea_mask
 
 
 def _identify_product_type(filename: str) -> str:
