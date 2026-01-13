@@ -895,6 +895,108 @@ class GPT:
         self.current_cmd.append(f'Warp {" ".join(cmd_params)}')
         return self._call(suffix='WARP', output_name=output_name)
 
+    def update_geo_reference(
+        self,
+        source_bands: Optional[List[str]] = None,
+        dem_name: str = 'SRTM 3Sec',
+        dem_resampling_method: str = 'BICUBIC_INTERPOLATION',
+        external_dem_file: Optional[str | Path] = None,
+        external_dem_no_data_value: float = 0.0,
+        re_grid_method: bool = False,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Update geo-reference information in the product.
+        
+        This method updates the geolocation information of SAR products using
+        a digital elevation model, improving the accuracy of geographic coordinates.
+        
+        Args:
+            source_bands: List of source bands to process. If None, all bands are processed.
+            dem_name: The digital elevation model to use.
+                Must be one of 'ACE', 'ASTER 1sec GDEM', 'GETASSE30',
+                'SRTM 1Sec HGT', 'SRTM 3Sec'.
+            dem_resampling_method: DEM resampling method.
+            external_dem_file: Path to external DEM file.
+            external_dem_no_data_value: No data value for external DEM.
+            re_grid_method: Apply re-gridding method.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to output product with updated geo-reference, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PdemName="{dem_name}"',
+            f'-PdemResamplingMethod={dem_resampling_method}',
+            f'-PexternalDEMNoDataValue={external_dem_no_data_value}',
+            f'-PreGridMethod={str(re_grid_method).lower()}'
+        ]
+        
+        if source_bands:
+            cmd_params.insert(0, f'-PsourceBands={",".join(source_bands)}')
+        
+        if external_dem_file:
+            cmd_params.append(f'-PexternalDEMFile={Path(external_dem_file).as_posix()}')
+        
+        self.current_cmd.append(f'Update-Geo-Reference {" ".join(cmd_params)}')
+        return self._call(suffix='UGR', output_name=output_name)
+
+    def unmix(
+        self,
+        source_bands: Optional[List[str]] = None,
+        endmember_file: Optional[str | Path] = None,
+        unmixing_model_name: str = 'Constrained LSU',
+        abundance_band_name_suffix: str = '_abundance',
+        error_band_name_suffix: str = '_error',
+        compute_error_bands: bool = False,
+        min_bandwidth: float = 10.0,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Perform linear spectral unmixing.
+        
+        This method decomposes mixed spectral signatures into constituent endmembers,
+        useful for analyzing surface composition from multi-spectral or hyperspectral data.
+        
+        Args:
+            source_bands: List of spectral bands providing the source spectrum.
+                If None, all bands are used.
+            endmember_file: Text file containing endmembers in a table.
+                Wavelengths must be given in nanometers.
+            unmixing_model_name: The unmixing model to use.
+                Must be one of 'Unconstrained LSU', 'Constrained LSU',
+                'Fully Constrained LSU'.
+            abundance_band_name_suffix: Suffix for generated abundance band names
+                (name = endmember + suffix). Must match pattern '[a-zA-Z_0-9]*'.
+            error_band_name_suffix: Suffix for generated error band names
+                (name = source + suffix). Must match pattern '[a-zA-Z_0-9]*'.
+            compute_error_bands: Generate error bands for all source bands.
+            min_bandwidth: Minimum spectral bandwidth for endmember wavelength
+                matching in nanometers. Must be greater than 0.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to unmixed output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PunmixingModelName="{unmixing_model_name}"',
+            f'-PabundanceBandNameSuffix={abundance_band_name_suffix}',
+            f'-PerrorBandNameSuffix={error_band_name_suffix}',
+            f'-PcomputeErrorBands={str(compute_error_bands).lower()}',
+            f'-PminBandwidth={min_bandwidth}'
+        ]
+        
+        if source_bands:
+            cmd_params.insert(0, f'-PsourceBands={",".join(source_bands)}')
+        
+        if endmember_file:
+            cmd_params.append(f'-PendmemberFile={Path(endmember_file).as_posix()}')
+        
+        self.current_cmd.append(f'Unmix {" ".join(cmd_params)}')
+        return self._call(suffix='UNMIX', output_name=output_name)
+
     def apply_orbit_file(
         self,
         orbit_type: str = 'Sentinel Precise (Auto Download)',
@@ -1131,6 +1233,8 @@ class GPT:
     WindFieldEstimation = wind_field_estimation
     Wdvi = wdvi
     Warp = warp
+    UpdateGeoReference = update_geo_reference
+    Unmix = unmix
     ApplyOrbitFile = apply_orbit_file
     TerrainCorrection = terrain_correction
     Demodulate = demodulate
