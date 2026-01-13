@@ -857,6 +857,21 @@ class GPT:
         self.current_cmd.append(f'Subset {" ".join(cmd_params)}')
         return self._call(suffix=suffix, output_name=output_name)
 
+    def set_no_data_value(
+        self,
+        no_data_value: float = 0.0,
+        no_data_value_used: bool = True,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Set the NoDataValue and enable the NoDataValueUsed flag for all bands."""
+        self._reset_command()
+        self.current_cmd.append(
+            f'SetNoDataValue '
+            f'-PnoDataValue={no_data_value} '
+            f'-PnoDataValueUsed={str(no_data_value_used).lower()}'
+        )
+        return self._call(suffix='NDV', output_name=output_name)
+
     def supervised_wishart_classification(
         self,
         training_dataset: str,
@@ -1010,6 +1025,84 @@ class GPT:
         )
         return self._call(suffix='STKAVG', output_name=output_name)
 
+    def s2_resampling(
+        self,
+        source_product: Optional[str | Path] = None,
+        bands: Optional[List[str]] = None,
+        downsampling: str = 'Mean',
+        flag_downsampling: str = 'First',
+        masks: Optional[List[str]] = None,
+        resample_on_pyramid_levels: bool = True,
+        resolution: str = '60',
+        upsampling: str = 'Bilinear',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Run the S2Resampling operator with configurable options."""
+        self._reset_command()
+
+        product_path = Path(source_product or self.prod_path).as_posix()
+        for i, cmd_part in enumerate(self.current_cmd):
+            if cmd_part.startswith('-Ssource='):
+                self.current_cmd[i] = f'-SsourceProduct={product_path}'
+                break
+
+        cmd_params = [
+            f'-Presolution={resolution}',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PflagDownsampling={flag_downsampling}',
+            f'-PresampleOnPyramidLevels={str(resample_on_pyramid_levels).lower()}'
+        ]
+
+        if bands:
+            cmd_params.insert(0, f'-Pbands={",".join(bands)}')
+
+        if masks:
+            cmd_params.append(f'-Pmasks={",".join(masks)}')
+
+        self.current_cmd.append(f'S2Resampling {" ".join(cmd_params)}')
+        return self._call(suffix='S2R', output_name=output_name)
+
+    def s2rep(
+        self,
+        downsampling: str = 'First',
+        nir_factor: float = 1.0,
+        nir_source_band: Optional[str] = None,
+        red_b4_factor: float = 1.0,
+        red_b5_factor: float = 1.0,
+        red_b6_factor: float = 1.0,
+        red_source_band4: Optional[str] = None,
+        red_source_band5: Optional[str] = None,
+        red_source_band6: Optional[str] = None,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute the Sentinel-2 red-edge position index (S2rep)."""
+        self._reset_command()
+
+        cmd_params = [
+            f'-PresampleType={resample_type}',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredB4Factor={red_b4_factor}',
+            f'-PredB5Factor={red_b5_factor}',
+            f'-PredB6Factor={red_b6_factor}',
+            f'-PnirFactor={nir_factor}'
+        ]
+
+        if red_source_band4:
+            cmd_params.append(f'-PredSourceBand4={red_source_band4}')
+        if red_source_band5:
+            cmd_params.append(f'-PredSourceBand5={red_source_band5}')
+        if red_source_band6:
+            cmd_params.append(f'-PredSourceBand6={red_source_band6}')
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+
+        self.current_cmd.append(f'S2repOp {" ".join(cmd_params)}')
+        return self._call(suffix='S2REP', output_name=output_name)
+
     def spectral_angle_mapper(
         self,
         reference_bands: Optional[List[str]] = None,
@@ -1081,6 +1174,49 @@ class GPT:
 
         self.current_cmd.append(f'Speckle-Filter {" ".join(cmd_params)}')
         return self._call(suffix='SPKL', output_name=output_name)
+
+    def speckle_divergence(
+        self,
+        source_bands: Optional[List[str]] = None,
+        window_size_str: str = '15x15',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Generate urban-area detection via the Speckle-Divergence operator."""
+        self._reset_command()
+
+        cmd_params = [
+            f'-PwindowSizeStr="{window_size_str}"'
+        ]
+
+        if source_bands:
+            cmd_params.insert(0, f'-PsourceBands={",".join(source_bands)}')
+
+        self.current_cmd.append(f'Speckle-Divergence {" ".join(cmd_params)}')
+        return self._call(suffix='SPKD', output_name=output_name)
+
+    def snaphu_import(
+        self,
+        source_products: Optional[List[str | Path]] = None,
+        do_not_keep_wrapped: bool = False,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Import Snaphu results into the product via SnaphuImport."""
+        self._reset_command()
+
+        products = source_products or [self.prod_path]
+        if not products:
+            raise ValueError('source_products must contain at least one product path')
+
+        source_products_str = ','.join(Path(p).as_posix() for p in products)
+        for i, cmd_part in enumerate(self.current_cmd):
+            if cmd_part.startswith('-Ssource='):
+                self.current_cmd[i] = f'-SsourceProducts={source_products_str}'
+                break
+
+        self.current_cmd.append(
+            f'SnaphuImport -PdoNotKeepWrapped={str(do_not_keep_wrapped).lower()}'
+        )
+        return self._call(suffix='SNAP', output_name=output_name)
 
     def aatsr_sst(
         self,
@@ -1174,6 +1310,107 @@ class GPT:
         self.current_cmd.append(f'AATSR.Ungrid {" ".join(cmd_params)}')
         return self._call(suffix='UNGRID', output_name=output_name)
 
+    def smac_op(
+        self,
+        aerosol_type: str,
+        band_names: List[str],
+        invalid_pixel: float = 0.0,
+        mask_expression: Optional[str] = None,
+        mask_expression_forward: Optional[str] = None,
+        surf_press: float = 1013.0,
+        tau_aero550: float = 0.2,
+        u_h2o: float = 3.0,
+        u_o3: float = 0.15,
+        use_meris_ads: bool = False,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Run the SmacOp atmospheric correction operator."""
+        if not band_names:
+            raise ValueError('band_names must be provided for SmacOp')
+
+        self._reset_command()
+
+        cmd_params = [
+            f'-PtauAero550={tau_aero550}',
+            f'-PuH2o={u_h2o}',
+            f'-PuO3={u_o3}',
+            f'-PsurfPress={surf_press}',
+            f'-PuseMerisADS={str(use_meris_ads).lower()}',
+            f'-PaerosolType={aerosol_type}',
+            f'-PinvalidPixel={invalid_pixel}',
+            f'-PbandNames={",".join(band_names)}'
+        ]
+
+        if mask_expression:
+            cmd_params.append(f'-PmaskExpression="{mask_expression}"')
+        if mask_expression_forward:
+            cmd_params.append(f'-PmaskExpressionForward="{mask_expression_forward}"')
+
+        self.current_cmd.append(f'SmacOp {" ".join(cmd_params)}')
+        return self._call(suffix='SMAC', output_name=output_name)
+
+    def sm_dielectric_modeling(
+        self,
+        source_products: Optional[List[str | Path]] = None,
+        effective_soil_temperature: float = 18.0,
+        max_sm: float = 0.55,
+        min_sm: float = 0.0,
+        model_to_use: str = 'Hallikainen',
+        output_land_cover: bool = True,
+        output_rdc: bool = True,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Perform soil moisture inversion using the dielectric model."""
+        self._reset_command()
+
+        products = source_products or [self.prod_path]
+        if not products:
+            raise ValueError('source_products must contain at least one product path')
+
+        source_products_str = ','.join(Path(p).as_posix() for p in products)
+        for i, cmd_part in enumerate(self.current_cmd):
+            if cmd_part.startswith('-Ssource='):
+                self.current_cmd[i] = f'-SsourceProducts={source_products_str}'
+                break
+
+        cmd_params = [
+            f'-PeffectiveSoilTemperature={effective_soil_temperature}',
+            f'-PmaxSM={max_sm}',
+            f'-PminSM={min_sm}',
+            f'-PmodelToUse={model_to_use}',
+            f'-PoutputLandCover={str(output_land_cover).lower()}',
+            f'-PoutputRDC={str(output_rdc).lower()}'
+        ]
+
+        self.current_cmd.append(f'SM-Dielectric-Modeling {" ".join(cmd_params)}')
+        return self._call(suffix='SMOK', output_name=output_name)
+
+    def slice_assembly(
+        self,
+        source_products: Optional[List[str | Path]] = None,
+        selected_polarisations: Optional[List[str]] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Merge Sentinel-1 slice products using the SliceAssembly operator."""
+        self._reset_command()
+
+        products = source_products or [self.prod_path]
+        if not products:
+            raise ValueError('source_products must contain at least one product path')
+
+        source_products_str = ','.join(Path(p).as_posix() for p in products)
+        for i, cmd_part in enumerate(self.current_cmd):
+            if cmd_part.startswith('-Ssource='):
+                self.current_cmd[i] = f'-SsourceProducts={source_products_str}'
+                break
+
+        cmd_params = []
+        if selected_polarisations:
+            cmd_params.append(f'-PselectedPolarisations={",".join(selected_polarisations)}')
+
+        self.current_cmd.append(f'SliceAssembly {" ".join(cmd_params)}')
+        return self._call(suffix='SLICE', output_name=output_name)
+
     def wind_field_estimation(
         self,
         source_bands: Optional[List[str]] = None,
@@ -1260,6 +1497,38 @@ class GPT:
         
         self.current_cmd.append(f'WdviOp {" ".join(cmd_params)}')
         return self._call(suffix='WDVI', output_name=output_name)
+
+    def savi(
+        self,
+        red_source_band: Optional[str] = None,
+        nir_source_band: Optional[str] = None,
+        red_factor: float = 1.0,
+        nir_factor: float = 1.0,
+        soil_correction_factor: float = 0.5,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute the Soil Adjusted Vegetation Index (SAVI)."""
+        self._reset_command()
+
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredFactor={red_factor}',
+            f'-PnirFactor={nir_factor}',
+            f'-PsoilCorrectionFactor={soil_correction_factor}'
+        ]
+
+        if red_source_band:
+            cmd_params.append(f'-PredSourceBand={red_source_band}')
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+
+        self.current_cmd.append(f'SaviOp {" ".join(cmd_params)}')
+        return self._call(suffix='SAVI', output_name=output_name)
 
     def warp(
         self,
@@ -2019,6 +2288,138 @@ class GPT:
         self.current_cmd.append(f'Terrain-Correction {" ".join(cmd_params)}')
         return self._call(suffix='TC', output_name=output_name)
 
+    def sar_sim_terrain_correction(
+        self,
+        map_projection: str = 'WGS84(DD)',
+        img_resampling_method: str = 'BILINEAR_INTERPOLATION',
+        pixel_spacing_in_meter: float = 0.0,
+        pixel_spacing_in_degree: float = 0.0,
+        align_to_standard_grid: bool = False,
+        standard_grid_origin_x: float = 0.0,
+        standard_grid_origin_y: float = 0.0,
+        rms_threshold: float = 1.0,
+        warp_polynomial_order: int = 1,
+        apply_radiometric_normalization: bool = False,
+        aux_file: str = 'Latest Auxiliary File',
+        external_aux_file: Optional[str | Path] = None,
+        open_shifts_file: bool = False,
+        open_residuals_file: bool = False,
+        output_complex: bool = False,
+        save_dem: bool = False,
+        save_lat_lon: bool = False,
+        save_local_incidence_angle: bool = False,
+        save_projected_local_incidence_angle: bool = False,
+        save_selected_source_band: bool = True,
+        save_sigma_nought: bool = False,
+        save_gamma_nought: bool = False,
+        save_beta_nought: bool = False,
+        incidence_angle_for_sigma0: str = 'Use projected local incidence angle from DEM',
+        incidence_angle_for_gamma0: str = 'Use projected local incidence angle from DEM',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Orthorectify the product using SARSim Terrain Correction."""
+        self._reset_command()
+
+        cmd_params = [
+            f'-PrmsThreshold={rms_threshold}',
+            f'-PwarpPolynomialOrder={warp_polynomial_order}',
+            f'-PimgResamplingMethod={img_resampling_method}',
+            f'-PpixelSpacingInMeter={pixel_spacing_in_meter}',
+            f'-PpixelSpacingInDegree={pixel_spacing_in_degree}',
+            f'-PmapProjection="{map_projection}"',
+            f'-PalignToStandardGrid={str(align_to_standard_grid).lower()}',
+            f'-PstandardGridOriginX={standard_grid_origin_x}',
+            f'-PstandardGridOriginY={standard_grid_origin_y}',
+            f'-PsaveDEM={str(save_dem).lower()}',
+            f'-PsaveLatLon={str(save_lat_lon).lower()}',
+            f'-PsaveLocalIncidenceAngle={str(save_local_incidence_angle).lower()}',
+            f'-PsaveProjectedLocalIncidenceAngle={str(save_projected_local_incidence_angle).lower()}',
+            f'-PsaveSelectedSourceBand={str(save_selected_source_band).lower()}',
+            f'-PoutputComplex={str(output_complex).lower()}',
+            f'-PapplyRadiometricNormalization={str(apply_radiometric_normalization).lower()}',
+            f'-PsaveSigmaNought={str(save_sigma_nought).lower()}',
+            f'-PsaveGammaNought={str(save_gamma_nought).lower()}',
+            f'-PsaveBetaNought={str(save_beta_nought).lower()}',
+            f'-PincidenceAngleForSigma0="{incidence_angle_for_sigma0}"',
+            f'-PincidenceAngleForGamma0="{incidence_angle_for_gamma0}"',
+            f'-PauxFile="{aux_file}"',
+            f'-PopenResidualsFile={str(open_residuals_file).lower()}',
+            f'-PopenShiftsFile={str(open_shifts_file).lower()}'
+        ]
+
+        if external_aux_file:
+            cmd_params.append(f'-PexternalAuxFile={Path(external_aux_file).as_posix()}')
+
+        self.current_cmd.append(f'SARSim-Terrain-Correction {" ".join(cmd_params)}')
+        return self._call(suffix='SSTM', output_name=output_name)
+
+    def sar_simulation(
+        self,
+        dem_name: str = 'SRTM 3Sec',
+        dem_resampling_method: str = 'BICUBIC_INTERPOLATION',
+        external_dem_apply_egm: bool = True,
+        external_dem_file: Optional[str | Path] = None,
+        external_dem_no_data_value: float = 0.0,
+        save_layover_shadow_mask: bool = False,
+        source_bands: Optional[List[str]] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Run the rigorous SAR Simulation operator."""
+        self._reset_command()
+
+        cmd_params = [
+            f'-PdemName="{dem_name}"',
+            f'-PdemResamplingMethod={dem_resampling_method}',
+            f'-PexternalDEMApplyEGM={str(external_dem_apply_egm).lower()}',
+            f'-PexternalDEMNoDataValue={external_dem_no_data_value}',
+            f'-PsaveLayoverShadowMask={str(save_layover_shadow_mask).lower()}'
+        ]
+
+        if source_bands:
+            cmd_params.insert(0, f'-PsourceBands={",".join(source_bands)}')
+
+        if external_dem_file:
+            cmd_params.append(f'-PexternalDEMFile={Path(external_dem_file).as_posix()}')
+
+        self.current_cmd.append(f'SAR-Simulation {" ".join(cmd_params)}')
+        return self._call(suffix='SRSIM', output_name=output_name)
+
+    def sar_mosaic(
+        self,
+        source_bands: Optional[List[str]] = None,
+        average: bool = True,
+        convergence_threshold: float = 1e-4,
+        feather: int = 0,
+        gradient_domain_mosaic: bool = False,
+        max_iterations: int = 5000,
+        normalize_by_mean: bool = True,
+        pixel_size: float = 0.0,
+        presampling_method: str = 'NEAREST_NEIGHBOUR',
+        scene_height: int = 0,
+        scene_width: int = 0,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Mosaic multiple SAR products with adjustable blending parameters."""
+        self._reset_command()
+
+        cmd_params = [
+            f'-Paverage={str(average).lower()}',
+            f'-PconvergenceThreshold={convergence_threshold}',
+            f'-Pfeather={feather}',
+            f'-PgradientDomainMosaic={str(gradient_domain_mosaic).lower()}',
+            f'-PmaxIterations={max_iterations}',
+            f'-PnormalizeByMean={str(normalize_by_mean).lower()}',
+            f'-PpixelSize={pixel_size}',
+            f'-PresamplingMethod={presampling_method}',
+            f'-PsceneHeight={scene_height}',
+            f'-PsceneWidth={scene_width}'
+        ]
+
+        if source_bands:
+            cmd_params.insert(0, f'-PsourceBands={",".join(source_bands)}')
+
+        self.current_cmd.append(f'SAR-Mosaic {" ".join(cmd_params)}')
+        return self._call(suffix='SMOS', output_name=output_name)
     def demodulate(self, output_name: Optional[str] = None) -> Optional[str]:
         """Perform demodulation and deramping of SLC data.
         
@@ -2150,6 +2551,7 @@ class GPT:
     AdaptiveThresholding = adaptive_thresholding
     ObjectDiscrimination = object_discrimination
     Subset = subset
+    SetNoDataValue = set_no_data_value
     SupervisedWishartClassification = supervised_wishart_classification
     StatisticsOp = statistics_op
     SubGraph = subgraph
@@ -2159,14 +2561,20 @@ class GPT:
     AatsrUngrid = aatsr_ungrid
     WindFieldEstimation = wind_field_estimation
     Wdvi = wdvi
+    SaviOp = savi
     Warp = warp
     SRGR = srgr
+    SmacOp = smac_op
+    SMDielectricModeling = sm_dielectric_modeling
+    SliceAssembly = slice_assembly
     UpdateGeoReference = update_geo_reference
     AddElevation = add_elevation
     ThreePassDInSAR = three_pass_dinsar
     TemporalPercentile = temporal_percentile
     SpectralAngleMapperOp = spectral_angle_mapper
     SpeckleFilter = speckle_filter
+    SpeckleDivergence = speckle_divergence
+    SnaphuImport = snaphu_import
     Unmix = unmix
     Undersample = undersample
     Tsavi = tsavi
@@ -2178,6 +2586,11 @@ class GPT:
     ToolAdapter = tool_adapter
     ApplyOrbitFile = apply_orbit_file
     TerrainCorrection = terrain_correction
+    SarSimTerrainCorrection = sar_sim_terrain_correction
+    SarSimulation = sar_simulation
+    SarMosaic = sar_mosaic
+    S2Resampling = s2_resampling
+    S2repOp = s2rep
     Demodulate = demodulate
     Write = write
     TileWriter = tile_writer
