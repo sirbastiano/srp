@@ -1062,6 +1062,69 @@ class GPT:
         self.current_cmd.append(f'Undersample {" ".join(cmd_params)}')
         return self._call(suffix='UNDER', output_name=output_name)
 
+    def tsavi(
+        self,
+        red_source_band: Optional[str] = None,
+        nir_source_band: Optional[str] = None,
+        red_factor: float = 1.0,
+        nir_factor: float = 1.0,
+        slope: float = 0.5,
+        intercept: float = 0.5,
+        adjustment: float = 0.08,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute Transformed Soil Adjusted Vegetation Index (TSAVI).
+        
+        This method retrieves TSAVI which minimizes soil background effects
+        using soil line parameters. It's particularly effective for areas
+        with partial vegetation cover.
+        
+        Args:
+            red_source_band: The red band for TSAVI computation.
+                If None, operator will try to find the best fitting band.
+            nir_source_band: The near-infrared band for TSAVI computation.
+                If None, operator will try to find the best fitting band.
+            red_factor: Multiplication factor for red band values.
+            nir_factor: Multiplication factor for NIR band values.
+            slope: The soil line slope.
+            intercept: The soil line intercept.
+            adjustment: Adjustment factor to minimize soil background.
+            resample_type: Resample method if bands differ in size.
+                Must be one of 'None', 'Lowest resolution', 'Highest resolution'.
+            upsampling: Interpolation method for upsampling to finer resolution.
+                Must be one of 'Nearest', 'Bilinear', 'Bicubic'.
+            downsampling: Aggregation method for downsampling to coarser resolution.
+                Must be one of 'First', 'Min', 'Max', 'Mean', 'Median'.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to TSAVI output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredFactor={red_factor}',
+            f'-PnirFactor={nir_factor}',
+            f'-Pslope={slope}',
+            f'-Pintercept={intercept}',
+            f'-Padjustment={adjustment}'
+        ]
+        
+        if red_source_band:
+            cmd_params.append(f'-PredSourceBand={red_source_band}')
+        
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+        
+        self.current_cmd.append(f'TsaviOp {" ".join(cmd_params)}')
+        return self._call(suffix='TSAVI', output_name=output_name)
+
     def apply_orbit_file(
         self,
         orbit_type: str = 'Sentinel Precise (Auto Download)',
@@ -1301,6 +1364,7 @@ class GPT:
     UpdateGeoReference = update_geo_reference
     Unmix = unmix
     Undersample = undersample
+    Tsavi = tsavi
     ApplyOrbitFile = apply_orbit_file
     TerrainCorrection = terrain_correction
     Demodulate = demodulate
