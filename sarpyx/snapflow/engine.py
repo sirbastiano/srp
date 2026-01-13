@@ -1125,6 +1125,59 @@ class GPT:
         self.current_cmd.append(f'TsaviOp {" ".join(cmd_params)}')
         return self._call(suffix='TSAVI', output_name=output_name)
 
+    def tndvi(
+        self,
+        red_source_band: Optional[str] = None,
+        nir_source_band: Optional[str] = None,
+        red_factor: float = 1.0,
+        nir_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute Transformed Normalized Difference Vegetation Index (TNDVI).
+        
+        This method retrieves isovegetation lines parallel to the soil line,
+        providing a transformed version of NDVI that accounts for soil background effects.
+        
+        Args:
+            red_source_band: The red band for TNDVI computation.
+                If None, operator will try to find the best fitting band.
+            nir_source_band: The near-infrared band for TNDVI computation.
+                If None, operator will try to find the best fitting band.
+            red_factor: Multiplication factor for red band values.
+            nir_factor: Multiplication factor for NIR band values.
+            resample_type: Resample method if bands differ in size.
+                Must be one of 'None', 'Lowest resolution', 'Highest resolution'.
+            upsampling: Interpolation method for upsampling to finer resolution.
+                Must be one of 'Nearest', 'Bilinear', 'Bicubic'.
+            downsampling: Aggregation method for downsampling to coarser resolution.
+                Must be one of 'First', 'Min', 'Max', 'Mean', 'Median'.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to TNDVI output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredFactor={red_factor}',
+            f'-PnirFactor={nir_factor}'
+        ]
+        
+        if red_source_band:
+            cmd_params.append(f'-PredSourceBand={red_source_band}')
+        
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+        
+        self.current_cmd.append(f'TndviOp {" ".join(cmd_params)}')
+        return self._call(suffix='TNDVI', output_name=output_name)
+
     def topsar_split(
         self,
         subswath: Optional[str] = None,
@@ -1518,10 +1571,58 @@ class GPT:
         self.current_cmd.append(f'Write {" ".join(cmd_params)}')
         return self._call(suffix='WRITE')
 
+    def tile_writer(
+        self,
+        output_file: Optional[str | Path] = None,
+        format_name: Optional[str] = None,
+        division_by: str = 'Tiles',
+        number_of_tiles: str = '4',
+        pixel_size_x: int = 200,
+        pixel_size_y: int = 200,
+        overlap: int = 0,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Write a data product to tiles.
         
-
-
-
+        This method splits the output into multiple tiles, useful for processing
+        large datasets or creating tiled outputs for specific applications.
+        
+        Args:
+            output_file: The output file path. If None, uses standard path construction.
+            format_name: The output file format name. If None, uses the instance format.
+            division_by: How to divide the tiles.
+                Must be one of 'Tiles', 'Pixels'.
+            number_of_tiles: The number of output tiles.
+                Must be one of '2', '4', '9', '16', '36', '64', '100', '256'.
+            pixel_size_x: Tile pixel width.
+            pixel_size_y: Tile pixel height.
+            overlap: Tile overlap in pixels.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to tiled output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PdivisionBy={division_by}',
+            f'-PnumberOfTiles={number_of_tiles}',
+            f'-PpixelSizeX={pixel_size_x}',
+            f'-PpixelSizeY={pixel_size_y}',
+            f'-Poverlap={overlap}'
+        ]
+        
+        if output_file:
+            output_path = Path(output_file)
+            cmd_params.append(f'-Pfile={output_path.as_posix()}')
+        
+        if format_name:
+            cmd_params.append(f'-PformatName="{format_name}"')
+        else:
+            cmd_params.append(f'-PformatName="{self.format}"')
+        
+        self.current_cmd.append(f'TileWriter {" ".join(cmd_params)}')
+        return self._call(suffix='TILES', output_name=output_name)
 
     # Legacy method names for backward compatibility
     ImportVector = import_vector
@@ -1541,6 +1642,7 @@ class GPT:
     Unmix = unmix
     Undersample = undersample
     Tsavi = tsavi
+    Tndvi = tndvi
     TopsarSplit = topsar_split
     TopsarMerge = topsar_merge
     TopsarDerampDemod = topsar_deramp_demod
@@ -1550,6 +1652,7 @@ class GPT:
     TerrainCorrection = terrain_correction
     Demodulate = demodulate
     Write = write
+    TileWriter = tile_writer
 
 
 def _identify_product_type(filename: str) -> str:
