@@ -1,7 +1,8 @@
-from pathlib import Path
-from sarpyx.snapflow.engine import GPT
-from sarpyx.snap.utils import delProd, mode_identifier
 import pandas as pd
+from pathlib import Path
+
+from sarpyx.snapflow.engine import GPT
+from sarpyx.snapflow.utils import delProd, mode_identifier
 
 
 def _process_product_cfar(product_path: Path, mask_shp_path: Path, gpt_mode: str | None, 

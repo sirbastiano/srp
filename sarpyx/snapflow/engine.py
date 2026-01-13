@@ -715,6 +715,47 @@ class GPT:
         self.current_cmd.append(f'Aatsr.SST {" ".join(cmd_params)}')
         return self._call(suffix='SST', output_name=output_name)
 
+    def aatsr_ungrid(
+        self,
+        l1b_characterisation_file: Optional[str | Path] = None,
+        corner_reference_flag: bool = True,
+        topographic_flag: bool = False,
+        topography_homogenity: float = 0.05,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Ungrid (A)ATSR L1B products and extract geolocation and pixel field of view data.
+        
+        This method processes ATSR L1B products to extract geolocation information and
+        pixel field-of-view data, with optional topographic corrections.
+        
+        Args:
+            l1b_characterisation_file: L1B characterisation file needed to specify
+                first forward pixel and first nadir pixel.
+            corner_reference_flag: Choose pixel coordinate reference point for output file.
+                True for corner (default), False for centre.
+            topographic_flag: Apply topographic corrections to tie points.
+            topography_homogenity: Distance (image coordinates) pixel can be from
+                tie-point to have topographic correction applied.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to ungridded output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PcornerReferenceFlag={str(corner_reference_flag).lower()}',
+            f'-PtopographicFlag={str(topographic_flag).lower()}',
+            f'-PtopographyHomogenity={topography_homogenity}'
+        ]
+        
+        if l1b_characterisation_file:
+            char_file_path = Path(l1b_characterisation_file)
+            cmd_params.append(f'-PL1BCharacterisationFile={char_file_path.as_posix()}')
+        
+        self.current_cmd.append(f'AATSR.Ungrid {" ".join(cmd_params)}')
+        return self._call(suffix='UNGRID', output_name=output_name)
+
     def apply_orbit_file(
         self,
         orbit_type: str = 'Sentinel Precise (Auto Download)',
@@ -763,7 +804,7 @@ class GPT:
         standard_grid_origin_x: float = 0.0,
         standard_grid_origin_y: float = 0.0,
         nodata_value_at_sea: bool = False,
-        save_dem: bool = False,
+        save_dem: bool = True,
         save_lat_lon: bool = True,
         save_incidence_angle_from_ellipsoid: bool = False,
         save_local_incidence_angle: bool = True,
@@ -932,6 +973,11 @@ class GPT:
         self.current_cmd.append(f'Write {" ".join(cmd_params)}')
         return self._call(suffix='WRITE')
 
+        
+
+
+
+
     # Legacy method names for backward compatibility
     ImportVector = import_vector
     LandMask = land_mask
@@ -942,6 +988,7 @@ class GPT:
     ObjectDiscrimination = object_discrimination
     Subset = subset
     AatsrSST = aatsr_sst
+    AatsrUngrid = aatsr_ungrid
     ApplyOrbitFile = apply_orbit_file
     TerrainCorrection = terrain_correction
     Demodulate = demodulate
