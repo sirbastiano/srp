@@ -1173,6 +1173,134 @@ class GPT:
         self.current_cmd.append(f'TOPSAR-Split {" ".join(cmd_params)}')
         return self._call(suffix='SPLIT', output_name=output_name)
 
+    def topsar_merge(
+        self,
+        selected_polarisations: Optional[List[str]] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Merge subswaths of a Sentinel-1 TOPSAR product.
+        
+        This method merges multiple subswaths (e.g., IW1, IW2, IW3) into a single
+        product, creating a seamless wide-swath image from split TOPS data.
+        
+        Args:
+            selected_polarisations: List of polarisations to merge.
+                If None, all polarisations are merged.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to merged output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = []
+        
+        if selected_polarisations:
+            cmd_params.append(f'-PselectedPolarisations={",".join(selected_polarisations)}')
+        
+        self.current_cmd.append(f'TOPSAR-Merge {" ".join(cmd_params)}')
+        return self._call(suffix='MERGE', output_name=output_name)
+
+    def topsar_deramp_demod(
+        self,
+        output_deramp_demod_phase: bool = False,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Perform deramp and demodulation for TOPSAR burst co-registration.
+        
+        This method performs burst co-registration using orbit and DEM information,
+        removing the azimuth phase ramp and demodulating the signal. This is essential
+        for interferometric processing of Sentinel-1 TOPS data.
+        
+        Args:
+            output_deramp_demod_phase: Output the deramp/demod phase.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to deramp/demod output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [f'-PoutputDerampDemodPhase={str(output_deramp_demod_phase).lower()}']
+        
+        self.current_cmd.append(f'TOPSAR-DerampDemod {" ".join(cmd_params)}')
+        return self._call(suffix='DERAMP', output_name=output_name)
+
+    def topo_phase_removal(
+        self,
+        orbit_degree: int = 3,
+        dem_name: str = 'SRTM 3Sec',
+        external_dem_file: Optional[str | Path] = None,
+        external_dem_no_data_value: float = 0.0,
+        tile_extension_percent: str = '100',
+        output_topo_phase_band: bool = False,
+        output_elevation_band: bool = False,
+        output_lat_lon_bands: bool = False,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute and subtract topographic phase from interferogram.
+        
+        This method removes the topographic phase contribution from an interferogram
+        using a DEM, essential for differential interferometry to isolate deformation signals.
+        
+        Args:
+            orbit_degree: Degree of orbit interpolation polynomial.
+                Must be in range (1, 10].
+            dem_name: The digital elevation model to use.
+            external_dem_file: Path to external DEM file.
+            external_dem_no_data_value: No data value for external DEM.
+            tile_extension_percent: Extension of tile for DEM simulation
+                (optimization parameter).
+            output_topo_phase_band: Output topographic phase band.
+            output_elevation_band: Output elevation band.
+            output_lat_lon_bands: Output latitude/longitude bands.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to output product with topographic phase removed, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PorbitDegree={orbit_degree}',
+            f'-PdemName="{dem_name}"',
+            f'-PexternalDEMNoDataValue={external_dem_no_data_value}',
+            f'-PtileExtensionPercent={tile_extension_percent}',
+            f'-PoutputTopoPhaseBand={str(output_topo_phase_band).lower()}',
+            f'-PoutputElevationBand={str(output_elevation_band).lower()}',
+            f'-PoutputLatLonBands={str(output_lat_lon_bands).lower()}'
+        ]
+        
+        if external_dem_file:
+            cmd_params.append(f'-PexternalDEMFile={Path(external_dem_file).as_posix()}')
+        
+        self.current_cmd.append(f'TopoPhaseRemoval {" ".join(cmd_params)}')
+        return self._call(suffix='TOPO', output_name=output_name)
+
+    def tool_adapter(
+        self,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Execute a custom tool adapter operator.
+        
+        This method provides a generic interface to SNAP's Tool Adapter framework,
+        allowing execution of external tools and scripts integrated into SNAP.
+        Tool adapters must be configured separately in SNAP before use.
+        
+        Args:
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to tool adapter output product, or None if failed.
+        
+        Note:
+            This is a generic operator. Specific tool adapter parameters
+            should be added to the command manually or through XML graphs.
+        """
+        self._reset_command()
+        self.current_cmd.append('ToolAdapterOp')
+        return self._call(suffix='TOOL', output_name=output_name)
+
     def apply_orbit_file(
         self,
         orbit_type: str = 'Sentinel Precise (Auto Download)',
@@ -1414,6 +1542,10 @@ class GPT:
     Undersample = undersample
     Tsavi = tsavi
     TopsarSplit = topsar_split
+    TopsarMerge = topsar_merge
+    TopsarDerampDemod = topsar_deramp_demod
+    TopoPhaseRemoval = topo_phase_removal
+    ToolAdapter = tool_adapter
     ApplyOrbitFile = apply_orbit_file
     TerrainCorrection = terrain_correction
     Demodulate = demodulate
