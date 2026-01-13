@@ -843,6 +843,58 @@ class GPT:
         self.current_cmd.append(f'WdviOp {" ".join(cmd_params)}')
         return self._call(suffix='WDVI', output_name=output_name)
 
+    def warp(
+        self,
+        rms_threshold: float = 0.05,
+        warp_polynomial_order: int = 2,
+        interpolation_method: str = 'Cubic convolution (6 points)',
+        dem_refinement: bool = False,
+        dem_name: str = 'SRTM 3Sec',
+        exclude_master: bool = False,
+        open_residuals_file: bool = False,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Create warp function and get co-registered images.
+        
+        This method performs geometric co-registration of images using warp
+        polynomial functions, enabling precise alignment of multi-temporal
+        or multi-sensor SAR imagery.
+        
+        Args:
+            rms_threshold: Confidence level for outlier detection procedure.
+                Lower value accepts more outliers. Must be one of 0.001, 0.05, 0.1, 0.5, 1.0.
+            warp_polynomial_order: The order of WARP polynomial function.
+                Must be one of 1, 2, or 3.
+            interpolation_method: Interpolation method for resampling.
+                Must be one of 'Nearest-neighbor interpolation', 'Bilinear interpolation',
+                'Bicubic interpolation', 'Bicubic2 interpolation', 'Linear interpolation',
+                'Cubic convolution (4 points)', 'Cubic convolution (6 points)',
+                'Truncated sinc (6 points)', 'Truncated sinc (8 points)',
+                'Truncated sinc (16 points)'.
+            dem_refinement: Refine estimated offsets using a-priori DEM.
+            dem_name: The digital elevation model to use.
+            exclude_master: Whether to exclude the master image from output.
+            open_residuals_file: Show the residuals file in a text viewer.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to warped output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PrmsThreshold={rms_threshold}',
+            f'-PwarpPolynomialOrder={warp_polynomial_order}',
+            f'-PinterpolationMethod="{interpolation_method}"',
+            f'-PdemRefinement={str(dem_refinement).lower()}',
+            f'-PdemName="{dem_name}"',
+            f'-PexcludeMaster={str(exclude_master).lower()}',
+            f'-PopenResidualsFile={str(open_residuals_file).lower()}'
+        ]
+        
+        self.current_cmd.append(f'Warp {" ".join(cmd_params)}')
+        return self._call(suffix='WARP', output_name=output_name)
+
     def apply_orbit_file(
         self,
         orbit_type: str = 'Sentinel Precise (Auto Download)',
@@ -1078,6 +1130,7 @@ class GPT:
     AatsrUngrid = aatsr_ungrid
     WindFieldEstimation = wind_field_estimation
     Wdvi = wdvi
+    Warp = warp
     ApplyOrbitFile = apply_orbit_file
     TerrainCorrection = terrain_correction
     Demodulate = demodulate
