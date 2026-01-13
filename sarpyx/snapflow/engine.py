@@ -113,7 +113,6 @@ class GPT:
         outdir: str | Path,
         format: str = 'BEAM-DIMAP',
         gpt_path: Optional[str] = '/usr/local/snap/bin/gpt',
-        mode: Optional[str] = None,
         memory: str = '64G',
         parallelism: Optional[int] = 16,
     ):
@@ -125,7 +124,6 @@ class GPT:
             format: Output format for processed data. Defaults to 'BEAM-DIMAP'.
             gpt_path: Path to the SNAP GPT executable.
                 Defaults to '/usr/local/snap/bin/gpt'.
-            mode: Processing mode configuration. Defaults to None.
             
         Raises:
             AssertionError: If product path doesn't exist, format is unsupported,
@@ -149,7 +147,6 @@ class GPT:
         self.outdir = Path(outdir)
         self.outdir.mkdir(parents=True, exist_ok=True)
         
-        self.mode = mode
         self.parallelism = parallelism
         self.memory = memory
         
@@ -438,6 +435,166 @@ class GPT:
             xml_path.unlink(missing_ok=True)
             return None
 
+    def terrain_mask(
+        self,
+        dem_name: str = 'SRTM 3Sec',
+        dem_resampling_method: str = 'NEAREST_NEIGHBOUR',
+        external_dem_file: Optional[str | Path] = None,
+        external_dem_no_data_value: float = 0.0,
+        threshold_in_meter: float = 40.0,
+        window_size_str: str = '15x15',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Generate a terrain mask using a DEM.
+        
+        Args:
+            dem_name: The digital elevation model to use.
+            dem_resampling_method: DEM resampling method.
+            external_dem_file: Path to an external DEM file.
+            external_dem_no_data_value: No data value for the external DEM.
+            threshold_in_meter: Elevation threshold for mask detection.
+            window_size_str: Size of the window used for filtering.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to the terrain mask product, or None if failed.
+        """
+        self._reset_command()
+        cmd_params = [
+            f'-PdemName="{dem_name}"',
+            f'-PdemResamplingMethod={dem_resampling_method}',
+            f'-PexternalDEMNoDataValue={external_dem_no_data_value}',
+            f'-PthresholdInMeter={threshold_in_meter}',
+            f'-PwindowSizeStr="{window_size_str}"'
+        ]
+
+        if external_dem_file:
+            cmd_params.append(f'-PexternalDEMFile={Path(external_dem_file).as_posix()}')
+
+        self.current_cmd.append(f'Terrain-Mask {" ".join(cmd_params)}')
+        return self._call(suffix='TMSK', output_name=output_name)
+
+    def terrain_flattening(
+        self,
+        additional_overlap: float = 0.1,
+        dem_name: str = 'SRTM 1Sec HGT',
+        dem_resampling_method: str = 'BILINEAR_INTERPOLATION',
+        external_dem_apply_egm: bool = False,
+        external_dem_file: Optional[str | Path] = None,
+        external_dem_no_data_value: float = 0.0,
+        nodata_value_at_sea: bool = True,
+        output_sigma0: bool = False,
+        output_simulated_image: bool = False,
+        oversampling_multiple: float = 1.0,
+        source_bands: Optional[List[str]] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Perform terrain flattening with configurable DEM and output options."""
+        self._reset_command()
+
+        cmd_params = [
+            f'-PadditionalOverlap={additional_overlap}',
+            f'-PdemName="{dem_name}"',
+            f'-PdemResamplingMethod={dem_resampling_method}',
+            f'-PexternalDEMApplyEGM={str(external_dem_apply_egm).lower()}',
+            f'-PexternalDEMNoDataValue={external_dem_no_data_value}',
+            f'-PnodataValueAtSea={str(nodata_value_at_sea).lower()}',
+            f'-PoutputSigma0={str(output_sigma0).lower()}',
+            f'-PoutputSimulatedImage={str(output_simulated_image).lower()}',
+            f'-PoversamplingMultiple={oversampling_multiple}'
+        ]
+
+        if external_dem_file:
+            cmd_params.append(f'-PexternalDEMFile={Path(external_dem_file).as_posix()}')
+
+        if source_bands:
+            cmd_params.append(f'-PsourceBands={",".join(source_bands)}')
+
+        self.current_cmd.append(f'Terrain-Flattening {" ".join(cmd_params)}')
+        return self._call(suffix='TFLAT', output_name=output_name)
+
+    def temporal_percentile(
+        self,
+        source_products: Optional[List[str | Path]] = None,
+        source_product_paths: Optional[List[str]] = None,
+        band_math_expression: Optional[str] = None,
+        source_band_name: Optional[str] = None,
+        crs: str = 'EPSG:4326',
+        west_bound: float = -15.0,
+        north_bound: float = 75.0,
+        east_bound: float = 30.0,
+        south_bound: float = 35.0,
+        pixel_size_x: float = 0.05,
+        pixel_size_y: float = 0.05,
+        resampling: str = 'Nearest',
+        percentiles: Optional[List[int]] = None,
+        valid_pixel_expression: str = 'true',
+        gap_filling_method: str = 'gapFillingLinearInterpolation',
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        start_value_fallback: float = 0.0,
+        end_value_fallback: float = 0.0,
+        keep_intermediate_time_series_product: bool = True,
+        time_series_output_dir: Optional[str | Path] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute percentile statistics over time series products."""
+        if not band_math_expression and not source_band_name:
+            raise ValueError('Either band_math_expression or source_band_name must be provided')
+
+        self._reset_command()
+
+        products = source_products or [self.prod_path]
+        if not products:
+            raise ValueError('source_products must contain at least one product path')
+
+        source_products_str = ','.join(Path(p).as_posix() for p in products)
+        for i, cmd_part in enumerate(self.current_cmd):
+            if cmd_part.startswith('-Ssource='):
+                self.current_cmd[i] = f'-SsourceProducts={source_products_str}'
+                break
+
+        cmd_params = [
+            f'-Pcrs="{crs}"',
+            f'-PwestBound={west_bound}',
+            f'-PnorthBound={north_bound}',
+            f'-PeastBound={east_bound}',
+            f'-PsouthBound={south_bound}',
+            f'-PpixelSizeX={pixel_size_x}',
+            f'-PpixelSizeY={pixel_size_y}',
+            f'-Presampling={resampling}',
+            f'-PkeepIntermediateTimeSeriesProduct={str(keep_intermediate_time_series_product).lower()}',
+            f'-PvalidPixelExpression="{valid_pixel_expression}"',
+            f'-PgapFillingMethod={gap_filling_method}',
+            f'-PstartValueFallback={start_value_fallback}',
+            f'-PendValueFallback={end_value_fallback}'
+        ]
+
+        if start_date:
+            cmd_params.append(f'-PstartDate="{start_date}"')
+        if end_date:
+            cmd_params.append(f'-PendDate="{end_date}"')
+
+        if percentiles:
+            percentiles_str = ','.join(str(p) for p in percentiles)
+        else:
+            percentiles_str = '90'
+        cmd_params.append(f'-Ppercentiles={percentiles_str}')
+
+        if source_product_paths:
+            cmd_params.append(f'-PsourceProductPaths={",".join(source_product_paths)}')
+
+        if time_series_output_dir:
+            cmd_params.append(f'-PtimeSeriesOutputDir={Path(time_series_output_dir).as_posix()}')
+
+        if band_math_expression:
+            cmd_params.append(f'-PbandMathsExpression="{band_math_expression}"')
+        if source_band_name:
+            cmd_params.append(f'-PsourceBandName="{source_band_name}"')
+
+        self.current_cmd.append(f'TemporalPercentile {" ".join(cmd_params)}')
+        return self._call(suffix='TMPP', output_name=output_name)
+
     def calibration(
         self,
         pols: Optional[List[str]] = None,
@@ -468,6 +625,44 @@ class GPT:
             )
         
         return self._call(suffix='CAL', output_name=output_name)
+
+    def thermal_noise_removal(
+        self,
+        pols: Optional[List[str]] = None,
+        output_noise: bool = False,
+        reintroduce_thermal_noise: bool = False,
+        remove_thermal_noise: bool = True,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Remove thermal noise from products.
+        
+        Args:
+            pols: Polarizations to process. If None, all polarizations are used.
+            output_noise: Output the noise band.
+            reintroduce_thermal_noise: Re-introduce thermal noise.
+            remove_thermal_noise: Remove thermal noise.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to output product, or None if failed.
+        """
+        self._reset_command()
+        for i, cmd_part in enumerate(self.current_cmd):
+            if cmd_part.startswith('-Ssource='):
+                self.current_cmd[i] = cmd_part.replace('-Ssource=', '-SsourceProduct=')
+                break
+        
+        cmd_params = [
+            f'-PoutputNoise={str(output_noise).lower()}',
+            f'-PreIntroduceThermalNoise={str(reintroduce_thermal_noise).lower()}',
+            f'-PremoveThermalNoise={str(remove_thermal_noise).lower()}'
+        ]
+        
+        if pols:
+            cmd_params.append(f'-PselectedPolarisations={",".join(pols)}')
+        
+        self.current_cmd.append(f'ThermalNoiseRemoval {" ".join(cmd_params)}')
+        return self._call(suffix='TNR', output_name=output_name)
 
     def deburst(
         self,
@@ -983,6 +1178,39 @@ class GPT:
         
         self.current_cmd.append(f'AddElevation {" ".join(cmd_params)}')
         return self._call(suffix='ELEV', output_name=output_name)
+
+    def three_pass_dinsar(
+        self,
+        source_products: Optional[List[str | Path]] = None,
+        orbit_degree: int = 3,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Perform three-pass differential interferometry.
+        
+        This method runs the Three-passDInSAR operator using multiple source products.
+        
+        Args:
+            source_products: Source product paths. If None, uses the current product.
+            orbit_degree: Degree of orbit interpolation polynomial.
+                Valid interval is (1, 10].
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to output product, or None if failed.
+        """
+        self._reset_command()
+        
+        products = source_products or [self.prod_path]
+        if not products:
+            raise ValueError('source_products must contain at least one product path')
+        source_list = ','.join(Path(p).as_posix() for p in products)
+        for i, cmd_part in enumerate(self.current_cmd):
+            if cmd_part.startswith('-Ssource='):
+                self.current_cmd[i] = f'-SsourceProducts={source_list}'
+                break
+        
+        self.current_cmd.append(f'Three-passDInSAR -PorbitDegree={orbit_degree}')
+        return self._call(suffix='3PASS', output_name=output_name)
 
     def unmix(
         self,
@@ -1669,7 +1897,10 @@ class GPT:
     # Legacy method names for backward compatibility
     ImportVector = import_vector
     LandMask = land_mask
+    TerrainMask = terrain_mask
+    TerrainFlattening = terrain_flattening
     Calibration = calibration
+    ThermalNoiseRemoval = thermal_noise_removal
     Deburst = deburst
     Multilook = multilook
     AdaptiveThresholding = adaptive_thresholding
@@ -1682,6 +1913,8 @@ class GPT:
     Warp = warp
     UpdateGeoReference = update_geo_reference
     AddElevation = add_elevation
+    ThreePassDInSAR = three_pass_dinsar
+    TemporalPercentile = temporal_percentile
     Unmix = unmix
     Undersample = undersample
     Tsavi = tsavi
