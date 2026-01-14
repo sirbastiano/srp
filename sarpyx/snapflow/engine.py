@@ -2420,6 +2420,7 @@ class GPT:
 
         self.current_cmd.append(f'SAR-Mosaic {" ".join(cmd_params)}')
         return self._call(suffix='SMOS', output_name=output_name)
+       
     def demodulate(self, output_name: Optional[str] = None) -> Optional[str]:
         """Perform demodulation and deramping of SLC data.
         
@@ -3930,6 +3931,2081 @@ class GPT:
         self.current_cmd.append(f'Land-Sea-Mask {" ".join(cmd_params)}')
         return self._call(suffix='LSMSK', output_name=output_name)
 
+    def enhanced_spectral_diversity(
+        self,
+        fine_win_width_str: str = '512',
+        fine_win_height_str: str = '512',
+        fine_win_acc_azimuth: str = '16',
+        fine_win_acc_range: str = '16',
+        fine_win_oversampling: str = '128',
+        x_corr_threshold: float = 0.1,
+        coh_threshold: float = 0.3,
+        num_blocks_per_overlap: int = 10,
+        esd_estimator: str = 'Periodogram',
+        weight_func: str = 'Inv Quadratic',
+        temporal_baseline_type: str = 'Number of images',
+        max_temporal_baseline: int = 4,
+        integration_method: str = 'L1 and L2',
+        do_not_write_target_bands: bool = False,
+        use_supplied_range_shift: bool = False,
+        overall_range_shift: float = 0.0,
+        use_supplied_azimuth_shift: bool = False,
+        overall_azimuth_shift: float = 0.0,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Estimate constant range and azimuth offsets for a stack of images.
+        
+        This method performs Enhanced Spectral Diversity (ESD) analysis to compute
+        precise azimuth and range offsets between overlapping bursts in TOPS mode data.
+        
+        Args:
+            fine_win_width_str: Width of fine registration window.
+            fine_win_height_str: Height of fine registration window.
+            fine_win_acc_azimuth: Fine registration azimuth accuracy.
+            fine_win_acc_range: Fine registration range accuracy.
+            fine_win_oversampling: Fine registration oversampling factor.
+            x_corr_threshold: Peak cross-correlation threshold.
+            coh_threshold: Coherence threshold for outlier removal.
+            num_blocks_per_overlap: Number of windows per overlap for ESD.
+            esd_estimator: ESD estimator used for azimuth shift computation.
+            weight_func: Weight function of coherence for azimuth shift estimation.
+            temporal_baseline_type: Baseline type for building integration network.
+            max_temporal_baseline: Maximum temporal baseline between image pairs.
+            integration_method: Method used for integrating shifts network.
+            do_not_write_target_bands: Do not write target bands.
+            use_supplied_range_shift: Use user supplied range shift.
+            overall_range_shift: The overall range shift value.
+            use_supplied_azimuth_shift: Use user supplied azimuth shift.
+            overall_azimuth_shift: The overall azimuth shift value.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to ESD-corrected output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PfineWinWidthStr={fine_win_width_str}',
+            f'-PfineWinHeightStr={fine_win_height_str}',
+            f'-PfineWinAccAzimuth={fine_win_acc_azimuth}',
+            f'-PfineWinAccRange={fine_win_acc_range}',
+            f'-PfineWinOversampling={fine_win_oversampling}',
+            f'-PxCorrThreshold={x_corr_threshold}',
+            f'-PcohThreshold={coh_threshold}',
+            f'-PnumBlocksPerOverlap={num_blocks_per_overlap}',
+            f'-PesdEstimator={esd_estimator}',
+            f'-PweightFunc="{weight_func}"',
+            f'-PtemporalBaselineType="{temporal_baseline_type}"',
+            f'-PmaxTemporalBaseline={max_temporal_baseline}',
+            f'-PintegrationMethod="{integration_method}"',
+            f'-PdoNotWriteTargetBands={str(do_not_write_target_bands).lower()}',
+            f'-PuseSuppliedRangeShift={str(use_supplied_range_shift).lower()}',
+            f'-PoverallRangeShift={overall_range_shift}',
+            f'-PuseSuppliedAzimuthShift={str(use_supplied_azimuth_shift).lower()}',
+            f'-PoverallAzimuthShift={overall_azimuth_shift}'
+        ]
+        
+        self.current_cmd.append(f'Enhanced-Spectral-Diversity {" ".join(cmd_params)}')
+        return self._call(suffix='ESD', output_name=output_name)
+
+    def phase_to_displacement(
+        self,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Convert unwrapped phase to displacement along line of sight.
+        
+        This method performs phase-to-displacement conversion, translating interferometric
+        phase measurements into physical displacement values.
+        
+        Args:
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to displacement output product, or None if failed.
+        """
+        self._reset_command()
+        self.current_cmd.append('PhaseToDisplacement')
+        return self._call(suffix='DISP', output_name=output_name)
+
+    def phase_to_elevation(
+        self,
+        dem_name: str = 'SRTM 3Sec',
+        dem_resampling_method: str = 'BILINEAR_INTERPOLATION',
+        external_dem_file: Optional[str | Path] = None,
+        external_dem_no_data_value: float = 0.0,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Convert interferometric phase to elevation (DEM generation).
+        
+        This method generates a digital elevation model from interferometric phase data.
+        
+        Args:
+            dem_name: The digital elevation model to use as reference.
+            dem_resampling_method: DEM resampling method.
+            external_dem_file: Path to external DEM file.
+            external_dem_no_data_value: No data value for external DEM.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to elevation output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PdemName="{dem_name}"',
+            f'-PdemResamplingMethod={dem_resampling_method}',
+            f'-PexternalDEMNoDataValue={external_dem_no_data_value}'
+        ]
+        
+        if external_dem_file:
+            cmd_params.append(f'-PexternalDEMFile={Path(external_dem_file).as_posix()}')
+        
+        self.current_cmd.append(f'PhaseToElevation {" ".join(cmd_params)}')
+        return self._call(suffix='ELEV', output_name=output_name)
+
+    def phase_to_height(
+        self,
+        n_points: int = 200,
+        n_heights: int = 3,
+        degree_1d: int = 2,
+        degree_2d: int = 5,
+        orbit_degree: int = 3,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Convert unwrapped phase to height.
+        
+        This method performs phase-to-height conversion using polynomial fitting.
+        
+        Args:
+            n_points: Number of points for evaluation of flat earth phase.
+            n_heights: Number of height samples in range [0,5000).
+            degree_1d: Degree of 1D polynomial to fit reference phase through.
+            degree_2d: Degree of 2D polynomial to fit reference phase through.
+            orbit_degree: Degree of orbit (polynomial) interpolator.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to height output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PnPoints={n_points}',
+            f'-PnHeights={n_heights}',
+            f'-Pdegree1D={degree_1d}',
+            f'-Pdegree2D={degree_2d}',
+            f'-PorbitDegree={orbit_degree}'
+        ]
+        
+        self.current_cmd.append(f'PhaseToHeight {" ".join(cmd_params)}')
+        return self._call(suffix='HEIGHT', output_name=output_name)
+
+    def snaphu_export(
+        self,
+        snaphu_processing_location: Optional[str | Path] = None,
+        snaphu_install_location: Optional[str | Path] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Download and execute SNAPHU on interferograms.
+        
+        This method exports interferograms in SNAPHU format for phase unwrapping.
+        
+        Args:
+            snaphu_processing_location: Directory for SNAPHU processing.
+            snaphu_install_location: Directory to install SNAPHU binary.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to SNAPHU export output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = []
+        
+        if snaphu_processing_location:
+            cmd_params.append(f'-PsnaphuProcessingLocation={Path(snaphu_processing_location).as_posix()}')
+        
+        if snaphu_install_location:
+            cmd_params.append(f'-PsnaphuInstallLocation={Path(snaphu_install_location).as_posix()}')
+        
+        self.current_cmd.append(f'BatchSnaphuUnwrapOp {" ".join(cmd_params)}')
+        return self._call(suffix='SNAPHU', output_name=output_name)
+
+    def cross_correlation(
+        self,
+        num_gcp_to_generate: int = 2000,
+        coarse_registration_window_width: str = '128',
+        coarse_registration_window_height: str = '128',
+        row_interp_factor: str = '2',
+        column_interp_factor: str = '2',
+        max_iteration: int = 10,
+        gcp_tolerance: float = 0.5,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Automatic GCP selection using cross-correlation.
+        
+        This method performs automatic GCP selection and coregistration.
+        
+        Args:
+            num_gcp_to_generate: Number of GCPs to use in a grid.
+            coarse_registration_window_width: Coarse registration window width.
+            coarse_registration_window_height: Coarse registration window height.
+            row_interp_factor: Row interpolation factor.
+            column_interp_factor: Column interpolation factor.
+            max_iteration: Maximum number of iterations.
+            gcp_tolerance: Tolerance in slave GCP validation check.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to coregistered output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PnumGCPtoGenerate={num_gcp_to_generate}',
+            f'-PcoarseRegistrationWindowWidth={coarse_registration_window_width}',
+            f'-PcoarseRegistrationWindowHeight={coarse_registration_window_height}',
+            f'-ProwInterpFactor={row_interp_factor}',
+            f'-PcolumnInterpFactor={column_interp_factor}',
+            f'-PmaxIteration={max_iteration}',
+            f'-PgcpTolerance={gcp_tolerance}'
+        ]
+        
+        self.current_cmd.append(f'Cross-Correlation {" ".join(cmd_params)}')
+        return self._call(suffix='XCORR', output_name=output_name)
+
+    def dem_assisted_coregistration(
+        self,
+        dem_name: str = 'SRTM 3Sec',
+        dem_resampling_method: str = 'BICUBIC_INTERPOLATION',
+        external_dem_file: Optional[str | Path] = None,
+        external_dem_no_data_value: float = 0.0,
+        resampling_type: str = 'BISINC_5_POINT_INTERPOLATION',
+        mask_out_area_without_elevation: bool = True,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Perform orbit and DEM based coregistration.
+        
+        This method uses orbit and DEM for geometric coregistration.
+        
+        Args:
+            dem_name: The digital elevation model to use.
+            dem_resampling_method: DEM resampling method.
+            external_dem_file: Path to external DEM file.
+            external_dem_no_data_value: No data value for external DEM.
+            resampling_type: Method for resampling slave grid onto master grid.
+            mask_out_area_without_elevation: Mask out areas without elevation.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to coregistered output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PdemName="{dem_name}"',
+            f'-PdemResamplingMethod={dem_resampling_method}',
+            f'-PexternalDEMNoDataValue={external_dem_no_data_value}',
+            f'-PresamplingType={resampling_type}',
+            f'-PmaskOutAreaWithoutElevation={str(mask_out_area_without_elevation).lower()}'
+        ]
+        
+        if external_dem_file:
+            cmd_params.append(f'-PexternalDEMFile={Path(external_dem_file).as_posix()}')
+        
+        self.current_cmd.append(f'DEM-Assisted-Coregistration {" ".join(cmd_params)}')
+        return self._call(suffix='DEMCOREG', output_name=output_name)
+
+    def eap_phase_correction(
+        self,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Apply EAP (Equivalent Aperture Position) phase correction.
+        
+        This method corrects phase errors from platform motion.
+        
+        Args:
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to phase-corrected output product, or None if failed.
+        """
+        self._reset_command()
+        self.current_cmd.append('EAP-Phase-Correction')
+        return self._call(suffix='EAPCORR', output_name=output_name)
+
+    def ellipsoid_correction_rd(
+        self,
+        source_bands: Optional[List[str]] = None,
+        pixel_spacing_in_meter: float = 0.0,
+        map_projection: str = 'WGS84(DD)',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Apply ellipsoid correction with Range-Doppler method.
+        
+        This method performs geometric terrain correction using ellipsoid model.
+        
+        Args:
+            source_bands: List of source bands to process.
+            pixel_spacing_in_meter: Pixel spacing in meters.
+            map_projection: Coordinate reference system in WKT format.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to terrain-corrected output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PpixelSpacingInMeter={pixel_spacing_in_meter}',
+            f'-PmapProjection="{map_projection}"'
+        ]
+        
+        if source_bands:
+            cmd_params.insert(0, f'-PsourceBands={",".join(source_bands)}')
+        
+        self.current_cmd.append(f'Ellipsoid-Correction-RD {" ".join(cmd_params)}')
+        return self._call(suffix='EC', output_name=output_name)
+
+    def range_filter(
+        self,
+        fft_length: int = 8,
+        alpha_hamming: float = 0.75,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Apply range filtering for spectral analysis.
+        
+        This method performs range direction filtering in frequency domain.
+        
+        Args:
+            fft_length: Length of filtering window.
+            alpha_hamming: Weight for Hamming filter.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to range-filtered output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PfftLength={fft_length}',
+            f'-PalphaHamming={alpha_hamming}'
+        ]
+        
+        self.current_cmd.append(f'RangeFilter {" ".join(cmd_params)}')
+        return self._call(suffix='RGFLT', output_name=output_name)
+
+    def azimuth_filter(
+        self,
+        fft_length: int = 256,
+        alpha_hamming: float = 0.75,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Apply azimuth filtering for spectral analysis.
+        
+        This method performs azimuth direction filtering in frequency domain.
+        
+        Args:
+            fft_length: Length of filtering window.
+            alpha_hamming: Weight for Hamming filter.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to azimuth-filtered output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PfftLength={fft_length}',
+            f'-PalphaHamming={alpha_hamming}'
+        ]
+        
+        self.current_cmd.append(f'AzimuthFilter {" ".join(cmd_params)}')
+        return self._call(suffix='AZFLT', output_name=output_name)
+
+    def band_pass_filter(
+        self,
+        subband: str = 'low',
+        alpha: float = 1.0,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Create basebanded SLC based on a subband of 1/3 the original bandwidth.
+        
+        This method applies band-pass filter to extract specific frequency subband.
+        
+        Args:
+            subband: Subband selection ('low' or 'high').
+            alpha: Hamming alpha parameter.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to band-pass filtered output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-Psubband={subband}',
+            f'-Palpha={alpha}'
+        ]
+        
+        self.current_cmd.append(f'BandPassFilter {" ".join(cmd_params)}')
+        return self._call(suffix='BPF', output_name=output_name)
+
+    def oversample(
+        self,
+        source_bands: Optional[List[str]] = None,
+        output_image_by: str = 'Ratio',
+        width_ratio: float = 2.0,
+        height_ratio: float = 2.0,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Oversample the dataset to increase spatial resolution.
+        
+        This method increases pixel density through interpolation.
+        
+        Args:
+            source_bands: List of source bands to oversample.
+            output_image_by: Method to specify output dimensions.
+            width_ratio: Width ratio of output/input images.
+            height_ratio: Height ratio of output/input images.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to oversampled output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PoutputImageBy="{output_image_by}"',
+            f'-PwidthRatio={width_ratio}',
+            f'-PheightRatio={height_ratio}'
+        ]
+        
+        if source_bands:
+            cmd_params.insert(0, f'-PsourceBands={",".join(source_bands)}')
+        
+        self.current_cmd.append(f'Oversample {" ".join(cmd_params)}')
+        return self._call(suffix='OVER', output_name=output_name)
+
+    def glcm(
+        self,
+        source_bands: Optional[List[str]] = None,
+        window_size_str: str = '9x9',
+        angle_str: str = 'ALL',
+        quantization_levels_str: str = '32',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Extract texture features using Gray Level Co-occurrence Matrix.
+        
+        This method computes texture features from SAR imagery.
+        
+        Args:
+            source_bands: List of source bands for texture analysis.
+            window_size_str: Size of the analysis window.
+            angle_str: Angle for co-occurrence matrix computation.
+            quantization_levels_str: Number of quantization levels.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to GLCM output product with texture features, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PwindowSizeStr="{window_size_str}"',
+            f'-PangleStr={angle_str}',
+            f'-PquantizationLevelsStr={quantization_levels_str}'
+        ]
+        
+        if source_bands:
+            cmd_params.insert(0, f'-PsourceBands={",".join(source_bands)}')
+        
+        self.current_cmd.append(f'GLCM {" ".join(cmd_params)}')
+        return self._call(suffix='GLCM', output_name=output_name)
+
+    def pca(
+        self,
+        source_band_names: Optional[List[str]] = None,
+        component_count: int = -1,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Perform Principal Component Analysis (PCA).
+        
+        This method transforms correlated bands into uncorrelated components.
+        
+        Args:
+            source_band_names: Names of bands to use for analysis.
+            component_count: Maximum number of components (-1 for all).
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to PCA output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [f'-PcomponentCount={component_count}']
+        
+        if source_band_names:
+            cmd_params.insert(0, f'-PsourceBandNames={",".join(source_band_names)}')
+        
+        self.current_cmd.append(f'PCA {" ".join(cmd_params)}')
+        return self._call(suffix='PCA', output_name=output_name)
+
+    def k_means_cluster_analysis(
+        self,
+        source_band_names: Optional[List[str]] = None,
+        cluster_count: int = 14,
+        iteration_count: int = 30,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Perform K-Means cluster analysis.
+        
+        This method performs unsupervised classification using K-Means.
+        
+        Args:
+            source_band_names: Names of bands to use for cluster analysis.
+            cluster_count: Number of clusters.
+            iteration_count: Number of iterations.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to clustered output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PclusterCount={cluster_count}',
+            f'-PiterationCount={iteration_count}'
+        ]
+        
+        if source_band_names:
+            cmd_params.insert(0, f'-PsourceBandNames={",".join(source_band_names)}')
+        
+        self.current_cmd.append(f'KMeansClusterAnalysis {" ".join(cmd_params)}')
+        return self._call(suffix='KMEANS', output_name=output_name)
+
+    def em_cluster_analysis(
+        self,
+        source_band_names: Optional[List[str]] = None,
+        cluster_count: int = 14,
+        iteration_count: int = 30,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Perform Expectation-Maximization cluster analysis.
+        
+        This method performs probabilistic clustering using EM algorithm.
+        
+        Args:
+            source_band_names: Names of bands to use for cluster analysis.
+            cluster_count: Number of clusters.
+            iteration_count: Number of iterations.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to clustered output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [
+            f'-PclusterCount={cluster_count}',
+            f'-PiterationCount={iteration_count}'
+        ]
+        
+        if source_band_names:
+            cmd_params.insert(0, f'-PsourceBandNames={",".join(source_band_names)}')
+        
+        self.current_cmd.append(f'EMClusterAnalysis {" ".join(cmd_params)}')
+        return self._call(suffix='EM', output_name=output_name)
+
+    def random_forest_classifier(
+        self,
+        tree_count: int = 10,
+        feature_bands: Optional[List[str]] = None,
+        training_vectors: Optional[List[str]] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Perform Random Forest classification.
+        
+        This method performs supervised classification using Random Forest.
+        
+        Args:
+            tree_count: Number of trees in the forest.
+            feature_bands: Names of bands to use as features.
+            training_vectors: Vectors to train on.
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to classified output product, or None if failed.
+        """
+        self._reset_command()
+        
+        cmd_params = [f'-PtreeCount={tree_count}']
+        
+        if feature_bands:
+            cmd_params.append(f'-PfeatureBands={",".join(feature_bands)}')
+        
+        if training_vectors:
+            cmd_params.append(f'-PtrainingVectors={",".join(training_vectors)}')
+        
+        self.current_cmd.append(f'Random-Forest-Classifier {" ".join(cmd_params)}')
+        return self._call(suffix='RF', output_name=output_name)
+
+    def decision_tree(
+        self,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Perform Decision Tree classification.
+        
+        This method performs supervised classification using decision trees.
+        
+        Args:
+            output_name: Custom output filename (without extension).
+        
+        Returns:
+            Path to classified output product, or None if failed.
+        """
+        self._reset_command()
+        self.current_cmd.append('DecisionTree')
+        return self._call(suffix='DT', output_name=output_name)
+
+    def arvi(
+        self,
+        red_source_band: Optional[str] = None,
+        nir_source_band: Optional[str] = None,
+        blue_source_band: Optional[str] = None,
+        red_factor: float = 1.0,
+        nir_factor: float = 1.0,
+        blue_factor: float = 1.0,
+        gamma_parameter: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute Atmospherically Resistant Vegetation Index."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredFactor={red_factor}',
+            f'-PnirFactor={nir_factor}',
+            f'-PblueFactor={blue_factor}',
+            f'-PgammaParameter={gamma_parameter}'
+        ]
+        if red_source_band:
+            cmd_params.append(f'-PredSourceBand={red_source_band}')
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+        if blue_source_band:
+            cmd_params.append(f'-PblueSourceBand={blue_source_band}')
+        self.current_cmd.append(f'ArviOp {" ".join(cmd_params)}')
+        return self._call(suffix='ARVI', output_name=output_name)
+
+    def dvi(
+        self,
+        red_source_band: Optional[str] = None,
+        nir_source_band: Optional[str] = None,
+        red_factor: float = 1.0,
+        nir_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute Difference Vegetation Index."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredFactor={red_factor}',
+            f'-PnirFactor={nir_factor}'
+        ]
+        if red_source_band:
+            cmd_params.append(f'-PredSourceBand={red_source_band}')
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+        self.current_cmd.append(f'DviOp {" ".join(cmd_params)}')
+        return self._call(suffix='DVI', output_name=output_name)
+
+    def gemi(
+        self,
+        red_source_band: Optional[str] = None,
+        nir_source_band: Optional[str] = None,
+        red_factor: float = 1.0,
+        nir_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute Global Environmental Monitoring Index."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredFactor={red_factor}',
+            f'-PnirFactor={nir_factor}'
+        ]
+        if red_source_band:
+            cmd_params.append(f'-PredSourceBand={red_source_band}')
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+        self.current_cmd.append(f'GemiOp {" ".join(cmd_params)}')
+        return self._call(suffix='GEMI', output_name=output_name)
+
+    def gndvi(
+        self,
+        green_source_band: Optional[str] = None,
+        nir_source_band: Optional[str] = None,
+        green_factor: float = 1.0,
+        nir_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute Green Normalized Difference Vegetation Index."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PgreenFactor={green_factor}',
+            f'-PnirFactor={nir_factor}'
+        ]
+        if green_source_band:
+            cmd_params.append(f'-PgreenSourceBand={green_source_band}')
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+        self.current_cmd.append(f'GndviOp {" ".join(cmd_params)}')
+        return self._call(suffix='GNDVI', output_name=output_name)
+
+    def ipvi(
+        self,
+        red_source_band: Optional[str] = None,
+        nir_source_band: Optional[str] = None,
+        red_factor: float = 1.0,
+        nir_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute Infrared Percentage Vegetation Index."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredFactor={red_factor}',
+            f'-PnirFactor={nir_factor}'
+        ]
+        if red_source_band:
+            cmd_params.append(f'-PredSourceBand={red_source_band}')
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+        self.current_cmd.append(f'IpviOp {" ".join(cmd_params)}')
+        return self._call(suffix='IPVI', output_name=output_name)
+
+    def mcari(
+        self,
+        red1_source_band: Optional[str] = None,
+        red2_source_band: Optional[str] = None,
+        green_source_band: Optional[str] = None,
+        red1_factor: float = 1.0,
+        red2_factor: float = 1.0,
+        green_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute Modified Chlorophyll Absorption Ratio Index."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-Pred1Factor={red1_factor}',
+            f'-Pred2Factor={red2_factor}',
+            f'-PgreenFactor={green_factor}'
+        ]
+        if red1_source_band:
+            cmd_params.append(f'-Pred1SourceBand={red1_source_band}')
+        if red2_source_band:
+            cmd_params.append(f'-Pred2SourceBand={red2_source_band}')
+        if green_source_band:
+            cmd_params.append(f'-PgreenSourceBand={green_source_band}')
+        self.current_cmd.append(f'McariOp {" ".join(cmd_params)}')
+        return self._call(suffix='MCARI', output_name=output_name)
+
+    def mndwi(
+        self,
+        green_source_band: Optional[str] = None,
+        mir_source_band: Optional[str] = None,
+        green_factor: float = 1.0,
+        mir_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute Modified Normalized Difference Water Index."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PgreenFactor={green_factor}',
+            f'-PmirFactor={mir_factor}'
+        ]
+        if green_source_band:
+            cmd_params.append(f'-PgreenSourceBand={green_source_band}')
+        if mir_source_band:
+            cmd_params.append(f'-PmirSourceBand={mir_source_band}')
+        self.current_cmd.append(f'MndwiOp {" ".join(cmd_params)}')
+        return self._call(suffix='MNDWI', output_name=output_name)
+
+    def msavi2(
+        self,
+        red_source_band: Optional[str] = None,
+        nir_source_band: Optional[str] = None,
+        red_factor: float = 1.0,
+        nir_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute second Modified Soil Adjusted Vegetation Index."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredFactor={red_factor}',
+            f'-PnirFactor={nir_factor}'
+        ]
+        if red_source_band:
+            cmd_params.append(f'-PredSourceBand={red_source_band}')
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+        self.current_cmd.append(f'Msavi2Op {" ".join(cmd_params)}')
+        return self._call(suffix='MSAVI2', output_name=output_name)
+
+    def msavi(
+        self,
+        red_source_band: Optional[str] = None,
+        nir_source_band: Optional[str] = None,
+        red_factor: float = 1.0,
+        nir_factor: float = 1.0,
+        slope: float = 0.5,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute Modified Soil Adjusted Vegetation Index."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredFactor={red_factor}',
+            f'-PnirFactor={nir_factor}',
+            f'-Pslope={slope}'
+        ]
+        if red_source_band:
+            cmd_params.append(f'-PredSourceBand={red_source_band}')
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+        self.current_cmd.append(f'MsaviOp {" ".join(cmd_params)}')
+        return self._call(suffix='MSAVI', output_name=output_name)
+
+    def mtci(
+        self,
+        red_source_band4: Optional[str] = None,
+        red_source_band5: Optional[str] = None,
+        nir_source_band: Optional[str] = None,
+        red_b4_factor: float = 1.0,
+        red_b5_factor: float = 1.0,
+        nir_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute MERIS Terrestrial Chlorophyll Index."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredB4Factor={red_b4_factor}',
+            f'-PredB5Factor={red_b5_factor}',
+            f'-PnirFactor={nir_factor}'
+        ]
+        if red_source_band4:
+            cmd_params.append(f'-PredSourceBand4={red_source_band4}')
+        if red_source_band5:
+            cmd_params.append(f'-PredSourceBand5={red_source_band5}')
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+        self.current_cmd.append(f'MtciOp {" ".join(cmd_params)}')
+        return self._call(suffix='MTCI', output_name=output_name)
+
+    def ndwi(
+        self,
+        nir_source_band: Optional[str] = None,
+        mir_source_band: Optional[str] = None,
+        nir_factor: float = 1.0,
+        mir_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute Normalized Difference Water Index."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PnirFactor={nir_factor}',
+            f'-PmirFactor={mir_factor}'
+        ]
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+        if mir_source_band:
+            cmd_params.append(f'-PmirSourceBand={mir_source_band}')
+        self.current_cmd.append(f'NdwiOp {" ".join(cmd_params)}')
+        return self._call(suffix='NDWI', output_name=output_name)
+
+    def rvi(
+        self,
+        red_source_band: Optional[str] = None,
+        nir_source_band: Optional[str] = None,
+        red_factor: float = 1.0,
+        nir_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute Ratio Vegetation Index."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredFactor={red_factor}',
+            f'-PnirFactor={nir_factor}'
+        ]
+        if red_source_band:
+            cmd_params.append(f'-PredSourceBand={red_source_band}')
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+        self.current_cmd.append(f'RviOp {" ".join(cmd_params)}')
+        return self._call(suffix='RVI', output_name=output_name)
+
+    def bi2(
+        self,
+        red_source_band: Optional[str] = None,
+        green_source_band: Optional[str] = None,
+        nir_source_band: Optional[str] = None,
+        red_factor: float = 1.0,
+        green_factor: float = 1.0,
+        nir_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Second Brightness Index."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredFactor={red_factor}',
+            f'-PgreenFactor={green_factor}',
+            f'-PnirFactor={nir_factor}'
+        ]
+        if red_source_band:
+            cmd_params.append(f'-PredSourceBand={red_source_band}')
+        if green_source_band:
+            cmd_params.append(f'-PgreenSourceBand={green_source_band}')
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+        self.current_cmd.append(f'Bi2Op {" ".join(cmd_params)}')
+        return self._call(suffix='BI2', output_name=output_name)
+
+    def bi(
+        self,
+        red_source_band: Optional[str] = None,
+        green_source_band: Optional[str] = None,
+        red_factor: float = 1.0,
+        green_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Brightness Index."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredFactor={red_factor}',
+            f'-PgreenFactor={green_factor}'
+        ]
+        if red_source_band:
+            cmd_params.append(f'-PredSourceBand={red_source_band}')
+        if green_source_band:
+            cmd_params.append(f'-PgreenSourceBand={green_source_band}')
+        self.current_cmd.append(f'BiOp {" ".join(cmd_params)}')
+        return self._call(suffix='BI', output_name=output_name)
+
+    def ci(
+        self,
+        red_source_band: Optional[str] = None,
+        green_source_band: Optional[str] = None,
+        red_factor: float = 1.0,
+        green_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Colour Index."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredFactor={red_factor}',
+            f'-PgreenFactor={green_factor}'
+        ]
+        if red_source_band:
+            cmd_params.append(f'-PredSourceBand={red_source_band}')
+        if green_source_band:
+            cmd_params.append(f'-PgreenSourceBand={green_source_band}')
+        self.current_cmd.append(f'CiOp {" ".join(cmd_params)}')
+        return self._call(suffix='CI', output_name=output_name)
+
+    def ireci(
+        self,
+        red_source_band4: Optional[str] = None,
+        red_source_band5: Optional[str] = None,
+        red_source_band6: Optional[str] = None,
+        nir_source_band: Optional[str] = None,
+        red_b4_factor: float = 1.0,
+        red_b5_factor: float = 1.0,
+        red_b6_factor: float = 1.0,
+        nir_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Inverted Red-Edge Chlorophyll."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredB4Factor={red_b4_factor}',
+            f'-PredB5Factor={red_b5_factor}',
+            f'-PredB6Factor={red_b6_factor}',
+            f'-PnirFactor={nir_factor}'
+        ]
+        if red_source_band4:
+            cmd_params.append(f'-PredSourceBand4={red_source_band4}')
+        if red_source_band5:
+            cmd_params.append(f'-PredSourceBand5={red_source_band5}')
+        if red_source_band6:
+            cmd_params.append(f'-PredSourceBand6={red_source_band6}')
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+        self.current_cmd.append(f'IreciOp {" ".join(cmd_params)}')
+        return self._call(suffix='IRECI', output_name=output_name)
+
+    def ndi45(
+        self,
+        red_source_band4: Optional[str] = None,
+        red_source_band5: Optional[str] = None,
+        red_b4_factor: float = 1.0,
+        red_b5_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Normalized Difference Index."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredB4Factor={red_b4_factor}',
+            f'-PredB5Factor={red_b5_factor}'
+        ]
+        if red_source_band4:
+            cmd_params.append(f'-PredSourceBand4={red_source_band4}')
+        if red_source_band5:
+            cmd_params.append(f'-PredSourceBand5={red_source_band5}')
+        self.current_cmd.append(f'Ndi45Op {" ".join(cmd_params)}')
+        return self._call(suffix='NDI45', output_name=output_name)
+
+    def ndpi(
+        self,
+        green_source_band: Optional[str] = None,
+        mir_source_band: Optional[str] = None,
+        green_factor: float = 1.0,
+        mir_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Normalized Differential Pond."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PgreenFactor={green_factor}',
+            f'-PmirFactor={mir_factor}'
+        ]
+        if green_source_band:
+            cmd_params.append(f'-PgreenSourceBand={green_source_band}')
+        if mir_source_band:
+            cmd_params.append(f'-PmirSourceBand={mir_source_band}')
+        self.current_cmd.append(f'NdpiOp {" ".join(cmd_params)}')
+        return self._call(suffix='NDPI', output_name=output_name)
+
+    def ndti(
+        self,
+        red_source_band: Optional[str] = None,
+        green_source_band: Optional[str] = None,
+        red_factor: float = 1.0,
+        green_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Normalized Difference Turbidity."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredFactor={red_factor}',
+            f'-PgreenFactor={green_factor}'
+        ]
+        if red_source_band:
+            cmd_params.append(f'-PredSourceBand={red_source_band}')
+        if green_source_band:
+            cmd_params.append(f'-PgreenSourceBand={green_source_band}')
+        self.current_cmd.append(f'NdtiOp {" ".join(cmd_params)}')
+        return self._call(suffix='NDTI', output_name=output_name)
+
+    def ndwi2(
+        self,
+        green_source_band: Optional[str] = None,
+        nir_source_band: Optional[str] = None,
+        green_factor: float = 1.0,
+        nir_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Normalized Difference Water."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PgreenFactor={green_factor}',
+            f'-PnirFactor={nir_factor}'
+        ]
+        if green_source_band:
+            cmd_params.append(f'-PgreenSourceBand={green_source_band}')
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+        self.current_cmd.append(f'Ndwi2Op {" ".join(cmd_params)}')
+        return self._call(suffix='NDWI2', output_name=output_name)
+
+    def pssra(
+        self,
+        red_source_band: Optional[str] = None,
+        nir_source_band: Optional[str] = None,
+        red_factor: float = 1.0,
+        nir_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Pigment Specific Simple."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredFactor={red_factor}',
+            f'-PnirFactor={nir_factor}'
+        ]
+        if red_source_band:
+            cmd_params.append(f'-PredSourceBand={red_source_band}')
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+        self.current_cmd.append(f'PssraOp {" ".join(cmd_params)}')
+        return self._call(suffix='PSSRA', output_name=output_name)
+
+    def pvi(
+        self,
+        red_source_band: Optional[str] = None,
+        nir_source_band: Optional[str] = None,
+        red_factor: float = 1.0,
+        nir_factor: float = 1.0,
+        angle_soil_line_nir_axis: float = 45.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Perpendicular Vegetation Index."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredFactor={red_factor}',
+            f'-PnirFactor={nir_factor}',
+            f'-PangleSoilLineNIRAxis={angle_soil_line_nir_axis}'
+        ]
+        if red_source_band:
+            cmd_params.append(f'-PredSourceBand={red_source_band}')
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+        self.current_cmd.append(f'PviOp {" ".join(cmd_params)}')
+        return self._call(suffix='PVI', output_name=output_name)
+
+    def reip(
+        self,
+        red_source_band4: Optional[str] = None,
+        red_source_band5: Optional[str] = None,
+        red_source_band6: Optional[str] = None,
+        nir_source_band: Optional[str] = None,
+        red_b4_factor: float = 1.0,
+        red_b5_factor: float = 1.0,
+        red_b6_factor: float = 1.0,
+        nir_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Red Edge Inflection."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredB4Factor={red_b4_factor}',
+            f'-PredB5Factor={red_b5_factor}',
+            f'-PredB6Factor={red_b6_factor}',
+            f'-PnirFactor={nir_factor}'
+        ]
+        if red_source_band4:
+            cmd_params.append(f'-PredSourceBand4={red_source_band4}')
+        if red_source_band5:
+            cmd_params.append(f'-PredSourceBand5={red_source_band5}')
+        if red_source_band6:
+            cmd_params.append(f'-PredSourceBand6={red_source_band6}')
+        if nir_source_band:
+            cmd_params.append(f'-PnirSourceBand={nir_source_band}')
+        self.current_cmd.append(f'ReipOp {" ".join(cmd_params)}')
+        return self._call(suffix='REIP', output_name=output_name)
+
+    def ri(
+        self,
+        red_source_band: Optional[str] = None,
+        green_source_band: Optional[str] = None,
+        red_factor: float = 1.0,
+        green_factor: float = 1.0,
+        resample_type: str = 'None',
+        upsampling: str = 'Nearest',
+        downsampling: str = 'First',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Redness Index."""
+        self._reset_command()
+        cmd_params = [
+            f'-PresampleType="{resample_type}"',
+            f'-Pupsampling={upsampling}',
+            f'-Pdownsampling={downsampling}',
+            f'-PredFactor={red_factor}',
+            f'-PgreenFactor={green_factor}'
+        ]
+        if red_source_band:
+            cmd_params.append(f'-PredSourceBand={red_source_band}')
+        if green_source_band:
+            cmd_params.append(f'-PgreenSourceBand={green_source_band}')
+        self.current_cmd.append(f'RiOp {" ".join(cmd_params)}')
+        return self._call(suffix='RI', output_name=output_name)
+
+    def c2rcc_msi(
+        self,
+        valid_pixel_expression: Optional[str] = 'B8 > 0 && B8 < 0.1',
+        salinity: float = 35.0,
+        temperature: float = 15.0,
+        ozone: float = 330.0,
+        press: float = 1000.0,
+        elevation: float = 0.0,
+        tsm_fac: float = 1.06,
+        tsm_exp: float = 0.942,
+        chl_exp: float = 1.04,
+        chl_fac: float = 21.0,
+        threshold_rtosa_oos: float = 0.05,
+        threshold_ac_reflec_oos: float = 0.1,
+        threshold_cloud_t_down865: float = 0.955,
+        atmospheric_aux_data_path: Optional[str] = None,
+        alternative_nn_path: Optional[str] = None,
+        net_set: str = 'C2RCC-Nets',
+        output_as_rrs: bool = False,
+        derive_rw_from_path_and_transmittance: bool = False,
+        use_ecmwf_aux_data: bool = False,
+        dem_name: str = 'Copernicus 90m Global DEM',
+        output_rtoa: bool = True,
+        output_rtosa_gc: bool = False,
+        output_rtosa_gc_aann: bool = False,
+        output_rpath: bool = False,
+        output_tdown: bool = False,
+        output_tup: bool = False,
+        output_ac_reflectance: bool = True,
+        output_rhown: bool = True,
+        output_oos: bool = False,
+        output_kd: bool = True,
+        output_uncertainties: bool = True,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """C2RCC MSI atmospheric correction."""
+        self._reset_command()
+        cmd_params = [
+            f'-Psalinity={salinity}',
+            f'-Ptemperature={temperature}',
+            f'-Pozone={ozone}',
+            f'-Ppress={press}',
+            f'-Pelevation={elevation}',
+            f'-PTSMfac={tsm_fac}',
+            f'-PTSMexp={tsm_exp}',
+            f'-PCHLexp={chl_exp}',
+            f'-PCHLfac={chl_fac}',
+            f'-PthresholdRtosaOOS={threshold_rtosa_oos}',
+            f'-PthresholdAcReflecOos={threshold_ac_reflec_oos}',
+            f'-PthresholdCloudTDown865={threshold_cloud_t_down865}',
+            f'-PnetSet="{net_set}"',
+            f'-PoutputAsRrs={str(output_as_rrs).lower()}',
+            f'-PderiveRwFromPathAndTransmittance={str(derive_rw_from_path_and_transmittance).lower()}',
+            f'-PuseEcmwfAuxData={str(use_ecmwf_aux_data).lower()}',
+            f'-PdemName="{dem_name}"',
+            f'-PoutputRtoa={str(output_rtoa).lower()}',
+            f'-PoutputRtosaGc={str(output_rtosa_gc).lower()}',
+            f'-PoutputRtosaGcAann={str(output_rtosa_gc_aann).lower()}',
+            f'-PoutputRpath={str(output_rpath).lower()}',
+            f'-PoutputTdown={str(output_tdown).lower()}',
+            f'-PoutputTup={str(output_tup).lower()}',
+            f'-PoutputAcReflectance={str(output_ac_reflectance).lower()}',
+            f'-PoutputRhown={str(output_rhown).lower()}',
+            f'-PoutputOos={str(output_oos).lower()}',
+            f'-PoutputKd={str(output_kd).lower()}',
+            f'-PoutputUncertainties={str(output_uncertainties).lower()}'
+        ]
+        if valid_pixel_expression:
+            cmd_params.append(f'-PvalidPixelExpression="{valid_pixel_expression}"')
+        if atmospheric_aux_data_path:
+            cmd_params.append(f'-PatmosphericAuxDataPath="{atmospheric_aux_data_path}"')
+        if alternative_nn_path:
+            cmd_params.append(f'-PalternativeNNPath="{alternative_nn_path}"')
+        self.current_cmd.append(f'c2rcc.msi {" ".join(cmd_params)}')
+        return self._call(suffix='C2MSI', output_name=output_name)
+
+    def c2rcc_olci(
+        self,
+        valid_pixel_expression: Optional[str] = '!quality_flags.invalid && (!quality_flags.land || quality_flags.fresh_inland_water)',
+        salinity: float = 35.0,
+        temperature: float = 15.0,
+        ozone: float = 330.0,
+        press: float = 1000.0,
+        tsm_fac: float = 1.06,
+        tsm_exp: float = 0.942,
+        chl_exp: float = 1.04,
+        chl_fac: float = 21.0,
+        threshold_rtosa_oos: float = 0.01,
+        threshold_ac_reflec_oos: float = 0.15,
+        threshold_cloud_t_down865: float = 0.955,
+        atmospheric_aux_data_path: Optional[str] = None,
+        alternative_nn_path: Optional[str] = None,
+        output_as_rrs: bool = False,
+        derive_rw_from_path_and_transmittance: bool = False,
+        use_ecmwf_aux_data: bool = True,
+        dem_name: Optional[str] = None,
+        output_rtoa: bool = True,
+        output_rtosa_gc: bool = False,
+        output_rtosa_gc_aann: bool = False,
+        output_rpath: bool = False,
+        output_tdown: bool = False,
+        output_tup: bool = False,
+        output_ac_reflectance: bool = True,
+        output_rhown: bool = True,
+        output_oos: bool = False,
+        output_kd: bool = True,
+        output_uncertainties: bool = True,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """C2RCC OLCI atmospheric correction."""
+        self._reset_command()
+        cmd_params = [
+            f'-Psalinity={salinity}',
+            f'-Ptemperature={temperature}',
+            f'-Pozone={ozone}',
+            f'-Ppress={press}',
+            f'-PTSMfac={tsm_fac}',
+            f'-PTSMexp={tsm_exp}',
+            f'-PCHLexp={chl_exp}',
+            f'-PCHLfac={chl_fac}',
+            f'-PthresholdRtosaOOS={threshold_rtosa_oos}',
+            f'-PthresholdAcReflecOos={threshold_ac_reflec_oos}',
+            f'-PthresholdCloudTDown865={threshold_cloud_t_down865}',
+            f'-PoutputAsRrs={str(output_as_rrs).lower()}',
+            f'-PderiveRwFromPathAndTransmittance={str(derive_rw_from_path_and_transmittance).lower()}',
+            f'-PuseEcmwfAuxData={str(use_ecmwf_aux_data).lower()}',
+            f'-PoutputRtoa={str(output_rtoa).lower()}',
+            f'-PoutputRtosaGc={str(output_rtosa_gc).lower()}',
+            f'-PoutputRtosaGcAann={str(output_rtosa_gc_aann).lower()}',
+            f'-PoutputRpath={str(output_rpath).lower()}',
+            f'-PoutputTdown={str(output_tdown).lower()}',
+            f'-PoutputTup={str(output_tup).lower()}',
+            f'-PoutputAcReflectance={str(output_ac_reflectance).lower()}',
+            f'-PoutputRhown={str(output_rhown).lower()}',
+            f'-PoutputOos={str(output_oos).lower()}',
+            f'-PoutputKd={str(output_kd).lower()}',
+            f'-PoutputUncertainties={str(output_uncertainties).lower()}'
+        ]
+        if valid_pixel_expression:
+            cmd_params.append(f'-PvalidPixelExpression="{valid_pixel_expression}"')
+        if atmospheric_aux_data_path:
+            cmd_params.append(f'-PatmosphericAuxDataPath="{atmospheric_aux_data_path}"')
+        if alternative_nn_path:
+            cmd_params.append(f'-PalternativeNNPath="{alternative_nn_path}"')
+        if dem_name:
+            cmd_params.append(f'-PdemName="{dem_name}"')
+        self.current_cmd.append(f'c2rcc.olci {" ".join(cmd_params)}')
+        return self._call(suffix='C2OLCI', output_name=output_name)
+
+    def c2rcc_s2_msi(
+        self,
+        valid_pixel_expression: Optional[str] = 'B8 > 0 && B8 < 0.1',
+        salinity: float = 35.0,
+        temperature: float = 15.0,
+        ozone: float = 330.0,
+        press: float = 1000.0,
+        elevation: float = 0.0,
+        tsm_fac: float = 1.06,
+        tsm_exp: float = 0.942,
+        chl_exp: float = 1.04,
+        chl_fac: float = 21.0,
+        threshold_rtosa_oos: float = 0.05,
+        threshold_ac_reflec_oos: float = 0.1,
+        threshold_cloud_t_down865: float = 0.955,
+        atmospheric_aux_data_path: Optional[str] = None,
+        alternative_nn_path: Optional[str] = None,
+        net_set: str = 'C2RCC-Nets',
+        output_as_rrs: bool = False,
+        derive_rw_from_path_and_transmittance: bool = False,
+        use_ecmwf_aux_data: bool = False,
+        dem_name: str = 'Copernicus 90m Global DEM',
+        output_rtoa: bool = True,
+        output_rtosa_gc: bool = False,
+        output_rtosa_gc_aann: bool = False,
+        output_rpath: bool = False,
+        output_tdown: bool = False,
+        output_tup: bool = False,
+        output_ac_reflectance: bool = True,
+        output_rhown: bool = True,
+        output_oos: bool = False,
+        output_kd: bool = True,
+        output_uncertainties: bool = True,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """C2RCC S2 MSI correction."""
+        self._reset_command()
+        cmd_params = [
+            f'-Psalinity={salinity}',
+            f'-Ptemperature={temperature}',
+            f'-Pozone={ozone}',
+            f'-Ppress={press}',
+            f'-Pelevation={elevation}',
+            f'-PTSMfac={tsm_fac}',
+            f'-PTSMexp={tsm_exp}',
+            f'-PCHLexp={chl_exp}',
+            f'-PCHLfac={chl_fac}',
+            f'-PthresholdRtosaOOS={threshold_rtosa_oos}',
+            f'-PthresholdAcReflecOos={threshold_ac_reflec_oos}',
+            f'-PthresholdCloudTDown865={threshold_cloud_t_down865}',
+            f'-PnetSet="{net_set}"',
+            f'-PoutputAsRrs={str(output_as_rrs).lower()}',
+            f'-PderiveRwFromPathAndTransmittance={str(derive_rw_from_path_and_transmittance).lower()}',
+            f'-PuseEcmwfAuxData={str(use_ecmwf_aux_data).lower()}',
+            f'-PdemName="{dem_name}"',
+            f'-PoutputRtoa={str(output_rtoa).lower()}',
+            f'-PoutputRtosaGc={str(output_rtosa_gc).lower()}',
+            f'-PoutputRtosaGcAann={str(output_rtosa_gc_aann).lower()}',
+            f'-PoutputRpath={str(output_rpath).lower()}',
+            f'-PoutputTdown={str(output_tdown).lower()}',
+            f'-PoutputTup={str(output_tup).lower()}',
+            f'-PoutputAcReflectance={str(output_ac_reflectance).lower()}',
+            f'-PoutputRhown={str(output_rhown).lower()}',
+            f'-PoutputOos={str(output_oos).lower()}',
+            f'-PoutputKd={str(output_kd).lower()}',
+            f'-PoutputUncertainties={str(output_uncertainties).lower()}'
+        ]
+        if valid_pixel_expression:
+            cmd_params.append(f'-PvalidPixelExpression="{valid_pixel_expression}"')
+        if atmospheric_aux_data_path:
+            cmd_params.append(f'-PatmosphericAuxDataPath="{atmospheric_aux_data_path}"')
+        if alternative_nn_path:
+            cmd_params.append(f'-PalternativeNNPath="{alternative_nn_path}"')
+        self.current_cmd.append(f'c2rcc.msi {" ".join(cmd_params)}')
+        return self._call(suffix='C2S2MSI', output_name=output_name)
+
+    def biophysical(
+        self,
+        sensor: str = 'S2A',
+        resolution: str = '60',
+        compute_lai: bool = True,
+        compute_fapar: bool = True,
+        compute_fcover: bool = True,
+        compute_cab: bool = True,
+        compute_cw: bool = True,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Biophysical processor."""
+        self._reset_command()
+        cmd_params = [
+            f'-Psensor="{sensor}"',
+            f'-Presolution="{resolution}"',
+            f'-PcomputeLAI={str(compute_lai).lower()}',
+            f'-PcomputeFapar={str(compute_fapar).lower()}',
+            f'-PcomputeFcover={str(compute_fcover).lower()}',
+            f'-PcomputeCab={str(compute_cab).lower()}',
+            f'-PcomputeCw={str(compute_cw).lower()}'
+        ]
+        self.current_cmd.append(f'BiophysicalOp {" ".join(cmd_params)}')
+        return self._call(suffix='BIO', output_name=output_name)
+
+    def biophysical_10m(
+        self,
+        sensor: str = 'S2A_10m',
+        compute_lai: bool = True,
+        compute_fapar: bool = True,
+        compute_fcover: bool = True,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Biophysical processor 10m."""
+        self._reset_command()
+        cmd_params = [
+            f'-Psensor="{sensor}"',
+            f'-PcomputeLAI={str(compute_lai).lower()}',
+            f'-PcomputeFapar={str(compute_fapar).lower()}',
+            f'-PcomputeFcover={str(compute_fcover).lower()}'
+        ]
+        self.current_cmd.append(f'Biophysical10mOp {" ".join(cmd_params)}')
+        return self._call(suffix='BIO10M', output_name=output_name)
+
+    def biophysical_landsat8(
+        self,
+        compute_lai: bool = True,
+        compute_fapar: bool = True,
+        compute_fcover: bool = True,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Biophysical Landsat8 processor."""
+        self._reset_command()
+        cmd_params = [
+            f'-PcomputeLAI={str(compute_lai).lower()}',
+            f'-PcomputeFapar={str(compute_fapar).lower()}',
+            f'-PcomputeFcover={str(compute_fcover).lower()}'
+        ]
+        self.current_cmd.append(f'BiophysicalLandsat8Op {" ".join(cmd_params)}')
+        return self._call(suffix='BIOL8', output_name=output_name)
+
+    def compactpol_radar_vegetation_index(
+        self,
+        window_size_str: str = '3',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compact-pol radar vegetation index."""
+        self._reset_command()
+        cmd_params = [f'-PwindowSizeStr="{window_size_str}"']
+        self.current_cmd.append(f'Compactpol-Radar-Vegetation-Index {" ".join(cmd_params)}')
+        return self._call(suffix='CPRVI', output_name=output_name)
+
+    def generalized_radar_vegetation_indices(
+        self,
+        window_size: int = 5,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Generalized radar vegetation indices."""
+        self._reset_command()
+        cmd_params = [f'-PwindowSize={window_size}']
+        self.current_cmd.append(f'Generalized-Radar-Vegetation-Index {" ".join(cmd_params)}')
+        return self._call(suffix='GRVI', output_name=output_name)
+
+    def radar_vegetation_index(
+        self,
+        window_size: int = 5,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Radar vegetation index."""
+        self._reset_command()
+        cmd_params = [f'-PwindowSize={window_size}']
+        self.current_cmd.append(f'Radar-Vegetation-Index {" ".join(cmd_params)}')
+        return self._call(suffix='RVINDEX', output_name=output_name)
+
+    def change_detection(
+        self,
+        source_bands: Optional[List[str]] = None,
+        mask_upper_threshold: float = 2.0,
+        mask_lower_threshold: float = -2.0,
+        include_source_bands: bool = False,
+        output_difference: bool = False,
+        output_ratio: bool = False,
+        output_log_ratio: bool = True,
+        output_normalized_ratio: bool = False,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Log ratio change detection."""
+        self._reset_command()
+        cmd_params = [
+            f'-PmaskUpperThreshold={mask_upper_threshold}',
+            f'-PmaskLowerThreshold={mask_lower_threshold}',
+            f'-PincludeSourceBands={str(include_source_bands).lower()}',
+            f'-PoutputDifference={str(output_difference).lower()}',
+            f'-PoutputRatio={str(output_ratio).lower()}',
+            f'-PoutputLogRatio={str(output_log_ratio).lower()}',
+            f'-PoutputNormalizedRatio={str(output_normalized_ratio).lower()}'
+        ]
+        if source_bands:
+            cmd_params.append(f'-PsourceBands={",".join(source_bands)}')
+        self.current_cmd.append(f'Change-Detection {" ".join(cmd_params)}')
+        return self._call(suffix='CHGDET', output_name=output_name)
+
+    def change_vector_analysis(
+        self,
+        source_band1: Optional[str] = None,
+        source_band2: Optional[str] = None,
+        magnitude_threshold: str = '0',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Change vector analysis."""
+        self._reset_command()
+        cmd_params = [f'-PmagnitudeThreshold="{magnitude_threshold}"']
+        if source_band1:
+            cmd_params.append(f'-PsourceBand1="{source_band1}"')
+        if source_band2:
+            cmd_params.append(f'-PsourceBand2="{source_band2}"')
+        self.current_cmd.append(f'ChangeVectorAnalysisOp {" ".join(cmd_params)}')
+        return self._call(suffix='CVA', output_name=output_name)
+
+    def add_land_cover(
+        self,
+        land_cover_names: Optional[List[str]] = None,
+        external_files: Optional[List[str]] = None,
+        resampling_method: str = 'NEAREST_NEIGHBOUR',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Add land cover band."""
+        self._reset_command()
+        cmd_params = [f'-PresamplingMethod={resampling_method}']
+        if land_cover_names:
+            cmd_params.append(f'-PlandCoverNames={",".join(land_cover_names)}')
+        if external_files:
+            cmd_params.append(f'-PexternalFiles={",".join(external_files)}')
+        self.current_cmd.append(f'AddLandCover {" ".join(cmd_params)}')
+        return self._call(suffix='LC', output_name=output_name)
+
+    def cloud_prob(
+        self,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Cloud probability detection."""
+        self._reset_command()
+        self.current_cmd.append('CloudProb')
+        return self._call(suffix='CLDPRB', output_name=output_name)
+
+    def double_difference_interferogram(
+        self,
+        coh_win_size: str = '5',
+        output_coherence: bool = False,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute double difference interferogram."""
+        self._reset_command()
+        cmd_params = [
+            f'-PcohWinSize={coh_win_size}',
+            f'-PoutputCoherence={str(output_coherence).lower()}'
+        ]
+        self.current_cmd.append(f'Double-Difference-Interferogram {" ".join(cmd_params)}')
+        return self._call(suffix='DDIFF', output_name=output_name)
+
+    def add_elevation(
+        self,
+        dem_name: str = 'SRTM 3Sec',
+        dem_resampling_method: str = 'BICUBIC_INTERPOLATION',
+        elevation_band_name: str = 'elevation',
+        external_dem_file: Optional[str] = None,
+        external_dem_no_data_value: float = 0.0,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Creates DEM band."""
+        self._reset_command()
+        cmd_params = [
+            f'-PdemName={dem_name}',
+            f'-PdemResamplingMethod={dem_resampling_method}',
+            f'-PelevationBandName={elevation_band_name}',
+            f'-PexternalDEMNoDataValue={external_dem_no_data_value}'
+        ]
+        if external_dem_file:
+            cmd_params.append(f'-PexternalDEMFile={external_dem_file}')
+        self.current_cmd.append(f'AddElevation {" ".join(cmd_params)}')
+        return self._call(suffix='ELEV', output_name=output_name)
+
+    def fill_dem_hole(
+        self,
+        no_data_value: float = 0.0,
+        source_bands: Optional[List[str]] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Fill DEM holes."""
+        self._reset_command()
+        cmd_params = [f'-PNoDataValue={no_data_value}']
+        if source_bands:
+            cmd_params.append(f'-PsourceBands={",".join(source_bands)}')
+        self.current_cmd.append(f'Fill-DEM-Hole {" ".join(cmd_params)}')
+        return self._call(suffix='FILLDEM', output_name=output_name)
+
+    def compute_slope_aspect(
+        self,
+        dem_band_name: str = 'elevation',
+        dem_name: str = 'SRTM 1Sec HGT',
+        dem_resampling_method: str = 'BILINEAR_INTERPOLATION',
+        external_dem_apply_egm: bool = False,
+        external_dem_file: Optional[str] = None,
+        external_dem_no_data_value: float = 0.0,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compute slope and aspect."""
+        self._reset_command()
+        cmd_params = [
+            f'-PdemBandName={dem_band_name}',
+            f'-PdemName={dem_name}',
+            f'-PdemResamplingMethod={dem_resampling_method}',
+            f'-PexternalDEMApplyEGM={str(external_dem_apply_egm).lower()}',
+            f'-PexternalDEMNoDataValue={external_dem_no_data_value}'
+        ]
+        if external_dem_file:
+            cmd_params.append(f'-PexternalDEMFile={external_dem_file}')
+        self.current_cmd.append(f'Compute-Slope-Aspect {" ".join(cmd_params)}')
+        return self._call(suffix='SLOPE', output_name=output_name)
+
+    def cp_decomposition(
+        self,
+        decomposition: str = 'M-Chi Decomposition',
+        window_size_x_str: str = '5',
+        window_size_y_str: str = '5',
+        compute_alpha_by_t3: bool = True,
+        output_rvog: bool = True,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compact polarimetric decomposition."""
+        self._reset_command()
+        cmd_params = [
+            f'-Pdecomposition={decomposition}',
+            f'-PwindowSizeXStr={window_size_x_str}',
+            f'-PwindowSizeYStr={window_size_y_str}',
+            f'-PcomputeAlphaByT3={str(compute_alpha_by_t3).lower()}',
+            f'-PoutputRVOG={str(output_rvog).lower()}'
+        ]
+        self.current_cmd.append(f'CP-Decomposition {" ".join(cmd_params)}')
+        return self._call(suffix='CPDECOMP', output_name=output_name)
+
+    def cp_simulation(
+        self,
+        compact_mode: str = 'Right Circular Hybrid Mode',
+        output_format: str = 'Covariance Matrix C2',
+        noise_power: float = -25.0,
+        simulate_noise_floor: bool = False,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compact pol simulation."""
+        self._reset_command()
+        cmd_params = [
+            f'-PcompactMode={compact_mode}',
+            f'-PoutputFormat={output_format}',
+            f'-PnoisePower={noise_power}',
+            f'-PsimulateNoiseFloor={str(simulate_noise_floor).lower()}'
+        ]
+        self.current_cmd.append(f'CP-Simulation {" ".join(cmd_params)}')
+        return self._call(suffix='CPSIM', output_name=output_name)
+
+    def cp_stokes_parameters(
+        self,
+        window_size_x_str: str = '5',
+        window_size_y_str: str = '5',
+        output_stokes_vector: bool = False,
+        output_degree_of_polarization: bool = True,
+        output_degree_of_depolarization: bool = True,
+        output_degree_of_circularity: bool = True,
+        output_degree_of_ellipticity: bool = True,
+        output_cpr: bool = True,
+        output_lpr: bool = True,
+        output_relative_phase: bool = True,
+        output_alphas: bool = True,
+        output_conformity: bool = True,
+        output_phase_phi: bool = True,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Compact pol Stokes parameters."""
+        self._reset_command()
+        cmd_params = [
+            f'-PwindowSizeXStr={window_size_x_str}',
+            f'-PwindowSizeYStr={window_size_y_str}',
+            f'-PoutputStokesVector={str(output_stokes_vector).lower()}',
+            f'-PoutputDegreeOfPolarization={str(output_degree_of_polarization).lower()}',
+            f'-PoutputDegreeOfDepolarization={str(output_degree_of_depolarization).lower()}',
+            f'-PoutputDegreeOfCircularity={str(output_degree_of_circularity).lower()}',
+            f'-PoutputDegreeOfEllipticity={str(output_degree_of_ellipticity).lower()}',
+            f'-PoutputCPR={str(output_cpr).lower()}',
+            f'-PoutputLPR={str(output_lpr).lower()}',
+            f'-PoutputRelativePhase={str(output_relative_phase).lower()}',
+            f'-PoutputAlphas={str(output_alphas).lower()}',
+            f'-PoutputConformity={str(output_conformity).lower()}',
+            f'-PoutputPhasePhi={str(output_phase_phi).lower()}'
+        ]
+        self.current_cmd.append(f'CP-Stokes-Parameters {" ".join(cmd_params)}')
+        return self._call(suffix='CPSTOKES', output_name=output_name)
+
+    def coregistration(
+        self,
+        master_source_band: Optional[str] = None,
+        slave_source_band: Optional[str] = None,
+        levels: int = 6,
+        rank: int = 4,
+        iterations: int = 2,
+        radius: str = '32, 28, 24, 20, 16, 12, 8',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Coregister two rasters."""
+        self._reset_command()
+        cmd_params = [
+            f'-Plevels={levels}',
+            f'-Prank={rank}',
+            f'-Piterations={iterations}',
+            f'-Pradius={radius}'
+        ]
+        if master_source_band:
+            cmd_params.append(f'-PmasterSourceBand={master_source_band}')
+        if slave_source_band:
+            cmd_params.append(f'-PslaveSourceBand={slave_source_band}')
+        self.current_cmd.append(f'CoregistrationOp {" ".join(cmd_params)}')
+        return self._call(suffix='COREG', output_name=output_name)
+
+    def ellipsoid_correction_gg(
+        self,
+        img_resampling_method: str = 'BILINEAR_INTERPOLATION',
+        map_projection: str = 'WGS84(DD)',
+        source_bands: Optional[List[str]] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """GG ellipsoid correction."""
+        self._reset_command()
+        cmd_params = [
+            f'-PimgResamplingMethod={img_resampling_method}',
+            f'-PmapProjection={map_projection}'
+        ]
+        if source_bands:
+            cmd_params.append(f'-PsourceBands={",".join(source_bands)}')
+        self.current_cmd.append(f'Ellipsoid-Correction-GG {" ".join(cmd_params)}')
+        return self._call(suffix='ELLCORR', output_name=output_name)
+
+    def cross_resampling(
+        self,
+        warp_polynomial_order: int = 2,
+        interpolation_method: str = 'Cubic convolution (6 points)',
+        target_geometry: str = 'ERS',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Cross resampling operation."""
+        self._reset_command()
+        cmd_params = [
+            f'-PwarpPolynomialOrder={warp_polynomial_order}',
+            f'-PinterpolationMethod={interpolation_method}',
+            f'-PtargetGeometry={target_geometry}'
+        ]
+        self.current_cmd.append(f'CrossResampling {" ".join(cmd_params)}')
+        return self._call(suffix='CROSSRES', output_name=output_name)
+
+    def bands_difference(
+        self,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Bands difference operation."""
+        self._reset_command()
+        self.current_cmd.append('BandsDifferenceOp')
+        return self._call(suffix='BANDDIFF', output_name=output_name)
+
+    def bands_extractor(
+        self,
+        source_band_names: Optional[List[str]] = None,
+        source_mask_names: Optional[List[str]] = None,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Extract specific bands."""
+        self._reset_command()
+        cmd_params = []
+        if source_band_names:
+            cmd_params.append(f'-PsourceBandNames={",".join(source_band_names)}')
+        if source_mask_names:
+            cmd_params.append(f'-PsourceMaskNames={",".join(source_mask_names)}')
+        self.current_cmd.append(f'BandsExtractorOp {" ".join(cmd_params)}')
+        return self._call(suffix='BANDEXT', output_name=output_name)
+
+    def binning(
+        self,
+        num_rows: int = 2160,
+        mask_expr: Optional[str] = None,
+        source_product_paths: Optional[List[str]] = None,
+        source_product_format: Optional[str] = None,
+        region: Optional[str] = None,
+        start_date_time: Optional[str] = None,
+        period_duration: Optional[float] = None,
+        time_filter_method: str = 'NONE',
+        min_data_hour: Optional[float] = None,
+        super_sampling: int = 1,
+        max_distance_on_earth: int = -1,
+        output_binned_data: bool = False,
+        output_mapped_product: bool = True,
+        output_type: str = 'Product',
+        output_format: str = 'BEAM-DIMAP',
+        output_file: Optional[str] = None,
+        metadata_aggregator_name: str = 'NAME',
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Spatial temporal binning."""
+        self._reset_command()
+        cmd_params = [
+            f'-PnumRows={num_rows}',
+            f'-PsuperSampling={super_sampling}',
+            f'-PmaxDistanceOnEarth={max_distance_on_earth}',
+            f'-PoutputBinnedData={str(output_binned_data).lower()}',
+            f'-PoutputMappedProduct={str(output_mapped_product).lower()}',
+            f'-PoutputType={output_type}',
+            f'-PoutputFormat={output_format}',
+            f'-PmetadataAggregatorName={metadata_aggregator_name}',
+            f'-PtimeFilterMethod={time_filter_method}'
+        ]
+        if mask_expr:
+            cmd_params.append(f'-PmaskExpr={mask_expr}')
+        if source_product_paths:
+            cmd_params.append(f'-PsourceProductPaths={",".join(source_product_paths)}')
+        if source_product_format:
+            cmd_params.append(f'-PsourceProductFormat={source_product_format}')
+        if region:
+            cmd_params.append(f'-Pregion={region}')
+        if start_date_time:
+            cmd_params.append(f'-PstartDateTime={start_date_time}')
+        if period_duration:
+            cmd_params.append(f'-PperiodDuration={period_duration}')
+        if min_data_hour is not None:
+            cmd_params.append(f'-PminDataHour={min_data_hour}')
+        if output_file:
+            cmd_params.append(f'-PoutputFile={output_file}')
+        self.current_cmd.append(f'Binning {" ".join(cmd_params)}')
+        return self._call(suffix='BIN', output_name=output_name)
+
+    def fu_classification(
+        self,
+        copy_all_source_bands: bool = False,
+        input_is_irradiance_reflectance: bool = False,
+        valid_expression: Optional[str] = None,
+        reflectance_name_pattern: Optional[str] = None,
+        instrument: str = 'AUTO_DETECT',
+        include_dominant_lambda: bool = False,
+        include_intermediate_results: bool = True,
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Forel-Ule classification."""
+        self._reset_command()
+        cmd_params = [
+            f'-PcopyAllSourceBands={str(copy_all_source_bands).lower()}',
+            f'-PinputIsIrradianceReflectance={str(input_is_irradiance_reflectance).lower()}',
+            f'-Pinstrument={instrument}',
+            f'-PincludeDominantLambda={str(include_dominant_lambda).lower()}',
+            f'-PincludeIntermediateResults={str(include_intermediate_results).lower()}'
+        ]
+        if valid_expression:
+            cmd_params.append(f'-PvalidExpression={valid_expression}')
+        if reflectance_name_pattern:
+            cmd_params.append(f'-PreflectanceNamePattern={reflectance_name_pattern}')
+        self.current_cmd.append(f'FuClassification {" ".join(cmd_params)}')
+        return self._call(suffix='FUCLASS', output_name=output_name)
+
+    def flh_mci(
+        self,
+        preset: str = 'NONE',
+        lower_baseline_band_name: Optional[str] = None,
+        upper_baseline_band_name: Optional[str] = None,
+        signal_band_name: Optional[str] = None,
+        line_height_band_name: Optional[str] = None,
+        slope: bool = True,
+        slope_band_name: Optional[str] = None,
+        mask_expression: Optional[str] = None,
+        cloud_correction_factor: float = 1.005,
+        invalid_flh_mci_value: float = float('nan'),
+        output_name: Optional[str] = None
+    ) -> Optional[str]:
+        """Fluorescence line height."""
+        self._reset_command()
+        cmd_params = [
+            f'-Ppreset={preset}',
+            f'-Pslope={str(slope).lower()}',
+            f'-PcloudCorrectionFactor={cloud_correction_factor}',
+            f'-PinvalidFlhMciValue={invalid_flh_mci_value}'
+        ]
+        if lower_baseline_band_name:
+            cmd_params.append(f'-PlowerBaselineBandName={lower_baseline_band_name}')
+        if upper_baseline_band_name:
+            cmd_params.append(f'-PupperBaselineBandName={upper_baseline_band_name}')
+        if signal_band_name:
+            cmd_params.append(f'-PsignalBandName={signal_band_name}')
+        if line_height_band_name:
+            cmd_params.append(f'-PlineHeightBandName={line_height_band_name}')
+        if slope_band_name:
+            cmd_params.append(f'-PslopeBandName={slope_band_name}')
+        if mask_expression:
+            cmd_params.append(f'-PmaskExpression={mask_expression}')
+        self.current_cmd.append(f'FlhMci {" ".join(cmd_params)}')
+        return self._call(suffix='FLH', output_name=output_name)
+
     # Legacy method names for backward compatibility
     ImportVector = import_vector
     LandMask = land_mask
@@ -4013,25 +6089,77 @@ class GPT:
     ImageFilter = image_filter
     ConvertDatatype = convert_datatype
     LandSeaMask = land_sea_mask
+    EnhancedSpectralDiversity = enhanced_spectral_diversity
+    PhaseToDisplacement = phase_to_displacement
+    PhaseToElevation = phase_to_elevation
+    PhaseToHeight = phase_to_height
+    SnaphuExport = snaphu_export
+    CrossCorrelation = cross_correlation
+    DEMAssistedCoregistration = dem_assisted_coregistration
+    EAPPhaseCorrection = eap_phase_correction
+    EllipsoidCorrectionRD = ellipsoid_correction_rd
+    RangeFilter = range_filter
+    AzimuthFilter = azimuth_filter
+    BandPassFilter = band_pass_filter
+    Oversample = oversample
+    GLCM = glcm
+    PCA = pca
+    KMeansClusterAnalysis = k_means_cluster_analysis
+    EMClusterAnalysis = em_cluster_analysis
+    RandomForestClassifier = random_forest_classifier
+    DecisionTree = decision_tree
+    Arvi = arvi
+    Dvi = dvi
+    Gemi = gemi
+    Gndvi = gndvi
+    Ipvi = ipvi
+    Mcari = mcari
+    Mndwi = mndwi
+    Msavi2 = msavi2
+    Msavi = msavi
+    Mtci = mtci
+    Ndwi = ndwi
+    Rvi = rvi
+    Bi2 = bi2
+    Bi = bi
+    Ci = ci
+    Ireci = ireci
+    Ndi45 = ndi45
+    Ndpi = ndpi
+    Ndti = ndti
+    Ndwi2 = ndwi2
+    Pssra = pssra
+    Pvi = pvi
+    Reip = reip
+    Ri = ri
+    C2rccMsi = c2rcc_msi
+    C2rccOlci = c2rcc_olci
+    C2rccS2Msi = c2rcc_s2_msi
+    Biophysical = biophysical
+    Biophysical10m = biophysical_10m
+    BiophysicalLandsat8 = biophysical_landsat8
+    CompactpolRadarVegetationIndex = compactpol_radar_vegetation_index
+    GeneralizedRadarVegetationIndices = generalized_radar_vegetation_indices
+    RadarVegetationIndex = radar_vegetation_index
+    ChangeDetection = change_detection
+    ChangeVectorAnalysis = change_vector_analysis
+    AddLandCover = add_land_cover
+    CloudProb = cloud_prob
+    DoubleDifferenceInterferogram = double_difference_interferogram
+    AddElevation = add_elevation
+    FillDemHole = fill_dem_hole
+    ComputeSlopeAspect = compute_slope_aspect
+    CpDecomposition = cp_decomposition
+    CpSimulation = cp_simulation
+    CpStokesParameters = cp_stokes_parameters
+    Coregistration = coregistration
+    EllipsoidCorrectionGg = ellipsoid_correction_gg
+    CrossResampling = cross_resampling
+    BandsDifference = bands_difference
+    BandsExtractor = bands_extractor
+    Binning = binning
+    FuClassification = fu_classification
+    FlhMci = flh_mci
 
 
-def _identify_product_type(filename: str) -> str:
-    """Identify the product type based on filename.
-    
-    Args:
-        filename: Name of the product file.
-    
-    Returns:
-        Product type string.
-    
-    Raises:
-        ValueError: If product type cannot be determined.
-    """
-    if 'S1' in filename:
-        return 'Sentinel-1'
-    elif 'CSK' in filename:
-        return 'COSMO-SkyMed'
-    elif 'SAO' in filename:
-        return 'SAOCOM'
-    else:
-        raise ValueError(f'Unknown product type for file: {filename}')
+

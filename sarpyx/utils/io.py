@@ -349,7 +349,31 @@ def calculate_slice_indices(array_height: int, slice_height: int) -> List[dict]:
 
 
 
-
+def _identify_mission_type(filename: str) -> str:
+    """Identify the mission type based on filename.
+    
+    Args:
+        filename: Name of the product file.
+    
+    Returns:
+        Product type string.
+    
+    Raises:
+        ValueError: If product type cannot be determined.
+    """
+    # TODO: double check naming schemes
+    if 'BIO' in filename:
+        return 'BIOMASS'
+    if 'TSX' in filename:
+        return 'TerraSAR'
+    if 'S1' in filename:
+        return 'Sentinel-1'
+    elif 'CSK' in filename:
+        return 'COSMO-SkyMed'
+    elif 'SAO' in filename:
+        return 'SAOCOM'
+    else:
+        raise ValueError(f'Unknown product type for file: {filename}')
 
 
 def save_matlab_mat(data_object: Any, filename: str, filepath: Union[str, Path]) -> bool:
