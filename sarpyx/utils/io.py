@@ -187,10 +187,6 @@ class ArraySlicer:
 # ------- Functions for file operations -------
 
 
-
-
-
-
 def calculate_slice_indices(array_height: int, slice_height: int) -> List[dict]:
     """Calculate slice indices and drop information for array slicing.
     
@@ -346,9 +342,6 @@ def calculate_slice_indices(array_height: int, slice_height: int) -> List[dict]:
     return slice_info_list
 
 
-
-
-
 def _identify_mission_type(filename: str) -> str:
     """Identify the mission type based on filename.
     
@@ -402,6 +395,7 @@ def save_matlab_mat(data_object: Any, filename: str, filepath: Union[str, Path])
         print(f"Could not save MATLAB file to {savename}: {e}")
         return False
 
+
 def delete(path_to_delete: Union[str, Path]):
     """Deletes a file or directory.
 
@@ -417,6 +411,7 @@ def delete(path_to_delete: Union[str, Path]):
         else:
             path_to_delete.unlink()  # Use unlink for files
 
+
 def unzip(path_to_zip_file: Union[str, Path]):
     """Unzips a file to its parent directory.
 
@@ -427,6 +422,7 @@ def unzip(path_to_zip_file: Union[str, Path]):
     output_dir = zip_path.parent
     with ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(output_dir)
+
 
 def delProd(prodToDelete: Union[str, Path]):
     """Deletes a SNAP product (.dim file and associated .data directory).
@@ -442,6 +438,7 @@ def delProd(prodToDelete: Union[str, Path]):
 
     delete(dim_file)
     delete(data_dir)
+
 
 def command_line(cmd: str):
     """Executes a command line process and prints its output.
@@ -460,6 +457,7 @@ def command_line(cmd: str):
         print(f"Stderr: {e.stderr}")
     except FileNotFoundError:
         print(f"Error: Command not found - ensure the executable is in the system's PATH or provide the full path.")
+
 
 def iterNodes(root, val_dict: dict) -> dict:
     """Recursively iterates through XML nodes and extracts tag/text pairs.
@@ -484,6 +482,7 @@ def iterNodes(root, val_dict: dict) -> dict:
             val_dict[child.tag] = child.text.strip()  # Add strip() to remove potential whitespace
 
     return val_dict
+
 
 def find_dat_file(folder: Path, pol: str) -> Path:
     """

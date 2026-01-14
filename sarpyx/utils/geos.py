@@ -83,7 +83,6 @@ def get_point_coordinates(
         for feature in contained_features
     ]
 
-
 class GridNavigator:
     """
     Grid navigation utilities for moving between adjacent grid points.
@@ -394,7 +393,64 @@ def rectangle_to_wkt(rectangle: dict) -> str:
     return wkt
 
 
+def rectanglify(contained: list) -> list | None:
+    """
+    Build rectangles for cutting based on contained points.
 
+    This function identifies rectangles formed by points in the `contained` list.
+    It uses the `GridNavigator` class to navigate between points and checks if
+    the points form a valid rectangle.
+
+    Args:
+        contained (list): A list of GeoJSON-like features, where each feature
+                          contains properties (e.g., 'row', 'col', 'name') and
+                          geometry (e.g., coordinates).
+
+    Returns:
+        list | None: A list of rectangles, where each rectangle is represented
+                     as a dictionary with keys 'TL', 'TR', 'BR', 'BL' (top-left,
+                     top-right, bottom-right, bottom-left). Returns None if no
+                     rectangles are found.
+
+    Example:
+        >>> contained_points = [
+        ...     {'properties': {'name': '1U_1R', 'row': '1U', 'col': '1R'}, 'geometry': {'coordinates': [0, 0]}},
+        ...     {'properties': {'name': '1U_2R', 'row': '1U', 'col': '2R'}, 'geometry': {'coordinates': [1, 0]}},
+        ...     {'properties': {'name': '2U_1R', 'row': '2U', 'col': '1R'}, 'geometry': {'coordinates': [0, 1]}},
+        ...     {'properties': {'name': '2U_2R', 'row': '2U', 'col': '2R'}, 'geometry': {'coordinates': [1, 1]}}
+        ... ]
+        >>> rectangles = rectanglify(contained_points)
+        >>> print(rectangles)
+    """
+    rectangles = []
+    navi = GridNavigator()
+    for idx in range(len(contained)):
+        row, col = contained[idx]['properties']['row'], contained[idx]['properties']['col']
+
+        # Find the top-left corner
+        TL = navi.move_up(row, col)
+
+        if is_point_in_contained(TL, contained):
+            # Find the top-right corner
+            TR = navi.move_up_right(row, col)
+            if is_point_in_contained(TR, contained):
+                # Find the bottom-right corner
+                BR = navi.move_right(row, col)
+                if is_point_in_contained(BR, contained):
+                    # Bottom-left corner is the current point
+                    BL = f"{row}_{col}"
+                    # Create a rectangle dictionary
+                    rectangle = {
+                        'TL': [point for point in contained if point['properties']['name'] == TL][0],
+                        'TR': [point for point in contained if point['properties']['name'] == TR][0],
+                        'BR': [point for point in contained if point['properties']['name'] == BR][0],
+                        'BL': [point for point in contained if point['properties']['name'] == BL][0]
+                    }
+                    rectangles.append(rectangle)
+        else:
+            print(f'Point {TL} not in contained points.')
+
+    return rectangles if len(rectangles) > 0 else None
 
 
 
