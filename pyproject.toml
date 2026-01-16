@@ -43,6 +43,7 @@ dependencies = [
     "wandb>=0.21.3",
     "scikit-learn>=1.7.2",
     "geographiclib>=2.1",
+    "dotenv>=0.9.9"
 ]
 
 [project.scripts]
@@ -53,6 +54,7 @@ sarpyx-shipdet = "sarpyx.cli.shipdet:main"
 sarpyx-unzip = "sarpyx.cli.unzip:main"
 sarpyx-upload = "sarpyx.cli.upload:main"
 
+[tool]
 [tool.setuptools]
 packages = { find = {} }
 

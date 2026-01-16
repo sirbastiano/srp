@@ -2039,7 +2039,7 @@ class GPT:
 
     def topsar_deramp_demod(
         self,
-        output_deramp_demod_phase: bool = False,
+        output_deramp_demod_phase: bool = True,
         output_name: Optional[str] = None
     ) -> Optional[str]:
         """Perform deramp and demodulation for TOPSAR burst co-registration.
