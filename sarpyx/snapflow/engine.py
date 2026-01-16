@@ -2172,7 +2172,7 @@ class GPT:
     def terrain_correction(
         self,
         source_bands: Optional[List[str]] = None,
-        dem_name: str = 'SRTM 3Sec',
+        dem_name: str = 'Copernicus 30m Global DEM',
         external_dem_file: Optional[str | Path] = None,
         external_dem_no_data_value: float = 0.0,
         external_dem_apply_egm: bool = True,
@@ -2210,7 +2210,7 @@ class GPT:
         
         Args:
             source_bands: List of source bands to process. If None, all bands are processed.
-            dem_name: Digital elevation model name.
+            dem_name: Digital elevation model name. (CDEM, SRTM 3Sec, Copernicus 30m Global DEM, ...)
             external_dem_file: Path to external DEM file.
             external_dem_no_data_value: No data value for external DEM.
             external_dem_apply_egm: Apply EGM96 geoid to external DEM.
