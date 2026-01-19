@@ -558,6 +558,10 @@ class CoarseRDA:
         # Round up to next power of 2 for FFT efficiency
         range_fft_size = int(2**np.ceil(np.log2(required_fft_size)))
         
+        # Safety check: ensure FFT size is at least the required size
+        assert range_fft_size >= required_fft_size, \
+            f'FFT size {range_fft_size} is smaller than required {required_fft_size}'
+        
         if self._verbose:
             print(f'Range line length: {len_range_line}')
             print(f'TX replica length: {self.num_tx_vals}')
@@ -566,6 +570,8 @@ class CoarseRDA:
         
         # Zero-pad along range axis to enable linear convolution
         pad_width = range_fft_size - len_range_line
+        assert pad_width >= 0, f'Negative padding width {pad_width} calculated'
+        
         self.radar_data = np.pad(self.radar_data, ((0, 0), (0, pad_width)), mode='constant', constant_values=0)
         
         if self._verbose:
@@ -609,6 +615,10 @@ class CoarseRDA:
         # Round up to next power of 2 for FFT efficiency
         range_fft_size = int(2**np.ceil(np.log2(required_fft_size)))
         
+        # Safety check: ensure FFT size is at least the required size
+        assert range_fft_size >= required_fft_size, \
+            f'FFT size {range_fft_size} is smaller than required {required_fft_size}'
+        
         if self._verbose:
             print(f'Range line length: {len_range_line}')
             print(f'TX replica length: {self.num_tx_vals}')
@@ -617,6 +627,8 @@ class CoarseRDA:
         
         # Zero-pad along range axis
         pad_width = range_fft_size - len_range_line
+        assert pad_width >= 0, f'Negative padding width {pad_width} calculated'
+        
         self.radar_data = torch.nn.functional.pad(self.radar_data, (0, pad_width), mode='constant', value=0)
         
         if self._verbose:
@@ -1553,8 +1565,8 @@ class CoarseRDA:
         """Perform memory-efficient range compression step with padded dimensions.
         
         Args:
-            w_pad: Width padding for FFT length optimization (unused).
-            original_w: Original width, now the padded width from FFT.
+            w_pad: Width padding (unused, kept for interface compatibility).
+            original_w: Original padded width from FFT.
             
         Raises:
             ValueError: If array shapes are incompatible.
