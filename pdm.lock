@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:9d10e1f5f614bcf7ea1a309f5e529da401dda157739787f16872dc7fc522ff60"
+content_hash = "sha256:5d87c752e99190078a2ac1b40fb20cbadb9b8c16ba7e4bff2e8ada32b3c496d3"
 
 [[metadata.targets]]
 requires_python = ">=3.11,<3.13"
@@ -2527,7 +2527,7 @@ files = [
 
 [[package]]
 name = "phidown"
-version = "0.1.23"
+version = "0.1.24"
 requires_python = ">=3.9"
 summary = "A project using AWS services and dataset tools for Sentinel data"
 groups = ["default"]
@@ -2537,8 +2537,8 @@ dependencies = [
     "tqdm>=4.65.0",
 ]
 files = [
-    {file = "phidown-0.1.23-py3-none-any.whl", hash = "sha256:46181795c6546a7cb012e2e9ef8c8ea2cb9ca38e62dab5d57b2df183a3f31059"},
-    {file = "phidown-0.1.23.tar.gz", hash = "sha256:2dd127dc750af330cbdc32c5822c8efe4b73f7b4ce9eaf4181779818a85635ec"},
+    {file = "phidown-0.1.24-py3-none-any.whl", hash = "sha256:8a07e267a33b93684c199e708ee5ec9238b2fc4d88f0e8c659f626cf23485c90"},
+    {file = "phidown-0.1.24.tar.gz", hash = "sha256:c14e367940940d3368eaebe126047b9345fc72c630ba6c72ba358862c243fefd"},
 ]
 
 [[package]]

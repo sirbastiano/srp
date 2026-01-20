@@ -35,7 +35,7 @@ from ..utils.viz import dump
 
 
 # ---------- Global settings ----------
-environ['OMP_NUM_THREADS'] = '12' # Set OpenMP threads for parallel processing
+environ['OMP_NUM_THREADS'] = '16' # Set OpenMP threads for parallel processing
 __VTIMING__ = False
 
 
