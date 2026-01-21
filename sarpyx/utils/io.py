@@ -10,7 +10,7 @@ from typing import Optional, Tuple, Union, Dict, Any, List, Callable
 import numpy as np
 import matplotlib.pyplot as plt
 
-from meta import extract_core_metadata_sentinel
+from .meta import extract_core_metadata_sentinel
 
 
 # ------- Functions for memory efficiency -------
