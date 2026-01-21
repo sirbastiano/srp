@@ -1,5 +1,6 @@
 import shutil
 import subprocess
+import h5py
 from pathlib import Path
 from typing import Any, Union
 from zipfile import ZipFile
@@ -8,6 +9,8 @@ import gc
 from typing import Optional, Tuple, Union, Dict, Any, List, Callable
 import numpy as np
 import matplotlib.pyplot as plt
+
+from meta import extract_core_metadata_sentinel
 
 
 # ------- Functions for memory efficiency -------
@@ -184,8 +187,8 @@ class ArraySlicer:
         plt.show()
 
 
-# ------- Functions for file operations -------
 
+# ------- Functions for file operations -------
 
 def calculate_slice_indices(array_height: int, slice_height: int) -> List[dict]:
     """Calculate slice indices and drop information for array slicing.
@@ -506,3 +509,45 @@ def find_dat_file(folder: Path, pol: str) -> Path:
             return file
 
     raise FileNotFoundError(f'No valid .dat file found in {folder} for polarization {pol}')
+
+
+# =====================================================================
+# Product Readers
+def read_h5(file_path: str) -> tuple[dict, dict]:
+    """Read an HDF5 file and return its contents and metadata as dictionaries.
+    
+    Args:
+        file_path: Path to the HDF5 file to read.
+        
+    Returns:
+        Tuple containing:
+            - Dictionary with datasets and their values from the HDF5 file
+            - Dictionary with metadata (attributes) from the HDF5 file
+        
+    Raises:
+        FileNotFoundError: If the file doesn't exist.
+        OSError: If the file cannot be opened or read.
+    """
+    data = {}
+    metadata = {}
+    
+    with h5py.File(file_path, 'r') as h5_file:
+        # Extract root attributes
+        metadata['root'] = dict(h5_file.attrs)
+        
+        def extract_data(name, obj):
+            if isinstance(obj, h5py.Dataset):
+                data[name] = obj[()]
+                # Extract dataset attributes
+                if obj.attrs:
+                    metadata[name] = dict(obj.attrs)
+            elif isinstance(obj, h5py.Group):
+                # Extract group attributes
+                if obj.attrs:
+                    metadata[name] = dict(obj.attrs)
+        
+        h5_file.visititems(extract_data)
+    
+    quickinfo = extract_core_metadata_sentinel(metadata.get('metadata/Abstracted_Metadata', {}))
+    metadata['quickinfo'] = quickinfo
+    return data, metadata
