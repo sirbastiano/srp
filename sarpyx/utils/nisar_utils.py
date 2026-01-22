@@ -326,11 +326,7 @@ class NISARCutter:
     """
     
     def __init__(self, reader: NISARReader):
-        """Initialize cutter with a NISAR reader.
-        
-        Args:
-            reader: NISARReader instance
-        """
+        """Initialize cutter with a NISAR reader."""
         self.reader = reader
     
     def _wkt_to_polygon(self, wkt_string: str) -> Polygon:
@@ -341,9 +337,6 @@ class NISARCutter:
             
         Returns:
             Shapely Polygon object
-            
-        Raises:
-            ValueError: If geometry is not a polygon
         """
         geom = wkt.loads(wkt_string)
         if not isinstance(geom, Polygon):
@@ -363,9 +356,6 @@ class NISARCutter:
             
         Returns:
             Window as ((row_start, row_stop), (col_start, col_stop))
-            
-        Raises:
-            ValueError: If polygon does not intersect product bounds
         """
         # Get polygon bounds
         minx, miny, maxx, maxy = polygon.bounds
@@ -386,9 +376,7 @@ class NISARCutter:
         
         # Ensure valid window
         if row_start >= row_stop or col_start >= col_stop:
-            raise ValueError(
-                f'Polygon does not intersect with product bounds: {metadata.bounds}'
-            )
+            raise ValueError(f'Polygon does not intersect with product bounds: {metadata.bounds}')
         
         return ((row_start, row_stop), (col_start, col_stop))
     
@@ -426,15 +414,12 @@ class NISARCutter:
         x_coords = transform.c + xx * transform.a + yy * transform.b
         y_coords = transform.f + xx * transform.d + yy * transform.e
         
+        # Create mask by checking point inclusion in polygon
+        mask = np.zeros((rows, cols), dtype=bool)
+        
         # Vectorized point-in-polygon test
-        try:
-            # Try new API (shapely 2.0+)
-            from shapely import contains_xy
-            mask = contains_xy(polygon, x_coords.ravel(), y_coords.ravel()).reshape((rows, cols))
-        except ImportError:
-            # Fall back to deprecated API
-            from shapely.vectorized import contains
-            mask = contains(polygon, x_coords.ravel(), y_coords.ravel()).reshape((rows, cols))
+        from shapely.vectorized import contains
+        mask = contains(polygon, x_coords.ravel(), y_coords.ravel()).reshape((rows, cols))
         
         return mask
     
@@ -538,7 +523,93 @@ class NISARCutter:
         Args:
             subset_result: Result dictionary from cut_by_wkt()
             output_path: Output file path
-            driver: Rasterio driver (default: 'GTiff')
+            driver: Rasterio driver (default: 'GTiff') or 'HDF5'/'h5' for HDF5 format
+            **kwargs: Additional arguments passed to rasterio.open() or h5py.File.create_dataset()
+        """
+        data = subset_result['data']
+        metadata = subset_result['metadata']
+        transform = subset_result['transform']
+        output_path = Path(output_path)
+        
+        # Check if HDF5 format is requested
+        if driver.upper() in ['HDF5', 'H5']:
+            self._save_subset_hdf5(subset_result, output_path, **kwargs)
+        else:
+            self._save_subset_rasterio(subset_result, output_path, driver, **kwargs)
+        
+        print(f'Subset saved to: {output_path}')
+    
+    def _save_subset_hdf5(
+        self,
+        subset_result: Dict,
+        output_path: Path,
+        **kwargs
+    ) -> None:
+        """Save subset result to HDF5 file.
+        
+        Args:
+            subset_result: Result dictionary from cut_by_wkt()
+            output_path: Output file path
+            **kwargs: Additional arguments passed to h5py.File.create_dataset()
+        """
+        data = subset_result['data']
+        metadata = subset_result['metadata']
+        transform = subset_result['transform']
+        mask = subset_result['mask']
+        
+        with h5py.File(output_path, 'w') as f:
+            # Create main data group
+            data_group = f.create_group('data')
+            
+            # Save the SAR data
+            ds = data_group.create_dataset('array', data=data, **kwargs)
+            
+            # Save mask
+            mask_ds = data_group.create_dataset('mask', data=mask, compression='gzip')
+            
+            # Save metadata as attributes
+            meta_group = f.create_group('metadata')
+            meta_group.attrs['product_path'] = str(metadata.product_path)
+            meta_group.attrs['frequency'] = metadata.frequency
+            meta_group.attrs['grid_name'] = metadata.grid_name
+            meta_group.attrs['shape'] = metadata.shape
+            meta_group.attrs['epsg'] = metadata.epsg if metadata.epsg else -1
+            meta_group.attrs['x_spacing'] = metadata.x_spacing
+            meta_group.attrs['y_spacing'] = metadata.y_spacing
+            meta_group.attrs['x_min'] = metadata.x_min
+            meta_group.attrs['y_min'] = metadata.y_min
+            meta_group.attrs['x_max'] = metadata.x_max
+            meta_group.attrs['y_max'] = metadata.y_max
+            
+            # Save transform as array
+            transform_arr = np.array([
+                transform.a, transform.b, transform.c,
+                transform.d, transform.e, transform.f
+            ])
+            meta_group.create_dataset('transform', data=transform_arr)
+            
+            # Save polarizations as string array
+            if metadata.polarizations:
+                dt = h5py.special_dtype(vlen=str)
+                pol_ds = meta_group.create_dataset('polarizations', 
+                                                   (len(metadata.polarizations),), 
+                                                   dtype=dt)
+                for i, pol in enumerate(metadata.polarizations):
+                    pol_ds[i] = pol
+    
+    def _save_subset_rasterio(
+        self,
+        subset_result: Dict,
+        output_path: Path,
+        driver: str,
+        **kwargs
+    ) -> None:
+        """Save subset result using rasterio (GeoTIFF, etc.).
+        
+        Args:
+            subset_result: Result dictionary from cut_by_wkt()
+            output_path: Output file path
+            driver: Rasterio driver
             **kwargs: Additional arguments passed to rasterio.open()
         """
         data = subset_result['data']
@@ -578,5 +649,4 @@ class NISARCutter:
         with rasterio.open(output_path, 'w', **profile) as dst:
             for i, band_data in enumerate(write_data, 1):
                 dst.write(band_data, i)
-        
-        print(f'Subset saved to: {output_path}')
+
