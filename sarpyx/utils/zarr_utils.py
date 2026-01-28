@@ -497,7 +497,7 @@ def concatenate_slices_efficient(
         shutil.rmtree(output_path)
     
     # Create output Zarr store and initialize arrays
-    print(f'🏗️ Creating output Zarr store at: {output_path}')
+    print(f'🏗️ Creating output Zarr store (Using Zarr v{zarr.__version__}) at: {output_path}')
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_store = zarr.open(str(output_path), mode='w')
     
