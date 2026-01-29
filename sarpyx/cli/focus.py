@@ -198,10 +198,8 @@ def process_sar_slice(
     if hasattr(result['metadata'], 'iloc'):
         if drop_end > 0:
             result['metadata'] = result['metadata'].iloc[drop_start:-drop_end]
-            result['ephemeris'] = result['ephemeris'].iloc[drop_start:-drop_end]
         else:
             result['metadata'] = result['metadata'].iloc[drop_start:]
-            result['ephemeris'] = result['ephemeris'].iloc[drop_start:]
     
     logger.info(f'📉 Dropped overlapping data: start={drop_start}, end={drop_end}')
     logger.info(f'📊 Focused data shape: {result["raw"].shape}')
