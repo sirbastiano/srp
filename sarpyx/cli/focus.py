@@ -186,7 +186,7 @@ def process_sar_slice(
    
     # Focus slice data
     result = focalize_slice(raw_data=raw_data, verbose=verbose)
-    logger.info(f'✅ Slice focused successfully.')
+    logger.info('✅ Slice focused successfully.')
     
     # Drop overlapping data
     result['raw'] = result['raw'][drop_start:-drop_end] if drop_end > 0 else result['raw'][drop_start:]
@@ -215,7 +215,7 @@ def process_sar_slice(
         zarr_path = tmp_dir.parent / f'{filename}.zarr'
         logger.info(f'💾 Saving entire product to: {zarr_path}')
         dask_slice_saver(result, zarr_path, chunks='auto', clevel=5)
-        logger.info(f'📂 Product saved successfully.')
+        logger.info('📂 Product saved successfully.')
     
     # Clean up memory
     del raw_data, result
@@ -256,7 +256,7 @@ def main() -> None:
     # Extract product name
     product_name = input_path.stem
     
-    logger.info(f'🚀 Starting SAR data focusing...')
+    logger.info('🚀 Starting SAR data focusing...')
     logger.info(f'📁 Input file: {input_path}')
     logger.info(f'📁 Output directory: {output_dir}')
     logger.info(f'📁 Temporary directory: {tmp_dir}')
