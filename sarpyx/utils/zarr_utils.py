@@ -40,11 +40,7 @@ def save_array_to_zarr(array: 'np.ndarray',
     chunks = (chunk_size, chunk_size)
     
     # Use maximum compression with zstd and byte shuffle
-    codec = numcodecs.Blosc(
-        cname='zstd', # Best compression ratio
-        clevel=compressor_level, # Maximum compression level
-        shuffle=numcodecs.Blosc.BITSHUFFLE # Better for floating point data
-    )
+    compressors = [{'name': 'blosc', 'configuration': {'cname': 'zstd', 'clevel': compressor_level, 'shuffle': 'bitshuffle'}}]
     
     # Create Zarr array with specified shape, dtype, and compression
     zarr_array = zarr.open(
@@ -52,8 +48,7 @@ def save_array_to_zarr(array: 'np.ndarray',
         mode='w', 
         shape=array.shape, 
         dtype=array.dtype,
-        zarr_format=2, 
-        compressor=codec, 
+        compressors=compressors,
         chunks=chunks,
     )
     zarr_array[:] = array
@@ -212,14 +207,10 @@ def dask_slice_saver(
     zarr_path = Path(zarr_path)
     zarr_path.parent.mkdir(parents=True, exist_ok=True)
     
-    store = zarr.open_group(str(zarr_path), mode='w', zarr_format=2)
+    store = zarr.open_group(str(zarr_path), mode='w')
     
     # Configure compression codec
-    compressor = numcodecs.Blosc(
-        cname='zstd',
-        clevel=clevel,
-        shuffle=numcodecs.Blosc.BITSHUFFLE
-    )
+    compressors = [{'name': 'blosc', 'configuration': {'cname': 'zstd', 'clevel': clevel, 'shuffle': 'bitshuffle'}}]
     
     # Save arrays with optimized compression
     for array_name in required_arrays:
@@ -240,7 +231,7 @@ def dask_slice_saver(
             shape=array_data.shape,
             dtype=array_data.dtype,
             chunks=chunk_shape,
-            compressor=compressor,
+            compressors=compressors,
             overwrite=True
         )
         zarr_array[:] = array_data
@@ -497,7 +488,7 @@ def concatenate_slices_efficient(
         shutil.rmtree(output_path)
     
     # Create output Zarr store and initialize arrays
-    print(f'🏗️ Creating output Zarr store at: {output_path}')
+    print(f'🏗️ Creating output Zarr store (Using Zarr v{zarr.__version__}) at: {output_path}')
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_store = zarr.open(str(output_path), mode='w')
     
