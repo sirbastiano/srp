@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:5d87c752e99190078a2ac1b40fb20cbadb9b8c16ba7e4bff2e8ada32b3c496d3"
+content_hash = "sha256:e680816a964ad2db755fe520ecd49ebc340fbfcf5eed283d8b744ec80c734101"
 
 [[metadata.targets]]
 requires_python = ">=3.11,<3.13"
@@ -3237,7 +3237,7 @@ name = "s1isp"
 version = "0.1.dev0"
 requires_python = ">=3.10"
 git = "https://github.com/avalentino/s1isp.git"
-revision = "3567fc3714b1da2264438dd94a70fd51fb3b9bc1"
+revision = "26d850f9fb6a343bb1475fa162ba88f944d5b52d"
 summary = "Sentinel-1 Instrument Source Packets decoder"
 groups = ["default"]
 dependencies = [

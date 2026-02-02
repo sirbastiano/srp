@@ -14,7 +14,7 @@ requires-python = ">=3.11, <3.13"
 dependencies = [
     "matplotlib",
     "scipy",
-    "s1isp",
+    "s1isp @ git+https://github.com/avalentino/s1isp.git@26d850f9fb6a343bb1475fa162ba88f944d5b52d",
     "geopandas>=1.1.1",
     "shapely",
     "numpy",
@@ -54,7 +54,6 @@ sarpyx-shipdet = "sarpyx.cli.shipdet:main"
 sarpyx-unzip = "sarpyx.cli.unzip:main"
 sarpyx-upload = "sarpyx.cli.upload:main"
 
-[tool]
 [tool.setuptools]
 packages = { find = {} }
 
@@ -62,5 +61,5 @@ packages = { find = {} }
 "*" = ["*.csv", "*.json", "*.xml"]
 [dependency-groups]
 dev = [
-    "pytest>=8.4.0",
+    "pytest==8.4.0",
 ]
