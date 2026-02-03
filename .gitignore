@@ -78,7 +78,8 @@ S1*
 
 
 /logs
-
+.pdm-python
+*events*
 *.pth
 *.ckpt
-*events*
+**/.ipynb_checkpoints/
