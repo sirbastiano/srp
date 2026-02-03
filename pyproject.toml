@@ -24,7 +24,7 @@ dependencies = [
     "jupyter",
     "phidown>=0.1.24",
     "rasterio>=1.4.3",
-    "zarr<3.0.0",
+    "zarr>=3.0.0",
     "joblib>=1.5.1",
     "dask>=2025.5.1",
     "lxml>=5.4.0",

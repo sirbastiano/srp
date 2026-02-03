@@ -39,40 +39,42 @@ def save_array_to_zarr(array: 'np.ndarray',
     chunk_size = max(64, chunk_size)  # Ensure minimum chunk size
     chunks = (chunk_size, chunk_size)
     
-    # Use maximum compression with zstd and byte shuffle
+    # Use maximum compression with zstd and byte shuffle (Zarr 3.x format)
     compressors = [{'name': 'blosc', 'configuration': {'cname': 'zstd', 'clevel': compressor_level, 'shuffle': 'bitshuffle'}}]
     
-    # Create Zarr array with specified shape, dtype, and compression
-    zarr_array = zarr.open(
-        file_path, 
-        mode='w', 
-        shape=array.shape, 
+    # Create Zarr array using group + create_array pattern for Zarr 3.x compatibility
+    store = zarr.open_group(file_path, mode='w')
+    zarr_array = store.create_array(
+        name='data',
+        shape=array.shape,
         dtype=array.dtype,
-        compressors=compressors,
         chunks=chunks,
+        compressors=compressors,
+        overwrite=True
     )
     zarr_array[:] = array
     
-    zarr_array.attrs['parent_product'] = parent_product if parent_product else 'unknown'
-    zarr_array.attrs['creation_date'] = pd.Timestamp.now().isoformat()
+    # Store attributes on the group level for easier access
+    store.attrs['parent_product'] = parent_product if parent_product else 'unknown'
+    store.attrs['creation_date'] = pd.Timestamp.now().isoformat()
     # Add metadata as attributes if provided
     if metadata_df is not None:
         # Handle NaN values by filling them with None or converting to string
         metadata_clean = metadata_df.fillna('null')
         
         # Convert DataFrame to dictionary for zarr attributes
-        zarr_array.attrs['metadata'] = metadata_clean.to_dict('records')
-        zarr_array.attrs['metadata_columns'] = list(metadata_df.columns)
-        zarr_array.attrs['metadata_dtypes'] = metadata_df.dtypes.astype(str).to_dict()
+        store.attrs['metadata'] = metadata_clean.to_dict('records')
+        store.attrs['metadata_columns'] = list(metadata_df.columns)
+        store.attrs['metadata_dtypes'] = metadata_df.dtypes.astype(str).to_dict()
         print(f'Added metadata with {len(metadata_df)} records as zarr attributes')
     
     # Add ephemeris data as attributes if provided
     if ephemeris_df is not None:
         ephemeris_clean = ephemeris_df.fillna('null')
         
-        zarr_array.attrs['ephemeris'] = ephemeris_clean.to_dict('records')
-        zarr_array.attrs['ephemeris_columns'] = list(ephemeris_df.columns)
-        zarr_array.attrs['ephemeris_dtypes'] = ephemeris_df.dtypes.astype(str).to_dict()
+        store.attrs['ephemeris'] = ephemeris_clean.to_dict('records')
+        store.attrs['ephemeris_columns'] = list(ephemeris_df.columns)
+        store.attrs['ephemeris_dtypes'] = ephemeris_df.dtypes.astype(str).to_dict()
         print(f'Added ephemeris with {len(ephemeris_df)} records as zarr attributes')
     
     print(f'Saved array to {file_path} with maximum compression (zstd-9, chunks={chunks})')
@@ -579,6 +581,7 @@ class ZarrManager:
         self.file_path = file_path
         self.filename = Path(file_path).stem
         self._zarr_array = None
+        self._zarr_store = None  # Cache for the group/store (for attributes)
         self._metadata = None
         self._ephemeris = None
         self.echoes_shape = self.load().shape if self.load() is not None else None
@@ -587,11 +590,34 @@ class ZarrManager:
         """
         Load the zarr array and cache it.
         
+        Handles both Zarr 3.x format (group with 'data' array) and legacy format (direct array).
+        
         Returns:
             zarr.Array: The loaded zarr array
         """
         if self._zarr_array is None:
-            self._zarr_array = zarr.open(self.file_path, mode='r')
+            self._zarr_store = zarr.open(self.file_path, mode='r')
+            # Check if it's a group with a 'data' array (Zarr 3.x format)
+            if isinstance(self._zarr_store, zarr.Group) and 'data' in self._zarr_store:
+                self._zarr_array = self._zarr_store['data']
+            else:
+                # Legacy format: direct array
+                self._zarr_array = self._zarr_store
+        return self._zarr_array
+    
+    def _get_attrs_source(self):
+        """
+        Get the object that contains attributes (group for Zarr 3.x, array for legacy).
+        
+        Returns:
+            zarr.Group or zarr.Array: The object containing metadata attributes
+        """
+        if self._zarr_store is None:
+            self.load()
+        # For Zarr 3.x format, attributes are on the group
+        if isinstance(self._zarr_store, zarr.Group) and 'data' in self._zarr_store:
+            return self._zarr_store
+        # For legacy format, attributes are on the array
         return self._zarr_array
     
     def _create_output_dir(self, output_path: str) -> None:
@@ -849,10 +875,10 @@ class ZarrManager:
             pandas DataFrame containing metadata if available, None otherwise
         """
         if self._metadata is None:
-            arr = self.load()
-            if 'metadata' in arr.attrs:
+            attrs_source = self._get_attrs_source()
+            if 'metadata' in attrs_source.attrs:
                 import pandas as pd
-                self._metadata = pd.DataFrame(arr.attrs['metadata'])
+                self._metadata = pd.DataFrame(attrs_source.attrs['metadata'])
         return self._metadata
     
     def get_ephemeris(self) -> Optional['pd.DataFrame']:
@@ -863,10 +889,11 @@ class ZarrManager:
             pandas DataFrame containing ephemeris data if available, None otherwise
         """
         if self._ephemeris is None:
-            arr = self.load()
-            if 'ephemeris' in arr.attrs:
+            attrs_source = self._get_attrs_source()
+            if 'ephemeris' in attrs_source.attrs:
                 import pandas as pd
-                self._ephemeris = pd.DataFrame(arr.attrs['ephemeris'])
+                self._ephemeris = pd.DataFrame(attrs_source.attrs['ephemeris'])
+        return self._ephemeris
         return self._ephemeris
     
     @gc_collect
