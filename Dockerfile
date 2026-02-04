@@ -1,4 +1,7 @@
-FROM ubuntu:22.04 as base
+FROM ubuntu:22.04 AS base
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
 
 RUN apt-get update && apt-get install -y software-properties-common && \
     add-apt-repository ppa:deadsnakes/ppa && \
@@ -10,7 +13,7 @@ RUN apt-get update && apt-get install -y software-properties-common && \
     python3.11-distutils \
     && rm -rf /var/lib/apt/lists/*
 
-FROM base as build
+FROM base AS build
 
 LABEL authors="Roberto Del Prete"
 LABEL maintainer="roberto.delprete@esa.int"
@@ -26,9 +29,9 @@ RUN apt-get update && apt-get install -y \
     fonts-dejavu \
     && rm -rf /var/lib/apt/lists/*
 
-ENV LC_ALL "en_US.UTF-8"
-ENV LD_LIBRARY_PATH ".:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server/:$LD_LIBRARY_PATH"
-ENV JAVA_HOME "/usr/lib/jvm/java-8-openjdk-amd64"
+ENV LC_ALL="en_US.UTF-8"
+ENV LD_LIBRARY_PATH=".:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server/"
+ENV JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"
 
 # Download and install SNAP directly
 RUN wget -q https://download.esa.int/step/snap/12.0/installers/esa-snap_all_linux-12.0.0.sh -O /tmp/snap_installer.sh && \
@@ -36,7 +39,7 @@ RUN wget -q https://download.esa.int/step/snap/12.0/installers/esa-snap_all_linu
     /tmp/snap_installer.sh -q -dir /usr/local/snap && \
     rm /tmp/snap_installer.sh
 
-FROM base as jupyter-ready
+FROM base AS jupyter-ready
 
 RUN apt-get update && apt-get install -y \
     fonts-dejavu \
@@ -53,8 +56,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-ENV LD_LIBRARY_PATH ".:$LD_LIBRARY_PATH"
-ENV JAVA_HOME "/usr/lib/jvm/java-8-openjdk-amd64"
+ENV LD_LIBRARY_PATH=".:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server/"
+ENV JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"
 ENV PATH="${PATH}:/usr/local/snap/bin"
 
 COPY --from=build /usr/local/snap /usr/local/snap
