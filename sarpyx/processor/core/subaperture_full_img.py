@@ -48,7 +48,7 @@ def DeHammWin(signal,coeff):
 
      return changeImag(signal/w)
 
-def write_envi_bsq_float32(path_img, path_hdr, arr2d, band_name, byte_order=1):
+def write_envi_bsq_float32(path_img, path_hdr, arr2d, band_name, byte_order=1, type_="real"):
     """
     Write a single-band ENVI BSQ float32 image + header.
 
@@ -75,7 +75,7 @@ def write_envi_bsq_float32(path_img, path_hdr, arr2d, band_name, byte_order=1):
 
     lines, samples = arr.shape
     hdr = f"""ENVI
-description = {{Sentinel-1 SM Level-1 SLC Product - Unit: real}}
+description = {{Sentinel-1 SM Level-1 SLC Product - Unit: {type_}}}
 samples = {samples}
 lines = {lines}
 bands = 1
@@ -211,7 +211,7 @@ class CombinedSublooking:
         
         if self.choice == 0:
             band = self.ChirpBand
-            band_limit = band/2 * 1e-6 # el factor de 1e-6 se utiliza para escalar la frecuencia y manejar valores uniformes.
+            band_limit = band/2 * 1e-6 # 1e-6 to scale freq and handle uniform vals.
         else:
             band = self.AzimBand
             band_limit = band/2
@@ -275,7 +275,7 @@ class CombinedSublooking:
             
     def SpectrumNormalization(self, VERBOSE=False):
         """
-        Address singal attenuation by normalizing frequency spectrum to the average value by row or column and scale by average intensity of the image.
+        Address signal attenuation by normalizing frequency spectrum to the average value by row or column and scale by average intensity of the image.
         
         Returns:
         SpectrumOneDimNorm: Normalized spectrum.
@@ -295,7 +295,7 @@ class CombinedSublooking:
             dim_average_int = np.mean(np.abs(self.SpectrumOneDim), axis=1)  # mean magnitude profile
             dim_average_int[dim_average_int == 0] = 1e-6  
             
-            # Normalización más suave, con balance de escala global
+            # Smoother normalization with global scale balance. 
             self.SpectrumOneDimNorm = (self.SpectrumOneDim / dim_average_int[:, None]) * np.median(dim_average_int)
                         
         if VERBOSE:
@@ -455,7 +455,6 @@ class CombinedSublooking:
         os.makedirs(out_dir, exist_ok=True)
     
         # Normalize prefix: allow "" or "L2_" etc.
-        # If user passes "L2" without underscore, fix it.
         if prefix and not prefix.endswith("_"):
             prefix = prefix + "_"
     
@@ -477,8 +476,8 @@ class CombinedSublooking:
             band_name_i = f"{prefix}i_{pol}_SA{sa}" if prefix else f"i_{pol}_SA{sa}"
             band_name_q = f"{prefix}q_{pol}_SA{sa}" if prefix else f"q_{pol}_SA{sa}"
     
-            write_envi_bsq_float32(img_i, hdr_i, i, band_name=band_name_i, byte_order=byte_order)
-            write_envi_bsq_float32(img_q, hdr_q, q, band_name=band_name_q, byte_order=byte_order)
+            write_envi_bsq_float32(img_i, hdr_i, i, band_name=band_name_i, byte_order=byte_order, type_="real")
+            write_envi_bsq_float32(img_q, hdr_q, q, band_name=band_name_q, byte_order=byte_order, type_="imaginary")
             
     def chain(self, VERBOSE=False):
         self.FrequencyComputation(VERBOSE=VERBOSE)
@@ -509,7 +508,7 @@ def find_pols_in_dim_data(data_dir: str):
     - Returns a sorted list of detected polarizations (e.g. ['VV', 'VH']).
     """
 
-    # Match: i_VV.img, i_VH.img, etc. (sin _SA)
+    # Match: i_VV.img, i_VH.img, etc. (without _SA)
     pat = re.compile(r"^i_([A-Z]{2})\.img$", re.IGNORECASE)
 
     pols = []
