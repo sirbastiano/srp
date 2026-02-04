@@ -6,7 +6,7 @@ services:
     image: sirbastiano94/sarpyx:latest
     container_name: sarpyx
     ports:
-      - "8888:8888"
+      - "127.0.0.1:8888:8888"
     volumes:
       - ./data:/workspace/data
       - ./output:/workspace/output
@@ -16,14 +16,12 @@ services:
     working_dir: /workspace
     environment:
       - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
-      - LD_LIBRARY_PATH=.:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server/:${LD_LIBRARY_PATH}
+      - LD_LIBRARY_PATH=.:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server/
       - LC_ALL=en_US.UTF-8
-      - PATH=${PATH}:/usr/local/snap/bin
+      - PATH=/usr/local/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       - JUPYTER_ENABLE_LAB=yes
       - JUPYTER_TOKEN=
       - JUPYTER_ALLOW_INSECURE_WRITES=1
-    stdin_open: true
-    tty: true
     command: /usr/local/bin/start-jupyter.sh
     restart: unless-stopped
     healthcheck:

@@ -1,6 +1,14 @@
 FROM ubuntu:22.04 as base
 
-RUN apt-get update && apt-get install -y openjdk-8-jdk && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update && apt-get install -y \
+    openjdk-8-jdk \
+    python3.11 \
+    python3.11-venv \
+    python3.11-dev \
+    python3.11-distutils \
+    && rm -rf /var/lib/apt/lists/*
 
 FROM base as build
 
@@ -12,8 +20,6 @@ USER root
 RUN apt-get update && apt-get install -y \
     wget \
     unzip \
-    python3 \
-    python3-pip \
     git \
     vim \
     fontconfig \
@@ -33,9 +39,6 @@ RUN wget -q https://download.esa.int/step/snap/12.0/installers/esa-snap_all_linu
 FROM base as jupyter-ready
 
 RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    python3-dev \
     fonts-dejavu \
     git \
     build-essential \
@@ -56,8 +59,14 @@ ENV PATH="${PATH}:/usr/local/snap/bin"
 
 COPY --from=build /usr/local/snap /usr/local/snap
 
+# Install pip for Python 3.11
+RUN curl -sS https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && \
+    python3.11 /tmp/get-pip.py && \
+    rm /tmp/get-pip.py
+
 # Create symlink for python command
-RUN ln -s /usr/bin/python3 /usr/bin/python
+RUN ln -sf /usr/bin/python3.11 /usr/bin/python3 && \
+    ln -sf /usr/bin/python3.11 /usr/bin/python
 
 # Copy project files
 COPY Makefile /workspace/
@@ -68,8 +77,8 @@ COPY sarpyx /workspace/sarpyx/
 WORKDIR /workspace
 
 # Install the package and Jupyter
-RUN pip install pdm jupyter jupyterlab ipykernel
-RUN cd sarpyx && pdm install && pdm add lxml
+RUN python3.11 -m pip install pdm jupyter jupyterlab ipykernel
+RUN pdm install && pdm add lxml
 
 # Install sarpyx as a Jupyter kernel
 RUN python -m ipykernel install --user --name=sarpyx --display-name="SAR Python (sarpyx-12.0)"
