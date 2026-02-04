@@ -83,3 +83,4 @@ S1*
 *.ckpt
 *events*
 AGENTS.md
+support/esa-snap_sentinel_linux-13.0.0.sh
