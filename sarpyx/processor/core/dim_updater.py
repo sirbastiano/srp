@@ -20,10 +20,10 @@ def _rel_href(dim_path: str, filename: str) -> str:
 
 def _scan_data_dir_for_groups(data_dir: str) -> List[Tuple[Optional[str], str, Optional[str]]]:
     """
-    Devuelve tuplas (Lprefix, POL, SA):
+    Retrieves tuples (Lprefix, POL, SA):
       (None, 'VV', None)          -> i_VV/q_VV
       ('L2','VV','SA1')           -> L2_i_VV_SA1 / L2_q_VV_SA1
-    Requiere pares i y q.
+    Requires i, q pairs.
     """
     hdrs = [f for f in os.listdir(data_dir) if f.lower().endswith(".hdr")]
     found_i = set()
@@ -53,12 +53,12 @@ def _scan_data_dir_for_groups(data_dir: str) -> List[Tuple[Optional[str], str, O
 
 def _sort_groups(groups: List[Tuple[Optional[str], str, Optional[str]]]) -> List[Tuple[Optional[str], str, Optional[str]]]:
     """
-    Orden:
-      - base sin Lpref primero (None)
-      - luego L2, L3, ...
-    Dentro:
-      - sin SA primero, luego SA1..SAn
-      - y por pol.
+    Order:
+      - base without Lpref first (None)
+      - then L2, L3, ...
+    Inside:
+      - without SA first, then SA1..SAn
+      - and per pol.
     """
     def sort_key(t):
         Lpref, pol, sa = t
@@ -120,23 +120,23 @@ def _ensure_data_file(data_access_el: ET.Element, template_df: ET.Element, band_
     df.find("BAND_INDEX").text = str(band_index)
     df_path = df.find("DATA_FILE_PATH")
     if df_path is None:
-        raise RuntimeError("DATA_FILE_PATH no existe en el template de Data_File")
+        raise RuntimeError("DATA_FILE_PATH doesnt exist in the template of Data_File")
     df_path.set("href", _rel_href(dim_path, hdr_filename))
     _insert_data_file_in_order(data_access_el, df)
 
 def _get_georef_templates(root: ET.Element):
     template_geo = root.find(".//Geoposition")
     if template_geo is None:
-        raise RuntimeError("No encontré ningún nodo <Geoposition> para usar como template.")
+        raise RuntimeError("<Geoposition> node did not find to be used as template.")
 
     parent = _find_parent(root, template_geo)
     if parent is None:
-        raise RuntimeError("No pude determinar el padre de <Geoposition>.")
+        raise RuntimeError("Not possible to determine father of <Geoposition>.")
 
     children = list(parent)
     geo_idx = next((i for i, el in enumerate(children) if el is template_geo), None)
     if geo_idx is None:
-        raise RuntimeError("No pude ubicar el template <Geoposition>.")
+        raise RuntimeError("Not founded the template of <Geoposition>.")
 
     template_crs = None
     if geo_idx > 0 and children[geo_idx - 1].tag == "Coordinate_Reference_System":
@@ -145,7 +145,7 @@ def _get_georef_templates(root: ET.Element):
         template_crs = next((el for el in children if el.tag == "Coordinate_Reference_System"), None)
 
     if template_crs is None:
-        raise RuntimeError("No encontré ningún <Coordinate_Reference_System> para clonar.")
+        raise RuntimeError("Not founded any <Coordinate_Reference_System> to be cloned.")
 
     return parent, template_crs, template_geo
 
@@ -166,7 +166,7 @@ def _append_georef_pair(parent: ET.Element, template_crs: ET.Element, template_g
     geo = copy.deepcopy(template_geo)
     bi = geo.find("BAND_INDEX")
     if bi is None:
-        raise RuntimeError("El template <Geoposition> no tiene <BAND_INDEX>.")
+        raise RuntimeError("The template of <Geoposition> does not have <BAND_INDEX>.")
     bi.text = str(band_index)
     _insert_georef_pair_before_rasterdims(parent, crs, geo)
 
@@ -191,16 +191,16 @@ def _ensure_band_mdelem(abstract_md: ET.Element, template_band_md: ET.Element, s
 
 def update_dim_add_bands_from_data_dir(dim_in: str, dim_out: str = None, verbose: bool = True) -> str:
     """
-    Agrega al .dim todas las bandas (i/q/intensity) encontradas en .data
-    soportando prefijos tipo L2_ (p.ej. L2_i_VV_SA1.hdr).
+    Adds to .dim file all the bands (i/q/intensity) founded in .data
+    accepting prefixes like L2_ (e.g. L2_i_VV_SA1.hdr).
     """
     if not dim_in.lower().endswith(".dim"):
-        raise ValueError(f"Se esperaba un .dim: {dim_in}")
+        raise ValueError(f"It was expected a .dim: {dim_in}")
 
     data_dir = dim_in[:-4] + ".data"
     groups = _sort_groups(_scan_data_dir_for_groups(data_dir))
     if not groups:
-        raise RuntimeError(f"No encontré pares i/q .hdr válidos en {data_dir}")
+        raise RuntimeError(f"Not founded i/q .hdr valid pairs in {data_dir}")
 
     tree = ET.parse(dim_in)
     root = tree.getroot()
@@ -223,12 +223,12 @@ def update_dim_add_bands_from_data_dir(dim_in: str, dim_out: str = None, verbose
 
     existing_dfs = root.findall(".//Data_File")
     if not existing_dfs:
-        raise RuntimeError("El .dim no tiene Data_File (template).")
+        raise RuntimeError("The .dim does not have Data_File (template).")
     template_df = existing_dfs[0]
 
     sbis = root.findall(".//Image_Interpretation/Spectral_Band_Info")
     if len(sbis) < 3:
-        raise RuntimeError("No encuentro suficientes Spectral_Band_Info para templates.")
+        raise RuntimeError("Do not found enough Spectral_Band_Info for templates.")
 
     template_sbi_i = next((x for x in sbis if (x.findtext("BAND_NAME") or "").startswith("i_")), sbis[0])
     template_sbi_q = next((x for x in sbis if (x.findtext("BAND_NAME") or "").startswith("q_")), sbis[1])
@@ -236,10 +236,10 @@ def update_dim_add_bands_from_data_dir(dim_in: str, dim_out: str = None, verbose
 
     band_mds = [md for md in abstract_md.findall("MDElem") if (md.get("name") or "").startswith("Band_")]
     if not band_mds:
-        raise RuntimeError("No encontré Band_* dentro de Abstracted_Metadata.")
+        raise RuntimeError("Do not found Band_* inside of Abstracted_Metadata.")
     m0 = re.match(r"Band_(S\d+)_", band_mds[0].get("name") or "")
     if not m0:
-        raise RuntimeError(f"No pude inferir swath desde {band_mds[0].get('name')}")
+        raise RuntimeError(f"Not possible to determine swath from {band_mds[0].get('name')}")
     swath = m0.group(1)
 
     template_band_by_pol = {}
@@ -254,15 +254,13 @@ def update_dim_add_bands_from_data_dir(dim_in: str, dim_out: str = None, verbose
     def ensure_triplet(Lpref: Optional[str], pol: str, sa: Optional[str]):
         nonlocal max_idx
 
-        # Construir el “token” que SNAP usa en Band_* (polarization)
-        # ejemplo: VV, VH_SA1, etc.
+        # Build “token” SNAP uses in Band_* (polarization)
+        # example: VV, VH_SA1, etc.
         token = pol if not sa else f"{pol}_{sa}"
 
-        # Band names EXACTOS como stems de los .hdr:
+        # EXACT Band names as stems of the .hdr:
         #   i/q: (L2_)i_VV(_SA1)
         #   intensity: Intensity_(L2_)VV(_SA1)
-        # Nota: intensity NO tiene L2_ en el original SNAP, pero vos lo querés coherente con lo generado.
-        # Si preferís otra convención, lo ajustamos.
         iq_prefix = f"{Lpref}_" if Lpref else ""
         sa_suffix = f"_{sa}" if sa else ""
 
@@ -312,7 +310,7 @@ def update_dim_add_bands_from_data_dir(dim_in: str, dim_out: str = None, verbose
                 abstract_md,
                 tmpl,
                 swath,
-                token,      # Band_S3_<token>
+                token,      
                 b_i,
                 b_q
             )
@@ -328,9 +326,9 @@ def update_dim_add_bands_from_data_dir(dim_in: str, dim_out: str = None, verbose
     tree.write(dim_out, encoding="UTF-8", xml_declaration=True)
 
     if verbose:
-        print(f"OK: escrito {dim_out}")
+        print(f"OK: write {dim_out}")
         print(f"  data_dir: {data_dir}")
-        print(f"  grupos detectados: {groups}")
+        print(f"  grupos detected: {groups}")
         print(f"  NBANDS: {nbands_el.text}")
 
     return dim_out
