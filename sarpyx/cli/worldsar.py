@@ -126,8 +126,10 @@ def create_parser() -> argparse.ArgumentParser:
 
 # ======================================================================================================================== SETTINGS
 """ Processing settings"""
+#TODO: to be removed in final.
+
 prepro = True
-tiling = False
+tiling = True
 db_indexing = False
 
 # ======================================================================================================================== AUXILIARY
