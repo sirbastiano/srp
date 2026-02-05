@@ -522,5 +522,28 @@ def main():
 
 
 if __name__ == "__main__":
+    print("=======================================================================================================================")
+    print(" __        __   ___    ____   _       ____    ____      _      ____  ")
+    print(" \\ \\      / /  / _ \\  |  _ \\ | |     |  _ \\  / ___|    / \\    | 0 _ \\ ")
+    print("  \\ \\ /\\ / /  | | | | | |_) || |     | | | | \\___ \\   / _ \\   | |_) |")
+    print("   \\ V  V /   | |_| | |  _ < | |___  | |_| |  ___) | / ___ \\  |  _ < ")
+    print("    \\_/\\_/     \\___/  |_| \\_\\|_____| |____/  |____/ /_/   \\_\\ |_| \\_\\")
+    print("=======================================================================================================================")
+    print("======================================         DATA PROCESSOR       ===================================================")
+    print("=======================================================================================================================")
+    print("")
+    print(f"Using virtual environment at: {os.getenv('VENV_PATH')}")
+    print(f"Using GPT at: {GPT_PATH}")
+    print(f"Output directory: {os.getenv('OUTPUT_DIR')}")
+    print(f"Output cuts directory: {os.getenv('OUTPUT_CUTS_DIR')}")
+    print(f"Scripts directory: {os.getenv('SCRIPTS_DIR')}")
+    print(f"DB directory: {DB_DIR}")
+    print(f"Bash dir: {os.getenv('SCRIPTS_DIR')}")
+    print(f"Python scripts dir: {os.getenv('PYSCRIPTS_DIR')}")
+    print(f"Product mode: {os.getenv('MODE')}")
+    print(f"Upload repo: {os.getenv('UPLOAD_REPO')}")
+    print(f"DB Upload repo: {os.getenv('DB_UPLOAD_REPO')}")
+    print("")
+    print("=======================================================================================================================")
+    
     main()
-        
