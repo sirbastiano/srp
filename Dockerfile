@@ -16,8 +16,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     python3.11 \
     python3.11-venv \
+    python3.11-dev \
     curl \
     wget \
+    git \
+    build-essential \
     openjdk-8-jdk \
     && rm -rf /var/lib/apt/lists/*
 
@@ -39,10 +42,15 @@ RUN ln -sf /usr/bin/python3.11 /usr/bin/python3 && \
 WORKDIR /workspace
 
 # Copy only essential files
-COPY pyproject.toml sarpyx ./
+COPY pyproject.toml ./
+COPY sarpyx ./sarpyx
 
 # Install sarpyx in development mode and verify import
 RUN python3.11 -m pip install -e . && \
     python3.11 -c "import sarpyx; print('sarpyx installed successfully')"
+
+# Make the grid
+RUN mkdir grid && cd grid && python3.11 -m sarpyx.utils.grid 
+
 
 CMD ["python3.11", "-c", "import sarpyx; print('sarpyx version:', getattr(sarpyx, '__version__', 'unknown'))"]
