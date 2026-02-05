@@ -84,14 +84,26 @@ def terrasar_wkt_extractor(product_path: Path) -> str:
 
 
 if __name__ == "__main__":
-    MODE = 'S1TOPS'  # Example mode, can be 'S1TOPS', 'S1STRIP', 'BM', 'TSX', etc.
+    import argparse 
+    
+    parser = argparse.ArgumentParser(description="Extract WKT footprint from satellite product metadata.")
+    parser.add_argument('--mode', type=str, required=True, help="Mode of operation: 'S1TOPS', 'S1STRIP', 'BM', 'TSX', etc.")
+    parser.add_argument('--product-path', type=str, required=True, help="Name of the satellite product.")
+    args = parser.parse_args()
+    
+    
+    MODE = args.mode  # Example mode, can be 'S1TOPS', 'S1STRIP', 'BM', 'TSX', etc.
+    PRODUCT_PATH = Path(args.product_path)
+    PRODUCT_NAME = PRODUCT_PATH.name
+    
     if MODE == 'S1TOPS' or MODE == 'S1STRIP':
         # Example usage for Sentinel-1 product
-        sentinel1_product_name = "S1A_IW_GRDH_1SDV_20141031T161924_20141031T161949_003076_003856_634E.SAFE"
+        sentinel1_product_name = PRODUCT_NAME
         wkt_sentinel1 = sentinel1_wkt_extractor_cdse(sentinel1_product_name, display_results=False)
+        print(f"\nSentinel-1 WKT Polygon:\n{wkt_sentinel1}")
     
     elif MODE == 'TSX':
         # Example usage for Terrasar-X product
-        terrasar_product_path = Path("/path/to/terrasar_product.xml")
+        terrasar_product_path = PRODUCT_PATH
         wkt_terrasar = terrasar_wkt_extractor(terrasar_product_path)
         print(f"\nTerrasar-X WKT Polygon:\n{wkt_terrasar}")
