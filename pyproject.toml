@@ -9,12 +9,11 @@ description = "A swissknife for SAR processing."
 authors = [
     { name = "Roberto Del Prete", email = "roberto.delprete@esa.int" }
 ]
-license = { text = "MIT" }
+license = { text = "Apache-2.0" }
 requires-python = ">=3.11, <3.13"
 dependencies = [
     "matplotlib",
     "scipy",
-    "s1isp @ git+https://github.com/avalentino/s1isp.git@26d850f9fb6a343bb1475fa162ba88f944d5b52d",
     "geopandas>=1.1.1",
     "shapely",
     "numpy",

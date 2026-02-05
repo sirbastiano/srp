@@ -6,7 +6,7 @@ This guide will help you install SARPyX and its dependencies on your system.
 
 Before installing SARPyX, ensure you have:
 
-- Python 3.9 or higher
+- Python 3.11 or higher
 - pip package manager
 - Git (for development installation)
 
@@ -33,7 +33,7 @@ pip install sarpyx
 
 For specific versions:
 ```bash
-pip install sarpyx==0.2.0
+pip install sarpyx==0.1.5
 ```
 
 ### 2. Using PDM (Recommended for Development)

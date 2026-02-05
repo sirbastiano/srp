@@ -227,4 +227,4 @@ pip install -e .
 
 ## License
 
-SARPyX is released under the GPL v3 License. See the [LICENSE](../LICENSE) file for details.
+SARPyX is released under the Apache 2.0 License. See the [LICENSE](../LICENSE) file for details.

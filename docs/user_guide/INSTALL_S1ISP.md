@@ -1,6 +1,7 @@
 # Installing s1isp for SAR Decoding
 
 The `s1isp` package is required for SAR decoding functionality but requires compilation of C extensions.
+It is installed separately because PyPI does not allow direct Git dependencies in published packages.
 
 ## Prerequisites
 
@@ -30,18 +31,12 @@ Once you have the prerequisites:
 
 ### Option 1: Using uv (recommended)
 ```bash
-# Install the SAR decoding optional dependencies
-uv pip install sarpyx[sar-decode]
-
-# Or install s1isp separately
-uv add git+https://github.com/avalentino/s1isp.git
+# Install s1isp from GitHub
+uv pip install git+https://github.com/avalentino/s1isp.git
 ```
 
 ### Option 2: Using pip
 ```bash
-pip install "sarpyx[sar-decode]"
-
-# Or install s1isp separately
 pip install git+https://github.com/avalentino/s1isp.git
 ```
 

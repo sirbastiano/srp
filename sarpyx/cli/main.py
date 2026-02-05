@@ -48,7 +48,7 @@ For command-specific help:
     parser.add_argument(
         '--version',
         action='version',
-        version='sarpyx-cli 0.1.0'
+        version='sarpyx-cli 0.1.5'
     )
     
     # Create subparsers for different commands

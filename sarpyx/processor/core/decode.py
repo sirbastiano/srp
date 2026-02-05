@@ -45,9 +45,9 @@ def _check_s1isp_available():
         error_msg = (
             f"s1isp package is not available: {_IMPORT_ERROR}\n"
             f"SAR decoding functionality requires s1isp to be installed.\n"
-            f"Please install it using:\n"
-            f"  uv pip install 'sarpyx[sar-decode]'\n"
-            f"Or see INSTALL_S1ISP.md for detailed installation instructions."
+            f"Please install it separately using:\n"
+            f"  pip install git+https://github.com/avalentino/s1isp.git\n"
+            f"Or see docs/user_guide/INSTALL_S1ISP.md for detailed instructions."
         )
         raise ImportError(error_msg)
 

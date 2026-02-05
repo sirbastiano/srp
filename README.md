@@ -7,8 +7,8 @@
 ![GitHub top language](https://img.shields.io/github/languages/top/sirbastiano/srp.svg)
 ![GitHub repo size](https://img.shields.io/github/repo-size/sirbastiano/srp.svg)
 ![GitHub contributors](https://img.shields.io/github/contributors/sirbastiano/srp.svg)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://makeapullrequest.com)
 
 
