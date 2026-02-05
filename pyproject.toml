@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sarpyx"
-version = "0.1.5"
+version = "0.1.6"
 description = "A swissknife for SAR processing."
 authors = [
     { name = "Roberto Del Prete", email = "roberto.delprete@esa.int" }
