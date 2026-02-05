@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sarpyx"
+version = "0.1.6"
+description = "A swissknife for SAR processing."
+authors = [
+    { name = "Roberto Del Prete", email = "roberto.delprete@esa.int" }
+]
+license = { text = "Apache-2.0" }
+requires-python = ">=3.11, <3.13"
+dependencies = [
+    "matplotlib",
+    "scipy",
+    "geopandas>=1.1.1",
+    "shapely",
+    "numpy",
+    "openpyxl",
+    "h5py",
+    "numba",
+    "jupyter",
+    "phidown>=0.1.24",
+    "rasterio>=1.4.3",
+    "zarr>=3.0.0",
+    "joblib>=1.5.1",
+    "dask>=2025.5.1",
+    "lxml>=5.4.0",
+    "huggingface-hub>=0.34.1",
+    "tifffile>=2025.6.11",
+    "folium>=0.20.0",
+    "plotly>=6.2.0",
+    "lightning>=2.5.3",
+    "einops>=0.8.1",
+    "opt-einsum>=3.4.0",
+    "scikit-image>=0.25.2",
+    "pykeops>=2.3",
+    "kornia>=0.8.1",
+    "tensorboard>=2.20.0",
+    "tensorboardX>=2.6.4",
+    "wandb>=0.21.3",
+    "scikit-learn>=1.7.2",
+    "geographiclib>=2.1",
+    "dotenv>=0.9.9",
+    "pyarrow>=23.0.0",
+    "fastparquet>=2025.12.0"
+]
+
+[project.scripts]
+sarpyx = "sarpyx.cli.main:main"
+sarpyx-decode = "sarpyx.cli.decode:main"
+sarpyx-focus = "sarpyx.cli.focus:main"
+sarpyx-shipdet = "sarpyx.cli.shipdet:main"
+sarpyx-unzip = "sarpyx.cli.unzip:main"
+sarpyx-upload = "sarpyx.cli.upload:main"
+
+[tool.setuptools]
+packages = { find = {} }
+
+[tool.setuptools.package-data]
+"*" = ["*.csv", "*.json", "*.xml"]
+[dependency-groups]
+dev = [
+    "pytest==8.4.0",
+]
