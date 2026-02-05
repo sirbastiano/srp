@@ -103,6 +103,20 @@ def create_parser() -> argparse.ArgumentParser:
         default=None,
         help='Override database output directory (default: db_dir env var).'
     )
+    parser.add_argument(
+        '--gpt-memory',
+        dest='gpt_memory',
+        type=str,
+        default=None,
+        help='Override GPT Java heap (e.g., 24G).'
+    )
+    parser.add_argument(
+        '--gpt-parallelism',
+        dest='gpt_parallelism',
+        type=int,
+        default=None,
+        help='Override GPT parallelism (number of tiles).'
+    )
     return parser
 
 
@@ -112,9 +126,9 @@ def create_parser() -> argparse.ArgumentParser:
 
 # ======================================================================================================================== SETTINGS
 """ Processing settings"""
-tiling = True
 prepro = True
-db_indexing = True
+tiling = False
+db_indexing = False
 
 # ======================================================================================================================== AUXILIARY
 """ Auxiliary functions for database creation and product subsetting. """
@@ -166,28 +180,54 @@ def create_tile_database(input_folder: str, output_db_folder: str) -> pd.DataFra
     return db
 
 
-def to_geotiff(product_path: Path, output_dir: Path, geo_region: str = None, output_name: str = None):
+def to_geotiff(
+    product_path: Path,
+    output_dir: Path,
+    geo_region: str = None,
+    output_name: str = None,
+    gpt_memory: str | None = None,
+    gpt_parallelism: int | None = None,
+):
     assert geo_region is not None, "Geo region WKT string must be provided for subsetting."
+    gpt_kwargs = {}
+    if gpt_memory:
+        gpt_kwargs['memory'] = gpt_memory
+    if gpt_parallelism:
+        gpt_kwargs['parallelism'] = gpt_parallelism
     
     op = GPT(
         product=product_path,
         outdir=output_dir,
         format='GDAL-GTiff-WRITER',
         gpt_path=GPT_PATH,
+        **gpt_kwargs,
     )
     op.Write()
 
     return op.prod_path
 
 
-def subset(product_path: Path, output_dir: Path, geo_region: str = None, output_name: str = None):
+def subset(
+    product_path: Path,
+    output_dir: Path,
+    geo_region: str = None,
+    output_name: str = None,
+    gpt_memory: str | None = None,
+    gpt_parallelism: int | None = None,
+):
     assert geo_region is not None, "Geo region WKT string must be provided for subsetting."
+    gpt_kwargs = {}
+    if gpt_memory:
+        gpt_kwargs['memory'] = gpt_memory
+    if gpt_parallelism:
+        gpt_kwargs['parallelism'] = gpt_parallelism
     
     op = GPT(
         product=product_path,
         outdir=output_dir,
         format='HDF5',
         gpt_path=GPT_PATH,
+        **gpt_kwargs,
     )
     op.Subset(
         copy_metadata=True,
@@ -199,7 +239,14 @@ def subset(product_path: Path, output_dir: Path, geo_region: str = None, output_
 
 # ======================================================================================================================== PIPELINES
 """ Different pipelines for different missions/products. """
-def pipeline_sentinel(product_path: Path, output_dir: Path, is_TOPS: bool = False, subaperture: bool = False):
+def pipeline_sentinel(
+    product_path: Path,
+    output_dir: Path,
+    is_TOPS: bool = False,
+    subaperture: bool = False,
+    gpt_memory: str | None = None,
+    gpt_parallelism: int | None = None,
+):
     """A simple test pipeline to validate the GPT wrapper functionality.
 
     The operations included are:
@@ -214,11 +261,17 @@ def pipeline_sentinel(product_path: Path, output_dir: Path, is_TOPS: bool = Fals
     Returns:
         Path: Path to the processed product.
     """
+    gpt_kwargs = {}
+    if gpt_memory:
+        gpt_kwargs['memory'] = gpt_memory
+    if gpt_parallelism:
+        gpt_kwargs['parallelism'] = gpt_parallelism
     op = GPT(
         product=product_path,
         outdir=output_dir,
         format='BEAM-DIMAP',
         gpt_path=GPT_PATH,
+        **gpt_kwargs,
     )
     op.ApplyOrbitFile()
     if is_TOPS and subaperture:
@@ -230,7 +283,12 @@ def pipeline_sentinel(product_path: Path, output_dir: Path, is_TOPS: bool = Fals
     return op.prod_path
 
 
-def pipeline_terrasar(product_path: Path, output_dir: Path):
+def pipeline_terrasar(
+    product_path: Path,
+    output_dir: Path,
+    gpt_memory: str | None = None,
+    gpt_parallelism: int | None = None,
+):
     """Terrasar-X pipeline.
 
     The operations included are:
@@ -244,11 +302,17 @@ def pipeline_terrasar(product_path: Path, output_dir: Path):
     Returns:
         Path: Path to the processed product.
     """
+    gpt_kwargs = {}
+    if gpt_memory:
+        gpt_kwargs['memory'] = gpt_memory
+    if gpt_parallelism:
+        gpt_kwargs['parallelism'] = gpt_parallelism
     op = GPT(
         product=product_path,
         outdir=output_dir,
         format='BEAM-DIMAP',
         gpt_path=GPT_PATH,
+        **gpt_kwargs,
     )
     op.Calibration(output_complex=True)
     # TODO: Add subaperture.
@@ -256,7 +320,12 @@ def pipeline_terrasar(product_path: Path, output_dir: Path):
     return op.prod_path
 
 
-def pipeline_cosmo(product_path: Path, output_dir: Path):
+def pipeline_cosmo(
+    product_path: Path,
+    output_dir: Path,
+    gpt_memory: str | None = None,
+    gpt_parallelism: int | None = None,
+):
     """COSMO-SkyMed pipeline.
 
     The operations included are:
@@ -270,11 +339,17 @@ def pipeline_cosmo(product_path: Path, output_dir: Path):
     Returns:
         Path: Path to the processed product.
     """
+    gpt_kwargs = {}
+    if gpt_memory:
+        gpt_kwargs['memory'] = gpt_memory
+    if gpt_parallelism:
+        gpt_kwargs['parallelism'] = gpt_parallelism
     op = GPT(
         product=product_path,
         outdir=output_dir,
         format='BEAM-DIMAP',
         gpt_path=GPT_PATH,
+        **gpt_kwargs,
     )
     op.Calibration(output_complex=True)
     # TODO: Add subaperture.
@@ -282,7 +357,12 @@ def pipeline_cosmo(product_path: Path, output_dir: Path):
     return op.prod_path
 
 
-def pipeline_biomass(product_path: Path, output_dir: Path):
+def pipeline_biomass(
+    product_path: Path,
+    output_dir: Path,
+    gpt_memory: str | None = None,
+    gpt_parallelism: int | None = None,
+):
     """BIOMASS pipeline.
 
     Args:
@@ -292,11 +372,17 @@ def pipeline_biomass(product_path: Path, output_dir: Path):
     Returns:
         Path: Path to the processed product.
     """
+    gpt_kwargs = {}
+    if gpt_memory:
+        gpt_kwargs['memory'] = gpt_memory
+    if gpt_parallelism:
+        gpt_kwargs['parallelism'] = gpt_parallelism
     op = GPT(
         product=product_path,
         outdir=output_dir,
         format='GDAL-GTiff-WRITER',
         gpt_path=GPT_PATH,
+        **gpt_kwargs,
     )
     op.Write()
     # TODO: Calculate SubApertures with BIOMASS Data.
@@ -356,10 +442,17 @@ def main():
     cuts_outdir = Path(args.cuts_outdir)
     grid_geoj_path = Path(GRID_PATH) if GRID_PATH else None
     product_mode = args.prod_mode
+    gpt_memory = args.gpt_memory
+    gpt_parallelism = args.gpt_parallelism
 
     # STEP1:
     if prepro:
-        intermediate_product = ROUTER_PIPE[product_mode](product_path, output_dir)
+        intermediate_product = ROUTER_PIPE[product_mode](
+            product_path,
+            output_dir,
+            gpt_memory=gpt_memory,
+            gpt_parallelism=gpt_parallelism,
+        )
         print(f"Intermediate processed product located at: {intermediate_product}")
         assert Path(intermediate_product).exists(), f"Intermediate product {intermediate_product} does not exist."
 
@@ -370,8 +463,14 @@ def main():
         assert grid_geoj_path is not None and grid_geoj_path.exists(), 'grid_10km.geojson does not exist.'
         # step 1: check the contained grid points in the prod
         contained = check_points_in_polygon(product_wkt, geojson_path=grid_geoj_path)
+        if not contained:
+            print('No grid points contained within the provided WKT.')
+            raise ValueError('No grid points contained; check WKT and grid CRS alignment.')
         # step 2: Build the rectangles for cutting
         rectangles = rectanglify(contained)
+        if not rectangles:
+            print('No rectangles could be formed from contained points.')
+            raise ValueError('No rectangles formed; check WKT coverage and grid alignment.')
         product_path = Path(intermediate_product)
         name = extract_product_id(product_path.as_posix()) if product_mode != 'NISAR' else product_path.stem
         if name is None:
@@ -380,17 +479,21 @@ def main():
         for rect in rectangles: # CUT!
             geo_region = rectangle_to_wkt(rect)
             if product_mode != 'NISAR':
-                final_product = subset(product_path, 
-                                    cuts_outdir / name, 
-                                    output_name=rect['BL']['properties']['name'],
-                                    geo_region=geo_region)
+                final_product = subset(
+                    product_path,
+                    cuts_outdir / name,
+                    output_name=rect['BL']['properties']['name'],
+                    geo_region=geo_region,
+                    gpt_memory=gpt_memory,
+                    gpt_parallelism=gpt_parallelism,
+                )
                 print(f"Final processed product located at: {final_product}")
             else:
                 reader = NISARReader(product_path.as_posix())
                 cutter = NISARCutter(reader)
-                subset = cutter.cut_by_wkt(geo_region, "HH", apply_mask=False)
+                subset_data = cutter.cut_by_wkt(geo_region, "HH", apply_mask=False)
                 nisar_tile_path = cuts_outdir / name / f"{rect['BL']['properties']['name']}.tiff"
-                cutter.save_subset(subset, nisar_tile_path)
+                cutter.save_subset(subset_data, nisar_tile_path)
                 # TODO: write write method to save to h5.
                 print(f"Final processed NISAR tile saved at: {nisar_tile_path}")
                 

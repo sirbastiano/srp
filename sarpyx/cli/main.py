@@ -424,6 +424,20 @@ def _add_worldsar_arguments(parser: argparse.ArgumentParser) -> None:
         default=None,
         help='Override database output directory (default: db_dir env var).'
     )
+    parser.add_argument(
+        '--gpt-memory',
+        dest='gpt_memory',
+        type=str,
+        default=None,
+        help='Override GPT Java heap (e.g., 24G).'
+    )
+    parser.add_argument(
+        '--gpt-parallelism',
+        dest='gpt_parallelism',
+        type=int,
+        default=None,
+        help='Override GPT parallelism (number of tiles).'
+    )
 
 
 def main() -> None:
