@@ -113,7 +113,7 @@ class GPT:
         outdir: str | Path,
         format: str = 'BEAM-DIMAP',
         gpt_path: Optional[str] = '/usr/local/snap/bin/gpt',
-        memory: str = '64G',
+        memory: str = '32G',
         parallelism: Optional[int] = 16,
     ):
         """Initialize SNAP GPT processing engine.
