@@ -12,7 +12,7 @@ import xml.etree.ElementTree as ET
 
 
 
-def sentinel1_wkt_extractor_cdse(product_name: str, display_results: bool = False) -> str | None:
+def sentinel1_wkt_extractor_cdse(product_name: str, display_results: bool = False, verbose: bool = False) -> str | None:
     """
     Extract WKT footprint from Sentinel-1 product using Copernicus Data Search.
 
@@ -24,26 +24,30 @@ def sentinel1_wkt_extractor_cdse(product_name: str, display_results: bool = Fals
         str | None: WKT representation of the product footprint polygon, or None if not found.
     """
     searcher = CopernicusDataSearcher()
-    
-    print(f"Searching for product with exact name: {product_name}\n")
+    if verbose:
+        print(f"Searching for product with exact name: {product_name}\n")
     df_exact = searcher.query_by_name(product_name=product_name)
 
     if not df_exact.empty:
         if display_results:
             searcher.display_results(top_n=1)
-            print(df_exact)
-            print("\nProduct found successfully.")
+            if verbose:
+                print(df_exact)
+                print("\nProduct found successfully.")
         
         geofootprint = df_exact['GeoFootprint'].values[0]
-        print(f"Product with GeoFootprint: '{geofootprint}' found.")
+        if verbose:
+            print(f"Product with GeoFootprint: '{geofootprint}' found.")
         
         polygon = shape(geofootprint)
         wkt_polygon = polygon.wkt
         
-        print(f"\nWKT Polygon:\n{wkt_polygon}")
+        if verbose:
+            print(f"\nWKT Polygon:\n{wkt_polygon}")
         return wkt_polygon
     else:
-        print(f"Product '{product_name}' not found or an error occurred.")
+        if verbose:
+            print("No product found with the specified name.")
         return None
 
 

@@ -9,12 +9,6 @@ import argparse
 import sys
 from typing import List
 
-from .shipdet import main as shipdet_main
-from .decode import main as decode_main
-from .focus import main as focus_main
-from .unzip import main as unzip_main
-from .upload import main as upload_main
-
 
 def create_main_parser() -> argparse.ArgumentParser:
     """
@@ -34,6 +28,7 @@ Available commands:
   shipdet    Ship detection using SNAP GPT engine
   unzip      Extract SAR data from zip archives
   upload     Upload data to Hugging Face Hub
+  worldsar   Process SAR products with SNAP GPT pipelines and tiling
   
 Examples:
   sarpyx decode --input /path/to/file.dat --output /path/to/output
@@ -41,6 +36,9 @@ Examples:
   sarpyx shipdet --product-path /path/to/S1A_*.SAFE --outdir /path/to/output
   sarpyx unzip --input /path/to/file.zip --output /path/to/output
   sarpyx upload --folder /path/to/folder --repo username/dataset-name
+  sarpyx worldsar --input /path/to/product --output /path/to/output \\
+                 --cuts-outdir /path/to/tiles --product-wkt "POLYGON ((...))" \\
+                 --prod-mode S1TOPS
   
 For command-specific help:
   sarpyx <command> --help
@@ -99,6 +97,14 @@ For command-specific help:
         description='Upload processed SAR data to Hugging Face Hub'
     )
     _add_upload_arguments(upload_parser)
+
+    # WorldSAR subcommand
+    worldsar_parser = subparsers.add_parser(
+        'worldsar',
+        help='Process SAR products with SNAP GPT pipelines and tiling',
+        description='Process SAR products from multiple missions and generate tiles'
+    )
+    _add_worldsar_arguments(worldsar_parser)
     
     return parser
 
@@ -350,6 +356,76 @@ def _add_upload_arguments(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def _add_worldsar_arguments(parser: argparse.ArgumentParser) -> None:
+    """
+    Add arguments for the worldsar subcommand.
+    
+    Args:
+        parser: The subparser for worldsar command.
+    """
+    parser.add_argument(
+        '--input',
+        '-i',
+        dest='product_path',
+        type=str,
+        required=True,
+        help='Path to the input SAR product.'
+    )
+    parser.add_argument(
+        '--output',
+        '-o',
+        dest='output_dir',
+        type=str,
+        required=True,
+        help='Directory to save the processed output.'
+    )
+    parser.add_argument(
+        '--cuts-outdir',
+        '--cuts_outdir',
+        dest='cuts_outdir',
+        type=str,
+        required=True,
+        help='Where to store the tiles after extraction.'
+    )
+    parser.add_argument(
+        '--product-wkt',
+        '--product_wkt',
+        dest='product_wkt',
+        type=str,
+        required=True,
+        help='WKT string defining the product region of interest.'
+    )
+    parser.add_argument(
+        '--prod-mode',
+        '--prod_mode',
+        dest='prod_mode',
+        type=str,
+        required=True,
+        help='Product mode: ["S1TOPS", "S1STRIP", "BM", "NISAR", "TSX", "CSG", "ICE"].'
+    )
+    parser.add_argument(
+        '--gpt-path',
+        dest='gpt_path',
+        type=str,
+        default=None,
+        help='Override GPT executable path (default: gpt_path env var).'
+    )
+    parser.add_argument(
+        '--grid-path',
+        dest='grid_path',
+        type=str,
+        default=None,
+        help='Override grid GeoJSON path (default: grid_path env var).'
+    )
+    parser.add_argument(
+        '--db-dir',
+        dest='db_dir',
+        type=str,
+        default=None,
+        help='Override database output directory (default: db_dir env var).'
+    )
+
+
 def main() -> None:
     """
     Main entry point for sarpyx CLI.
@@ -367,20 +443,29 @@ def main() -> None:
     
     try:
         if args.command == 'decode':
+            from .decode import main as decode_main
             sys.argv = ['sarpyx-decode'] + [arg for arg in original_argv[2:]]
             decode_main()
         elif args.command == 'focus':
+            from .focus import main as focus_main
             sys.argv = ['sarpyx-focus'] + [arg for arg in original_argv[2:]]
             focus_main()
         elif args.command == 'shipdet':
+            from .shipdet import main as shipdet_main
             sys.argv = ['sarpyx-shipdet'] + [arg for arg in original_argv[2:]]
             shipdet_main()
         elif args.command == 'unzip':
+            from .unzip import main as unzip_main
             sys.argv = ['sarpyx-unzip'] + [arg for arg in original_argv[2:]]
             unzip_main()
         elif args.command == 'upload':
+            from .upload import main as upload_main
             sys.argv = ['sarpyx-upload'] + [arg for arg in original_argv[2:]]
             upload_main()
+        elif args.command == 'worldsar':
+            from .worldsar import main as worldsar_main
+            sys.argv = ['sarpyx-worldsar'] + [arg for arg in original_argv[2:]]
+            worldsar_main()
         else:
             print(f'Unknown command: {args.command}', file=sys.stderr)
             sys.exit(1)
