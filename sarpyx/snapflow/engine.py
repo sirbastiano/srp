@@ -247,6 +247,7 @@ class GPT:
         Returns:
             True if command executed successfully, False otherwise.
         """
+        print("=" * 120)
         cmd_str = ' '.join(self.current_cmd)
         print(f'Executing GPT command: {cmd_str}')
         
