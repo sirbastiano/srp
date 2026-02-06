@@ -115,6 +115,7 @@ class GPT:
         gpt_path: Optional[str] = '/usr/local/snap/bin/gpt',
         memory: str = '64G',
         parallelism: Optional[int] = 14,
+        snap_userdir: Optional[str | Path] = None,
     ):
         """Initialize SNAP GPT processing engine.
         
@@ -149,9 +150,27 @@ class GPT:
         
         self.parallelism = parallelism
         self.memory = memory
+
+        if snap_userdir is None:
+            snap_userdir = os.getenv('SNAP_USERDIR') or os.getenv('snap_userdir')
+        self.snap_userdir = Path(snap_userdir).expanduser() if snap_userdir else None
+        if self.snap_userdir:
+            self.snap_userdir.mkdir(parents=True, exist_ok=True)
         
         self.gpt_executable = self._get_gpt_executable(gpt_path)
         self.current_cmd: List[str] = []
+
+    def _base_cmd(self) -> List[str]:
+        """Build the base GPT command with shared options."""
+        cmd = [self.gpt_executable]
+        if self.snap_userdir:
+            cmd.append(f'-J-Dsnap.userdir={self.snap_userdir.as_posix()}')
+        if self.parallelism:
+            cmd.append(f'-q {self.parallelism}')
+        if self.memory:
+            cmd.append(f'-c {self.memory}')
+        cmd.extend(['-x', '-e'])
+        return cmd
 
     def _get_gpt_executable(self, gpt_path: Optional[str] = None) -> str:
         """Determine the correct GPT executable path.
@@ -180,14 +199,27 @@ class GPT:
 
     def _reset_command(self) -> None:
         """Reset the command list for a new GPT operation."""
-        self.current_cmd = [
-            self.gpt_executable,
-            f'-q {self.parallelism}',
-            f'-c {self.memory}',
-            '-x',
-            '-e',
-            f'-Ssource={self.prod_path.as_posix()}'
-        ]
+        self.current_cmd = self._base_cmd()
+        self.current_cmd.append(f'-Ssource={self.prod_path.as_posix()}')
+
+    def run_graph(
+        self,
+        graph_path: str | Path,
+        output_path: str | Path,
+        delete_graph: bool = False,
+    ) -> Optional[str]:
+        """Execute a standalone GPT XML graph file."""
+        graph_path = Path(graph_path)
+        output_path = Path(output_path)
+        self.current_cmd = self._base_cmd()
+        self.current_cmd.append(graph_path.as_posix())
+
+        if self._execute_command():
+            self.prod_path = output_path
+            if delete_graph:
+                graph_path.unlink(missing_ok=True)
+            return output_path.as_posix()
+        return None
 
     def _build_output_path(self, suffix: str, output_name: Optional[str] = None) -> Path:
         """Build the output path for a processing step.
@@ -420,13 +452,12 @@ class GPT:
 
         try:
             xml_path.write_text(graph_xml, encoding='utf-8')
-            self.current_cmd = [self.gpt_executable, xml_path.as_posix()]
-
-            if self._execute_command():
-                self.prod_path = output_path
-                xml_path.unlink(missing_ok=True)
-                return output_path.as_posix()
-            return None
+            result = self.run_graph(
+                graph_path=xml_path,
+                output_path=output_path,
+                delete_graph=True,
+            )
+            return result
 
         except Exception as e:
             print(f'Error generating LandMask XML graph: {e}')
@@ -6160,6 +6191,5 @@ class GPT:
     Binning = binning
     FuClassification = fu_classification
     FlhMci = flh_mci
-
 
 
