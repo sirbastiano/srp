@@ -231,20 +231,11 @@ def subset(
         gpt_path=GPT_PATH,
         **gpt_kwargs,
     )
-    
-    # BUGFIX: Explicitly include ALL polarizations (VV and VH) in I/Q format
-    # Without this, SNAP defaults to selecting only VH bands, losing VV data
-    source_bands = [
-        'i_VH', 'q_VH',   # VH polarization I/Q channels
-        'i_VV', 'q_VV',   # VV polarization I/Q channels
-        'elevation', 'localIncidenceAngle'  # Auxiliary bands
-    ]
-    
+
     op.Subset(
         copy_metadata=True,
         output_name=output_name,
         geo_region=geo_region,
-        source_bands=source_bands,
         )
 
     return op.prod_path
