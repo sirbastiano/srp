@@ -15,10 +15,10 @@ VERSION=13
 # SNAP 13MacOS-ARM: https://download.esa.int/step/snap/13.0/installers/esa-snap_sentinel_macos_arm-13.0.0.dmg
 # SNAP 13Windows: https://download.esa.int/step/snap/13.0/installers/esa-snap_sentinel_windows-13.0.0.exe
 
-# get filepath of current file 
-CURRENT_FILE_PATH="$(realpath "$0")"
-# go up two directories
-BASE_DIR="$(dirname "$(dirname "$(dirname "$CURRENT_FILE_PATH")")")"
+# get filepath of current file (BASH_SOURCE works with both 'source' and direct execution)
+CURRENT_FILE_PATH="$(realpath "${BASH_SOURCE[0]}")"
+# go up two directories (snap-install.sh → support/ → srp/)
+BASE_DIR="$(dirname "$(dirname "$CURRENT_FILE_PATH")")"
 
 
 SNAP_DIR="${BASE_DIR}/snap${VERSION}"
@@ -38,7 +38,7 @@ if [ "$VERSION" = "12" ]; then
     echo 'Installing SNAP 12...'
     ./esa-snap_all_linux-12.0.0.sh -q -varfile "$(pwd)/snap.varfile" -dir "${SNAP_DIR}"
     echo 'Configuring SNAP memory settings...'
-    echo "-Xmx8G" > "${SNAP_DIR}/snap/bin/gpt.vmoptions"
+    echo "-Xmx8G" > "${SNAP_DIR}/bin/gpt.vmoptions"
     echo 'SNAP 12 installation complete.'
 
 elif [ "$VERSION" = "13" ]; then
@@ -50,7 +50,7 @@ elif [ "$VERSION" = "13" ]; then
     echo 'Installing SNAP 13...'
     ./esa-snap_sentinel_linux-13.0.0.sh -q -varfile "$(pwd)/snap.varfile" -dir "${SNAP_DIR}"
     echo 'Configuring SNAP memory settings...'
-    echo "-Xmx16G" > "${SNAP_DIR}/snap/bin/gpt.vmoptions"
+    echo "-Xmx16G" > "${SNAP_DIR}/bin/gpt.vmoptions"
     echo 'SNAP 13 installation complete.'
 
 else

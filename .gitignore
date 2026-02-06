@@ -14,7 +14,8 @@ wandb
 deimos_notebooks
 training
 
-
+snap13/
+snap12/
 
 *.csv
 *.txt
