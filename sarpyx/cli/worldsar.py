@@ -525,7 +525,7 @@ def pipeline_sentinel(
         op.TopsarDerampDemod()
     if op.Deburst() is None:
         raise RuntimeError('Deburst failed.')
-    if op.Calibration(output_complex=True) is None:
+    if op.Calibration(output_complex=True, pols=["VV", "VH"]) is None:
         raise RuntimeError(
             'Calibration failed. If input is a processed DIMAP product, '
             'use --use-graph or run calibration directly on SAFE input.'
