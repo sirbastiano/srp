@@ -519,20 +519,18 @@ def pipeline_sentinel(
             raise RuntimeError('Sentinel graph execution failed.')
         return result
 
-    if op.ApplyOrbitFile(orbit_type=orbit_type, continue_on_fail=orbit_continue_on_fail) is None:
-        raise RuntimeError('Apply-Orbit-File failed.')
-    if is_TOPS:
-        op.TopsarDerampDemod()
-    if op.Deburst() is None:
-        raise RuntimeError('Deburst failed.')
-    if op.Calibration(output_complex=True, pols=["VV", "VH"]) is None:
-        raise RuntimeError(
-            'Calibration failed. If input is a processed DIMAP product, '
-            'use --use-graph or run calibration directly on SAFE input.'
-        )
-    if op.TerrainCorrection(map_projection='AUTO:42001', pixel_spacing_in_meter=10.0) is None:
-        raise RuntimeError('Terrain-Correction failed.')
-    return op.prod_path
+
+    else:
+        
+        op.ApplyOrbitFile()
+        if is_TOPS and subaperture:
+            op.TopsarDerampDemod()
+        op.Deburst()
+        op.Calibration(output_complex=True, pols=["VV", "VH"])
+        # TODO: Add subaperture.
+        op.TerrainCorrection(map_projection='AUTO:42001', pixel_spacing_in_meter=10.0)
+        return op.prod_path
+
 
 
 def pipeline_terrasar(
