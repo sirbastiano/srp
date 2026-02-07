@@ -51,13 +51,6 @@ python -m pip install -e .
 ```
 </details>
 
-## Quick start
-
-```bash
-sarpyx worldsar -i /path/to/S1A_*.SAFE \
-  -o /path/to/output \
-  --cuts-outdir /path/to/tiles
-```
 
 ## Docs
 
