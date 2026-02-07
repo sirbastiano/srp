@@ -20,7 +20,7 @@ The `GPT` class is a Python wrapper for executing SNAP Graph Processing Tool (GP
 
 ```python
 from pathlib import Path
-from sarpyx.snap.engine import GPT
+from sarpyx.snapflow.engine import GPT
 
 # Basic initialization
 product_path = Path('/path/to/your/S1A_IW_GRDH_product.SAFE')
@@ -61,7 +61,7 @@ The class supports 40+ output formats including:
 ### 1. Calibration
 
 ```python
-from sarpyx.snap.engine import GPT
+from sarpyx.snapflow.engine import GPT
 
 op = GPT(
     product='S1A_IW_GRDH_product.SAFE',
@@ -180,7 +180,7 @@ The key to chaining is that each operation **updates** `op.prod_path` internally
 ### Example 1: Basic Chain
 
 ```python
-from sarpyx.snap.engine import GPT
+from sarpyx.snapflow.engine import GPT
 
 # Initialize with raw product
 op = GPT(
@@ -204,7 +204,7 @@ print(f"Final product: {op.prod_path}")
 
 ```python
 from pathlib import Path
-from sarpyx.snap.engine import GPT
+from sarpyx.snapflow.engine import GPT
 
 input_product = Path('./data/S1A_IW_SLC_20240503.SAFE')
 output_dir = Path('./processed/')
@@ -236,7 +236,7 @@ print(f"✓ Processing complete: {op.prod_path}")
 ### Example 3: Error Handling in Chains
 
 ```python
-from sarpyx.snap.engine import GPT
+from sarpyx.snapflow.engine import GPT
 
 op = GPT(product='input.SAFE', outdir='./output/')
 
@@ -267,7 +267,7 @@ print("✓ All operations successful!")
 
 ```python
 from pathlib import Path
-from sarpyx.snap.engine import GPT, CFAR
+from sarpyx.snapflow.engine import GPT, CFAR
 import pandas as pd
 
 # Input data
@@ -318,7 +318,7 @@ if csv_files:
 
 ```python
 from pathlib import Path
-from sarpyx.snap.engine import CFAR
+from sarpyx.snapflow.engine import CFAR
 
 # Single PFA threshold
 first_product, excel_file = CFAR(
@@ -336,7 +336,7 @@ print(f"Detection results: {excel_file}")
 ### Workflow 3: Multiple PFA Thresholds
 
 ```python
-from sarpyx.snap.engine import CFAR
+from sarpyx.snapflow.engine import CFAR
 
 # Test multiple PFA values
 pfa_values = [4.5, 6.5, 8.5, 10.5, 12.5]
@@ -363,7 +363,7 @@ first_product, last_excel = CFAR(
 
 ```python
 from pathlib import Path
-from sarpyx.snap.engine import GPT
+from sarpyx.snapflow.engine import GPT
 
 products = [
     Path('./data/S1A_20240501.SAFE'),
@@ -395,7 +395,7 @@ for product in products:
 ### Example 2: Custom Format Output
 
 ```python
-from sarpyx.snap.engine import GPT
+from sarpyx.snapflow.engine import GPT
 
 # Output as GeoTIFF
 op = GPT(
@@ -413,7 +413,7 @@ op.Multilook(nRgLooks=2, nAzLooks=2)
 ### Example 3: Region of Interest Processing
 
 ```python
-from sarpyx.snap.engine import GPT
+from sarpyx.snapflow.engine import GPT
 
 op = GPT(product='large_scene.SAFE', outdir='./rois/')
 
@@ -439,7 +439,7 @@ for roi in rois:
 ### Example 4: COSMO-SkyMed Processing
 
 ```python
-from sarpyx.snap.engine import GPT
+from sarpyx.snapflow.engine import GPT
 from pathlib import Path
 
 # COSMO-SkyMed requires different processing

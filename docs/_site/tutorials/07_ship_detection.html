@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tutorial 7: Ship Detection with CFAR Algorithms – sarpyx Docs</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../index.html"><img class="logo" src="../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../user_guide/index.html">Overview</a>
+<a href="../user_guide/installation.html">Installation</a>
+<a href="../user_guide/getting_started.html">Getting Started</a>
+<a href="../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../user_guide/data_formats.html">Data Formats</a>
+<a href="../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../user_guide/science_applications.html">Science Applications</a>
+<a href="../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../tutorials/index.html">Overview</a>
+<a href="../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../tutorials/07_ship_detection.html" class="active">07 – Ship Detection</a>
+<a href="../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../api/index.html">Overview</a>
+<a href="../api/snapflow/index.html">Snapflow</a>
+<a href="../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../api/science/index.html">Science</a>
+<a href="../api/sla/index.html">SLA</a>
+<a href="../api/processor/index.html">Processor</a>
+<a href="../api/utils/index.html">Utils</a>
+<a href="../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../developer_guide/architecture.html">Architecture</a>
+<a href="../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="tutorial-7-ship-detection-with-cfar-algorithms">Tutorial 7: Ship Detection with CFAR Algorithms</h1>
+<h2 id="overview">Overview</h2>
+<p>This tutorial demonstrates how to use sarpyx for ship detection in SAR imagery using Constant False Alarm Rate (CFAR) algorithms. We&rsquo;ll explore different CFAR detectors and how to optimize their parameters for various sea conditions.</p>
+<h2 id="learning-objectives">Learning Objectives</h2>
+<p>By the end of this tutorial, you will be able to:
+- Implement CFAR-based ship detection algorithms
+- Optimize detection parameters for different scenarios
+- Validate detection results against ground truth
+- Integrate ship detection into automated processing workflows</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Completion of Tutorials 1-3</li>
+<li>Understanding of SAR backscatter principles</li>
+<li>Basic knowledge of statistical detection theory</li>
+</ul>
+<h2 id="dataset-requirements">Dataset Requirements</h2>
+<pre class="codehilite"><code><span class="c1"># Required data for this tutorial</span>
+<span class="n">data_requirements</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;sar_data&#39;</span><span class="p">:</span> <span class="s1">&#39;Sentinel-1 GRD or SLC data over maritime areas&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;resolution&#39;</span><span class="p">:</span> <span class="s1">&#39;High resolution (&lt; 20m)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;polarization&#39;</span><span class="p">:</span> <span class="s1">&#39;VV or VH (VV preferred for ship detection)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;area&#39;</span><span class="p">:</span> <span class="s1">&#39;Maritime area with known ship traffic&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ground_truth&#39;</span><span class="p">:</span> <span class="s1">&#39;AIS data or manual annotations (optional)&#39;</span>
+<span class="p">}</span>
+</code></pre>
+<h2 id="step-1-data-preparation-and-preprocessing">Step 1: Data Preparation and Preprocessing</h2>
+<h3 id="11-load-and-preprocess-sar-data">1.1 Load and Preprocess SAR Data</h3>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx</span><span class="w"> </span><span class="kn">import</span> <span class="n">SLA</span><span class="p">,</span> <span class="n">SNAPProcessor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.detection</span><span class="w"> </span><span class="kn">import</span> <span class="n">CFARDetector</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">visualization</span><span class="p">,</span> <span class="n">metrics</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science</span><span class="w"> </span><span class="kn">import</span> <span class="n">radar_indices</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+
+<span class="c1"># Initialize processors</span>
+<span class="n">snap_processor</span> <span class="o">=</span> <span class="n">SNAPProcessor</span><span class="p">()</span>
+<span class="n">detector</span> <span class="o">=</span> <span class="n">CFARDetector</span><span class="p">()</span>
+
+<span class="c1"># Load and preprocess SAR data</span>
+<span class="n">sar_file</span> <span class="o">=</span> <span class="s1">&#39;path/to/sentinel1_maritime.zip&#39;</span>
+
+<span class="c1"># Standard preprocessing for ship detection</span>
+<span class="n">preprocessing_config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;operations&#39;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s1">&#39;apply_orbit_file&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;thermal_noise_removal&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;calibration&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;speckle_filtering&#39;</span><span class="p">,</span>  <span class="c1"># Important for CFAR detection</span>
+        <span class="s1">&#39;terrain_correction&#39;</span>
+    <span class="p">],</span>
+    <span class="s1">&#39;speckle_filter&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;filter_type&#39;</span><span class="p">:</span> <span class="s1">&#39;Lee&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;filter_size&#39;</span><span class="p">:</span> <span class="s1">&#39;5x5&#39;</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;calibration&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;output_sigma&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s1">&#39;output_beta&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s1">&#39;output_gamma&#39;</span><span class="p">:</span> <span class="kc">False</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1"># Process with SNAP</span>
+<span class="n">processed_data</span> <span class="o">=</span> <span class="n">snap_processor</span><span class="o">.</span><span class="n">process_sar_data</span><span class="p">(</span>
+    <span class="n">input_file</span><span class="o">=</span><span class="n">sar_file</span><span class="p">,</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">preprocessing_config</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processed data shape: </span><span class="si">{</span><span class="n">processed_data</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data type: </span><span class="si">{</span><span class="n">processed_data</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="12-extract-intensity-data">1.2 Extract Intensity Data</h3>
+<pre class="codehilite"><code><span class="c1"># Extract intensity data for detection</span>
+<span class="k">if</span> <span class="n">processed_data</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>  <span class="c1"># Multi-band data</span>
+    <span class="c1"># Use VV polarization if available</span>
+    <span class="k">if</span> <span class="s1">&#39;VV&#39;</span> <span class="ow">in</span> <span class="n">processed_data</span><span class="o">.</span><span class="n">band_names</span><span class="p">:</span>
+        <span class="n">intensity</span> <span class="o">=</span> <span class="n">processed_data</span><span class="o">.</span><span class="n">get_band</span><span class="p">(</span><span class="s1">&#39;VV&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">intensity</span> <span class="o">=</span> <span class="n">processed_data</span><span class="o">.</span><span class="n">get_band</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">intensity</span> <span class="o">=</span> <span class="n">processed_data</span>
+
+<span class="c1"># Convert to linear scale if in dB</span>
+<span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">intensity</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># Likely in dB</span>
+    <span class="n">intensity</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">intensity</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>
+
+<span class="c1"># Display preprocessing results</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+<span class="c1"># Original intensity (log scale)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">intensity</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">),</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="mi">25</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;SAR Intensity (dB)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Range&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Azimuth&#39;</span><span class="p">)</span>
+
+<span class="c1"># Histogram of intensity values</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">intensity</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Intensity (linear)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Density&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Intensity Distribution&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h2 id="step-2-cfar-detection-implementation">Step 2: CFAR Detection Implementation</h2>
+<h3 id="21-configure-cfar-parameters">2.1 Configure CFAR Parameters</h3>
+<pre class="codehilite"><code><span class="c1"># CFAR detector configuration</span>
+<span class="n">cfar_config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;detector_type&#39;</span><span class="p">:</span> <span class="s1">&#39;cell_averaging&#39;</span><span class="p">,</span>  <span class="c1"># &#39;cell_averaging&#39;, &#39;greatest_of&#39;, &#39;smallest_of&#39;</span>
+    <span class="s1">&#39;guard_cells&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;azimuth&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="mi">2</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;training_cells&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;azimuth&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="mi">10</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;threshold_factor&#39;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span>  <span class="c1"># Multiplication factor for threshold</span>
+    <span class="s1">&#39;false_alarm_rate&#39;</span><span class="p">:</span> <span class="mf">1e-5</span><span class="p">,</span>  <span class="c1"># Target false alarm rate</span>
+    <span class="s1">&#39;min_target_size&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>  <span class="c1"># Minimum number of connected pixels</span>
+    <span class="s1">&#39;max_target_size&#39;</span><span class="p">:</span> <span class="mi">1000</span>  <span class="c1"># Maximum number of connected pixels</span>
+<span class="p">}</span>
+
+<span class="c1"># Initialize CFAR detector</span>
+<span class="n">detector</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">cfar_config</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;CFAR detector configured successfully&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Window size: </span><span class="si">{</span><span class="n">cfar_config</span><span class="p">[</span><span class="s1">&#39;training_cells&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Guard cells: </span><span class="si">{</span><span class="n">cfar_config</span><span class="p">[</span><span class="s1">&#39;guard_cells&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Threshold factor: </span><span class="si">{</span><span class="n">cfar_config</span><span class="p">[</span><span class="s1">&#39;threshold_factor&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="22-apply-cfar-detection">2.2 Apply CFAR Detection</h3>
+<pre class="codehilite"><code><span class="c1"># Apply CFAR detection</span>
+<span class="n">detection_results</span> <span class="o">=</span> <span class="n">detector</span><span class="o">.</span><span class="n">detect_targets</span><span class="p">(</span>
+    <span class="n">intensity_data</span><span class="o">=</span><span class="n">intensity</span><span class="p">,</span>
+    <span class="n">return_threshold_map</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">return_statistics</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="c1"># Extract results</span>
+<span class="n">detections</span> <span class="o">=</span> <span class="n">detection_results</span><span class="p">[</span><span class="s1">&#39;detections&#39;</span><span class="p">]</span>
+<span class="n">threshold_map</span> <span class="o">=</span> <span class="n">detection_results</span><span class="p">[</span><span class="s1">&#39;threshold_map&#39;</span><span class="p">]</span>
+<span class="n">statistics</span> <span class="o">=</span> <span class="n">detection_results</span><span class="p">[</span><span class="s1">&#39;statistics&#39;</span><span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of detections: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">detections</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Detection statistics: </span><span class="si">{</span><span class="n">statistics</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Display detection results</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+
+<span class="c1"># Original image</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">intensity</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">),</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="mi">25</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Original SAR Image (dB)&#39;</span><span class="p">)</span>
+
+<span class="c1"># Threshold map</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">threshold_map</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">),</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;CFAR Threshold Map (dB)&#39;</span><span class="p">)</span>
+
+<span class="c1"># Detection mask</span>
+<span class="n">detection_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">intensity</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">detection</span> <span class="ow">in</span> <span class="n">detections</span><span class="p">:</span>
+    <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">detection</span><span class="p">[</span><span class="s1">&#39;centroid&#39;</span><span class="p">]</span>
+    <span class="n">detection_mask</span><span class="p">[</span><span class="n">y</span><span class="o">-</span><span class="mi">2</span><span class="p">:</span><span class="n">y</span><span class="o">+</span><span class="mi">3</span><span class="p">,</span> <span class="n">x</span><span class="o">-</span><span class="mi">2</span><span class="p">:</span><span class="n">x</span><span class="o">+</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">detection_mask</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Reds&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">intensity</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">),</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="mi">25</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Detections Overlay&#39;</span><span class="p">)</span>
+
+<span class="c1"># Detection statistics</span>
+<span class="n">detection_sizes</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">detections</span><span class="p">]</span>
+<span class="n">detection_intensities</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;peak_intensity&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">detections</span><span class="p">]</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">detection_sizes</span><span class="p">,</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">detection_intensities</span><span class="p">)))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Target Size (pixels)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Peak Intensity (dB)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Detection Characteristics&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h2 id="step-3-advanced-cfar-algorithms">Step 3: Advanced CFAR Algorithms</h2>
+<h3 id="31-implement-multiple-cfar-variants">3.1 Implement Multiple CFAR Variants</h3>
+<pre class="codehilite"><code><span class="c1"># Compare different CFAR algorithms</span>
+<span class="n">cfar_variants</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;cell_averaging&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;detector_type&#39;</span><span class="p">:</span> <span class="s1">&#39;cell_averaging&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;threshold_factor&#39;</span><span class="p">:</span> <span class="mf">3.0</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;greatest_of&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;detector_type&#39;</span><span class="p">:</span> <span class="s1">&#39;greatest_of&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;threshold_factor&#39;</span><span class="p">:</span> <span class="mf">2.5</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;smallest_of&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;detector_type&#39;</span><span class="p">:</span> <span class="s1">&#39;smallest_of&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;threshold_factor&#39;</span><span class="p">:</span> <span class="mf">4.0</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;ordered_statistic&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;detector_type&#39;</span><span class="p">:</span> <span class="s1">&#39;ordered_statistic&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;threshold_factor&#39;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span>
+        <span class="s1">&#39;order_parameter&#39;</span><span class="p">:</span> <span class="mf">0.75</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1"># Apply each variant</span>
+<span class="n">variant_results</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">variant_name</span><span class="p">,</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">cfar_variants</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="c1"># Update base configuration</span>
+    <span class="n">variant_config</span> <span class="o">=</span> <span class="n">cfar_config</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">variant_config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+    <span class="c1"># Configure and run detector</span>
+    <span class="n">detector</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">variant_config</span><span class="p">)</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">detector</span><span class="o">.</span><span class="n">detect_targets</span><span class="p">(</span><span class="n">intensity_data</span><span class="o">=</span><span class="n">intensity</span><span class="p">)</span>
+
+    <span class="n">variant_results</span><span class="p">[</span><span class="n">variant_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;detections&#39;</span><span class="p">:</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;detections&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;detections&#39;</span><span class="p">]),</span>
+        <span class="s1">&#39;config&#39;</span><span class="p">:</span> <span class="n">variant_config</span>
+    <span class="p">}</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">variant_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;detections&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> detections&quot;</span><span class="p">)</span>
+
+<span class="c1"># Visualize comparison</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+<span class="n">axes</span> <span class="o">=</span> <span class="n">axes</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">variant_name</span><span class="p">,</span> <span class="n">results</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">variant_results</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+    <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="c1"># Create detection overlay</span>
+        <span class="n">detection_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">intensity</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">detection</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;detections&#39;</span><span class="p">]:</span>
+            <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">detection</span><span class="p">[</span><span class="s1">&#39;centroid&#39;</span><span class="p">]</span>
+            <span class="n">detection_mask</span><span class="p">[</span><span class="n">y</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="n">y</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="n">x</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="n">x</span><span class="o">+</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">intensity</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">),</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="mi">25</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+        <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">detection_mask</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Reds&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+        <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">variant_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;count&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> detections&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h3 id="32-adaptive-threshold-optimization">3.2 Adaptive Threshold Optimization</h3>
+<pre class="codehilite"><code><span class="c1"># Implement adaptive threshold optimization</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AdaptiveCFAR</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_detector</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detector</span> <span class="o">=</span> <span class="n">base_detector</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">optimize_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">intensity_data</span><span class="p">,</span> <span class="n">target_far</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span> 
+                          <span class="n">threshold_range</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">),</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Optimize threshold factor for target false alarm rate&quot;&quot;&quot;</span>
+        <span class="n">thresholds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">threshold_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">threshold_range</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">num_steps</span><span class="p">)</span>
+        <span class="n">far_estimates</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">detection_counts</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Estimate false alarm rate for each threshold</span>
+        <span class="k">for</span> <span class="n">threshold</span> <span class="ow">in</span> <span class="n">thresholds</span><span class="p">:</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="n">cfar_config</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">config</span><span class="p">[</span><span class="s1">&#39;threshold_factor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">threshold</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">detector</span><span class="o">.</span><span class="n">detect_targets</span><span class="p">(</span><span class="n">intensity_data</span><span class="p">)</span>
+
+            <span class="c1"># Estimate FAR (simplified approach)</span>
+            <span class="n">total_pixels</span> <span class="o">=</span> <span class="n">intensity_data</span><span class="o">.</span><span class="n">size</span>
+            <span class="n">detection_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;detections&#39;</span><span class="p">])</span>
+            <span class="n">estimated_far</span> <span class="o">=</span> <span class="n">detection_count</span> <span class="o">/</span> <span class="n">total_pixels</span>
+
+            <span class="n">far_estimates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">estimated_far</span><span class="p">)</span>
+            <span class="n">detection_counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">detection_count</span><span class="p">)</span>
+
+        <span class="c1"># Find optimal threshold</span>
+        <span class="n">far_errors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">far_estimates</span><span class="p">)</span> <span class="o">-</span> <span class="n">target_far</span><span class="p">)</span>
+        <span class="n">optimal_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">far_errors</span><span class="p">)</span>
+        <span class="n">optimal_threshold</span> <span class="o">=</span> <span class="n">thresholds</span><span class="p">[</span><span class="n">optimal_idx</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;optimal_threshold&#39;</span><span class="p">:</span> <span class="n">optimal_threshold</span><span class="p">,</span>
+            <span class="s1">&#39;thresholds&#39;</span><span class="p">:</span> <span class="n">thresholds</span><span class="p">,</span>
+            <span class="s1">&#39;far_estimates&#39;</span><span class="p">:</span> <span class="n">far_estimates</span><span class="p">,</span>
+            <span class="s1">&#39;detection_counts&#39;</span><span class="p">:</span> <span class="n">detection_counts</span>
+        <span class="p">}</span>
+
+<span class="c1"># Apply adaptive optimization</span>
+<span class="n">adaptive_cfar</span> <span class="o">=</span> <span class="n">AdaptiveCFAR</span><span class="p">(</span><span class="n">detector</span><span class="p">)</span>
+<span class="n">optimization_results</span> <span class="o">=</span> <span class="n">adaptive_cfar</span><span class="o">.</span><span class="n">optimize_threshold</span><span class="p">(</span>
+    <span class="n">intensity_data</span><span class="o">=</span><span class="n">intensity</span><span class="p">,</span>
+    <span class="n">target_far</span><span class="o">=</span><span class="mf">1e-5</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Optimal threshold factor: </span><span class="si">{</span><span class="n">optimization_results</span><span class="p">[</span><span class="s1">&#39;optimal_threshold&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Plot optimization results</span>
+<span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="n">ax2</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+<span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">optimization_results</span><span class="p">[</span><span class="s1">&#39;thresholds&#39;</span><span class="p">],</span> <span class="n">optimization_results</span><span class="p">[</span><span class="s1">&#39;far_estimates&#39;</span><span class="p">],</span> <span class="s1">&#39;b-&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Estimated FAR&#39;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Target FAR&#39;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">optimization_results</span><span class="p">[</span><span class="s1">&#39;optimal_threshold&#39;</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Optimal Threshold&#39;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Threshold Factor&#39;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;False Alarm Rate&#39;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;FAR vs Threshold Factor&#39;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">optimization_results</span><span class="p">[</span><span class="s1">&#39;thresholds&#39;</span><span class="p">],</span> <span class="n">optimization_results</span><span class="p">[</span><span class="s1">&#39;detection_counts&#39;</span><span class="p">],</span> <span class="s1">&#39;b-&#39;</span><span class="p">)</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">optimization_results</span><span class="p">[</span><span class="s1">&#39;optimal_threshold&#39;</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Optimal Threshold&#39;</span><span class="p">)</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Threshold Factor&#39;</span><span class="p">)</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Number of Detections&#39;</span><span class="p">)</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Detection Count vs Threshold Factor&#39;</span><span class="p">)</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h2 id="step-4-detection-validation-and-performance-assessment">Step 4: Detection Validation and Performance Assessment</h2>
+<h3 id="41-load-ground-truth-data-if-available">4.1 Load Ground Truth Data (if available)</h3>
+<pre class="codehilite"><code><span class="c1"># Example ground truth loading (adapt to your data format)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_ground_truth</span><span class="p">(</span><span class="n">gt_file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load ground truth ship positions&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">gt_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Generate synthetic ground truth for demonstration</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+        <span class="n">num_ships</span> <span class="o">=</span> <span class="mi">15</span>
+        <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">intensity</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="n">ground_truth</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_ships</span><span class="p">):</span>
+            <span class="c1"># Place ships in areas with higher backscatter</span>
+            <span class="n">candidates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">intensity</span> <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">intensity</span><span class="p">,</span> <span class="mi">90</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+                <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">idx</span><span class="p">],</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span>
+
+                <span class="n">ground_truth</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                    <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span>
+                    <span class="s1">&#39;position&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span>
+                    <span class="s1">&#39;size&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">25</span><span class="p">)</span>
+                <span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">ground_truth</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Load from AIS data or annotations</span>
+        <span class="c1"># Implementation depends on data format</span>
+        <span class="k">pass</span>
+
+<span class="c1"># Load ground truth</span>
+<span class="n">ground_truth</span> <span class="o">=</span> <span class="n">load_ground_truth</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Ground truth contains </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ground_truth</span><span class="p">)</span><span class="si">}</span><span class="s2"> ships&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="42-performance-metrics-calculation">4.2 Performance Metrics Calculation</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">calculate_detection_metrics</span><span class="p">(</span><span class="n">detections</span><span class="p">,</span> <span class="n">ground_truth</span><span class="p">,</span> <span class="n">match_threshold</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate detection performance metrics&quot;&quot;&quot;</span>
+
+    <span class="c1"># Match detections to ground truth</span>
+    <span class="n">matched_detections</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">matched_gt</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">detection</span> <span class="ow">in</span> <span class="n">detections</span><span class="p">:</span>
+        <span class="n">det_pos</span> <span class="o">=</span> <span class="n">detection</span><span class="p">[</span><span class="s1">&#39;centroid&#39;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">gt</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ground_truth</span><span class="p">):</span>
+            <span class="n">gt_pos</span> <span class="o">=</span> <span class="n">gt</span><span class="p">[</span><span class="s1">&#39;position&#39;</span><span class="p">]</span>
+            <span class="n">distance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">det_pos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">gt_pos</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> 
+                             <span class="p">(</span><span class="n">det_pos</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">gt_pos</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">distance</span> <span class="o">&lt;=</span> <span class="n">match_threshold</span> <span class="ow">and</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">matched_gt</span><span class="p">:</span>
+                <span class="n">matched_detections</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">detection</span><span class="p">)</span>
+                <span class="n">matched_gt</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="k">break</span>
+
+    <span class="c1"># Calculate metrics</span>
+    <span class="n">true_positives</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">matched_detections</span><span class="p">)</span>
+    <span class="n">false_positives</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">detections</span><span class="p">)</span> <span class="o">-</span> <span class="n">true_positives</span>
+    <span class="n">false_negatives</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ground_truth</span><span class="p">)</span> <span class="o">-</span> <span class="n">true_positives</span>
+
+    <span class="n">precision</span> <span class="o">=</span> <span class="n">true_positives</span> <span class="o">/</span> <span class="p">(</span><span class="n">true_positives</span> <span class="o">+</span> <span class="n">false_positives</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">true_positives</span> <span class="o">+</span> <span class="n">false_positives</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="n">recall</span> <span class="o">=</span> <span class="n">true_positives</span> <span class="o">/</span> <span class="p">(</span><span class="n">true_positives</span> <span class="o">+</span> <span class="n">false_negatives</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">true_positives</span> <span class="o">+</span> <span class="n">false_negatives</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="n">f1_score</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">precision</span> <span class="o">*</span> <span class="n">recall</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">precision</span> <span class="o">+</span> <span class="n">recall</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">precision</span> <span class="o">+</span> <span class="n">recall</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;true_positives&#39;</span><span class="p">:</span> <span class="n">true_positives</span><span class="p">,</span>
+        <span class="s1">&#39;false_positives&#39;</span><span class="p">:</span> <span class="n">false_positives</span><span class="p">,</span>
+        <span class="s1">&#39;false_negatives&#39;</span><span class="p">:</span> <span class="n">false_negatives</span><span class="p">,</span>
+        <span class="s1">&#39;precision&#39;</span><span class="p">:</span> <span class="n">precision</span><span class="p">,</span>
+        <span class="s1">&#39;recall&#39;</span><span class="p">:</span> <span class="n">recall</span><span class="p">,</span>
+        <span class="s1">&#39;f1_score&#39;</span><span class="p">:</span> <span class="n">f1_score</span><span class="p">,</span>
+        <span class="s1">&#39;matched_detections&#39;</span><span class="p">:</span> <span class="n">matched_detections</span><span class="p">,</span>
+        <span class="s1">&#39;matched_gt_indices&#39;</span><span class="p">:</span> <span class="n">matched_gt</span>
+    <span class="p">}</span>
+
+<span class="c1"># Calculate metrics for optimal threshold</span>
+<span class="n">optimal_config</span> <span class="o">=</span> <span class="n">cfar_config</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">optimal_config</span><span class="p">[</span><span class="s1">&#39;threshold_factor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">optimization_results</span><span class="p">[</span><span class="s1">&#39;optimal_threshold&#39;</span><span class="p">]</span>
+<span class="n">detector</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">optimal_config</span><span class="p">)</span>
+<span class="n">optimal_detections</span> <span class="o">=</span> <span class="n">detector</span><span class="o">.</span><span class="n">detect_targets</span><span class="p">(</span><span class="n">intensity_data</span><span class="o">=</span><span class="n">intensity</span><span class="p">)</span>
+
+<span class="n">metrics_results</span> <span class="o">=</span> <span class="n">calculate_detection_metrics</span><span class="p">(</span>
+    <span class="n">optimal_detections</span><span class="p">[</span><span class="s1">&#39;detections&#39;</span><span class="p">],</span> 
+    <span class="n">ground_truth</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Detection Performance Metrics:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Precision: </span><span class="si">{</span><span class="n">metrics_results</span><span class="p">[</span><span class="s1">&#39;precision&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Recall: </span><span class="si">{</span><span class="n">metrics_results</span><span class="p">[</span><span class="s1">&#39;recall&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;F1-Score: </span><span class="si">{</span><span class="n">metrics_results</span><span class="p">[</span><span class="s1">&#39;f1_score&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;True Positives: </span><span class="si">{</span><span class="n">metrics_results</span><span class="p">[</span><span class="s1">&#39;true_positives&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;False Positives: </span><span class="si">{</span><span class="n">metrics_results</span><span class="p">[</span><span class="s1">&#39;false_positives&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;False Negatives: </span><span class="si">{</span><span class="n">metrics_results</span><span class="p">[</span><span class="s1">&#39;false_negatives&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="43-visualize-detection-performance">4.3 Visualize Detection Performance</h3>
+<pre class="codehilite"><code><span class="c1"># Create comprehensive visualization</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+
+<span class="c1"># Detection overlay with ground truth</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">intensity</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">),</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="mi">25</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="c1"># Plot ground truth</span>
+<span class="k">for</span> <span class="n">gt</span> <span class="ow">in</span> <span class="n">ground_truth</span><span class="p">:</span>
+    <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">gt</span><span class="p">[</span><span class="s1">&#39;position&#39;</span><span class="p">]</span>
+    <span class="n">circle</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">Circle</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">radius</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Ground Truth&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">circle</span><span class="p">)</span>
+
+<span class="c1"># Plot detections (color-coded by match status)</span>
+<span class="k">for</span> <span class="n">detection</span> <span class="ow">in</span> <span class="n">optimal_detections</span><span class="p">[</span><span class="s1">&#39;detections&#39;</span><span class="p">]:</span>
+    <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">detection</span><span class="p">[</span><span class="s1">&#39;centroid&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">detection</span> <span class="ow">in</span> <span class="n">metrics_results</span><span class="p">[</span><span class="s1">&#39;matched_detections&#39;</span><span class="p">]:</span>
+        <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;green&#39;</span>  <span class="c1"># True positive</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;True Positive&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span>  <span class="c1"># False positive</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;False Positive&#39;</span>
+
+    <span class="n">marker</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Detection Results vs Ground Truth&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="s1">&#39;Ground Truth&#39;</span><span class="p">,</span> <span class="s1">&#39;True Positive&#39;</span><span class="p">,</span> <span class="s1">&#39;False Positive&#39;</span><span class="p">])</span>
+
+<span class="c1"># ROC-like curve for different thresholds</span>
+<span class="n">thresholds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span>
+<span class="n">precision_values</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">recall_values</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">threshold</span> <span class="ow">in</span> <span class="n">thresholds</span><span class="p">:</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">cfar_config</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">config</span><span class="p">[</span><span class="s1">&#39;threshold_factor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">threshold</span>
+    <span class="n">detector</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">detector</span><span class="o">.</span><span class="n">detect_targets</span><span class="p">(</span><span class="n">intensity_data</span><span class="o">=</span><span class="n">intensity</span><span class="p">)</span>
+
+    <span class="n">metrics</span> <span class="o">=</span> <span class="n">calculate_detection_metrics</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;detections&#39;</span><span class="p">],</span> <span class="n">ground_truth</span><span class="p">)</span>
+    <span class="n">precision_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;precision&#39;</span><span class="p">])</span>
+    <span class="n">recall_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;recall&#39;</span><span class="p">])</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">recall_values</span><span class="p">,</span> <span class="n">precision_values</span><span class="p">,</span> <span class="s1">&#39;b-o&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Recall&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Precision&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Precision-Recall Curve&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+<span class="c1"># Detection statistics</span>
+<span class="n">detection_stats</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;sizes&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">optimal_detections</span><span class="p">[</span><span class="s1">&#39;detections&#39;</span><span class="p">]],</span>
+    <span class="s1">&#39;intensities&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;peak_intensity&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">optimal_detections</span><span class="p">[</span><span class="s1">&#39;detections&#39;</span><span class="p">]],</span>
+    <span class="s1">&#39;contrasts&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;contrast&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">optimal_detections</span><span class="p">[</span><span class="s1">&#39;detections&#39;</span><span class="p">]]</span>
+<span class="p">}</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">detection_stats</span><span class="p">[</span><span class="s1">&#39;sizes&#39;</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Detection Size (pixels)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Frequency&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Distribution of Detection Sizes&#39;</span><span class="p">)</span>
+
+<span class="c1"># Performance summary table</span>
+<span class="n">performance_text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">Detection Performance Summary:</span>
+
+<span class="s2">Threshold Factor: </span><span class="si">{</span><span class="n">optimization_results</span><span class="p">[</span><span class="s1">&#39;optimal_threshold&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span>
+<span class="s2">Total Detections: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">optimal_detections</span><span class="p">[</span><span class="s1">&#39;detections&#39;</span><span class="p">])</span><span class="si">}</span>
+<span class="s2">True Positives: </span><span class="si">{</span><span class="n">metrics_results</span><span class="p">[</span><span class="s1">&#39;true_positives&#39;</span><span class="p">]</span><span class="si">}</span>
+<span class="s2">False Positives: </span><span class="si">{</span><span class="n">metrics_results</span><span class="p">[</span><span class="s1">&#39;false_positives&#39;</span><span class="p">]</span><span class="si">}</span>
+<span class="s2">False Negatives: </span><span class="si">{</span><span class="n">metrics_results</span><span class="p">[</span><span class="s1">&#39;false_negatives&#39;</span><span class="p">]</span><span class="si">}</span>
+
+<span class="s2">Precision: </span><span class="si">{</span><span class="n">metrics_results</span><span class="p">[</span><span class="s1">&#39;precision&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span>
+<span class="s2">Recall: </span><span class="si">{</span><span class="n">metrics_results</span><span class="p">[</span><span class="s1">&#39;recall&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span>
+<span class="s2">F1-Score: </span><span class="si">{</span><span class="n">metrics_results</span><span class="p">[</span><span class="s1">&#39;f1_score&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">performance_text</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">verticalalignment</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span>
+                <span class="n">bbox</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">boxstyle</span><span class="o">=</span><span class="s1">&#39;round&#39;</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;lightgray&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Performance Summary&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h2 id="step-5-automated-ship-detection-pipeline">Step 5: Automated Ship Detection Pipeline</h2>
+<h3 id="51-create-processing-pipeline-class">5.1 Create Processing Pipeline Class</h3>
+<pre class="codehilite"><code><span class="k">class</span><span class="w"> </span><span class="nc">ShipDetectionPipeline</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Complete ship detection pipeline with CFAR algorithms&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">snap_processor</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">snap_processor</span> <span class="o">=</span> <span class="n">snap_processor</span> <span class="ow">or</span> <span class="n">SNAPProcessor</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cfar_detector</span> <span class="o">=</span> <span class="n">CFARDetector</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">processing_history</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_scene</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_file</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+                     <span class="n">preprocessing_config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">detection_config</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process a complete SAR scene for ship detection&quot;&quot;&quot;</span>
+
+        <span class="c1"># Default configurations</span>
+        <span class="k">if</span> <span class="n">preprocessing_config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">preprocessing_config</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;operations&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;apply_orbit_file&#39;</span><span class="p">,</span> <span class="s1">&#39;thermal_noise_removal&#39;</span><span class="p">,</span> 
+                             <span class="s1">&#39;calibration&#39;</span><span class="p">,</span> <span class="s1">&#39;speckle_filtering&#39;</span><span class="p">,</span> <span class="s1">&#39;terrain_correction&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;speckle_filter&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;filter_type&#39;</span><span class="p">:</span> <span class="s1">&#39;Lee&#39;</span><span class="p">,</span> <span class="s1">&#39;filter_size&#39;</span><span class="p">:</span> <span class="s1">&#39;5x5&#39;</span><span class="p">},</span>
+                <span class="s1">&#39;calibration&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;output_sigma&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+            <span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">detection_config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">detection_config</span> <span class="o">=</span> <span class="n">cfar_config</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Step 1: Preprocessing</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Step 1: Preprocessing SAR data...&quot;</span><span class="p">)</span>
+        <span class="n">processed_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">snap_processor</span><span class="o">.</span><span class="n">process_sar_data</span><span class="p">(</span>
+            <span class="n">input_file</span><span class="o">=</span><span class="n">input_file</span><span class="p">,</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">preprocessing_config</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Step 2: Extract intensity</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Step 2: Extracting intensity data...&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">processed_data</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">intensity</span> <span class="o">=</span> <span class="n">processed_data</span><span class="o">.</span><span class="n">get_band</span><span class="p">(</span><span class="s1">&#39;VV&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="s1">&#39;VV&#39;</span> <span class="ow">in</span> <span class="n">processed_data</span><span class="o">.</span><span class="n">band_names</span> <span class="k">else</span> <span class="n">processed_data</span><span class="o">.</span><span class="n">get_band</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">intensity</span> <span class="o">=</span> <span class="n">processed_data</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">intensity</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">intensity</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">intensity</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>
+
+        <span class="c1"># Step 3: CFAR detection</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Step 3: Applying CFAR detection...&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cfar_detector</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">detection_config</span><span class="p">)</span>
+        <span class="n">detection_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfar_detector</span><span class="o">.</span><span class="n">detect_targets</span><span class="p">(</span>
+            <span class="n">intensity_data</span><span class="o">=</span><span class="n">intensity</span><span class="p">,</span>
+            <span class="n">return_threshold_map</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">return_statistics</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Step 4: Post-processing and filtering</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Step 4: Post-processing detections...&quot;</span><span class="p">)</span>
+        <span class="n">filtered_detections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filter_detections</span><span class="p">(</span>
+            <span class="n">detection_results</span><span class="p">[</span><span class="s1">&#39;detections&#39;</span><span class="p">],</span>
+            <span class="n">intensity</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Step 5: Generate output products</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Step 5: Generating output products...&quot;</span><span class="p">)</span>
+        <span class="n">output_products</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_outputs</span><span class="p">(</span>
+            <span class="n">intensity</span><span class="p">,</span> <span class="n">filtered_detections</span><span class="p">,</span> <span class="n">detection_results</span><span class="p">,</span>
+            <span class="n">output_dir</span><span class="p">,</span> <span class="n">input_file</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Record processing</span>
+        <span class="n">processing_record</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;input_file&#39;</span><span class="p">:</span> <span class="n">input_file</span><span class="p">,</span>
+            <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="s1">&#39;now&#39;</span><span class="p">),</span>
+            <span class="s1">&#39;preprocessing_config&#39;</span><span class="p">:</span> <span class="n">preprocessing_config</span><span class="p">,</span>
+            <span class="s1">&#39;detection_config&#39;</span><span class="p">:</span> <span class="n">detection_config</span><span class="p">,</span>
+            <span class="s1">&#39;detection_count&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">filtered_detections</span><span class="p">),</span>
+            <span class="s1">&#39;output_products&#39;</span><span class="p">:</span> <span class="n">output_products</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">processing_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">processing_record</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;detections&#39;</span><span class="p">:</span> <span class="n">filtered_detections</span><span class="p">,</span>
+            <span class="s1">&#39;intensity&#39;</span><span class="p">:</span> <span class="n">intensity</span><span class="p">,</span>
+            <span class="s1">&#39;threshold_map&#39;</span><span class="p">:</span> <span class="n">detection_results</span><span class="p">[</span><span class="s1">&#39;threshold_map&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;statistics&#39;</span><span class="p">:</span> <span class="n">detection_results</span><span class="p">[</span><span class="s1">&#39;statistics&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;output_products&#39;</span><span class="p">:</span> <span class="n">output_products</span><span class="p">,</span>
+            <span class="s1">&#39;processing_record&#39;</span><span class="p">:</span> <span class="n">processing_record</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_filter_detections</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">detections</span><span class="p">,</span> <span class="n">intensity</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply additional filtering criteria to detections&quot;&quot;&quot;</span>
+        <span class="n">filtered</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">detection</span> <span class="ow">in</span> <span class="n">detections</span><span class="p">:</span>
+            <span class="c1"># Size filtering</span>
+            <span class="k">if</span> <span class="n">detection</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">3</span> <span class="ow">or</span> <span class="n">detection</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Intensity filtering</span>
+            <span class="k">if</span> <span class="n">detection</span><span class="p">[</span><span class="s1">&#39;peak_intensity&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">intensity</span><span class="p">,</span> <span class="mi">95</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Shape filtering (aspect ratio)</span>
+            <span class="k">if</span> <span class="s1">&#39;bounding_box&#39;</span> <span class="ow">in</span> <span class="n">detection</span><span class="p">:</span>
+                <span class="n">bbox</span> <span class="o">=</span> <span class="n">detection</span><span class="p">[</span><span class="s1">&#39;bounding_box&#39;</span><span class="p">]</span>
+                <span class="n">height</span> <span class="o">=</span> <span class="n">bbox</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">bbox</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">width</span> <span class="o">=</span> <span class="n">bbox</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">-</span> <span class="n">bbox</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">aspect_ratio</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span> <span class="o">/</span> <span class="nb">min</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">aspect_ratio</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>  <span class="c1"># Too elongated</span>
+                    <span class="k">continue</span>
+
+            <span class="n">filtered</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">detection</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">filtered</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">intensity</span><span class="p">,</span> <span class="n">detections</span><span class="p">,</span> <span class="n">detection_results</span><span class="p">,</span> 
+                         <span class="n">output_dir</span><span class="p">,</span> <span class="n">input_file</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate output products&quot;&quot;&quot;</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="n">output_dir</span><span class="p">:</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">base_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">input_file</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="c1"># Save detection results as GeoTIFF</span>
+            <span class="n">detection_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">intensity</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">detection</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">detections</span><span class="p">):</span>
+                <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">detection</span><span class="p">[</span><span class="s1">&#39;centroid&#39;</span><span class="p">]</span>
+                <span class="n">detection_mask</span><span class="p">[</span><span class="n">y</span><span class="o">-</span><span class="mi">2</span><span class="p">:</span><span class="n">y</span><span class="o">+</span><span class="mi">3</span><span class="p">,</span> <span class="n">x</span><span class="o">-</span><span class="mi">2</span><span class="p">:</span><span class="n">x</span><span class="o">+</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+
+            <span class="c1"># Save products (implementation depends on your I/O utilities)</span>
+            <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;detection_mask&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">base_name</span><span class="si">}</span><span class="s2">_detections.tif&quot;</span>
+            <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;threshold_map&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">base_name</span><span class="si">}</span><span class="s2">_threshold.tif&quot;</span>
+            <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;detection_list&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">base_name</span><span class="si">}</span><span class="s2">_detections.json&quot;</span>
+
+            <span class="c1"># Save detection list as JSON</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+            <span class="n">detection_data</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;metadata&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s1">&#39;input_file&#39;</span><span class="p">:</span> <span class="n">input_file</span><span class="p">,</span>
+                    <span class="s1">&#39;detection_count&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">detections</span><span class="p">),</span>
+                    <span class="s1">&#39;processing_timestamp&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="s1">&#39;now&#39;</span><span class="p">))</span>
+                <span class="p">},</span>
+                <span class="s1">&#39;detections&#39;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">{</span>
+                        <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span>
+                        <span class="s1">&#39;position&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;centroid&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]),</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;centroid&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">])},</span>
+                        <span class="s1">&#39;size&#39;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]),</span>
+                        <span class="s1">&#39;peak_intensity_db&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;peak_intensity&#39;</span><span class="p">])),</span>
+                        <span class="s1">&#39;confidence&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;confidence&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+                    <span class="p">}</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">detections</span><span class="p">)</span>
+                <span class="p">]</span>
+            <span class="p">}</span>
+
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;detection_list&#39;</span><span class="p">],</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">detection_data</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">outputs</span>
+
+<span class="c1"># Initialize and test pipeline</span>
+<span class="n">pipeline</span> <span class="o">=</span> <span class="n">ShipDetectionPipeline</span><span class="p">(</span><span class="n">snap_processor</span><span class="p">)</span>
+
+<span class="c1"># Process the scene</span>
+<span class="n">pipeline_results</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">process_scene</span><span class="p">(</span>
+    <span class="n">input_file</span><span class="o">=</span><span class="n">sar_file</span><span class="p">,</span>
+    <span class="n">output_dir</span><span class="o">=</span><span class="s1">&#39;ship_detection_output&#39;</span><span class="p">,</span>
+    <span class="n">detection_config</span><span class="o">=</span><span class="n">optimal_config</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Pipeline Results:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Detections found: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pipeline_results</span><span class="p">[</span><span class="s1">&#39;detections&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Output products: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">pipeline_results</span><span class="p">[</span><span class="s1">&#39;output_products&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="52-batch-processing-capability">5.2 Batch Processing Capability</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">batch_ship_detection</span><span class="p">(</span><span class="n">input_files</span><span class="p">,</span> <span class="n">pipeline</span><span class="p">,</span> <span class="n">output_base_dir</span><span class="o">=</span><span class="s1">&#39;batch_outputs&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process multiple SAR files for ship detection&quot;&quot;&quot;</span>
+
+    <span class="n">batch_results</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">input_file</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">input_files</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Processing file </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">input_files</span><span class="p">)</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">input_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Create individual output directory</span>
+            <span class="n">file_output_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_base_dir</span><span class="si">}</span><span class="s2">/scene_</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">&quot;</span>
+
+            <span class="c1"># Process scene</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">process_scene</span><span class="p">(</span>
+                <span class="n">input_file</span><span class="o">=</span><span class="n">input_file</span><span class="p">,</span>
+                <span class="n">output_dir</span><span class="o">=</span><span class="n">file_output_dir</span>
+            <span class="p">)</span>
+
+            <span class="n">batch_results</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s1">&#39;input_file&#39;</span><span class="p">:</span> <span class="n">input_file</span><span class="p">,</span>
+                <span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="s1">&#39;success&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;detection_count&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;detections&#39;</span><span class="p">]),</span>
+                <span class="s1">&#39;output_dir&#39;</span><span class="p">:</span> <span class="n">file_output_dir</span><span class="p">,</span>
+                <span class="s1">&#39;results&#39;</span><span class="p">:</span> <span class="n">results</span>
+            <span class="p">})</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error processing </span><span class="si">{</span><span class="n">input_file</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">batch_results</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s1">&#39;input_file&#39;</span><span class="p">:</span> <span class="n">input_file</span><span class="p">,</span>
+                <span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="s1">&#39;error&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="p">})</span>
+
+    <span class="c1"># Generate batch summary</span>
+    <span class="n">successful_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">batch_results</span> <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;success&#39;</span><span class="p">]</span>
+    <span class="n">total_detections</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;detection_count&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">successful_files</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Batch Processing Summary:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Files processed: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">input_files</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Successful: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">successful_files</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">input_files</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">successful_files</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total detections: </span><span class="si">{</span><span class="n">total_detections</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">batch_results</span>
+
+<span class="c1"># Example batch processing</span>
+<span class="c1"># input_files = [&#39;file1.zip&#39;, &#39;file2.zip&#39;, &#39;file3.zip&#39;]  # Your SAR files</span>
+<span class="c1"># batch_results = batch_ship_detection(input_files, pipeline)</span>
+</code></pre>
+<h2 id="step-6-advanced-applications-and-integration">Step 6: Advanced Applications and Integration</h2>
+<h3 id="61-multi-temporal-ship-tracking">6.1 Multi-temporal Ship Tracking</h3>
+<pre class="codehilite"><code><span class="k">class</span><span class="w"> </span><span class="nc">ShipTracker</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Track ships across multiple SAR acquisitions&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_distance</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">max_time_gap</span><span class="o">=</span><span class="mi">24</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_distance</span> <span class="o">=</span> <span class="n">max_distance</span>  <span class="c1"># pixels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_time_gap</span> <span class="o">=</span> <span class="n">max_time_gap</span>  <span class="c1"># hours</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tracks</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_detections</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">detections</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">scene_id</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add new detections and update tracks&quot;&quot;&quot;</span>
+
+        <span class="c1"># Convert detections to tracking format</span>
+        <span class="n">new_detections</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s1">&#39;position&#39;</span><span class="p">:</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;centroid&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;size&#39;</span><span class="p">:</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;intensity&#39;</span><span class="p">:</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;peak_intensity&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="n">timestamp</span><span class="p">,</span>
+                <span class="s1">&#39;scene_id&#39;</span><span class="p">:</span> <span class="n">scene_id</span><span class="p">,</span>
+                <span class="s1">&#39;detection_id&#39;</span><span class="p">:</span> <span class="n">i</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">detections</span><span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracks</span><span class="p">:</span>
+            <span class="c1"># Initialize tracks with first detections</span>
+            <span class="k">for</span> <span class="n">detection</span> <span class="ow">in</span> <span class="n">new_detections</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">tracks</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                    <span class="s1">&#39;track_id&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tracks</span><span class="p">),</span>
+                    <span class="s1">&#39;detections&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">detection</span><span class="p">],</span>
+                    <span class="s1">&#39;start_time&#39;</span><span class="p">:</span> <span class="n">timestamp</span><span class="p">,</span>
+                    <span class="s1">&#39;last_time&#39;</span><span class="p">:</span> <span class="n">timestamp</span>
+                <span class="p">})</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Match detections to existing tracks</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_tracks</span><span class="p">(</span><span class="n">new_detections</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_update_tracks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_detections</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update existing tracks with new detections&quot;&quot;&quot;</span>
+
+        <span class="c1"># Calculate distances between new detections and track endpoints</span>
+        <span class="n">unmatched_detections</span> <span class="o">=</span> <span class="n">new_detections</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">track</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracks</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">track</span><span class="p">[</span><span class="s1">&#39;detections&#39;</span><span class="p">]:</span>
+                <span class="k">continue</span>
+
+            <span class="n">last_detection</span> <span class="o">=</span> <span class="n">track</span><span class="p">[</span><span class="s1">&#39;detections&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">time_gap</span> <span class="o">=</span> <span class="p">(</span><span class="n">timestamp</span> <span class="o">-</span> <span class="n">last_detection</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">/</span> <span class="mi">3600</span>
+
+            <span class="k">if</span> <span class="n">time_gap</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_time_gap</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Find closest detection</span>
+            <span class="n">best_match</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">best_distance</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">detection</span> <span class="ow">in</span> <span class="n">unmatched_detections</span><span class="p">:</span>
+                <span class="n">distance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">detection</span><span class="p">[</span><span class="s1">&#39;position&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">last_detection</span><span class="p">[</span><span class="s1">&#39;position&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span>
+                    <span class="p">(</span><span class="n">detection</span><span class="p">[</span><span class="s1">&#39;position&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">last_detection</span><span class="p">[</span><span class="s1">&#39;position&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span>
+                <span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">distance</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_distance</span> <span class="ow">and</span> <span class="n">distance</span> <span class="o">&lt;</span> <span class="n">best_distance</span><span class="p">:</span>
+                    <span class="n">best_distance</span> <span class="o">=</span> <span class="n">distance</span>
+                    <span class="n">best_match</span> <span class="o">=</span> <span class="n">detection</span>
+
+            <span class="c1"># Update track if match found</span>
+            <span class="k">if</span> <span class="n">best_match</span><span class="p">:</span>
+                <span class="n">track</span><span class="p">[</span><span class="s1">&#39;detections&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_match</span><span class="p">)</span>
+                <span class="n">track</span><span class="p">[</span><span class="s1">&#39;last_time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">timestamp</span>
+                <span class="n">unmatched_detections</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">best_match</span><span class="p">)</span>
+
+        <span class="c1"># Create new tracks for unmatched detections</span>
+        <span class="k">for</span> <span class="n">detection</span> <span class="ow">in</span> <span class="n">unmatched_detections</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tracks</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s1">&#39;track_id&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tracks</span><span class="p">),</span>
+                <span class="s1">&#39;detections&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">detection</span><span class="p">],</span>
+                <span class="s1">&#39;start_time&#39;</span><span class="p">:</span> <span class="n">timestamp</span><span class="p">,</span>
+                <span class="s1">&#39;last_time&#39;</span><span class="p">:</span> <span class="n">timestamp</span>
+            <span class="p">})</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_active_tracks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">min_length</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get tracks with minimum number of detections&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">track</span> <span class="k">for</span> <span class="n">track</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracks</span> 
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">track</span><span class="p">[</span><span class="s1">&#39;detections&#39;</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="n">min_length</span><span class="p">]</span>
+
+<span class="c1"># Example multi-temporal tracking</span>
+<span class="c1"># tracker = ShipTracker()</span>
+<span class="c1"># </span>
+<span class="c1"># # Add detections from multiple scenes</span>
+<span class="c1"># for scene_data in time_series_data:</span>
+<span class="c1">#     tracker.add_detections(</span>
+<span class="c1">#         detections=scene_data[&#39;detections&#39;],</span>
+<span class="c1">#         timestamp=scene_data[&#39;timestamp&#39;],</span>
+<span class="c1">#         scene_id=scene_data[&#39;scene_id&#39;]</span>
+<span class="c1">#     )</span>
+<span class="c1"># </span>
+<span class="c1"># active_tracks = tracker.get_active_tracks(min_length=3)</span>
+<span class="c1"># print(f&quot;Found {len(active_tracks)} ship tracks&quot;)</span>
+</code></pre>
+<h2 id="key-takeaways">Key Takeaways</h2>
+<ol>
+<li>
+<p><strong>CFAR Algorithms</strong>: Different CFAR variants (CA, GO, SO, OS) have different strengths for various clutter conditions</p>
+</li>
+<li>
+<p><strong>Parameter Optimization</strong>: Automatic threshold optimization helps achieve target false alarm rates</p>
+</li>
+<li>
+<p><strong>Performance Validation</strong>: Systematic validation against ground truth is essential for operational systems</p>
+</li>
+<li>
+<p><strong>Pipeline Integration</strong>: Automated pipelines enable operational ship detection workflows</p>
+</li>
+<li>
+<p><strong>Multi-temporal Analysis</strong>: Ship tracking across multiple acquisitions provides additional information</p>
+</li>
+</ol>
+<h2 id="next-steps">Next Steps</h2>
+<ol>
+<li><strong>Experiment with different CFAR algorithms</strong> for your specific data and conditions</li>
+<li><strong>Validate results</strong> with AIS data or other ground truth sources</li>
+<li><strong>Optimize parameters</strong> for your operational requirements</li>
+<li><strong>Integrate with other processing workflows</strong> for comprehensive maritime monitoring</li>
+</ol>
+<h2 id="additional-resources">Additional Resources</h2>
+<ul>
+<li>CFAR detection theory and implementation</li>
+<li>Ship detection in SAR imagery best practices</li>
+<li>Maritime surveillance applications</li>
+<li>AIS data integration techniques</li>
+</ul>
+<hr>
+<p><em>This tutorial demonstrates advanced ship detection capabilities in sarpyx. The techniques shown here form the foundation for operational maritime monitoring systems using SAR data.</em></p>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tutorial 3: Visualization and Quality Assessment – sarpyx Docs</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../index.html"><img class="logo" src="../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../user_guide/index.html">Overview</a>
+<a href="../user_guide/installation.html">Installation</a>
+<a href="../user_guide/getting_started.html">Getting Started</a>
+<a href="../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../user_guide/data_formats.html">Data Formats</a>
+<a href="../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../user_guide/science_applications.html">Science Applications</a>
+<a href="../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../tutorials/index.html">Overview</a>
+<a href="../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../tutorials/03_visualization_quality.html" class="active">03 – Visualisation</a>
+<a href="../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../api/index.html">Overview</a>
+<a href="../api/snapflow/index.html">Snapflow</a>
+<a href="../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../api/science/index.html">Science</a>
+<a href="../api/sla/index.html">SLA</a>
+<a href="../api/processor/index.html">Processor</a>
+<a href="../api/utils/index.html">Utils</a>
+<a href="../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../developer_guide/architecture.html">Architecture</a>
+<a href="../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="tutorial-3-visualization-and-quality-assessment">Tutorial 3: Visualization and Quality Assessment</h1>
+<p>Learn to effectively visualize SLA results and assess processing quality using sarpyx&rsquo;s built-in tools.</p>
+<h2 id="overview">Overview</h2>
+<p>This tutorial covers:
+- Visualization techniques for SLA decomposition results
+- Quality metrics and assessment methods<br>
+- Interactive plotting and analysis
+- Histogram analysis and statistical visualization
+- Multi-band visualization strategies</p>
+<p><strong>Duration</strong>: 25 minutes<br>
+<strong>Prerequisites</strong>: Tutorial 1 completed<br>
+<strong>Data</strong>: Results from Tutorial 1</p>
+<h2 id="1-setting-up-visualization-environment">1. Setting Up Visualization Environment</h2>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.sla</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubLookAnalysis</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.viz</span><span class="w"> </span><span class="kn">import</span> <span class="n">show_image</span><span class="p">,</span> <span class="n">show_histogram</span><span class="p">,</span> <span class="n">image_histogram_equalization</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_matlab_mat</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">seaborn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sns</span>
+
+<span class="c1"># Configure matplotlib for better plots</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;seaborn-v0_8&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;figure.figsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;font.size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="c1"># Load data from Tutorial 1 (adjust path as needed)</span>
+<span class="n">data_path</span> <span class="o">=</span> <span class="s2">&quot;path/to/your/sentinel1_data.dim&quot;</span>
+<span class="n">output_dir</span> <span class="o">=</span> <span class="s2">&quot;tutorial3_outputs&quot;</span>
+</code></pre>
+<h2 id="2-basic-sla-visualization">2. Basic SLA Visualization</h2>
+<h3 id="21-load-and-process-data">2.1 Load and Process Data</h3>
+<pre class="codehilite"><code><span class="c1"># Initialize SLA processor</span>
+<span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">()</span>
+
+<span class="c1"># Load and process data</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">band_name</span><span class="o">=</span><span class="s1">&#39;Sigma0_VV_slc&#39;</span><span class="p">)</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">set_sublook_parameters</span><span class="p">(</span><span class="n">num_looks</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">overlap_factor</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">decompose</span><span class="p">()</span>
+
+<span class="c1"># Get decomposition results</span>
+<span class="n">sublooks</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">get_sublooks</span><span class="p">()</span>
+<span class="n">master_image</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">get_master_image</span><span class="p">()</span>
+<span class="n">coherence</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">get_coherence_matrix</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of sub-looks: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sublooks</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Master image shape: </span><span class="si">{</span><span class="n">master_image</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Coherence matrix shape: </span><span class="si">{</span><span class="n">coherence</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="22-visualize-sub-look-images">2.2 Visualize Sub-look Images</h3>
+<pre class="codehilite"><code><span class="c1"># Display individual sub-looks</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+<span class="n">axes</span> <span class="o">=</span> <span class="n">axes</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">sublook</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="p">,</span> <span class="n">sublooks</span><span class="p">[:</span><span class="mi">4</span><span class="p">])):</span>
+    <span class="c1"># Convert to dB scale for visualization</span>
+    <span class="n">sublook_db</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sublook</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+
+    <span class="n">im</span> <span class="o">=</span> <span class="n">show_image</span><span class="p">(</span><span class="n">sublook_db</span><span class="p">,</span> 
+                   <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Sub-look </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1"> (dB)&#39;</span><span class="p">,</span>
+                   <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span>
+                   <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span>
+                   <span class="n">vmin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">sublook_db</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                   <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">sublook_db</span><span class="p">,</span> <span class="mi">95</span><span class="p">))</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/sublooks_visualization.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h3 id="23-master-image-visualization">2.3 Master Image Visualization</h3>
+<pre class="codehilite"><code><span class="c1"># Visualize master image with different enhancement techniques</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+<span class="c1"># Original master image</span>
+<span class="n">master_db</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">master_image</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+<span class="n">im1</span> <span class="o">=</span> <span class="n">show_image</span><span class="p">(</span><span class="n">master_db</span><span class="p">,</span> 
+                <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Master Image (dB)&#39;</span><span class="p">,</span>
+                <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im1</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="c1"># Histogram equalized version</span>
+<span class="n">master_eq</span> <span class="o">=</span> <span class="n">image_histogram_equalization</span><span class="p">(</span><span class="n">master_db</span><span class="p">)</span>
+<span class="n">im2</span> <span class="o">=</span> <span class="n">show_image</span><span class="p">(</span><span class="n">master_eq</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Histogram Equalized&#39;</span><span class="p">,</span>
+                <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> 
+                <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+<span class="c1"># Adaptive contrast enhancement</span>
+<span class="n">master_adaptive</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">((</span><span class="n">master_db</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">master_db</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span> <span class="o">/</span> 
+                         <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">master_db</span><span class="p">,</span> <span class="mi">98</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">master_db</span><span class="p">,</span> <span class="mi">2</span><span class="p">)),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">im3</span> <span class="o">=</span> <span class="n">show_image</span><span class="p">(</span><span class="n">master_adaptive</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Adaptive Contrast&#39;</span><span class="p">,</span>
+                <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im3</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/master_image_enhancements.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h2 id="3-statistical-analysis-and-quality-assessment">3. Statistical Analysis and Quality Assessment</h2>
+<h3 id="31-intensity-distribution-analysis">3.1 Intensity Distribution Analysis</h3>
+<pre class="codehilite"><code><span class="c1"># Analyze intensity distributions</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+
+<span class="c1"># Histogram of master image</span>
+<span class="n">show_histogram</span><span class="p">(</span><span class="n">master_db</span><span class="p">,</span> 
+              <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Master Image Intensity Distribution&#39;</span><span class="p">,</span>
+              <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span>
+              <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+              <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Intensity (dB)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Frequency&#39;</span><span class="p">)</span>
+
+<span class="c1"># Compare sub-look distributions</span>
+<span class="n">sublook_intensities</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sublook</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sublooks</span><span class="p">):</span>
+    <span class="n">sublook_db</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sublook</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+    <span class="n">sublook_intensities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sublook_db</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+
+    <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>  <span class="c1"># Plot first 4 sub-looks</span>
+        <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">sublook_db</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> 
+                      <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Sub-look </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Intensity (dB)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Density&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Sub-look Intensity Distributions&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+<span class="c1"># Statistical comparison</span>
+<span class="n">stats_data</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">intensities</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sublook_intensities</span><span class="p">):</span>
+    <span class="n">stats_data</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+        <span class="s1">&#39;Sub-look&#39;</span><span class="p">:</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span>
+        <span class="s1">&#39;Mean&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">intensities</span><span class="p">),</span>
+        <span class="s1">&#39;Std&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">intensities</span><span class="p">),</span>
+        <span class="s1">&#39;Median&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">intensities</span><span class="p">),</span>
+        <span class="s1">&#39;IQR&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">intensities</span><span class="p">,</span> <span class="mi">75</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">intensities</span><span class="p">,</span> <span class="mi">25</span><span class="p">)</span>
+    <span class="p">})</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="n">stats_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">stats_data</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Statistical Summary of Sub-looks:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">stats_df</span><span class="p">)</span>
+
+<span class="c1"># Box plot comparison</span>
+<span class="n">bp</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">boxplot</span><span class="p">(</span><span class="n">sublook_intensities</span><span class="p">[:</span><span class="mi">8</span><span class="p">],</span> <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;SL</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">)])</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Sub-look&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Intensity (dB)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Sub-look Intensity Box Plots&#39;</span><span class="p">)</span>
+
+<span class="c1"># Coefficient of variation analysis</span>
+<span class="n">cv_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">intensities</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">intensities</span><span class="p">)</span> <span class="k">for</span> <span class="n">intensities</span> <span class="ow">in</span> <span class="n">sublook_intensities</span><span class="p">]</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cv_values</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="n">cv_values</span><span class="p">,</span> <span class="s1">&#39;o-&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Sub-look Number&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Coefficient of Variation&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Sub-look Variability Assessment&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/statistical_analysis.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h3 id="32-coherence-analysis">3.2 Coherence Analysis</h3>
+<pre class="codehilite"><code><span class="c1"># Analyze coherence between sub-looks</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+
+<span class="c1"># Coherence magnitude visualization</span>
+<span class="n">coherence_mag</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">coherence</span><span class="p">)</span>
+<span class="n">im1</span> <span class="o">=</span> <span class="n">show_image</span><span class="p">(</span><span class="n">coherence_mag</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Inter Sub-look Coherence Magnitude&#39;</span><span class="p">,</span>
+                <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;hot&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im1</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="c1"># Coherence phase visualization  </span>
+<span class="n">coherence_phase</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">coherence</span><span class="p">)</span>
+<span class="n">im2</span> <span class="o">=</span> <span class="n">show_image</span><span class="p">(</span><span class="n">coherence_phase</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Inter Sub-look Coherence Phase&#39;</span><span class="p">,</span>
+                <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;hsv&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+
+<span class="c1"># Coherence statistics</span>
+<span class="n">mean_coherence</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">coherence_mag</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mean_coherence</span><span class="p">)),</span> <span class="n">mean_coherence</span><span class="p">,</span> <span class="s1">&#39;o-&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Sub-look Pair Index&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Mean Coherence&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Average Coherence Between Sub-looks&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="c1"># Coherence histogram</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">coherence_mag</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Coherence Magnitude&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Density&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Coherence Distribution&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">coherence_mag</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> 
+                  <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Mean: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">coherence_mag</span><span class="p">)</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/coherence_analysis.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean coherence: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">coherence_mag</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Coherence std: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">coherence_mag</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Min coherence: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">coherence_mag</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Max coherence: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">coherence_mag</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="4-quality-metrics-and-assessment">4. Quality Metrics and Assessment</h2>
+<h3 id="41-signal-to-noise-ratio-assessment">4.1 Signal-to-Noise Ratio Assessment</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">calculate_snr</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">noise_percentile</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate SNR using noise floor estimation&quot;&quot;&quot;</span>
+    <span class="n">signal_power</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">image</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">noise_floor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">image</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">noise_percentile</span><span class="p">)</span>
+    <span class="n">snr_db</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">signal_power</span> <span class="o">/</span> <span class="n">noise_floor</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">snr_db</span>
+
+<span class="c1"># Calculate SNR for each sub-look</span>
+<span class="n">snr_values</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sublook</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sublooks</span><span class="p">):</span>
+    <span class="n">snr</span> <span class="o">=</span> <span class="n">calculate_snr</span><span class="p">(</span><span class="n">sublook</span><span class="p">)</span>
+    <span class="n">snr_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">snr</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub-look </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2"> SNR: </span><span class="si">{</span><span class="n">snr</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+
+<span class="c1"># Plot SNR comparison</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">snr_values</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="n">snr_values</span><span class="p">,</span> <span class="s1">&#39;o-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Sub-look Number&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;SNR (dB)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Signal-to-Noise Ratio per Sub-look&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">snr_values</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> 
+           <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Mean SNR: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">snr_values</span><span class="p">)</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> dB&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/snr_analysis.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h3 id="42-speckle-reduction-assessment">4.2 Speckle Reduction Assessment</h3>
+<pre class="codehilite"><code><span class="c1"># Compare speckle characteristics</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">speckle_index</span><span class="p">(</span><span class="n">image</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate speckle index (std/mean)&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">image</span><span class="p">))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">image</span><span class="p">))</span>
+
+<span class="c1"># Calculate speckle indices</span>
+<span class="n">original_speckle</span> <span class="o">=</span> <span class="n">speckle_index</span><span class="p">(</span><span class="n">master_image</span><span class="p">)</span>
+<span class="n">sublook_speckles</span> <span class="o">=</span> <span class="p">[</span><span class="n">speckle_index</span><span class="p">(</span><span class="n">sl</span><span class="p">)</span> <span class="k">for</span> <span class="n">sl</span> <span class="ow">in</span> <span class="n">sublooks</span><span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Original image speckle index: </span><span class="si">{</span><span class="n">original_speckle</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Average sub-look speckle index: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">sublook_speckles</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Speckle reduction factor: </span><span class="si">{</span><span class="n">original_speckle</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">sublook_speckles</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Visualize speckle reduction</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+<span class="c1"># Plot speckle indices</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">([</span><span class="s1">&#39;Original&#39;</span><span class="p">,</span> <span class="s1">&#39;Sub-looks Mean&#39;</span><span class="p">],</span> 
+           <span class="p">[</span><span class="n">original_speckle</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">sublook_speckles</span><span class="p">)],</span>
+           <span class="n">color</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="s1">&#39;orange&#39;</span><span class="p">],</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Speckle Index&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Speckle Reduction Assessment&#39;</span><span class="p">)</span>
+
+<span class="c1"># Plot individual sub-look speckle indices</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sublook_speckles</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="n">sublook_speckles</span><span class="p">,</span> <span class="s1">&#39;o-&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">original_speckle</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> 
+               <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Original Image&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Sub-look Number&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Speckle Index&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Sub-look Speckle Characteristics&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/speckle_analysis.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h2 id="5-interactive-analysis-and-roi-selection">5. Interactive Analysis and ROI Selection</h2>
+<h3 id="51-region-of-interest-analysis">5.1 Region of Interest Analysis</h3>
+<pre class="codehilite"><code><span class="c1"># Define ROI coordinates (adjust based on your data)</span>
+<span class="n">roi_coords</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;water&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">250</span><span class="p">],</span>    <span class="c1"># [x1, x2, y1, y2]</span>
+    <span class="s1">&#39;land&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">300</span><span class="p">,</span> <span class="mi">400</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">],</span>
+    <span class="s1">&#39;urban&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">150</span><span class="p">,</span> <span class="mi">250</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="mi">400</span><span class="p">]</span>
+<span class="p">}</span>
+
+<span class="c1"># Analyze each ROI</span>
+<span class="n">roi_stats</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="k">for</span> <span class="n">roi_name</span><span class="p">,</span> <span class="n">coords</span> <span class="ow">in</span> <span class="n">roi_coords</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">coords</span>
+
+    <span class="c1"># Extract ROI from master image</span>
+    <span class="n">roi_master</span> <span class="o">=</span> <span class="n">master_image</span><span class="p">[</span><span class="n">y1</span><span class="p">:</span><span class="n">y2</span><span class="p">,</span> <span class="n">x1</span><span class="p">:</span><span class="n">x2</span><span class="p">]</span>
+
+    <span class="c1"># Extract ROI from each sub-look</span>
+    <span class="n">roi_sublooks</span> <span class="o">=</span> <span class="p">[</span><span class="n">sl</span><span class="p">[</span><span class="n">y1</span><span class="p">:</span><span class="n">y2</span><span class="p">,</span> <span class="n">x1</span><span class="p">:</span><span class="n">x2</span><span class="p">]</span> <span class="k">for</span> <span class="n">sl</span> <span class="ow">in</span> <span class="n">sublooks</span><span class="p">]</span>
+
+    <span class="c1"># Calculate statistics</span>
+    <span class="n">roi_stats</span><span class="p">[</span><span class="n">roi_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;master_mean&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">roi_master</span><span class="p">)),</span>
+        <span class="s1">&#39;master_std&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">roi_master</span><span class="p">)),</span>
+        <span class="s1">&#39;sublook_means&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sl</span><span class="p">))</span> <span class="k">for</span> <span class="n">sl</span> <span class="ow">in</span> <span class="n">roi_sublooks</span><span class="p">],</span>
+        <span class="s1">&#39;sublook_stds&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sl</span><span class="p">))</span> <span class="k">for</span> <span class="n">sl</span> <span class="ow">in</span> <span class="n">roi_sublooks</span><span class="p">],</span>
+        <span class="s1">&#39;coherence_roi&#39;</span><span class="p">:</span> <span class="n">coherence</span><span class="p">[</span><span class="n">y1</span><span class="p">:</span><span class="n">y2</span><span class="p">,</span> <span class="n">x1</span><span class="p">:</span><span class="n">x2</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="p">}</span>
+
+<span class="c1"># Visualize ROI analysis</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+
+<span class="c1"># Plot ROI locations on master image</span>
+<span class="n">master_display</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">master_image</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+<span class="n">im</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">master_display</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> 
+                     <span class="n">vmin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">master_display</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                     <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">master_display</span><span class="p">,</span> <span class="mi">95</span><span class="p">))</span>
+
+<span class="c1"># Mark ROIs</span>
+<span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="s1">&#39;blue&#39;</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">roi_name</span><span class="p">,</span> <span class="n">coords</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">roi_coords</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+    <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">coords</span>
+    <span class="n">rect</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">Rectangle</span><span class="p">((</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">),</span> <span class="n">x2</span><span class="o">-</span><span class="n">x1</span><span class="p">,</span> <span class="n">y2</span><span class="o">-</span><span class="n">y1</span><span class="p">,</span> 
+                        <span class="n">fill</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">rect</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="n">roi_name</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;ROI Locations&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="c1"># Compare ROI statistics</span>
+<span class="n">roi_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">roi_stats</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<span class="n">master_means</span> <span class="o">=</span> <span class="p">[</span><span class="n">roi_stats</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;master_mean&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">roi_names</span><span class="p">]</span>
+<span class="n">sublook_means</span> <span class="o">=</span> <span class="p">[[</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">roi_stats</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;sublook_means&#39;</span><span class="p">])]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">roi_names</span><span class="p">]</span>
+
+<span class="n">x_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">roi_names</span><span class="p">))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">x_pos</span> <span class="o">-</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">master_means</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Master&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">x_pos</span> <span class="o">+</span> <span class="mf">0.2</span><span class="p">,</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">sublook_means</span><span class="p">],</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Sub-looks&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;ROI&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Mean Intensity&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;ROI Intensity Comparison&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">x_pos</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">roi_names</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+<span class="c1"># ROI coherence analysis</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">roi_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">roi_names</span><span class="p">):</span>
+    <span class="n">coherence_roi</span> <span class="o">=</span> <span class="n">roi_stats</span><span class="p">[</span><span class="n">roi_name</span><span class="p">][</span><span class="s1">&#39;coherence_roi&#39;</span><span class="p">]</span>
+    <span class="n">mean_coherence_roi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">coherence_roi</span><span class="p">))</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">mean_coherence_roi</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;ROI&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Mean Coherence&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;ROI Coherence Comparison&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">roi_names</span><span class="p">)))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">roi_names</span><span class="p">)</span>
+
+<span class="c1"># Variability analysis</span>
+<span class="n">variability</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">roi_name</span> <span class="ow">in</span> <span class="n">roi_names</span><span class="p">:</span>
+    <span class="n">sublook_means</span> <span class="o">=</span> <span class="n">roi_stats</span><span class="p">[</span><span class="n">roi_name</span><span class="p">][</span><span class="s1">&#39;sublook_means&#39;</span><span class="p">]</span>
+    <span class="n">cv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">sublook_means</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">sublook_means</span><span class="p">)</span>
+    <span class="n">variability</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cv</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">roi_names</span><span class="p">)),</span> <span class="n">variability</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;ROI&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Coefficient of Variation&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Sub-look Variability by ROI&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">roi_names</span><span class="p">)))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">roi_names</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/roi_analysis.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># Print ROI statistics</span>
+<span class="k">for</span> <span class="n">roi_name</span><span class="p">,</span> <span class="n">stats</span> <span class="ow">in</span> <span class="n">roi_stats</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">roi_name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> ROI Statistics:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Master mean: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;master_mean&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Sub-look mean CV: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sublook_means&#39;</span><span class="p">])</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sublook_means&#39;</span><span class="p">])</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Mean coherence: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;coherence_roi&#39;</span><span class="p">]))</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="6-quality-report-generation">6. Quality Report Generation</h2>
+<h3 id="61-automated-quality-assessment">6.1 Automated Quality Assessment</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">generate_quality_report</span><span class="p">(</span><span class="n">sla_processor</span><span class="p">,</span> <span class="n">output_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate comprehensive quality assessment report&quot;&quot;&quot;</span>
+
+    <span class="n">report</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;processing_parameters&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;num_looks&#39;</span><span class="p">:</span> <span class="n">sla_processor</span><span class="o">.</span><span class="n">num_looks</span><span class="p">,</span>
+            <span class="s1">&#39;overlap_factor&#39;</span><span class="p">:</span> <span class="n">sla_processor</span><span class="o">.</span><span class="n">overlap_factor</span><span class="p">,</span>
+            <span class="s1">&#39;window_size&#39;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sla_processor</span><span class="p">,</span> <span class="s1">&#39;window_size&#39;</span><span class="p">,</span> <span class="s1">&#39;N/A&#39;</span><span class="p">)</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;data_statistics&#39;</span><span class="p">:</span> <span class="p">{},</span>
+        <span class="s1">&#39;quality_metrics&#39;</span><span class="p">:</span> <span class="p">{},</span>
+        <span class="s1">&#39;recommendations&#39;</span><span class="p">:</span> <span class="p">[]</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Get processed data</span>
+    <span class="n">sublooks</span> <span class="o">=</span> <span class="n">sla_processor</span><span class="o">.</span><span class="n">get_sublooks</span><span class="p">()</span>
+    <span class="n">master</span> <span class="o">=</span> <span class="n">sla_processor</span><span class="o">.</span><span class="n">get_master_image</span><span class="p">()</span>
+    <span class="n">coherence</span> <span class="o">=</span> <span class="n">sla_processor</span><span class="o">.</span><span class="n">get_coherence_matrix</span><span class="p">()</span>
+
+    <span class="c1"># Basic statistics</span>
+    <span class="n">report</span><span class="p">[</span><span class="s1">&#39;data_statistics&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;num_sublooks&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">sublooks</span><span class="p">),</span>
+        <span class="s1">&#39;image_dimensions&#39;</span><span class="p">:</span> <span class="n">master</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+        <span class="s1">&#39;master_intensity_range&#39;</span><span class="p">:</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">master</span><span class="p">))),</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">master</span><span class="p">)))],</span>
+        <span class="s1">&#39;master_mean_intensity&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">master</span><span class="p">))),</span>
+        <span class="s1">&#39;coherence_range&#39;</span><span class="p">:</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">coherence</span><span class="p">))),</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">coherence</span><span class="p">)))]</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Quality metrics</span>
+    <span class="n">snr_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">calculate_snr</span><span class="p">(</span><span class="n">sl</span><span class="p">)</span> <span class="k">for</span> <span class="n">sl</span> <span class="ow">in</span> <span class="n">sublooks</span><span class="p">]</span>
+    <span class="n">speckle_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">speckle_index</span><span class="p">(</span><span class="n">sl</span><span class="p">)</span> <span class="k">for</span> <span class="n">sl</span> <span class="ow">in</span> <span class="n">sublooks</span><span class="p">]</span>
+
+    <span class="n">report</span><span class="p">[</span><span class="s1">&#39;quality_metrics&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;mean_snr_db&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">snr_values</span><span class="p">)),</span>
+        <span class="s1">&#39;snr_std_db&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">snr_values</span><span class="p">)),</span>
+        <span class="s1">&#39;mean_speckle_index&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">speckle_indices</span><span class="p">)),</span>
+        <span class="s1">&#39;speckle_reduction_factor&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">speckle_index</span><span class="p">(</span><span class="n">master</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">speckle_indices</span><span class="p">)),</span>
+        <span class="s1">&#39;mean_coherence&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">coherence</span><span class="p">))),</span>
+        <span class="s1">&#39;coherence_std&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">coherence</span><span class="p">)))</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Generate recommendations</span>
+    <span class="k">if</span> <span class="n">report</span><span class="p">[</span><span class="s1">&#39;quality_metrics&#39;</span><span class="p">][</span><span class="s1">&#39;mean_snr_db&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
+        <span class="n">report</span><span class="p">[</span><span class="s1">&#39;recommendations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Low SNR detected. Consider increasing number of looks.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">report</span><span class="p">[</span><span class="s1">&#39;quality_metrics&#39;</span><span class="p">][</span><span class="s1">&#39;mean_coherence&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">0.3</span><span class="p">:</span>
+        <span class="n">report</span><span class="p">[</span><span class="s1">&#39;recommendations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Low coherence. Check data quality and processing parameters.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">report</span><span class="p">[</span><span class="s1">&#39;quality_metrics&#39;</span><span class="p">][</span><span class="s1">&#39;speckle_reduction_factor&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1.5</span><span class="p">:</span>
+        <span class="n">report</span><span class="p">[</span><span class="s1">&#39;recommendations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Limited speckle reduction. Consider adjusting decomposition parameters.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">report</span><span class="p">[</span><span class="s1">&#39;recommendations&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">report</span><span class="p">[</span><span class="s1">&#39;recommendations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Processing quality appears good. No major issues detected.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Save report</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_path</span><span class="si">}</span><span class="s2">/quality_report.json&quot;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">report</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">report</span>
+
+<span class="c1"># Generate quality report</span>
+<span class="n">quality_report</span> <span class="o">=</span> <span class="n">generate_quality_report</span><span class="p">(</span><span class="n">sla</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=== QUALITY ASSESSMENT REPORT ===&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of sub-looks: </span><span class="si">{</span><span class="n">quality_report</span><span class="p">[</span><span class="s1">&#39;data_statistics&#39;</span><span class="p">][</span><span class="s1">&#39;num_sublooks&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Image dimensions: </span><span class="si">{</span><span class="n">quality_report</span><span class="p">[</span><span class="s1">&#39;data_statistics&#39;</span><span class="p">][</span><span class="s1">&#39;image_dimensions&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean SNR: </span><span class="si">{</span><span class="n">quality_report</span><span class="p">[</span><span class="s1">&#39;quality_metrics&#39;</span><span class="p">][</span><span class="s1">&#39;mean_snr_db&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean coherence: </span><span class="si">{</span><span class="n">quality_report</span><span class="p">[</span><span class="s1">&#39;quality_metrics&#39;</span><span class="p">][</span><span class="s1">&#39;mean_coherence&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Speckle reduction factor: </span><span class="si">{</span><span class="n">quality_report</span><span class="p">[</span><span class="s1">&#39;quality_metrics&#39;</span><span class="p">][</span><span class="s1">&#39;speckle_reduction_factor&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Recommendations:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">quality_report</span><span class="p">[</span><span class="s1">&#39;recommendations&#39;</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- </span><span class="si">{</span><span class="n">rec</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="7-export-results-for-further-analysis">7. Export Results for Further Analysis</h2>
+<pre class="codehilite"><code><span class="c1"># Save processed data in multiple formats</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Save as MATLAB format</span>
+<span class="n">save_matlab_mat</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/sla_results.mat&quot;</span><span class="p">,</span> <span class="p">{</span>
+    <span class="s1">&#39;sublooks&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sublooks</span><span class="p">),</span>
+    <span class="s1">&#39;master_image&#39;</span><span class="p">:</span> <span class="n">master_image</span><span class="p">,</span>
+    <span class="s1">&#39;coherence&#39;</span><span class="p">:</span> <span class="n">coherence</span><span class="p">,</span>
+    <span class="s1">&#39;quality_metrics&#39;</span><span class="p">:</span> <span class="n">quality_report</span><span class="p">[</span><span class="s1">&#39;quality_metrics&#39;</span><span class="p">]</span>
+<span class="p">})</span>
+
+<span class="c1"># Save individual sub-looks as separate files</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sublook</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sublooks</span><span class="p">):</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/sublook_</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">.npy&quot;</span><span class="p">,</span> <span class="n">sublook</span><span class="p">)</span>
+
+<span class="c1"># Save visualization images</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Results saved to: </span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Generated files:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- sublooks_visualization.png&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- master_image_enhancements.png&quot;</span><span class="p">)</span> 
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- statistical_analysis.png&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- coherence_analysis.png&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- snr_analysis.png&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- speckle_analysis.png&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- roi_analysis.png&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- quality_report.json&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- sla_results.mat&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- sublook_*.npy files&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="summary">Summary</h2>
+<p>In this tutorial, you learned:</p>
+<ol>
+<li><strong>Basic visualization</strong> of SLA decomposition results</li>
+<li><strong>Statistical analysis</strong> techniques for quality assessment</li>
+<li><strong>Coherence analysis</strong> between sub-looks</li>
+<li><strong>Quality metrics</strong> calculation (SNR, speckle reduction)</li>
+<li><strong>ROI-based analysis</strong> for targeted assessment</li>
+<li><strong>Automated quality reporting</strong> for consistent evaluation</li>
+</ol>
+<h2 id="next-steps">Next Steps</h2>
+<ul>
+<li><strong>Tutorial 4</strong>: Multi-temporal analysis for change detection</li>
+<li><strong>Tutorial 5</strong>: Polarimetric analysis with dual-pol data</li>
+<li>Experiment with different visualization parameters</li>
+<li>Apply these techniques to your own SAR datasets</li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<p><strong>Common Issues:</strong></p>
+<ol>
+<li><strong>Memory errors with large datasets</strong>: Process smaller tiles or reduce number of sub-looks</li>
+<li><strong>Poor visualization contrast</strong>: Adjust percentile ranges or use histogram equalization</li>
+<li><strong>Low coherence values</strong>: Check data quality and processing parameters</li>
+<li><strong>Inconsistent ROI results</strong>: Ensure ROI coordinates are within image bounds</li>
+</ol>
+<p>For more help, see the <a href="../user_guide/troubleshooting.html">Troubleshooting Guide</a>.</p>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

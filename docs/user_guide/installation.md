@@ -1,10 +1,10 @@
 # Installation Guide
 
-This guide will help you install SARPyX and its dependencies on your system.
+This guide will help you install sarpyx and its dependencies on your system.
 
 ## Prerequisites
 
-Before installing SARPyX, ensure you have:
+Before installing sarpyx, ensure you have:
 
 - Python 3.11 or higher
 - pip package manager
@@ -25,7 +25,7 @@ Before installing SARPyX, ensure you have:
 
 ### 1. Using pip (Recommended for Users)
 
-Once SARPyX is published to PyPI, you can install it using:
+Once sarpyx is published to PyPI, you can install it using:
 
 ```bash
 pip install sarpyx
@@ -79,7 +79,7 @@ To verify your installation works correctly:
 
 ```python
 import sarpyx
-print(f"SARPyX version: {sarpyx.__version__}")
+print(f"sarpyx version: {sarpyx.__version__}")
 
 # Test basic functionality
 from sarpyx.utils import show_image
@@ -167,7 +167,7 @@ After successful installation:
 
 ### Virtual Environment (Recommended)
 
-Create an isolated environment for SARPyX:
+Create an isolated environment for sarpyx:
 
 ```bash
 # Using venv

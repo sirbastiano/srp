@@ -1,20 +1,39 @@
 # Utils Module API
 
-The `sarpyx.utils` module provides essential utility functions for data visualization, input/output operations, and general helper functions that support the entire SARPyX ecosystem.
+The `sarpyx.utils` module provides essential utility functions for data visualization, input/output operations, geometry and grid handling, DEM management, and general helper functions that support the entire sarpyx ecosystem.
 
 ## Overview
 
 The utils module includes:
 - **Visualization functions** for displaying SAR data and analysis results
 - **I/O utilities** for data format conversion and file management  
-- **Helper functions** for common operations across SARPyX modules
+- **DEM utilities** for downloading Copernicus DEM tiles by WKT geometry
+- **Geometry utilities** for WKT parsing, grid navigation, and spatial queries
+- **WKT extraction** from Sentinel-1 and TerraSAR-X products
+- **NISAR utilities** for reading and cutting NISAR products
+- **Execution helpers** for async and parallel processing
 
 ## Module Structure
 
 ```
 sarpyx.utils/
-├── viz.py         # Visualization and plotting functions
-└── io.py          # Input/output and file management utilities
+├── viz.py           # Visualization and plotting functions
+├── io.py            # Input/output and file management utilities
+├── dem_utils.py     # Copernicus DEM tile download and management
+├── geos.py          # Geometry utilities, grid navigation, WKT operations
+├── grid.py          # Grid management and tiling
+├── wkt_utils.py     # WKT footprint extraction from SAR products
+├── nisar_utils.py   # NISAR product reader and cutter
+├── executor.py      # Async/parallel execution helpers
+├── meta.py          # Metadata utilities
+├── hf.py            # Hugging Face integration utilities
+├── up.py            # Upload utilities
+├── zarr_utils.py    # Zarr archive utilities
+├── metrics.py       # Quality metrics
+├── losses.py        # Loss function utilities
+├── complex_losses.py # Complex-valued loss functions
+├── sar_loss.py      # SAR-specific loss functions
+└── rfigen.py        # RFI generation utilities
 ```
 
 ## Quick Start
@@ -553,7 +572,79 @@ def create_automated_report(processing_results, output_path):
 
 ## See Also
 
-- [API Reference](../README.md): Overview of all SARPyX modules
+- [DEM Utilities (dem_utils)](dem_utils.md): Copernicus DEM tile download and management
+- [API Reference](../README.md): Overview of all sarpyx modules
 - [SLA Module](../sla/README.md): Sub-aperture analysis visualization
 - [Science Module](../science/README.md): Scientific analysis and indices
 - [Examples](../../examples/README.md): Ready-to-run visualization examples
+
+---
+
+## DEM Utilities
+
+See the dedicated [DEM Utilities documentation](dem_utils.md) for the full API reference of `sarpyx.utils.dem_utils`, including:
+
+- `download_tiles_for_wkt()` — download Copernicus DEM tiles for a WKT geometry
+- `tiles_from_wkt()` — compute which 1×1° tiles intersect a geometry
+- `tile_name()` / `tile_url()` — build tile names and download URLs
+- `build_vrt()` — merge tiles into a GDAL Virtual Raster
+
+### Quick Example
+
+```python
+from sarpyx.utils.dem_utils import download_tiles_for_wkt
+
+wkt = "POLYGON ((-3.18 54.28, -3.78 55.89, 0.31 56.30, 0.75 54.69, -3.18 54.28))"
+tiles = download_tiles_for_wkt(wkt, output_dir="./dem_tiles", resolution_m=30)
+```
+
+---
+
+## Geometry Utilities
+
+The `sarpyx.utils.geos` module provides spatial query and grid navigation functions:
+
+```python
+from sarpyx.utils.geos import check_points_in_polygon, rectangle_to_wkt
+```
+
+### Key Functions
+
+| Function | Description |
+|----------|-------------|
+| `check_points_in_polygon(wkt, geojson)` | Find grid points inside a WKT polygon |
+| `get_point_names(wkt, geojson)` | Get grid cell names inside a polygon |
+| `get_point_coordinates(wkt, geojson)` | Get coordinates of grid cells inside a polygon |
+| `rectangle_to_wkt(rect)` | Convert a rectangle dict to a WKT POLYGON string |
+| `rectanglify(contained)` | Build cutting rectangles from contained grid points |
+| `GridNavigator` | Class for navigating the 10 km grid system |
+
+---
+
+## WKT Utilities
+
+The `sarpyx.utils.wkt_utils` module extracts WKT footprints from SAR products:
+
+```python
+from sarpyx.utils.wkt_utils import sentinel1_wkt_extractor_cdse
+```
+
+| Function | Description |
+|----------|-------------|
+| `sentinel1_wkt_extractor_cdse(product_name)` | Extract WKT footprint from Sentinel-1 via Copernicus Data Space API |
+| `terrasar_wkt_extractor(product_path)` | Extract WKT footprint from TerraSAR-X XML metadata |
+
+---
+
+## NISAR Utilities
+
+The `sarpyx.utils.nisar_utils` module provides NISAR product reading and cutting:
+
+```python
+from sarpyx.utils.nisar_utils import NISARReader, NISARCutter
+```
+
+| Class | Description |
+|-------|-------------|
+| `NISARReader` | Read NISAR GSLC/RSLC HDF5 products |
+| `NISARCutter` | Cut NISAR products into grid-aligned tiles |

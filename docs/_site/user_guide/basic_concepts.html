@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Basic Concepts – sarpyx Docs</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../index.html"><img class="logo" src="../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../user_guide/index.html">Overview</a>
+<a href="../user_guide/installation.html">Installation</a>
+<a href="../user_guide/getting_started.html">Getting Started</a>
+<a href="../user_guide/basic_concepts.html" class="active">Basic Concepts</a>
+<a href="../user_guide/data_formats.html">Data Formats</a>
+<a href="../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../user_guide/science_applications.html">Science Applications</a>
+<a href="../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../tutorials/index.html">Overview</a>
+<a href="../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../api/index.html">Overview</a>
+<a href="../api/snapflow/index.html">Snapflow</a>
+<a href="../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../api/science/index.html">Science</a>
+<a href="../api/sla/index.html">SLA</a>
+<a href="../api/processor/index.html">Processor</a>
+<a href="../api/utils/index.html">Utils</a>
+<a href="../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../developer_guide/architecture.html">Architecture</a>
+<a href="../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="basic-concepts">Basic Concepts</h1>
+<p>This section introduces the fundamental concepts underlying SAR processing and how they are implemented in sarpyx.</p>
+<h2 id="synthetic-aperture-radar-sar-fundamentals">Synthetic Aperture Radar (SAR) Fundamentals</h2>
+<h3 id="what-is-sar">What is SAR?</h3>
+<p>Synthetic Aperture Radar is a form of radar that creates high-resolution images by using the motion of the radar antenna over a target region. Unlike optical sensors, SAR can operate day and night and penetrate clouds, making it invaluable for Earth observation.</p>
+<h3 id="key-sar-parameters">Key SAR Parameters</h3>
+<h4 id="range-and-azimuth">Range and Azimuth</h4>
+<ul>
+<li><strong>Range</strong>: The line-of-sight distance from radar to target</li>
+<li><strong>Azimuth</strong>: The along-track direction of platform motion</li>
+</ul>
+<pre class="codehilite"><code><span class="c1"># In sarpyx, these are often referenced as:</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">choice</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Range processing</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">choice</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># Azimuth processing</span>
+</code></pre>
+<h4 id="resolution">Resolution</h4>
+<ul>
+<li><strong>Range Resolution</strong>: Ability to distinguish targets at different ranges</li>
+<li><strong>Azimuth Resolution</strong>: Ability to distinguish targets in the flight direction</li>
+</ul>
+<h4 id="polarization">Polarization</h4>
+<p>SAR can transmit and receive in different polarizations:
+- <strong>HH</strong>: Horizontal transmit, Horizontal receive
+- <strong>VV</strong>: Vertical transmit, Vertical receive<br>
+- <strong>HV/VH</strong>: Cross-polarizations</p>
+<h2 id="sub-look-analysis-sla">Sub-Look Analysis (SLA)</h2>
+<h3 id="concept">Concept</h3>
+<p>Sub-Look Analysis decomposes the full SAR aperture into smaller sub-apertures, each providing:
+- Different viewing angles (squint angles)
+- Enhanced motion sensitivity
+- Improved resolution in specific directions</p>
+<h3 id="mathematical-foundation">Mathematical Foundation</h3>
+<p>The sub-look decomposition is performed in the frequency domain:</p>
+<pre><code>S_sub(f) = S_full(f) · W(f - f_center)
+</code></pre>
+<p>Where:
+- <code>S_sub(f)</code>: Sub-look spectrum
+- <code>S_full(f)</code>: Full-aperture spectrum<br>
+- <code>W(f)</code>: Weighting window
+- <code>f_center</code>: Sub-look center frequency</p>
+<h3 id="implementation-in-sarpyx">Implementation in sarpyx</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.sla</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubLookAnalysis</span>
+
+<span class="c1"># Initialize SLA processor</span>
+<span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+
+<span class="c1"># Configure sub-look parameters</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">=</span> <span class="mi">3</span>           <span class="c1"># Number of sub-looks</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">centroidSeparations</span> <span class="o">=</span> <span class="mi">700</span>   <span class="c1"># Frequency separation (Hz)</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">subLookBandwidth</span> <span class="o">=</span> <span class="mi">700</span>      <span class="c1"># Bandwidth per sub-look (Hz)</span>
+
+<span class="c1"># Execute processing</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>      <span class="c1"># Compute frequency bins</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">()</span>       <span class="c1"># Transform to frequency domain</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">()</span>                <span class="c1"># Generate sub-look images</span>
+</code></pre>
+<h3 id="applications">Applications</h3>
+<p>Sub-look analysis enables:
+- <strong>Motion detection</strong>: Different sub-looks see moving targets differently
+- <strong>Interferometry</strong>: Phase differences between sub-looks
+- <strong>Speckle reduction</strong>: Incoherent averaging of sub-looks
+- <strong>Resolution enhancement</strong>: Combining sub-looks optimally</p>
+<h2 id="sar-processing-pipeline">SAR Processing Pipeline</h2>
+<h3 id="level-0-to-level-1-processing">Level 0 to Level 1 Processing</h3>
+<ol>
+<li><strong>Raw Data (Level 0)</strong>: Compressed, unfocused SAR data</li>
+<li><strong>Single Look Complex (SLC)</strong>: Focused, complex-valued SAR images</li>
+<li><strong>Ground Range Detected (GRD)</strong>: Multi-looked, geocoded products</li>
+</ol>
+<h3 id="sarpyx-processing-stages">sarpyx Processing Stages</h3>
+<h4 id="1-data-loading-and-preprocessing">1. Data Loading and Preprocessing</h4>
+<pre class="codehilite"><code><span class="c1"># Load SAR data</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.processor.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">readers</span>
+<span class="n">sar_data</span> <span class="o">=</span> <span class="n">readers</span><span class="o">.</span><span class="n">load_sar_product</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+
+<span class="c1"># Apply preprocessing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.processor.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">decode</span>
+<span class="n">processed_data</span> <span class="o">=</span> <span class="n">decode</span><span class="o">.</span><span class="n">preprocess</span><span class="p">(</span><span class="n">sar_data</span><span class="p">)</span>
+</code></pre>
+<h4 id="2-focus-processing">2. Focus Processing</h4>
+<pre class="codehilite"><code><span class="c1"># Apply focusing algorithm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.processor.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">focus</span>
+<span class="n">focused_data</span> <span class="o">=</span> <span class="n">focus</span><span class="o">.</span><span class="n">range_compression</span><span class="p">(</span><span class="n">processed_data</span><span class="p">)</span>
+<span class="n">focused_data</span> <span class="o">=</span> <span class="n">focus</span><span class="o">.</span><span class="n">azimuth_compression</span><span class="p">(</span><span class="n">focused_data</span><span class="p">)</span>
+</code></pre>
+<h4 id="3-autofocus-if-needed">3. Autofocus (if needed)</h4>
+<pre class="codehilite"><code><span class="c1"># Check focus quality</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.processor.autofocus</span><span class="w"> </span><span class="kn">import</span> <span class="n">metrics</span>
+<span class="n">focus_quality</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">calculate_entropy</span><span class="p">(</span><span class="n">focused_data</span><span class="p">)</span>
+
+<span class="c1"># Apply autofocus if necessary</span>
+<span class="k">if</span> <span class="n">focus_quality</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.processor.autofocus</span><span class="w"> </span><span class="kn">import</span> <span class="n">compressor</span>
+    <span class="n">autofocused</span> <span class="o">=</span> <span class="n">compressor</span><span class="o">.</span><span class="n">autofocus</span><span class="p">(</span><span class="n">focused_data</span><span class="p">)</span>
+</code></pre>
+<h2 id="frequency-domain-processing">Frequency Domain Processing</h2>
+<h3 id="discrete-fourier-transform-dft">Discrete Fourier Transform (DFT)</h3>
+<p>sarpyx extensively uses frequency domain processing:</p>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Transform to frequency domain</span>
+<span class="n">spectrum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft2</span><span class="p">(</span><span class="n">sar_image</span><span class="p">)</span>
+<span class="n">spectrum_shifted</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftshift</span><span class="p">(</span><span class="n">spectrum</span><span class="p">)</span>
+
+<span class="c1"># Process in frequency domain</span>
+<span class="n">filtered_spectrum</span> <span class="o">=</span> <span class="n">apply_frequency_filter</span><span class="p">(</span><span class="n">spectrum_shifted</span><span class="p">)</span>
+
+<span class="c1"># Transform back to spatial domain</span>
+<span class="n">filtered_image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft2</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifftshift</span><span class="p">(</span><span class="n">filtered_spectrum</span><span class="p">))</span>
+</code></pre>
+<h3 id="window-functions">Window Functions</h3>
+<p>For spectral analysis, sarpyx supports various window functions:</p>
+<pre class="codehilite"><code><span class="c1"># Available windows in sarpyx</span>
+<span class="n">window_types</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;HAMMING&#39;</span><span class="p">,</span> <span class="s1">&#39;HANNING&#39;</span><span class="p">,</span> <span class="s1">&#39;BLACKMAN&#39;</span><span class="p">,</span> <span class="s1">&#39;KAISER&#39;</span><span class="p">]</span>
+
+<span class="c1"># Applied in sub-look analysis</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">WeightFunctRange</span> <span class="o">=</span> <span class="s1">&#39;HAMMING&#39;</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">WeightFunctAzim</span> <span class="o">=</span> <span class="s1">&#39;HAMMING&#39;</span>
+</code></pre>
+<h2 id="data-types-and-formats">Data Types and Formats</h2>
+<h3 id="complex-sar-data">Complex SAR Data</h3>
+<p>SAR data is inherently complex, representing both amplitude and phase:</p>
+<pre class="codehilite"><code><span class="c1"># Complex SAR data structure</span>
+<span class="n">complex_data</span> <span class="o">=</span> <span class="n">real_part</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">imaginary_part</span>
+
+<span class="c1"># Extract amplitude and phase</span>
+<span class="n">amplitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">complex_data</span><span class="p">)</span>
+<span class="n">phase</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">complex_data</span><span class="p">)</span>
+
+<span class="c1"># Intensity (power)</span>
+<span class="n">intensity</span> <span class="o">=</span> <span class="n">amplitude</span> <span class="o">**</span> <span class="mi">2</span>
+</code></pre>
+<h3 id="multi-dimensional-arrays">Multi-dimensional Arrays</h3>
+<p>sarpyx works with multi-dimensional arrays:</p>
+<pre class="codehilite"><code><span class="c1"># Typical data shapes</span>
+<span class="n">sar_image</span><span class="o">.</span><span class="n">shape</span>       <span class="c1"># (rows, cols) - Single image</span>
+<span class="n">sublook_data</span><span class="o">.</span><span class="n">shape</span>    <span class="c1"># (looks, rows, cols) - Multiple sub-looks</span>
+<span class="n">timeseries</span><span class="o">.</span><span class="n">shape</span>      <span class="c1"># (time, rows, cols) - Time series</span>
+</code></pre>
+<h2 id="coordinate-systems">Coordinate Systems</h2>
+<h3 id="sensor-coordinates">Sensor Coordinates</h3>
+<ul>
+<li><strong>Range</strong>: Perpendicular to flight direction</li>
+<li><strong>Azimuth</strong>: Along flight direction</li>
+</ul>
+<h3 id="geographic-coordinates">Geographic Coordinates</h3>
+<ul>
+<li><strong>Latitude/Longitude</strong>: WGS84 coordinate system</li>
+<li><strong>UTM</strong>: Universal Transverse Mercator projection</li>
+</ul>
+<h3 id="coordinate-transformations">Coordinate Transformations</h3>
+<pre class="codehilite"><code><span class="c1"># sarpyx handles coordinate transformations through SNAP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.snapflow.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPT</span>
+
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">product_path</span><span class="p">)</span>
+<span class="c1"># Terrain correction converts from sensor to geographic coordinates</span>
+<span class="n">geocoded</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">TerrainCorrection</span><span class="p">(</span>
+    <span class="n">demName</span><span class="o">=</span><span class="s1">&#39;SRTM 1Sec HGT&#39;</span><span class="p">,</span>
+    <span class="n">pixelSpacingInMeter</span><span class="o">=</span><span class="mf">10.0</span>
+<span class="p">)</span>
+</code></pre>
+<h2 id="quality-metrics">Quality Metrics</h2>
+<h3 id="focus-quality-assessment">Focus Quality Assessment</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.processor.autofocus.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">calculate_entropy</span><span class="p">,</span>
+    <span class="n">calculate_contrast</span><span class="p">,</span>
+    <span class="n">calculate_sharpness</span>
+<span class="p">)</span>
+
+<span class="c1"># Assess image focus quality</span>
+<span class="n">entropy</span> <span class="o">=</span> <span class="n">calculate_entropy</span><span class="p">(</span><span class="n">sar_image</span><span class="p">)</span>
+<span class="n">contrast</span> <span class="o">=</span> <span class="n">calculate_contrast</span><span class="p">(</span><span class="n">sar_image</span><span class="p">)</span>
+<span class="n">sharpness</span> <span class="o">=</span> <span class="n">calculate_sharpness</span><span class="p">(</span><span class="n">sar_image</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Focus Quality - Entropy: </span><span class="si">{</span><span class="n">entropy</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, Contrast: </span><span class="si">{</span><span class="n">contrast</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="statistical-measures">Statistical Measures</h3>
+<pre class="codehilite"><code><span class="c1"># Common SAR statistics</span>
+<span class="n">mean_intensity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sar_data</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">std_intensity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sar_data</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Equivalent Number of Looks (ENL)</span>
+<span class="n">enl</span> <span class="o">=</span> <span class="n">mean_intensity</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="n">std_intensity</span><span class="o">**</span><span class="mi">2</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Equivalent Number of Looks: </span><span class="si">{</span><span class="n">enl</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="error-handling-and-validation">Error Handling and Validation</h2>
+<h3 id="parameter-validation">Parameter Validation</h3>
+<p>sarpyx includes built-in parameter validation:</p>
+<pre class="codehilite"><code><span class="c1"># Example validation in sub-look analysis</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Number of looks must be positive&quot;</span>
+    <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">subLookBandwidth</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Bandwidth must be positive&quot;</span>
+
+    <span class="c1"># Check frequency bounds</span>
+    <span class="n">max_freq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">AzimBand</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">min_freq</span> <span class="o">=</span> <span class="o">-</span><span class="n">max_freq</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">freq</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">freqMin</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">freq</span> <span class="o">&gt;</span> <span class="n">min_freq</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Sub-look </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> frequency too low&quot;</span>
+        <span class="k">assert</span> <span class="n">freq</span> <span class="o">&lt;</span> <span class="n">max_freq</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Sub-look </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> frequency too high&quot;</span>
+</code></pre>
+<h3 id="debugging-tips">Debugging Tips</h3>
+<pre class="codehilite"><code><span class="c1"># Enable verbose output for debugging</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Check intermediate results</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Spectrum shape: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">SpectrumOneDim</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Frequency vector: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">freqVect</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>  <span class="c1"># First 10 elements</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub-look frequencies: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">freqCentr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="performance-considerations">Performance Considerations</h2>
+<h3 id="memory-usage">Memory Usage</h3>
+<p>Large SAR datasets require careful memory management:</p>
+<pre class="codehilite"><code><span class="c1"># Monitor memory usage</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">psutil</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">check_memory</span><span class="p">():</span>
+    <span class="n">memory</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Memory usage: </span><span class="si">{</span><span class="n">memory</span><span class="o">.</span><span class="n">percent</span><span class="si">}</span><span class="s2">% (</span><span class="si">{</span><span class="n">memory</span><span class="o">.</span><span class="n">available</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> GB available)&quot;</span><span class="p">)</span>
+
+<span class="c1"># Process in chunks if needed</span>
+<span class="n">chunk_size</span> <span class="o">=</span> <span class="mi">1024</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">chunk_size</span><span class="p">):</span>
+    <span class="n">chunk</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">chunk_size</span><span class="p">]</span>
+    <span class="n">process_chunk</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+</code></pre>
+<h3 id="computational-complexity">Computational Complexity</h3>
+<ul>
+<li><strong>FFT operations</strong>: O(N log N) complexity</li>
+<li><strong>Sub-look generation</strong>: Linear in number of looks</li>
+<li><strong>Focus processing</strong>: Depends on algorithm choice</li>
+</ul>
+<h2 id="common-workflows">Common Workflows</h2>
+<h3 id="1-quality-assessment-workflow">1. Quality Assessment Workflow</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">assess_sar_quality</span><span class="p">(</span><span class="n">product_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Assess SAR data quality.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Load data</span>
+    <span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+
+    <span class="c1"># Compute spectrum</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">()</span>
+
+    <span class="c1"># Calculate quality metrics</span>
+    <span class="n">entropy</span> <span class="o">=</span> <span class="n">calculate_entropy</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">Box</span><span class="p">)</span>
+
+    <span class="c1"># Generate report</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;entropy&#39;</span><span class="p">:</span> <span class="n">entropy</span><span class="p">,</span>
+        <span class="s1">&#39;mean_intensity&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">Box</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span>
+        <span class="s1">&#39;data_shape&#39;</span><span class="p">:</span> <span class="n">sla</span><span class="o">.</span><span class="n">Box</span><span class="o">.</span><span class="n">shape</span>
+    <span class="p">}</span>
+</code></pre>
+<h3 id="2-multi-temporal-analysis">2. Multi-temporal Analysis</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">compare_temporal_data</span><span class="p">(</span><span class="n">path1</span><span class="p">,</span> <span class="n">path2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compare two SAR acquisitions.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Process both datasets</span>
+    <span class="n">sla1</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">path1</span><span class="p">)</span>
+    <span class="n">sla2</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">path2</span><span class="p">)</span>
+
+    <span class="c1"># Configure identical parameters</span>
+    <span class="k">for</span> <span class="n">sla</span> <span class="ow">in</span> <span class="p">[</span><span class="n">sla1</span><span class="p">,</span> <span class="n">sla2</span><span class="p">]:</span>
+        <span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">=</span> <span class="mi">3</span>
+        <span class="n">sla</span><span class="o">.</span><span class="n">choice</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>
+        <span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">()</span>
+        <span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">()</span>
+
+    <span class="c1"># Calculate temporal coherence</span>
+    <span class="n">coherence</span> <span class="o">=</span> <span class="n">calculate_coherence</span><span class="p">(</span><span class="n">sla1</span><span class="o">.</span><span class="n">Looks</span><span class="p">,</span> <span class="n">sla2</span><span class="o">.</span><span class="n">Looks</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">coherence</span>
+</code></pre>
+<h2 id="next-steps">Next Steps</h2>
+<p>Now that you understand the basic concepts:</p>
+<ol>
+<li><strong>Explore data formats</strong>: <a href="data_formats.html">Data Formats</a></li>
+<li><strong>Learn processing workflows</strong>: <a href="processing_workflows.html">Processing Workflows</a></li>
+<li><strong>Try scientific applications</strong>: <a href="science_applications.html">Science Applications</a></li>
+<li><strong>Integrate with SNAP</strong>: <a href="snap_integration.html">SNAP Integration</a></li>
+</ol>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="https://www.esa.int/Applications/Observing_the_Earth/Copernicus/Sentinel-1">ESA SAR Fundamentals</a></li>
+<li><a href="https://step.esa.int/main/doc/desktop/tutorials/">SNAP Documentation</a></li>
+<li><a href="https://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=36">IEEE Transactions on Geoscience and Remote Sensing</a></li>
+</ul>
+<p>Understanding these fundamentals will help you make the most of sarpyx&rsquo;s capabilities and choose the right processing approaches for your applications.</p>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

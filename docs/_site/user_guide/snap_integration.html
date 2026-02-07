@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SNAP Integration – sarpyx Docs</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../index.html"><img class="logo" src="../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../user_guide/index.html">Overview</a>
+<a href="../user_guide/installation.html">Installation</a>
+<a href="../user_guide/getting_started.html">Getting Started</a>
+<a href="../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../user_guide/data_formats.html">Data Formats</a>
+<a href="../user_guide/snap_integration.html" class="active">SNAP Integration</a>
+<a href="../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../user_guide/science_applications.html">Science Applications</a>
+<a href="../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../tutorials/index.html">Overview</a>
+<a href="../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../api/index.html">Overview</a>
+<a href="../api/snapflow/index.html">Snapflow</a>
+<a href="../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../api/science/index.html">Science</a>
+<a href="../api/sla/index.html">SLA</a>
+<a href="../api/processor/index.html">Processor</a>
+<a href="../api/utils/index.html">Utils</a>
+<a href="../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../developer_guide/architecture.html">Architecture</a>
+<a href="../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="snap-integration">SNAP Integration</h1>
+<p>sarpyx provides seamless integration with ESA&rsquo;s SNAP (Sentinel Application Platform) through the Graph Processing Tool (GPT). This enables automated SAR preprocessing, calibration, and processing workflows.</p>
+<h2 id="overview">Overview</h2>
+<p>The <code>sarpyx.snapflow</code> module provides a Python wrapper around SNAP&rsquo;s command-line GPT interface, supporting:</p>
+<ul>
+<li><strong>Automated Processing Chains</strong>: Preprocessing workflows for different SAR missions</li>
+<li><strong>Cross-Platform Support</strong>: Windows, macOS, and Linux compatibility  </li>
+<li><strong>Product Type Detection</strong>: Automatic detection of Sentinel-1, COSMO-SkyMed, and ALOS formats</li>
+<li><strong>Flexible Output Formats</strong>: BEAM-DIMAP, GeoTIFF, NetCDF support</li>
+<li><strong>Memory Management</strong>: Efficient processing with configurable parallelism</li>
+</ul>
+<h2 id="installation-and-setup">Installation and Setup</h2>
+<h3 id="snap-installation">SNAP Installation</h3>
+<p>First, ensure SNAP is installed on your system:</p>
+<ol>
+<li><strong>Download SNAP</strong>: <a href="https://step.esa.int/main/download/snap-download/">ESA SNAP Download</a></li>
+<li><strong>Install SNAP</strong>: Follow platform-specific installation instructions</li>
+<li><strong>Verify Installation</strong>: Check that GPT is accessible</li>
+</ol>
+<pre class="codehilite"><code><span class="c1"># Test SNAP GPT installation</span>
+/Applications/snap/bin/gpt<span class="w"> </span>--help<span class="w">  </span><span class="c1"># macOS</span>
+/home/username/ESA-STEP/snap/bin/gpt<span class="w"> </span>--help<span class="w">  </span><span class="c1"># Linux</span>
+gpt.exe<span class="w"> </span>--help<span class="w">  </span><span class="c1"># Windows (if in PATH)</span>
+</code></pre>
+<h3 id="sarpyx-snap-configuration">sarpyx SNAP Configuration</h3>
+<p>sarpyx automatically detects SNAP installations, but you can specify the mode explicitly:</p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.snapflow.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPT</span>
+
+<span class="c1"># Automatic detection</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product_path</span><span class="o">=</span><span class="s2">&quot;input.zip&quot;</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s2">&quot;output/&quot;</span><span class="p">)</span>
+
+<span class="c1"># Explicit mode specification</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product_path</span><span class="o">=</span><span class="s2">&quot;input.zip&quot;</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s2">&quot;output/&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;MacOS&quot;</span><span class="p">)</span>
+</code></pre>
+<p><strong>Supported Modes</strong>:
+- <code>"MacOS"</code>: <code>/Applications/snap/bin/gpt</code>
+- <code>"Ubuntu"</code>: <code>/home/&lt;username&gt;/ESA-STEP/snap/bin/gpt</code>
+- <code>"Windows"</code>: <code>gpt.exe</code> (assumes GPT is in PATH)
+- <code>None</code>: Automatic detection based on OS</p>
+<h2 id="basic-gpt-operations">Basic GPT Operations</h2>
+<h3 id="gpt-class-initialization">GPT Class Initialization</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.snapflow.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPT</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="c1"># Initialize GPT processor</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span>
+    <span class="n">product</span><span class="o">=</span><span class="s2">&quot;S1A_IW_SLC_1SDV_20231101.zip&quot;</span><span class="p">,</span>  <span class="c1"># Input SAR product</span>
+    <span class="n">outdir</span><span class="o">=</span><span class="s2">&quot;processing_output/&quot;</span><span class="p">,</span>             <span class="c1"># Output directory</span>
+    <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;BEAM-DIMAP&quot;</span><span class="p">,</span>                     <span class="c1"># Output format</span>
+    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;MacOS&quot;</span>                             <span class="c1"># SNAP installation mode</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Product: </span><span class="si">{</span><span class="n">gpt</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GPT executable: </span><span class="si">{</span><span class="n">gpt</span><span class="o">.</span><span class="n">gpt_executable</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parallelism: </span><span class="si">{</span><span class="n">gpt</span><span class="o">.</span><span class="n">parallelism</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="format-options">Format Options</h3>
+<pre class="codehilite"><code><span class="c1"># Available output formats</span>
+<span class="n">formats</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;BEAM-DIMAP&quot;</span><span class="p">,</span> <span class="s2">&quot;GeoTIFF&quot;</span><span class="p">,</span> <span class="s2">&quot;NetCDF4-CF&quot;</span><span class="p">,</span> <span class="s2">&quot;HDF5&quot;</span><span class="p">]</span>
+
+<span class="c1"># Change format for specific operations</span>
+<span class="n">gpt</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="s2">&quot;GeoTIFF&quot;</span>  <span class="c1"># Outputs will be .tif files</span>
+<span class="n">gpt</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="s2">&quot;BEAM-DIMAP&quot;</span>  <span class="c1"># Outputs will be .dim + .data directories</span>
+</code></pre>
+<h2 id="core-processing-operations">Core Processing Operations</h2>
+<h3 id="radiometric-calibration">Radiometric Calibration</h3>
+<p>Convert DN values to radiometrically calibrated backscatter coefficients:</p>
+<pre class="codehilite"><code><span class="c1"># Single polarization calibration</span>
+<span class="n">cal_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">(</span><span class="n">Pols</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;VH&#39;</span><span class="p">])</span>
+
+<span class="c1"># Multi-polarization calibration</span>
+<span class="n">cal_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">(</span>
+    <span class="n">Pols</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;VV&#39;</span><span class="p">,</span> <span class="s1">&#39;VH&#39;</span><span class="p">],</span> 
+    <span class="n">output_complex</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Preserve complex values</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Calibrated product: </span><span class="si">{</span><span class="n">cal_product</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<p><strong>Parameters</strong>:
+- <code>Pols</code>: List of polarizations to calibrate (e.g., [&lsquo;VV&rsquo;, &lsquo;VH&rsquo;, &lsquo;HH&rsquo;, &lsquo;HV&rsquo;])
+- <code>output_complex</code>: Whether to output complex values (True) or intensity (False)</p>
+<h3 id="topsar-deburst-sentinel-1">TOPSAR Deburst (Sentinel-1)</h3>
+<p>Remove burst boundaries from TOPSAR SLC/GRD products:</p>
+<pre class="codehilite"><code><span class="c1"># Deburst Sentinel-1 TOPSAR data</span>
+<span class="n">deb_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Deburst</span><span class="p">(</span><span class="n">Pols</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;VV&#39;</span><span class="p">,</span> <span class="s1">&#39;VH&#39;</span><span class="p">])</span>
+
+<span class="c1"># The debursted product has continuous azimuth coverage</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Debursted product: </span><span class="si">{</span><span class="n">deb_product</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="multi-looking">Multi-looking</h3>
+<p>Reduce speckle by averaging neighboring pixels:</p>
+<pre class="codehilite"><code><span class="c1"># Apply multi-looking</span>
+<span class="n">ml_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Multilook</span><span class="p">(</span>
+    <span class="n">nRgLooks</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>    <span class="c1"># Range looks</span>
+    <span class="n">nAzLooks</span><span class="o">=</span><span class="mi">4</span>     <span class="c1"># Azimuth looks  </span>
+<span class="p">)</span>
+
+<span class="c1"># Multi-looking reduces spatial resolution but improves radiometric resolution</span>
+</code></pre>
+<p><strong>Trade-offs</strong>:
+- <strong>More looks</strong>: Better speckle reduction, lower spatial resolution
+- <strong>Fewer looks</strong>: Better spatial resolution, more speckle</p>
+<h3 id="geometric-operations">Geometric Operations</h3>
+<h4 id="subsetting">Subsetting</h4>
+<p>Extract spatial subsets for focused analysis:</p>
+<pre class="codehilite"><code><span class="c1"># Pixel coordinates subset</span>
+<span class="n">subset_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Subset</span><span class="p">(</span>
+    <span class="n">loc</span><span class="o">=</span><span class="p">[</span><span class="mi">1500</span><span class="p">,</span> <span class="mi">2000</span><span class="p">],</span>      <span class="c1"># Center pixel [x, y]</span>
+    <span class="n">sourceBands</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Intensity_VH&#39;</span><span class="p">],</span>
+    <span class="n">idx</span><span class="o">=</span><span class="s2">&quot;01&quot;</span><span class="p">,</span>              <span class="c1"># Subset identifier</span>
+    <span class="n">winSize</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>           <span class="c1"># Window size in pixels</span>
+    <span class="n">GeoCoords</span><span class="o">=</span><span class="kc">False</span>        <span class="c1"># Use pixel coordinates</span>
+<span class="p">)</span>
+
+<span class="c1"># Geographic coordinates subset</span>
+<span class="n">subset_geo</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Subset</span><span class="p">(</span>
+    <span class="n">loc</span><span class="o">=</span><span class="p">[</span><span class="mf">12.4964</span><span class="p">,</span> <span class="mf">41.9028</span><span class="p">],</span>  <span class="c1"># [longitude, latitude]</span>
+    <span class="n">sourceBands</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Intensity_VV&#39;</span><span class="p">,</span> <span class="s1">&#39;Intensity_VH&#39;</span><span class="p">],</span>
+    <span class="n">idx</span><span class="o">=</span><span class="s2">&quot;Rome&quot;</span><span class="p">,</span>
+    <span class="n">winSize</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>            <span class="c1"># Window size in meters (approximately)</span>
+    <span class="n">GeoCoords</span><span class="o">=</span><span class="kc">True</span>           <span class="c1"># Use geographic coordinates</span>
+<span class="p">)</span>
+</code></pre>
+<h2 id="complete-processing-workflows">Complete Processing Workflows</h2>
+<h3 id="sentinel-1-standard-preprocessing">Sentinel-1 Standard Preprocessing</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">preprocess_sentinel1_standard</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">polarizations</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;VV&#39;</span><span class="p">,</span> <span class="s1">&#39;VH&#39;</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Complete Sentinel-1 preprocessing workflow.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Initialize GPT</span>
+    <span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">input_path</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;MacOS&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Step 1: TOPSAR Deburst (SLC products only)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Step 1: Debursting...&quot;</span><span class="p">)</span>
+    <span class="n">deb_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Deburst</span><span class="p">(</span><span class="n">Pols</span><span class="o">=</span><span class="n">polarizations</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">deb_product</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Deburst operation failed&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Step 2: Radiometric Calibration</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Step 2: Radiometric calibration...&quot;</span><span class="p">)</span>
+    <span class="n">cal_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">(</span>
+        <span class="n">Pols</span><span class="o">=</span><span class="n">polarizations</span><span class="p">,</span>
+        <span class="n">output_complex</span><span class="o">=</span><span class="kc">False</span>  <span class="c1"># Intensity output for most applications</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">cal_product</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Calibration operation failed&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Step 3: Multi-looking (optional)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Step 3: Multi-looking...&quot;</span><span class="p">)</span>
+    <span class="n">ml_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Multilook</span><span class="p">(</span><span class="n">nRgLooks</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nAzLooks</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+    <span class="c1"># Step 4: Convert to final format</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Step 4: Converting to GeoTIFF...&quot;</span><span class="p">)</span>
+    <span class="n">gpt</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="s2">&quot;GeoTIFF&quot;</span>
+    <span class="n">final_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;FINAL&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;deburst&#39;</span><span class="p">:</span> <span class="n">deb_product</span><span class="p">,</span>
+        <span class="s1">&#39;calibration&#39;</span><span class="p">:</span> <span class="n">cal_product</span><span class="p">,</span> 
+        <span class="s1">&#39;multilook&#39;</span><span class="p">:</span> <span class="n">ml_product</span><span class="p">,</span>
+        <span class="s1">&#39;final&#39;</span><span class="p">:</span> <span class="n">final_product</span>
+    <span class="p">}</span>
+
+<span class="c1"># Example usage</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">preprocess_sentinel1_standard</span><span class="p">(</span>
+    <span class="s2">&quot;S1A_IW_SLC_1SDV_20231101.zip&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;preprocessing_output/&quot;</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Final preprocessed product: </span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;final&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="cosmo-skymed-processing">COSMO-SkyMed Processing</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">preprocess_cosmo_skymed</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">polarization</span><span class="o">=</span><span class="s1">&#39;HH&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;COSMO-SkyMed preprocessing workflow.&quot;&quot;&quot;</span>
+
+    <span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">input_path</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">)</span>
+
+    <span class="c1"># Step 1: Multi-looking first (typically needed for CSK)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Step 1: Multi-looking...&quot;</span><span class="p">)</span>
+    <span class="n">ml_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Multilook</span><span class="p">(</span><span class="n">nRgLooks</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">nAzLooks</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># Step 2: Radiometric Calibration</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Step 2: Calibration...&quot;</span><span class="p">)</span>
+    <span class="n">cal_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">(</span><span class="n">Pols</span><span class="o">=</span><span class="p">[</span><span class="n">polarization</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;multilook&#39;</span><span class="p">:</span> <span class="n">ml_product</span><span class="p">,</span>
+        <span class="s1">&#39;calibration&#39;</span><span class="p">:</span> <span class="n">cal_product</span>
+    <span class="p">}</span>
+</code></pre>
+<h3 id="land-sea-masking">Land-Sea Masking</h3>
+<p>Apply land-sea masks using vector geometries or built-in coastlines:</p>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">apply_land_sea_mask</span><span class="p">(</span><span class="n">input_product</span><span class="p">,</span> <span class="n">coastline_shapefile</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply land-sea masking with customizable parameters.&quot;&quot;&quot;</span>
+
+    <span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">input_product</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s2">&quot;masked_output/&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">coastline_shapefile</span><span class="p">:</span>
+        <span class="c1"># Import external vector data</span>
+        <span class="n">vector_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">ImportVector</span><span class="p">(</span><span class="n">vector_data</span><span class="o">=</span><span class="n">coastline_shapefile</span><span class="p">)</span>
+
+        <span class="c1"># Apply custom land mask</span>
+        <span class="n">masked_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">LandMask</span><span class="p">(</span>
+            <span class="n">shoreline_extension</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>    <span class="c1"># Extend coastline by 500m</span>
+            <span class="n">geometry_name</span><span class="o">=</span><span class="s2">&quot;coastline&quot;</span><span class="p">,</span>  <span class="c1"># Geometry name from shapefile</span>
+            <span class="n">use_srtm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>             <span class="c1"># Use SRTM elevation data</span>
+            <span class="n">invert_geometry</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>      <span class="c1"># Keep ocean areas</span>
+            <span class="n">land_mask</span><span class="o">=</span><span class="kc">False</span>            <span class="c1"># False = mask land, keep water</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Use built-in coastline database</span>
+        <span class="n">masked_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">LandMask</span><span class="p">(</span>
+            <span class="n">use_srtm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">land_mask</span><span class="o">=</span><span class="kc">False</span>  <span class="c1"># Mask land areas</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">masked_product</span>
+
+<span class="c1"># Example with custom shapefile</span>
+<span class="n">masked_result</span> <span class="o">=</span> <span class="n">apply_land_sea_mask</span><span class="p">(</span>
+    <span class="s2">&quot;calibrated_product.dim&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mediterranean_coastline.shp&quot;</span>
+<span class="p">)</span>
+</code></pre>
+<h2 id="object-detection-workflows">Object Detection Workflows</h2>
+<h3 id="cfar-ship-detection">CFAR Ship Detection</h3>
+<p>Constant False Alarm Rate (CFAR) detection for ship monitoring:</p>
+<pre class="codehilite"><code><span class="c1"># Single threshold detection</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.snapflow.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">CFAR</span>
+
+<span class="n">first_product</span><span class="p">,</span> <span class="n">excel_results</span> <span class="o">=</span> <span class="n">CFAR</span><span class="p">(</span>
+    <span class="n">prod</span><span class="o">=</span><span class="s2">&quot;S1A_IW_GRDH_1SDV_20231101.zip&quot;</span><span class="p">,</span>
+    <span class="n">mask_shp_path</span><span class="o">=</span><span class="s2">&quot;land_mask.shp&quot;</span><span class="p">,</span>
+    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;MacOS&quot;</span><span class="p">,</span>
+    <span class="n">Thresh</span><span class="o">=</span><span class="mf">12.5</span><span class="p">,</span>  <span class="c1"># False alarm rate threshold  </span>
+    <span class="n">DELETE</span><span class="o">=</span><span class="kc">False</span>  <span class="c1"># Keep intermediate products for analysis</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Detection results saved to: </span><span class="si">{</span><span class="n">excel_results</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="advanced-cfar-with-multiple-thresholds">Advanced CFAR with Multiple Thresholds</h3>
+<pre class="codehilite"><code><span class="c1"># Test multiple sensitivity levels</span>
+<span class="n">pfa_thresholds</span> <span class="o">=</span> <span class="p">[</span><span class="mf">6.5</span><span class="p">,</span> <span class="mf">9.5</span><span class="p">,</span> <span class="mf">12.5</span><span class="p">,</span> <span class="mf">15.5</span><span class="p">]</span>
+
+<span class="n">first_product</span><span class="p">,</span> <span class="n">excel_results</span> <span class="o">=</span> <span class="n">CFAR</span><span class="p">(</span>
+    <span class="n">prod</span><span class="o">=</span><span class="s2">&quot;sentinel1_product.zip&quot;</span><span class="p">,</span>
+    <span class="n">mask_shp_path</span><span class="o">=</span><span class="s2">&quot;coastline.shp&quot;</span><span class="p">,</span>
+    <span class="n">Thresh</span><span class="o">=</span><span class="n">pfa_thresholds</span><span class="p">,</span>
+    <span class="n">DELETE</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Clean up intermediate files</span>
+<span class="p">)</span>
+
+<span class="c1"># Results include detection files for each threshold</span>
+<span class="c1"># Lower thresholds = more sensitive detection</span>
+<span class="c1"># Higher thresholds = fewer false alarms</span>
+</code></pre>
+<h3 id="custom-cfar-parameters">Custom CFAR Parameters</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">custom_cfar_detection</span><span class="p">(</span><span class="n">input_product</span><span class="p">,</span> <span class="n">mask_shapefile</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Custom CFAR detection with fine-tuned parameters.&quot;&quot;&quot;</span>
+
+    <span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">input_product</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">)</span>
+
+    <span class="c1"># Preprocessing (product-specific)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">mode_identifier</span>
+    <span class="n">prod_type</span> <span class="o">=</span> <span class="n">mode_identifier</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">input_product</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">prod_type</span> <span class="o">==</span> <span class="s2">&quot;SEN&quot;</span><span class="p">:</span>
+        <span class="c1"># Sentinel-1 preprocessing</span>
+        <span class="n">deb_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Deburst</span><span class="p">()</span>
+        <span class="n">cal_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">(</span><span class="n">Pols</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;VH&#39;</span><span class="p">])</span>
+
+        <span class="c1"># Import land mask</span>
+        <span class="n">vector_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">ImportVector</span><span class="p">(</span><span class="n">vector_data</span><span class="o">=</span><span class="n">mask_shapefile</span><span class="p">)</span>
+        <span class="n">masked_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">LandMask</span><span class="p">()</span>
+
+        <span class="n">start_product</span> <span class="o">=</span> <span class="n">masked_product</span>
+
+    <span class="k">elif</span> <span class="n">prod_type</span> <span class="o">==</span> <span class="s2">&quot;CSK&quot;</span><span class="p">:</span>  
+        <span class="c1"># COSMO-SkyMed preprocessing</span>
+        <span class="n">ml_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Multilook</span><span class="p">(</span><span class="n">nRgLooks</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">nAzLooks</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">cal_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">(</span><span class="n">Pols</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;HH&#39;</span><span class="p">])</span>
+
+        <span class="n">start_product</span> <span class="o">=</span> <span class="n">cal_product</span>
+
+    <span class="c1"># CFAR Detection</span>
+    <span class="n">detection_results</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">pfa</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">8.5</span><span class="p">,</span> <span class="mf">12.5</span><span class="p">,</span> <span class="mf">16.5</span><span class="p">]:</span>
+        <span class="c1"># Initialize new GPT instance for each threshold</span>
+        <span class="n">gpt_det</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">start_product</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">)</span>
+
+        <span class="c1"># Adaptive thresholding</span>
+        <span class="n">at_product</span> <span class="o">=</span> <span class="n">gpt_det</span><span class="o">.</span><span class="n">AdaptiveThresholding</span><span class="p">(</span>
+            <span class="n">background_window_m</span><span class="o">=</span><span class="mi">800</span><span class="p">,</span>  <span class="c1"># Background estimation window</span>
+            <span class="n">guard_window_m</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>       <span class="c1"># Guard band around targets</span>
+            <span class="n">target_window_m</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>       <span class="c1"># Target detection window</span>
+            <span class="n">pfa</span><span class="o">=</span><span class="n">pfa</span>                   <span class="c1"># False alarm probability</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Object discrimination</span>
+        <span class="n">od_product</span> <span class="o">=</span> <span class="n">gpt_det</span><span class="o">.</span><span class="n">ObjectDiscrimination</span><span class="p">(</span>
+            <span class="n">min_target_m</span><span class="o">=</span><span class="mi">35</span><span class="p">,</span>   <span class="c1"># Minimum target size (meters)</span>
+            <span class="n">max_target_m</span><span class="o">=</span><span class="mi">500</span>   <span class="c1"># Maximum target size (meters)</span>
+        <span class="p">)</span>
+
+        <span class="n">detection_results</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+            <span class="s1">&#39;pfa&#39;</span><span class="p">:</span> <span class="n">pfa</span><span class="p">,</span>
+            <span class="s1">&#39;at_product&#39;</span><span class="p">:</span> <span class="n">at_product</span><span class="p">,</span>
+            <span class="s1">&#39;od_product&#39;</span><span class="p">:</span> <span class="n">od_product</span>
+        <span class="p">})</span>
+
+    <span class="k">return</span> <span class="n">detection_results</span>
+</code></pre>
+<h2 id="advanced-snap-integration">Advanced SNAP Integration</h2>
+<h3 id="xml-graph-processing">XML Graph Processing</h3>
+<p>For complex workflows, use SNAP&rsquo;s XML graph format:</p>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">create_custom_graph</span><span class="p">(</span><span class="n">input_product</span><span class="p">,</span> <span class="n">output_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create and execute custom SNAP processing graph.&quot;&quot;&quot;</span>
+
+    <span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">input_product</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s2">&quot;graph_output/&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Example: Custom interferometry graph</span>
+    <span class="n">graph_xml</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span>
+<span class="s2">    &lt;graph id=&quot;CustomProcessing&quot;&gt;</span>
+<span class="s2">      &lt;version&gt;1.0&lt;/version&gt;</span>
+
+<span class="s2">      &lt;node id=&quot;Read&quot;&gt;</span>
+<span class="s2">        &lt;operator&gt;Read&lt;/operator&gt;</span>
+<span class="s2">        &lt;parameters&gt;</span>
+<span class="s2">          &lt;file&gt;</span><span class="si">{</span><span class="n">input_product</span><span class="si">}</span><span class="s2">&lt;/file&gt;</span>
+<span class="s2">        &lt;/parameters&gt;</span>
+<span class="s2">      &lt;/node&gt;</span>
+
+<span class="s2">      &lt;node id=&quot;Calibration&quot;&gt;</span>
+<span class="s2">        &lt;operator&gt;Calibration&lt;/operator&gt;</span>
+<span class="s2">        &lt;sources&gt;</span>
+<span class="s2">          &lt;sourceProduct refid=&quot;Read&quot;/&gt;</span>
+<span class="s2">        &lt;/sources&gt;</span>
+<span class="s2">        &lt;parameters&gt;</span>
+<span class="s2">          &lt;selectedPolarisations&gt;VV,VH&lt;/selectedPolarisations&gt;</span>
+<span class="s2">          &lt;outputImageInComplex&gt;true&lt;/outputImageInComplex&gt;</span>
+<span class="s2">        &lt;/parameters&gt;</span>
+<span class="s2">      &lt;/node&gt;</span>
+
+<span class="s2">      &lt;node id=&quot;TOPSAR-Deburst&quot;&gt;</span>
+<span class="s2">        &lt;operator&gt;TOPSAR-Deburst&lt;/operator&gt;</span>
+<span class="s2">        &lt;sources&gt;</span>
+<span class="s2">          &lt;sourceProduct refid=&quot;Calibration&quot;/&gt;</span>
+<span class="s2">        &lt;/sources&gt;</span>
+<span class="s2">        &lt;parameters&gt;</span>
+<span class="s2">          &lt;selectedPolarisations&gt;VV,VH&lt;/selectedPolarisations&gt;</span>
+<span class="s2">        &lt;/parameters&gt;</span>
+<span class="s2">      &lt;/node&gt;</span>
+
+<span class="s2">      &lt;node id=&quot;Write&quot;&gt;</span>
+<span class="s2">        &lt;operator&gt;Write&lt;/operator&gt;</span>
+<span class="s2">        &lt;sources&gt;</span>
+<span class="s2">          &lt;sourceProduct refid=&quot;TOPSAR-Deburst&quot;/&gt;</span>
+<span class="s2">        &lt;/sources&gt;</span>
+<span class="s2">        &lt;parameters&gt;</span>
+<span class="s2">          &lt;file&gt;</span><span class="si">{</span><span class="n">output_path</span><span class="si">}</span><span class="s2">&lt;/file&gt;</span>
+<span class="s2">          &lt;formatName&gt;BEAM-DIMAP&lt;/formatName&gt;</span>
+<span class="s2">        &lt;/parameters&gt;</span>
+<span class="s2">      &lt;/node&gt;</span>
+<span class="s2">    &lt;/graph&gt;&quot;&quot;&quot;</span>
+
+    <span class="c1"># Save and execute graph</span>
+    <span class="n">graph_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;custom_processing_graph.xml&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">graph_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">graph_xml</span><span class="p">)</span>
+
+    <span class="c1"># Execute graph</span>
+    <span class="n">gpt</span><span class="o">.</span><span class="n">current_cmd</span> <span class="o">=</span> <span class="p">[</span><span class="n">gpt</span><span class="o">.</span><span class="n">gpt_executable</span><span class="p">,</span> <span class="n">graph_path</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()]</span>
+    <span class="n">success</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">_execute_command</span><span class="p">()</span>
+
+    <span class="c1"># Cleanup</span>
+    <span class="n">graph_path</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">success</span>
+</code></pre>
+<h3 id="memory-and-performance-optimization">Memory and Performance Optimization</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">configure_snap_performance</span><span class="p">(</span><span class="n">gpt</span><span class="p">,</span> <span class="n">memory_gb</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">tile_size</span><span class="o">=</span><span class="mi">512</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configure SNAP for optimal performance.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Set JVM options for memory management</span>
+    <span class="n">jvm_options</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">&quot;-Xmx</span><span class="si">{</span><span class="n">memory_gb</span><span class="si">}</span><span class="s2">G&quot;</span><span class="p">,</span>      <span class="c1"># Maximum heap size</span>
+        <span class="s2">&quot;-XX:+UseG1GC&quot;</span><span class="p">,</span>           <span class="c1"># Use G1 garbage collector</span>
+        <span class="s2">&quot;-XX:+UseStringDeduplication&quot;</span>  <span class="c1"># Reduce memory usage</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Update parallelism based on available cores</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+    <span class="n">available_cores</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
+    <span class="n">gpt</span><span class="o">.</span><span class="n">parallelism</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">available_cores</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>  <span class="c1"># Leave one core free</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Configured SNAP with </span><span class="si">{</span><span class="n">memory_gb</span><span class="si">}</span><span class="s2">GB memory and </span><span class="si">{</span><span class="n">gpt</span><span class="o">.</span><span class="n">parallelism</span><span class="si">}</span><span class="s2"> threads&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">gpt</span>
+
+<span class="c1"># Example usage</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="s2">&quot;large_product.zip&quot;</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s2">&quot;output/&quot;</span><span class="p">)</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">configure_snap_performance</span><span class="p">(</span><span class="n">gpt</span><span class="p">,</span> <span class="n">memory_gb</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+</code></pre>
+<h2 id="batch-processing">Batch Processing</h2>
+<h3 id="multiple-product-processing">Multiple Product Processing</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">batch_process_products</span><span class="p">(</span><span class="n">product_list</span><span class="p">,</span> <span class="n">output_base_dir</span><span class="p">,</span> <span class="n">processing_func</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process multiple SAR products in batch.&quot;&quot;&quot;</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">failed_products</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">product_path</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">product_list</span><span class="p">):</span>
+        <span class="n">product_name</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span>
+        <span class="n">product_output_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_base_dir</span><span class="p">)</span> <span class="o">/</span> <span class="n">product_name</span>
+        <span class="n">product_output_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">product_list</span><span class="p">)</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">product_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">processing_func</span><span class="p">(</span><span class="n">product_path</span><span class="p">,</span> <span class="n">product_output_dir</span><span class="p">)</span>
+            <span class="n">results</span><span class="p">[</span><span class="n">product_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✓ Successfully processed </span><span class="si">{</span><span class="n">product_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✗ Failed to process </span><span class="si">{</span><span class="n">product_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">failed_products</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">failed_products</span>
+
+<span class="c1"># Example batch processing</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">standard_preprocessing</span><span class="p">(</span><span class="n">product_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Standard preprocessing function for batch processing.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">preprocess_sentinel1_standard</span><span class="p">(</span><span class="n">product_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">)</span>
+
+<span class="c1"># Process all products in a directory</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="n">product_directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;input_products/&quot;</span><span class="p">)</span>
+<span class="n">product_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">product_directory</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.zip&quot;</span><span class="p">))</span>
+
+<span class="n">results</span><span class="p">,</span> <span class="n">failures</span> <span class="o">=</span> <span class="n">batch_process_products</span><span class="p">(</span>
+    <span class="n">product_files</span><span class="p">,</span>
+    <span class="s2">&quot;batch_output/&quot;</span><span class="p">,</span>
+    <span class="n">standard_preprocessing</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processed </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="si">}</span><span class="s2"> products successfully&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed products: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">failures</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="parallel-processing">Parallel Processing</h3>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">concurrent.futures</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">parallel_batch_processing</span><span class="p">(</span><span class="n">product_list</span><span class="p">,</span> <span class="n">output_base_dir</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process products in parallel with controlled concurrency.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_single_product</span><span class="p">(</span><span class="n">product_path</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Single product processing function.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">product_name</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span>
+            <span class="n">product_output_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_base_dir</span><span class="p">)</span> <span class="o">/</span> <span class="n">product_name</span>
+            <span class="n">product_output_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="n">result</span> <span class="o">=</span> <span class="n">preprocess_sentinel1_standard</span><span class="p">(</span><span class="n">product_path</span><span class="p">,</span> <span class="n">product_output_dir</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">product_name</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="kc">None</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+    <span class="c1"># Process products in parallel</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">failures</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">with</span> <span class="n">concurrent</span><span class="o">.</span><span class="n">futures</span><span class="o">.</span><span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+        <span class="c1"># Submit all tasks</span>
+        <span class="n">future_to_product</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">process_single_product</span><span class="p">,</span> <span class="n">product_path</span><span class="p">):</span> <span class="n">product_path</span>
+            <span class="k">for</span> <span class="n">product_path</span> <span class="ow">in</span> <span class="n">product_list</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Collect results</span>
+        <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">concurrent</span><span class="o">.</span><span class="n">futures</span><span class="o">.</span><span class="n">as_completed</span><span class="p">(</span><span class="n">future_to_product</span><span class="p">):</span>
+            <span class="n">product_name</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">error</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
+                <span class="n">failures</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">product_name</span><span class="p">,</span> <span class="n">error</span><span class="p">))</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✗ Failed: </span><span class="si">{</span><span class="n">product_name</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">results</span><span class="p">[</span><span class="n">product_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✓ Completed: </span><span class="si">{</span><span class="n">product_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">failures</span>
+
+<span class="c1"># Example usage (be careful with SNAP memory usage in parallel)</span>
+<span class="n">results</span><span class="p">,</span> <span class="n">failures</span> <span class="o">=</span> <span class="n">parallel_batch_processing</span><span class="p">(</span>
+    <span class="n">product_files</span><span class="p">[:</span><span class="mi">4</span><span class="p">],</span>  <span class="c1"># Start with small batch</span>
+    <span class="s2">&quot;parallel_output/&quot;</span><span class="p">,</span>
+    <span class="n">max_workers</span><span class="o">=</span><span class="mi">2</span>       <span class="c1"># Conservative parallelism for SNAP</span>
+<span class="p">)</span>
+</code></pre>
+<h2 id="data-format-conversion">Data Format Conversion</h2>
+<h3 id="beam-dimap-to-geotiff">BEAM-DIMAP to GeoTIFF</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">convert_to_geotiff</span><span class="p">(</span><span class="n">beam_dimap_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert BEAM-DIMAP products to GeoTIFF.&quot;&quot;&quot;</span>
+
+    <span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">beam_dimap_path</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;GeoTIFF&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Simple format conversion</span>
+    <span class="n">geotiff_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;GEOTIFF&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">geotiff_product</span>
+
+<span class="c1"># Convert processed product to GeoTIFF</span>
+<span class="n">geotiff_path</span> <span class="o">=</span> <span class="n">convert_to_geotiff</span><span class="p">(</span>
+    <span class="s2">&quot;processed_product.dim&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;geotiff_output/&quot;</span>
+<span class="p">)</span>
+</code></pre>
+<h3 id="extract-specific-bands">Extract Specific Bands</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_bands_to_geotiff</span><span class="p">(</span><span class="n">product_path</span><span class="p">,</span> <span class="n">bands</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract specific bands and save as individual GeoTIFFs.&quot;&quot;&quot;</span>
+
+    <span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">product_path</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;GeoTIFF&quot;</span><span class="p">)</span>
+
+    <span class="n">extracted_bands</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">band</span> <span class="ow">in</span> <span class="n">bands</span><span class="p">:</span>
+        <span class="c1"># Create subset with single band</span>
+        <span class="n">band_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Subset</span><span class="p">(</span>
+            <span class="n">loc</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>           <span class="c1"># Full extent</span>
+            <span class="n">sourceBands</span><span class="o">=</span><span class="p">[</span><span class="n">band</span><span class="p">],</span>
+            <span class="n">idx</span><span class="o">=</span><span class="n">band</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">),</span>
+            <span class="n">winSize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>            <span class="c1"># Full size</span>
+            <span class="n">copy_metadata</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+        <span class="n">extracted_bands</span><span class="p">[</span><span class="n">band</span><span class="p">]</span> <span class="o">=</span> <span class="n">band_product</span>
+
+    <span class="k">return</span> <span class="n">extracted_bands</span>
+
+<span class="c1"># Extract VV and VH intensity bands</span>
+<span class="n">bands</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Intensity_VV&#39;</span><span class="p">,</span> <span class="s1">&#39;Intensity_VH&#39;</span><span class="p">]</span>
+<span class="n">extracted</span> <span class="o">=</span> <span class="n">extract_bands_to_geotiff</span><span class="p">(</span>
+    <span class="s2">&quot;calibrated_product.dim&quot;</span><span class="p">,</span>
+    <span class="n">bands</span><span class="p">,</span>
+    <span class="s2">&quot;individual_bands/&quot;</span>
+<span class="p">)</span>
+</code></pre>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-issues-and-solutions">Common Issues and Solutions</h3>
+<h4 id="1-gpt-not-found">1. GPT Not Found</h4>
+<pre class="codehilite"><code><span class="c1"># Check SNAP installation</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">check_snap_installation</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Verify SNAP GPT installation.&quot;&quot;&quot;</span>
+
+    <span class="n">common_paths</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;/Applications/snap/bin/gpt&quot;</span><span class="p">,</span>           <span class="c1"># macOS</span>
+        <span class="s2">&quot;/usr/local/snap/bin/gpt&quot;</span><span class="p">,</span>             <span class="c1"># Linux (custom install)</span>
+        <span class="s2">&quot;/opt/snap/bin/gpt&quot;</span><span class="p">,</span>                   <span class="c1"># Linux (system install)</span>
+        <span class="s2">&quot;C:</span><span class="se">\\</span><span class="s2">Program Files</span><span class="se">\\</span><span class="s2">snap</span><span class="se">\\</span><span class="s2">bin</span><span class="se">\\</span><span class="s2">gpt.exe&quot;</span> <span class="c1"># Windows</span>
+    <span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">common_paths</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found SNAP GPT at: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;--help&quot;</span><span class="p">],</span> 
+                                      <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;GPT is working correctly&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">path</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GPT found but not working: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SNAP GPT not found. Please install SNAP from:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;https://step.esa.int/main/download/snap-download/&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+<span class="n">snap_path</span> <span class="o">=</span> <span class="n">check_snap_installation</span><span class="p">()</span>
+</code></pre>
+<h4 id="2-memory-issues">2. Memory Issues</h4>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">diagnose_memory_issues</span><span class="p">(</span><span class="n">gpt</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Diagnose and suggest memory optimizations.&quot;&quot;&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current parallelism: </span><span class="si">{</span><span class="n">gpt</span><span class="o">.</span><span class="n">parallelism</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Suggest memory optimizations</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">psutil</span>
+    <span class="n">available_memory_gb</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span><span class="o">.</span><span class="n">available</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Available memory: </span><span class="si">{</span><span class="n">available_memory_gb</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> GB&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">available_memory_gb</span> <span class="o">&lt;</span> <span class="mi">8</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning: Low memory. Suggestions:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- Reduce parallelism: gpt.parallelism = 2&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- Process smaller subsets&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- Use GeoTIFF format to reduce intermediate file sizes&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Apply conservative settings</span>
+        <span class="n">gpt</span><span class="o">.</span><span class="n">parallelism</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">gpt</span><span class="o">.</span><span class="n">parallelism</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">gpt</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="s2">&quot;GeoTIFF&quot;</span>
+
+    <span class="k">return</span> <span class="n">gpt</span>
+</code></pre>
+<h4 id="3-processing-failures">3. Processing Failures</h4>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">robust_processing_wrapper</span><span class="p">(</span><span class="n">processing_func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper for robust processing with retry logic.&quot;&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_retries</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">processing_func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Attempt </span><span class="si">{</span><span class="n">attempt</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">attempt</span> <span class="o">&lt;</span> <span class="n">max_retries</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Retrying... (</span><span class="si">{</span><span class="n">attempt</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">max_retries</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+
+                <span class="c1"># Clean up any partial outputs</span>
+                <span class="n">output_dir</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;output_dir&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">output_dir</span> <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                    <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+                    <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="n">Path</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;All attempts failed. Final error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">raise</span>
+
+<span class="c1"># Example usage</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">robust_processing_wrapper</span><span class="p">(</span>
+    <span class="n">preprocess_sentinel1_standard</span><span class="p">,</span>
+    <span class="s2">&quot;problematic_product.zip&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;robust_output/&quot;</span><span class="p">,</span>
+    <span class="n">max_retries</span><span class="o">=</span><span class="mi">2</span>
+<span class="p">)</span>
+</code></pre>
+<h3 id="performance-monitoring">Performance Monitoring</h3>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">psutil</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">monitor_processing_performance</span><span class="p">(</span><span class="n">processing_func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Monitor processing performance and resource usage.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Initial state</span>
+    <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">initial_memory</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span><span class="o">.</span><span class="n">used</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting processing at </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%H:%M:%S&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Initial memory usage: </span><span class="si">{</span><span class="n">initial_memory</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> GB&quot;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># Run processing function</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">processing_func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># Final state</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">final_memory</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span><span class="o">.</span><span class="n">used</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+        <span class="n">processing_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing completed in </span><span class="si">{</span><span class="n">processing_time</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Memory change: </span><span class="si">{</span><span class="n">final_memory</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">initial_memory</span><span class="si">:</span><span class="s2">+.1f</span><span class="si">}</span><span class="s2"> GB&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Peak memory usage: </span><span class="si">{</span><span class="n">final_memory</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> GB&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing failed after </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_time</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>
+        <span class="k">raise</span>
+
+<span class="c1"># Monitor processing performance</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">monitor_processing_performance</span><span class="p">(</span>
+    <span class="n">preprocess_sentinel1_standard</span><span class="p">,</span>
+    <span class="s2">&quot;large_product.zip&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;monitored_output/&quot;</span>
+<span class="p">)</span>
+</code></pre>
+<h2 id="integration-with-sarpyx-workflows">Integration with sarpyx Workflows</h2>
+<h3 id="snap-to-sub-look-analysis">SNAP to Sub-Look Analysis</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.sla</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubLookAnalysis</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">snap_to_sla_workflow</span><span class="p">(</span><span class="n">input_product</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Combine SNAP preprocessing with sub-look analysis.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Step 1: SNAP preprocessing</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Step 1: SNAP preprocessing...&quot;</span><span class="p">)</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">preprocess_sentinel1_standard</span><span class="p">(</span><span class="n">input_product</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">)</span>
+
+    <span class="c1"># Step 2: Convert to SLC format if needed</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Step 2: Preparing for SLA...&quot;</span><span class="p">)</span>
+    <span class="n">slc_product</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;calibration&#39;</span><span class="p">]</span>  <span class="c1"># Use calibrated complex data</span>
+
+    <span class="c1"># Step 3: Sub-look analysis</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Step 3: Sub-look analysis...&quot;</span><span class="p">)</span>
+    <span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">slc_product</span><span class="p">)</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">choice</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># Azimuth processing</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">centroidSeparations</span> <span class="o">=</span> <span class="mi">700</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">subLookBandwidth</span> <span class="o">=</span> <span class="mi">700</span>
+
+    <span class="c1"># Execute SLA processing</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">()</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">AncillaryDeWe</span><span class="p">()</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;snap_results&#39;</span><span class="p">:</span> <span class="n">results</span><span class="p">,</span>
+        <span class="s1">&#39;sla_processor&#39;</span><span class="p">:</span> <span class="n">sla</span><span class="p">,</span>
+        <span class="s1">&#39;sublooks&#39;</span><span class="p">:</span> <span class="n">sla</span><span class="o">.</span><span class="n">Looks</span>
+    <span class="p">}</span>
+
+<span class="c1"># Complete workflow</span>
+<span class="n">workflow_results</span> <span class="o">=</span> <span class="n">snap_to_sla_workflow</span><span class="p">(</span>
+    <span class="s2">&quot;S1A_IW_SLC_1SDV_20231101.zip&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;complete_workflow_output/&quot;</span>
+<span class="p">)</span>
+</code></pre>
+<h3 id="snap-to-science-applications">SNAP to Science Applications</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science.indices</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_rvi</span><span class="p">,</span> <span class="n">calculate_ndpoll</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">snap_to_science_workflow</span><span class="p">(</span><span class="n">input_product</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Combine SNAP preprocessing with scientific indices.&quot;&quot;&quot;</span>
+
+    <span class="c1"># SNAP preprocessing for intensity products</span>
+    <span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">input_product</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">)</span>
+
+    <span class="c1"># Get intensity products</span>
+    <span class="n">cal_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">(</span><span class="n">Pols</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;VV&#39;</span><span class="p">,</span> <span class="s1">&#39;VH&#39;</span><span class="p">],</span> <span class="n">output_complex</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">ml_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Multilook</span><span class="p">(</span><span class="n">nRgLooks</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nAzLooks</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+    <span class="c1"># Convert to GeoTIFF for science processing</span>
+    <span class="n">gpt</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="s2">&quot;GeoTIFF&quot;</span>
+    <span class="n">final_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;SCIENCE&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Load data for science applications</span>
+    <span class="c1"># (This would require additional data loading functions)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SNAP processing complete: </span><span class="si">{</span><span class="n">final_product</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Ready for vegetation index calculation using sarpyx.science.indices&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">final_product</span>
+</code></pre>
+<h2 id="best-practices">Best Practices</h2>
+<h3 id="1-resource-management">1. Resource Management</h3>
+<pre class="codehilite"><code><span class="c1"># Always specify appropriate parallelism</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="s2">&quot;input.zip&quot;</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s2">&quot;output/&quot;</span><span class="p">)</span>
+<span class="n">gpt</span><span class="o">.</span><span class="n">parallelism</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>  <span class="c1"># Leave cores for system</span>
+
+<span class="c1"># Use appropriate output formats</span>
+<span class="n">gpt</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="s2">&quot;GeoTIFF&quot;</span>  <span class="c1"># For final products</span>
+<span class="n">gpt</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="s2">&quot;BEAM-DIMAP&quot;</span>  <span class="c1"># For intermediate products (better metadata)</span>
+</code></pre>
+<h3 id="2-error-handling">2. Error Handling</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">safe_snap_processing</span><span class="p">(</span><span class="n">product_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Template for safe SNAP processing.&quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">product_path</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">)</span>
+
+        <span class="c1"># Verify input product</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Product not found: </span><span class="si">{</span><span class="n">product_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Execute processing with error checking</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">(</span><span class="n">Pols</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;VV&#39;</span><span class="p">,</span> <span class="s1">&#39;VH&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Calibration failed&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Cleanup partial outputs</span>
+        <span class="k">if</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">raise</span>
+</code></pre>
+<h3 id="3-file-management">3. File Management</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">cleanup_intermediate_products</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">keep_final</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Clean up intermediate SNAP products.&quot;&quot;&quot;</span>
+
+    <span class="n">output_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+
+    <span class="c1"># Patterns for intermediate files</span>
+    <span class="n">intermediate_patterns</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;*_DEB.*&quot;</span><span class="p">,</span>     <span class="c1"># Deburst products</span>
+        <span class="s2">&quot;*_CAL.*&quot;</span><span class="p">,</span>     <span class="c1"># Calibration products  </span>
+        <span class="s2">&quot;*_ML.*&quot;</span><span class="p">,</span>      <span class="c1"># Multilook products</span>
+        <span class="s2">&quot;*_SHP.*&quot;</span><span class="p">,</span>     <span class="c1"># Vector import products</span>
+        <span class="s2">&quot;*_LM.*&quot;</span><span class="p">,</span>      <span class="c1"># Land mask products</span>
+    <span class="p">]</span>
+
+    <span class="n">cleaned_files</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">intermediate_patterns</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">file_path</span> <span class="ow">in</span> <span class="n">output_path</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">pattern</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">file_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+                <span class="n">file_path</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
+                <span class="n">cleaned_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file_path</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">file_path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+                <span class="n">cleaned_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file_path</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cleaned up </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cleaned_files</span><span class="p">)</span><span class="si">}</span><span class="s2"> intermediate files&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cleaned_files</span>
+</code></pre>
+<p>This comprehensive SNAP Integration guide provides users with everything they need to effectively use sarpyx&rsquo;s SNAP integration capabilities, from basic operations to advanced workflows and troubleshooting.</p>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

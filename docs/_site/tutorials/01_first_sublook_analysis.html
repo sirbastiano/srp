@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tutorial 1: Your First Sub-Look Analysis – sarpyx Docs</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../index.html"><img class="logo" src="../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../user_guide/index.html">Overview</a>
+<a href="../user_guide/installation.html">Installation</a>
+<a href="../user_guide/getting_started.html">Getting Started</a>
+<a href="../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../user_guide/data_formats.html">Data Formats</a>
+<a href="../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../user_guide/science_applications.html">Science Applications</a>
+<a href="../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../tutorials/index.html">Overview</a>
+<a href="../tutorials/01_first_sublook_analysis.html" class="active">01 – Sub-Look Analysis</a>
+<a href="../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../api/index.html">Overview</a>
+<a href="../api/snapflow/index.html">Snapflow</a>
+<a href="../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../api/science/index.html">Science</a>
+<a href="../api/sla/index.html">SLA</a>
+<a href="../api/processor/index.html">Processor</a>
+<a href="../api/utils/index.html">Utils</a>
+<a href="../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../developer_guide/architecture.html">Architecture</a>
+<a href="../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="tutorial-1-your-first-sub-look-analysis">Tutorial 1: Your First Sub-Look Analysis</h1>
+<p>Learn the fundamentals of sub-look decomposition using sarpyx with a real Sentinel-1 example.</p>
+<h2 id="overview">Overview</h2>
+<p>In this tutorial, you&rsquo;ll learn how to:
+- Load and prepare Sentinel-1 SLC data
+- Configure sub-look analysis parameters
+- Execute the complete processing chain
+- Visualize and interpret results
+- Assess the quality of sub-look decomposition</p>
+<p><strong>Duration</strong>: 15 minutes<br>
+<strong>Prerequisites</strong>: Basic Python knowledge<br>
+<strong>Data</strong>: Sample Sentinel-1 SLC product</p>
+<h2 id="what-is-sub-look-analysis">What is Sub-Look Analysis?</h2>
+<p>Sub-look analysis decomposes the full SAR aperture into smaller sub-apertures, each providing:
+- Different viewing angles (squint angles)
+- Enhanced motion sensitivity
+- Improved capability for interferometric analysis
+- Reduced speckle through incoherent averaging</p>
+<h2 id="setup">Setup</h2>
+<h3 id="required-imports">Required Imports</h3>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="c1"># sarpyx imports</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.sla</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubLookAnalysis</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">show_image</span><span class="p">,</span> <span class="n">show_histogram</span>
+</code></pre>
+<h3 id="sample-data">Sample Data</h3>
+<p>For this tutorial, we&rsquo;ll use a Sentinel-1 SLC product. If you don&rsquo;t have one, you can download sample data:</p>
+<pre class="codehilite"><code><span class="c1"># Sample data path (adjust to your data location)</span>
+<span class="n">product_path</span> <span class="o">=</span> <span class="s2">&quot;data/S1A_IW_SLC_1SDV_20231015T060000_20231015T060027_050123_060456_1234.zip&quot;</span>
+
+<span class="c1"># Verify the file exists</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Please download sample data or adjust the path: </span><span class="si">{</span><span class="n">product_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Alternative: use your own Sentinel-1 SLC product</span>
+</code></pre>
+<h2 id="step-1-initialize-sub-look-analysis">Step 1: Initialize Sub-Look Analysis</h2>
+<p>Let&rsquo;s start by creating a SubLookAnalysis object and examining the default parameters:</p>
+<pre class="codehilite"><code><span class="c1"># Initialize the SubLookAnalysis processor</span>
+<span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+
+<span class="c1"># Examine default parameters</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Default Parameters:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing direction: </span><span class="si">{</span><span class="s1">&#39;Azimuth&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">sla</span><span class="o">.</span><span class="n">choice</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;Range&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of looks: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Centroid separations: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">centroidSeparations</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub-look bandwidth: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">subLookBandwidth</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;De-weighting method: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">choiceDeWe</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<p>Expected output:</p>
+<pre><code>Default Parameters:
+Processing direction: Azimuth
+Number of looks: 3
+Centroid separations: 700 Hz
+Sub-look bandwidth: 700 Hz
+De-weighting method: 0
+</code></pre>
+<h2 id="step-2-configure-processing-parameters">Step 2: Configure Processing Parameters</h2>
+<p>Let&rsquo;s configure the parameters for our analysis. We&rsquo;ll start with conservative settings:</p>
+<pre class="codehilite"><code><span class="c1"># Configuration for sub-look analysis</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">choice</span> <span class="o">=</span> <span class="mi">1</span>                    <span class="c1"># Azimuth processing (most common)</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">=</span> <span class="mi">3</span>             <span class="c1"># Generate 3 sub-looks</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">centroidSeparations</span> <span class="o">=</span> <span class="mi">700</span>     <span class="c1"># 700 Hz separation between looks</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">subLookBandwidth</span> <span class="o">=</span> <span class="mi">700</span>        <span class="c1"># 700 Hz bandwidth per sub-look</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Configured Parameters:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing: </span><span class="si">{</span><span class="s1">&#39;Azimuth&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">sla</span><span class="o">.</span><span class="n">choice</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;Range&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub-looks: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Separation: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">centroidSeparations</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Bandwidth: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">subLookBandwidth</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="step-3-frequency-computation">Step 3: Frequency Computation</h2>
+<p>The first processing step computes the frequency bins for sub-look decomposition:</p>
+<pre class="codehilite"><code><span class="c1"># Compute frequency bins</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Computing frequency bins...&quot;</span><span class="p">)</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✓ Frequency computation successful&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Display computed frequencies</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Sub-look center frequencies:&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">freq</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">freqCentr</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Look </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">freq</span><span class="si">:</span><span class="s2">6.1f</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Frequency ranges:&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Look </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: [</span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">freqMin</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s2">6.1f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">freqMax</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s2">6.1f</span><span class="si">}</span><span class="s2">] Hz&quot;</span><span class="p">)</span>
+
+<span class="k">except</span> <span class="ne">AssertionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✗ Frequency computation failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Try reducing the number of looks or bandwidth&quot;</span><span class="p">)</span>
+</code></pre>
+<p>Expected output:</p>
+<pre><code>Computing frequency bins...
+✓ Frequency computation successful
+
+Sub-look center frequencies:
+  Look 1:  -700.0 Hz
+  Look 2:    0.0 Hz
+  Look 3:  700.0 Hz
+
+Frequency ranges:
+  Look 1: [-1050.0, -350.0] Hz
+  Look 2: [ -350.0,  350.0] Hz
+  Look 3: [  350.0, 1050.0] Hz
+</code></pre>
+<h2 id="step-4-spectrum-computation">Step 4: Spectrum Computation</h2>
+<p>Transform the SAR data to the frequency domain:</p>
+<pre class="codehilite"><code><span class="c1"># Compute spectrum</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Computing spectrum...&quot;</span><span class="p">)</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✓ Spectrum computation successful&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Display spectrum information</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Spectrum shape: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">SpectrumOneDim</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data type: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">SpectrumOneDim</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Frequency vector length: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">freqVect</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✗ Spectrum computation failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<p>With <code>VERBOSE=True</code>, you&rsquo;ll see plots showing the computed spectrum.</p>
+<h2 id="step-5-de-weighting">Step 5: De-weighting</h2>
+<p>Apply de-weighting to compensate for window functions:</p>
+<pre class="codehilite"><code><span class="c1"># Apply de-weighting</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Applying de-weighting...&quot;</span><span class="p">)</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">AncillaryDeWe</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✓ De-weighting successful&quot;</span><span class="p">)</span>
+
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✗ De-weighting failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="step-6-sub-look-generation">Step 6: Sub-Look Generation</h2>
+<p>Generate the final sub-look images:</p>
+<pre class="codehilite"><code><span class="c1"># Generate sub-look images</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Generating sub-look images...&quot;</span><span class="p">)</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✓ Sub-look generation successful&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Display results information</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Results:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub-look array shape: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of sub-looks: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Image dimensions: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> x </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✗ Sub-look generation failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<p>With <code>VERBOSE=True</code>, you&rsquo;ll see plots of the generated sub-look images.</p>
+<h2 id="step-7-visualize-results">Step 7: Visualize Results</h2>
+<p>Let&rsquo;s create comprehensive visualizations of our results:</p>
+<pre class="codehilite"><code><span class="c1"># Create figure with subplots</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Sub-Look Analysis Results&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+
+<span class="c1"># Display original data</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">Box</span><span class="p">),</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Original SAR Data&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Range&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Azimuth&#39;</span><span class="p">)</span>
+
+<span class="c1"># Display sub-look images</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span><span class="p">):</span>
+    <span class="n">row</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="k">else</span> <span class="mi">1</span>
+    <span class="n">col</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">2</span>
+
+    <span class="c1"># Display amplitude</span>
+    <span class="n">sublook_amp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="n">im</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">sublook_amp</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Sub-look </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="se">\n</span><span class="s1">(Freq: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">freqCentr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1"> Hz)&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Range&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Azimuth&#39;</span><span class="p">)</span>
+
+<span class="c1"># Display coherence map (if we have multiple looks)</span>
+<span class="k">if</span> <span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+    <span class="c1"># Calculate coherence between first two sub-looks</span>
+    <span class="n">look1_flat</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="n">look2_flat</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+    <span class="c1"># Coherence estimation (simplified)</span>
+    <span class="n">coherence</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">look1_flat</span><span class="p">,</span> <span class="n">look2_flat</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Coherence</span><span class="se">\n</span><span class="s1">between</span><span class="se">\n</span><span class="s1">Looks 1-2:</span><span class="se">\n</span><span class="si">{</span><span class="n">coherence</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> 
+                    <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> 
+                    <span class="n">transform</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">transAxes</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Quality Metrics&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h2 id="step-8-quality-assessment">Step 8: Quality Assessment</h2>
+<p>Let&rsquo;s assess the quality of our sub-look decomposition:</p>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">assess_sublook_quality</span><span class="p">(</span><span class="n">sla</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Assess the quality of sub-look decomposition.&quot;&quot;&quot;</span>
+
+    <span class="n">metrics</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># 1. Mean amplitude per sub-look</span>
+    <span class="n">mean_amplitudes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span><span class="p">):</span>
+        <span class="n">mean_amp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+        <span class="n">mean_amplitudes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mean_amp</span><span class="p">)</span>
+
+    <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;mean_amplitudes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mean_amplitudes</span>
+
+    <span class="c1"># 2. Standard deviation (speckle level)</span>
+    <span class="n">std_amplitudes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span><span class="p">):</span>
+        <span class="n">std_amp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+        <span class="n">std_amplitudes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">std_amp</span><span class="p">)</span>
+
+    <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;std_amplitudes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">std_amplitudes</span>
+
+    <span class="c1"># 3. Cross-correlation between sub-looks</span>
+    <span class="n">correlations</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span><span class="p">):</span>
+            <span class="n">corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span>
+                <span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> 
+                <span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">correlations</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">corr</span><span class="p">)))</span>
+
+    <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;correlations&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">correlations</span>
+
+    <span class="c1"># 4. Frequency separation validation</span>
+    <span class="n">freq_separations</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">sep</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">freqCentr</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">sla</span><span class="o">.</span><span class="n">freqCentr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">freq_separations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sep</span><span class="p">)</span>
+
+    <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;frequency_separations&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">freq_separations</span>
+
+    <span class="k">return</span> <span class="n">metrics</span>
+
+<span class="c1"># Assess quality</span>
+<span class="n">quality</span> <span class="o">=</span> <span class="n">assess_sublook_quality</span><span class="p">(</span><span class="n">sla</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Quality Assessment:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;==================&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">1. Mean Amplitudes:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">amp</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">quality</span><span class="p">[</span><span class="s1">&#39;mean_amplitudes&#39;</span><span class="p">]):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Sub-look </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">amp</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">2. Standard Deviations:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">std</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">quality</span><span class="p">[</span><span class="s1">&#39;std_amplitudes&#39;</span><span class="p">]):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Sub-look </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">std</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">3. Cross-correlations:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">corr</span> <span class="ow">in</span> <span class="n">quality</span><span class="p">[</span><span class="s1">&#39;correlations&#39;</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Sub-looks </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">corr</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">4. Frequency Separations:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sep</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">quality</span><span class="p">[</span><span class="s1">&#39;frequency_separations&#39;</span><span class="p">]):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Between looks </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">2</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">sep</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">sep</span> <span class="o">-</span> <span class="n">sla</span><span class="o">.</span><span class="n">centroidSeparations</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   ⚠ Warning: Expected </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">centroidSeparations</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="step-9-advanced-analysis">Step 9: Advanced Analysis</h2>
+<p>Let&rsquo;s perform some advanced analysis on our sub-look results:</p>
+<pre class="codehilite"><code><span class="c1"># Create intensity difference images</span>
+<span class="k">if</span> <span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+    <span class="c1"># Intensity images</span>
+    <span class="n">intensity1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">intensity2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span>
+
+    <span class="c1"># Intensity difference (normalized)</span>
+    <span class="n">intensity_diff</span> <span class="o">=</span> <span class="p">(</span><span class="n">intensity1</span> <span class="o">-</span> <span class="n">intensity2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">intensity1</span> <span class="o">+</span> <span class="n">intensity2</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+
+    <span class="c1"># Visualize</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+    <span class="n">im1</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">intensity1</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;hot&#39;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Intensity - Sub-look 1&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im1</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">im2</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">intensity2</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;hot&#39;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Intensity - Sub-look 2&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="n">im3</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">intensity_diff</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdBu&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Normalized Intensity Difference&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im3</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="c1"># Statistics</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Intensity difference statistics:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Mean: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">intensity_diff</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Std:  </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">intensity_diff</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Min:  </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">intensity_diff</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Max:  </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">intensity_diff</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="step-10-parameter-exploration">Step 10: Parameter Exploration</h2>
+<p>Let&rsquo;s explore how different parameters affect the results:</p>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">compare_parameters</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compare results with different parameter settings.&quot;&quot;&quot;</span>
+
+    <span class="n">configs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s1">&#39;numberOfLooks&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;centroidSeparations&#39;</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span> <span class="s1">&#39;subLookBandwidth&#39;</span><span class="p">:</span> <span class="mi">500</span><span class="p">},</span>
+        <span class="p">{</span><span class="s1">&#39;numberOfLooks&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;centroidSeparations&#39;</span><span class="p">:</span> <span class="mi">700</span><span class="p">,</span> <span class="s1">&#39;subLookBandwidth&#39;</span><span class="p">:</span> <span class="mi">700</span><span class="p">},</span>
+        <span class="p">{</span><span class="s1">&#39;numberOfLooks&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;centroidSeparations&#39;</span><span class="p">:</span> <span class="mi">400</span><span class="p">,</span> <span class="s1">&#39;subLookBandwidth&#39;</span><span class="p">:</span> <span class="mi">400</span><span class="p">}</span>
+    <span class="p">]</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">config</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">configs</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Testing configuration </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Create new SLA instance</span>
+            <span class="n">test_sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+
+            <span class="c1"># Apply configuration</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">test_sla</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+            <span class="c1"># Process (without verbose output)</span>
+            <span class="n">test_sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>
+            <span class="n">test_sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">test_sla</span><span class="o">.</span><span class="n">AncillaryDeWe</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">test_sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+            <span class="c1"># Calculate quality metric</span>
+            <span class="n">correlations</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">look_i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">test_sla</span><span class="o">.</span><span class="n">numberOfLooks</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">look_j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">look_i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">test_sla</span><span class="o">.</span><span class="n">numberOfLooks</span><span class="p">):</span>
+                    <span class="n">corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span>
+                        <span class="n">test_sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">[</span><span class="n">look_i</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span>
+                        <span class="n">test_sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">[</span><span class="n">look_j</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+                    <span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+                    <span class="n">correlations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">corr</span><span class="p">)</span>
+
+            <span class="n">avg_correlation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">correlations</span><span class="p">)</span>
+
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s1">&#39;config&#39;</span><span class="p">:</span> <span class="n">config</span><span class="p">,</span>
+                <span class="s1">&#39;avg_correlation&#39;</span><span class="p">:</span> <span class="n">avg_correlation</span><span class="p">,</span>
+                <span class="s1">&#39;success&#39;</span><span class="p">:</span> <span class="kc">True</span>
+            <span class="p">})</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  ✓ Success! Average correlation: </span><span class="si">{</span><span class="n">avg_correlation</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  ✗ Failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s1">&#39;config&#39;</span><span class="p">:</span> <span class="n">config</span><span class="p">,</span>
+                <span class="s1">&#39;success&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="p">})</span>
+
+    <span class="k">return</span> <span class="n">results</span>
+
+<span class="c1"># Run parameter comparison</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Parameter Exploration:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=====================&quot;</span><span class="p">)</span>
+<span class="n">param_results</span> <span class="o">=</span> <span class="n">compare_parameters</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Summary:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">param_results</span><span class="p">):</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;config&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;success&#39;</span><span class="p">]:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Config </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;numberOfLooks&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> looks, &quot;</span>
+              <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;centroidSeparations&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> Hz sep, &quot;</span>
+              <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;subLookBandwidth&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> Hz BW → &quot;</span>
+              <span class="sa">f</span><span class="s2">&quot;Correlation: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;avg_correlation&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Config </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: FAILED - </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;error&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="summary">Summary</h2>
+<p>Congratulations! You&rsquo;ve completed your first sub-look analysis. Here&rsquo;s what you learned:</p>
+<ol>
+<li><strong>Initialization</strong>: How to create a SubLookAnalysis object</li>
+<li><strong>Configuration</strong>: Setting processing parameters</li>
+<li><strong>Processing Chain</strong>: The four main steps of sub-look analysis</li>
+<li><strong>Visualization</strong>: Creating meaningful plots of results</li>
+<li><strong>Quality Assessment</strong>: Evaluating processing success</li>
+<li><strong>Parameter Exploration</strong>: Understanding parameter effects</li>
+</ol>
+<h3 id="key-takeaways">Key Takeaways</h3>
+<ul>
+<li><strong>Frequency planning is critical</strong>: Sub-look frequencies must fit within available bandwidth</li>
+<li><strong>Parameter balance</strong>: Trade-offs between number of looks, separation, and bandwidth</li>
+<li><strong>Quality metrics</strong>: Correlation and intensity statistics help assess results</li>
+<li><strong>Visualization helps</strong>: Always plot results to understand what&rsquo;s happening</li>
+</ul>
+<h2 id="exercises">Exercises</h2>
+<p>Try these exercises to deepen your understanding:</p>
+<ol>
+<li><strong>Different sensor data</strong>: Try the analysis with COSMO-SkyMed or other SAR data</li>
+<li><strong>Range processing</strong>: Set <code>choice = 0</code> and compare with azimuth results</li>
+<li><strong>Parameter optimization</strong>: Find optimal parameters for your specific dataset</li>
+<li><strong>Motion detection</strong>: Use intensity differences to identify moving targets</li>
+</ol>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<ol>
+<li>
+<p><strong>&ldquo;Sub-look spectrum outside the available bandwidth&rdquo;</strong>
+   - Reduce <code>subLookBandwidth</code> or <code>centroidSeparations</code>
+   - Decrease <code>numberOfLooks</code></p>
+</li>
+<li>
+<p><strong>Memory errors</strong>
+   - Use smaller spatial subsets
+   - Reduce data precision if acceptable</p>
+</li>
+<li>
+<p><strong>Poor quality results</strong>
+   - Check input data quality
+   - Adjust window functions
+   - Verify frequency parameters</p>
+</li>
+</ol>
+<h2 id="next-steps">Next Steps</h2>
+<p>Continue your learning journey:
+- <strong><a href="02_snap_integration_basics.html">Tutorial 2: SNAP Integration Basics</a></strong>: Learn SNAP automation
+- <strong><a href="03_visualization_quality.html">Tutorial 3: Visualization and Quality</a></strong>: Advanced visualization techniques
+- <strong><a href="04_multitemporal_analysis.html">Tutorial 4: Multi-temporal Analysis</a></strong>: Time series processing</p>
+<p>You&rsquo;re now ready to explore more advanced sarpyx capabilities!</p>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

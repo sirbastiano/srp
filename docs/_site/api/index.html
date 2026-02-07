@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>API Reference – sarpyx Docs</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../index.html"><img class="logo" src="../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../user_guide/index.html">Overview</a>
+<a href="../user_guide/installation.html">Installation</a>
+<a href="../user_guide/getting_started.html">Getting Started</a>
+<a href="../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../user_guide/data_formats.html">Data Formats</a>
+<a href="../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../user_guide/science_applications.html">Science Applications</a>
+<a href="../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../tutorials/index.html">Overview</a>
+<a href="../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../api/index.html" class="active">Overview</a>
+<a href="../api/snapflow/index.html">Snapflow</a>
+<a href="../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../api/science/index.html">Science</a>
+<a href="../api/sla/index.html">SLA</a>
+<a href="../api/processor/index.html">Processor</a>
+<a href="../api/utils/index.html">Utils</a>
+<a href="../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../developer_guide/architecture.html">Architecture</a>
+<a href="../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="api-reference">API Reference</h1>
+<p>Comprehensive documentation for all sarpyx modules, classes, and functions.</p>
+<h2 id="overview">Overview</h2>
+<p>The sarpyx API is organized into several main modules, each serving specific aspects of SAR processing:</p>
+<ul>
+<li><strong><a href="processor/index.html">processor</a></strong>: Core SAR processing algorithms and utilities</li>
+<li><strong><a href="sla/index.html">sla</a></strong>: Sub-Look Analysis for aperture decomposition  </li>
+<li><strong><a href="snapflow/index.html">snapflow</a></strong>: Integration with ESA&rsquo;s SNAP platform (GPT wrapper)</li>
+<li><strong><a href="science/index.html">science</a></strong>: Scientific analysis tools and indices</li>
+<li><strong><a href="utils/index.html">utils</a></strong>: General utilities, visualization, geometry, and DEM tools</li>
+</ul>
+<h2 id="quick-reference">Quick Reference</h2>
+<h3 id="most-common-classes">Most Common Classes</h3>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Module</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SubLookAnalysis</code></td>
+<td><code>sarpyx.sla</code></td>
+<td>Main class for sub-aperture analysis</td>
+</tr>
+<tr>
+<td><code>GPT</code></td>
+<td><code>sarpyx.snapflow</code></td>
+<td>SNAP Graph Processing Tool wrapper</td>
+</tr>
+<tr>
+<td><code>Handler</code></td>
+<td><code>sarpyx.sla.core</code></td>
+<td>Metadata extraction and handling</td>
+</tr>
+</tbody>
+</table>
+<h3 id="most-common-functions">Most Common Functions</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Module</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>show_image()</code></td>
+<td><code>sarpyx.utils</code></td>
+<td>Display SAR images with customization</td>
+</tr>
+<tr>
+<td><code>calculate_rvi()</code></td>
+<td><code>sarpyx.science.indices</code></td>
+<td>Radar Vegetation Index calculation</td>
+</tr>
+<tr>
+<td><code>calculate_entropy()</code></td>
+<td><code>sarpyx.processor.autofocus.metrics</code></td>
+<td>Image focus quality metric</td>
+</tr>
+<tr>
+<td><code>calculate_ndpoll()</code></td>
+<td><code>sarpyx.science.indices</code></td>
+<td>Normalized Difference Polarization Index</td>
+</tr>
+<tr>
+<td><code>save_matlab_mat()</code></td>
+<td><code>sarpyx.utils.io</code></td>
+<td>Save data in MATLAB format</td>
+</tr>
+<tr>
+<td><code>download_tiles_for_wkt()</code></td>
+<td><code>sarpyx.utils.dem_utils</code></td>
+<td>Download Copernicus DEM tiles for a WKT geometry</td>
+</tr>
+<tr>
+<td><code>tiles_from_wkt()</code></td>
+<td><code>sarpyx.utils.dem_utils</code></td>
+<td>Compute DEM tile grid for a WKT geometry</td>
+</tr>
+<tr>
+<td><code>Calibration()</code></td>
+<td><code>sarpyx.snapflow.GPT</code></td>
+<td>SNAP radiometric calibration</td>
+</tr>
+<tr>
+<td><code>TerrainCorrection()</code></td>
+<td><code>sarpyx.snapflow.GPT</code></td>
+<td>SNAP geometric terrain correction</td>
+</tr>
+</tbody>
+</table>
+<h2 id="module-structure">Module Structure</h2>
+<pre><code>sarpyx/
+├── processor/          # Core processing algorithms
+│   ├── core/          # Focus, decode, transforms
+│   ├── autofocus/     # Autofocus algorithms and metrics
+│   ├── algorithms/    # High-level processing algorithms
+│   ├── data/          # Data I/O and format conversion
+│   └── utils/         # Processing utilities
+├── sla/               # Sub-Look Analysis
+│   ├── core/          # Main SLA implementation
+│   └── utils/         # SLA-specific utilities
+├── snapflow/          # SNAP GPT integration
+├── science/           # Scientific analysis tools
+├── cli/               # Command-line interfaces (worldsar)
+├── algorithms/        # High-level algorithm wrappers
+└── utils/             # General utilities
+    ├── viz.py         # Visualization and plotting
+    ├── io.py          # File I/O, format conversion
+    ├── dem_utils.py   # Copernicus DEM tile download
+    ├── geos.py        # Geometry and grid utilities
+    ├── grid.py        # Grid management
+    ├── wkt_utils.py   # WKT extraction from products
+    ├── nisar_utils.py # NISAR product utilities
+    ├── executor.py    # Async/parallel execution helpers
+    ├── meta.py        # Metadata utilities
+    └── ...            # Additional utility modules
+</code></pre>
+<h2 id="usage-patterns">Usage Patterns</h2>
+<h3 id="importing-modules">Importing Modules</h3>
+<pre class="codehilite"><code><span class="c1"># Import main modules</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx</span><span class="w"> </span><span class="kn">import</span> <span class="n">sla</span><span class="p">,</span> <span class="n">snapflow</span><span class="p">,</span> <span class="n">utils</span><span class="p">,</span> <span class="n">science</span>
+
+<span class="c1"># Import specific classes</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.sla</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubLookAnalysis</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.snapflow.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPT</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">show_image</span><span class="p">,</span> <span class="n">download_tiles_for_wkt</span>
+
+<span class="c1"># Import specific functions</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science.indices</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_rvi</span><span class="p">,</span> <span class="n">calculate_ndpoll</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.processor.autofocus.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_entropy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.dem_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">tiles_from_wkt</span><span class="p">,</span> <span class="n">build_vrt</span>
+</code></pre>
+<h3 id="common-api-patterns">Common API Patterns</h3>
+<h4 id="configuration-objects">Configuration Objects</h4>
+<p>Many sarpyx classes use attribute-based configuration:</p>
+<pre class="codehilite"><code><span class="c1"># Configure SubLookAnalysis</span>
+<span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">choice</span> <span class="o">=</span> <span class="mi">1</span>                    <span class="c1"># Azimuth processing</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">=</span> <span class="mi">3</span>             <span class="c1"># Number of sub-looks</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">centroidSeparations</span> <span class="o">=</span> <span class="mi">700</span>     <span class="c1"># Frequency separation</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">subLookBandwidth</span> <span class="o">=</span> <span class="mi">700</span>        <span class="c1"># Sub-look bandwidth</span>
+</code></pre>
+<h4 id="method-chaining">Method Chaining</h4>
+<p>Some operations can be chained:</p>
+<pre class="codehilite"><code><span class="c1"># SNAP processing chain</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">output</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="n">gpt</span><span class="o">.</span><span class="n">calibration</span><span class="p">()</span>
+             <span class="o">.</span><span class="n">thermal_noise_removal</span><span class="p">()</span>
+             <span class="o">.</span><span class="n">terrain_correction</span><span class="p">())</span>
+</code></pre>
+<h4 id="verbose-output">Verbose Output</h4>
+<p>Many functions support verbose output for debugging:</p>
+<pre class="codehilite"><code><span class="c1"># Enable detailed output</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre>
+<h2 id="error-handling">Error Handling</h2>
+<h3 id="common-exceptions">Common Exceptions</h3>
+<table>
+<thead>
+<tr>
+<th>Exception</th>
+<th>Description</th>
+<th>Common Causes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AssertionError</code></td>
+<td>Parameter validation failed</td>
+<td>Invalid parameter values</td>
+</tr>
+<tr>
+<td><code>FileNotFoundError</code></td>
+<td>Input file not found</td>
+<td>Incorrect file paths</td>
+</tr>
+<tr>
+<td><code>MemoryError</code></td>
+<td>Insufficient memory</td>
+<td>Large datasets, limited RAM</td>
+</tr>
+<tr>
+<td><code>ValueError</code></td>
+<td>Invalid data values</td>
+<td>Corrupted data, wrong data types</td>
+</tr>
+</tbody>
+</table>
+<h3 id="exception-handling-example">Exception Handling Example</h3>
+<pre class="codehilite"><code><span class="k">try</span><span class="p">:</span>
+    <span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">()</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">()</span>
+<span class="k">except</span> <span class="ne">AssertionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter validation error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">FileNotFoundError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File not found: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="data-types">Data Types</h2>
+<h3 id="input-data-types">Input Data Types</h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>str</code></td>
+<td>File paths</td>
+<td><code>"/path/to/product.zip"</code></td>
+</tr>
+<tr>
+<td><code>Path</code></td>
+<td>Pathlib objects</td>
+<td><code>Path("product.zip")</code></td>
+</tr>
+<tr>
+<td><code>ndarray</code></td>
+<td>NumPy arrays</td>
+<td><code>np.array([[1, 2], [3, 4]])</code></td>
+</tr>
+<tr>
+<td><code>complex</code></td>
+<td>Complex numbers</td>
+<td><code>1+2j</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="output-data-types">Output Data Types</h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+<th>Shape</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ndarray</code></td>
+<td>SAR images</td>
+<td><code>(rows, cols)</code></td>
+</tr>
+<tr>
+<td><code>ndarray</code></td>
+<td>Sub-look data</td>
+<td><code>(looks, rows, cols)</code></td>
+</tr>
+<tr>
+<td><code>dict</code></td>
+<td>Metadata</td>
+<td>Variable</td>
+</tr>
+<tr>
+<td><code>str</code></td>
+<td>File paths</td>
+<td>N/A</td>
+</tr>
+</tbody>
+</table>
+<h2 id="performance-guidelines">Performance Guidelines</h2>
+<h3 id="memory-optimization">Memory Optimization</h3>
+<pre class="codehilite"><code><span class="c1"># For large datasets, monitor memory usage</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">psutil</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">process_with_memory_check</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="n">memory_before</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span><span class="o">.</span><span class="n">percent</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">your_processing_function</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">memory_after</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span><span class="o">.</span><span class="n">percent</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Memory usage: </span><span class="si">{</span><span class="n">memory_before</span><span class="si">}</span><span class="s2">% → </span><span class="si">{</span><span class="n">memory_after</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+</code></pre>
+<h3 id="computational-efficiency">Computational Efficiency</h3>
+<ul>
+<li>Use vectorized NumPy operations when possible</li>
+<li>Consider processing data in chunks for large datasets</li>
+<li>Enable multi-threading for supported operations</li>
+</ul>
+<h2 id="version-compatibility">Version Compatibility</h2>
+<h3 id="api-stability">API Stability</h3>
+<ul>
+<li><strong>Stable API</strong>: Core functions in stable modules (marked in documentation)</li>
+<li><strong>Experimental API</strong>: New features may change between versions</li>
+<li><strong>Deprecated API</strong>: Marked with deprecation warnings</li>
+</ul>
+<h3 id="version-information">Version Information</h3>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">sarpyx</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;sarpyx version: </span><span class="si">{</span><span class="n">sarpyx</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Check module versions</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx</span><span class="w"> </span><span class="kn">import</span> <span class="n">processor</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processor module version: </span><span class="si">{</span><span class="n">processor</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="contributing-to-api-documentation">Contributing to API Documentation</h2>
+<h3 id="documentation-standards">Documentation Standards</h3>
+<ul>
+<li>All public functions must have docstrings</li>
+<li>Use NumPy docstring format</li>
+<li>Include parameter types and descriptions</li>
+<li>Provide usage examples</li>
+<li>Document exceptions that may be raised</li>
+</ul>
+<h3 id="example-docstring">Example Docstring</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">calculate_metric</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;entropy&#39;</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate focus quality metric for SAR data.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : ndarray</span>
+<span class="sd">        Input SAR data array, shape (rows, cols)</span>
+<span class="sd">    method : str, optional</span>
+<span class="sd">        Metric calculation method. Options: &#39;entropy&#39;, &#39;contrast&#39;, &#39;gradient&#39;</span>
+<span class="sd">        Default is &#39;entropy&#39;</span>
+<span class="sd">    normalize : bool, optional</span>
+<span class="sd">        Whether to normalize the result. Default is True</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        Calculated metric value</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If method is not recognized</span>
+<span class="sd">    AssertionError</span>
+<span class="sd">        If data dimensions are invalid</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; data = np.random.random((100, 100))</span>
+<span class="sd">    &gt;&gt;&gt; metric = calculate_metric(data, method=&#39;entropy&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; print(f&quot;Focus quality: {metric:.3f}&quot;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+</code></pre>
+<h2 id="related-documentation">Related Documentation</h2>
+<ul>
+<li><strong><a href="../user_guide/index.html">User Guide</a></strong>: High-level usage instructions</li>
+<li><strong><a href="../tutorials/index.html">Tutorials</a></strong>: Step-by-step learning materials</li>
+<li><strong><a href="../examples/index.html">Examples</a></strong>: Ready-to-run code examples</li>
+<li><strong><a href="../developer_guide/index.html">Developer Guide</a></strong>: Contributing and development information</li>
+</ul>
+<h2 id="search-and-navigation">Search and Navigation</h2>
+<p>Use the module-specific API documentation pages for detailed information:</p>
+<ul>
+<li><strong><a href="processor/index.html">Processor API</a></strong>: Core processing algorithms</li>
+<li><strong><a href="sla/index.html">SLA API</a></strong>: Sub-Look Analysis</li>
+<li><strong><a href="snapflow/index.html">Snapflow API</a></strong>: SNAP GPT integration  </li>
+<li><strong><a href="science/index.html">Science API</a></strong>: Scientific analysis</li>
+<li><strong><a href="utils/index.html">Utils API</a></strong>: Utilities, visualization, and DEM tools</li>
+</ul>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

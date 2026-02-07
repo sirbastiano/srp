@@ -1,10 +1,10 @@
 # SNAP Integration
 
-SARPyX provides seamless integration with ESA's SNAP (Sentinel Application Platform) through the Graph Processing Tool (GPT). This enables automated SAR preprocessing, calibration, and processing workflows.
+sarpyx provides seamless integration with ESA's SNAP (Sentinel Application Platform) through the Graph Processing Tool (GPT). This enables automated SAR preprocessing, calibration, and processing workflows.
 
 ## Overview
 
-The `sarpyx.snap` module provides a Python wrapper around SNAP's command-line GPT interface, supporting:
+The `sarpyx.snapflow` module provides a Python wrapper around SNAP's command-line GPT interface, supporting:
 
 - **Automated Processing Chains**: Preprocessing workflows for different SAR missions
 - **Cross-Platform Support**: Windows, macOS, and Linux compatibility  
@@ -29,12 +29,12 @@ First, ensure SNAP is installed on your system:
 gpt.exe --help  # Windows (if in PATH)
 ```
 
-### SARPyX SNAP Configuration
+### sarpyx SNAP Configuration
 
-SARPyX automatically detects SNAP installations, but you can specify the mode explicitly:
+sarpyx automatically detects SNAP installations, but you can specify the mode explicitly:
 
 ```python
-from sarpyx.snap import GPT
+from sarpyx.snapflow.engine import GPT
 
 # Automatic detection
 gpt = GPT(product_path="input.zip", outdir="output/")
@@ -54,7 +54,7 @@ gpt = GPT(product_path="input.zip", outdir="output/", mode="MacOS")
 ### GPT Class Initialization
 
 ```python
-from sarpyx.snap import GPT
+from sarpyx.snapflow.engine import GPT
 from pathlib import Path
 
 # Initialize GPT processor
@@ -279,7 +279,7 @@ Constant False Alarm Rate (CFAR) detection for ship monitoring:
 
 ```python
 # Single threshold detection
-from sarpyx.snap import CFAR
+from sarpyx.snapflow.engine import CFAR
 
 first_product, excel_results = CFAR(
     prod="S1A_IW_GRDH_1SDV_20231101.zip",
@@ -772,7 +772,7 @@ result = monitor_processing_performance(
 )
 ```
 
-## Integration with SARPyX Workflows
+## Integration with sarpyx Workflows
 
 ### SNAP to Sub-Look Analysis
 
@@ -922,4 +922,4 @@ def cleanup_intermediate_products(output_dir, keep_final=True):
     return cleaned_files
 ```
 
-This comprehensive SNAP Integration guide provides users with everything they need to effectively use SARPyX's SNAP integration capabilities, from basic operations to advanced workflows and troubleshooting.
+This comprehensive SNAP Integration guide provides users with everything they need to effectively use sarpyx's SNAP integration capabilities, from basic operations to advanced workflows and troubleshooting.

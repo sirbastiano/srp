@@ -1,6 +1,6 @@
-# Contributing to SARPYX
+# Contributing to sarpyx
 
-Thank you for your interest in contributing to SARPYX! This guide will help you get started with developing and contributing to the library.
+Thank you for your interest in contributing to sarpyx! This guide will help you get started with developing and contributing to the library.
 
 ## Quick Start for Contributors
 
@@ -8,7 +8,7 @@ Thank you for your interest in contributing to SARPYX! This guide will help you 
 
 ```bash
 # Clone the repository
-git clone https://github.com/ESA-SARPYX/sarpyx.git
+git clone https://github.com/ESA-sarpyx/sarpyx.git
 cd sarpyx
 
 # Create a virtual environment

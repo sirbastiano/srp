@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>User Guide – sarpyx Docs</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../index.html"><img class="logo" src="../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../user_guide/index.html" class="active">Overview</a>
+<a href="../user_guide/installation.html">Installation</a>
+<a href="../user_guide/getting_started.html">Getting Started</a>
+<a href="../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../user_guide/data_formats.html">Data Formats</a>
+<a href="../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../user_guide/science_applications.html">Science Applications</a>
+<a href="../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../tutorials/index.html">Overview</a>
+<a href="../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../api/index.html">Overview</a>
+<a href="../api/snapflow/index.html">Snapflow</a>
+<a href="../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../api/science/index.html">Science</a>
+<a href="../api/sla/index.html">SLA</a>
+<a href="../api/processor/index.html">Processor</a>
+<a href="../api/utils/index.html">Utils</a>
+<a href="../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../developer_guide/architecture.html">Architecture</a>
+<a href="../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="user-guide">User Guide</h1>
+<p>This guide provides comprehensive information for users of sarpyx, from installation to advanced processing workflows.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="getting_started.html">Getting Started</a></li>
+<li><a href="basic_concepts.html">Basic Concepts</a></li>
+<li><a href="data_formats.html">Data Formats</a></li>
+<li><a href="processing_workflows.html">Processing Workflows</a></li>
+<li><a href="science_applications.html">Science Applications</a></li>
+<li><a href="snap_integration.html">SNAP Integration</a></li>
+<li><a href="troubleshooting.html">Troubleshooting</a></li>
+</ol>
+<h2 id="overview">Overview</h2>
+<p>sarpyx is designed to provide researchers and developers with powerful tools for SAR data processing. The package is organized into several main modules:</p>
+<ul>
+<li><strong><code>sarpyx.processor</code></strong>: Core processing algorithms and utilities</li>
+<li><strong><code>sarpyx.science</code></strong>: Scientific analysis tools and indices</li>
+<li><strong><code>sarpyx.sla</code></strong>: Sub-Look Analysis for aperture decomposition</li>
+<li><strong><code>sarpyx.snapflow</code></strong>: Integration with ESA&rsquo;s SNAP platform</li>
+<li><strong><code>sarpyx.utils</code></strong>: General utilities and visualization tools</li>
+</ul>
+<h2 id="quick-navigation">Quick Navigation</h2>
+<ul>
+<li><strong>New to SAR processing?</strong> Start with <a href="basic_concepts.html">Basic Concepts</a></li>
+<li><strong>Want to dive in quickly?</strong> Check out <a href="getting_started.html">Getting Started</a></li>
+<li><strong>Need specific processing workflows?</strong> See <a href="processing_workflows.html">Processing Workflows</a></li>
+<li><strong>Working with vegetation indices?</strong> Explore <a href="science_applications.html">Science Applications</a></li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Basic knowledge of Python programming</li>
+<li>Understanding of SAR imaging principles (recommended)</li>
+<li>Familiarity with NumPy and scientific Python ecosystem</li>
+</ul>
+<h2 id="support">Support</h2>
+<p>If you encounter any issues or have questions, please:</p>
+<ol>
+<li>Check the <a href="troubleshooting.html">Troubleshooting</a> section</li>
+<li>Search existing <a href="https://github.com/ESA-PhiLab/sarpyx/issues">GitHub Issues</a></li>
+<li>Create a new issue if your problem isn&rsquo;t covered</li>
+</ol>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

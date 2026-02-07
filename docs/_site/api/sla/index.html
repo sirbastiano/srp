@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SLA (Sub-Look Analysis) API – sarpyx Docs</title>
+  <link rel="stylesheet" href="../../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../../index.html"><img class="logo" src="../../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../../user_guide/index.html">Overview</a>
+<a href="../../user_guide/installation.html">Installation</a>
+<a href="../../user_guide/getting_started.html">Getting Started</a>
+<a href="../../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../../user_guide/data_formats.html">Data Formats</a>
+<a href="../../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../../user_guide/science_applications.html">Science Applications</a>
+<a href="../../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../../tutorials/index.html">Overview</a>
+<a href="../../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../../api/index.html">Overview</a>
+<a href="../../api/snapflow/index.html">Snapflow</a>
+<a href="../../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../../api/science/index.html">Science</a>
+<a href="../../api/sla/index.html" class="active">SLA</a>
+<a href="../../api/processor/index.html">Processor</a>
+<a href="../../api/utils/index.html">Utils</a>
+<a href="../../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../../developer_guide/architecture.html">Architecture</a>
+<a href="../../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="sla-sub-look-analysis-api">SLA (Sub-Look Analysis) API</h1>
+<p>Complete API reference for the Sub-Look Analysis module.</p>
+<h2 id="overview">Overview</h2>
+<p>The <code>sarpyx.sla</code> module provides functionality for decomposing SAR apertures into sub-looks, enabling advanced analysis techniques such as motion detection, interferometry, and resolution enhancement.</p>
+<h2 id="classes">Classes</h2>
+<h3 id="sublookanalysis"><code>SubLookAnalysis</code></h3>
+<p>Main class for performing sub-aperture decomposition analysis.</p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.sla</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubLookAnalysis</span>
+
+<span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">productPath</span><span class="p">)</span>
+</code></pre>
+<h4 id="constructor">Constructor</h4>
+<pre class="codehilite"><code><span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">productPath</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
+</code></pre>
+<p><strong>Parameters:</strong>
+- <code>productPath</code> (str): Path to the SAR product file (ZIP format for Sentinel-1)</p>
+<p><strong>Attributes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>choice</code></td>
+<td>int</td>
+<td>1</td>
+<td>Processing direction (0=Range, 1=Azimuth)</td>
+</tr>
+<tr>
+<td><code>numberOfLooks</code></td>
+<td>int</td>
+<td>3</td>
+<td>Number of sub-looks to generate</td>
+</tr>
+<tr>
+<td><code>centroidSeparations</code></td>
+<td>float</td>
+<td>700</td>
+<td>Frequency separation between sub-looks (Hz)</td>
+</tr>
+<tr>
+<td><code>subLookBandwidth</code></td>
+<td>float</td>
+<td>700</td>
+<td>Bandwidth of each sub-look (Hz)</td>
+</tr>
+<tr>
+<td><code>choiceDeWe</code></td>
+<td>int</td>
+<td>0</td>
+<td>De-weighting method (0=Ancillary, 1=Average)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Computed Attributes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Box</code></td>
+<td>ndarray(complex)</td>
+<td>Input SAR data subset</td>
+</tr>
+<tr>
+<td><code>SpectrumOneDim</code></td>
+<td>ndarray(complex)</td>
+<td>1D spectrum representation</td>
+</tr>
+<tr>
+<td><code>SpectrumOneDimNorm</code></td>
+<td>ndarray(complex)</td>
+<td>Normalized spectrum</td>
+</tr>
+<tr>
+<td><code>Looks</code></td>
+<td>ndarray(complex)</td>
+<td>Generated sub-look images, shape (looks, rows, cols)</td>
+</tr>
+<tr>
+<td><code>freqVect</code></td>
+<td>ndarray(float)</td>
+<td>Frequency vector</td>
+</tr>
+<tr>
+<td><code>freqCentr</code></td>
+<td>ndarray(float)</td>
+<td>Center frequencies of sub-looks</td>
+</tr>
+<tr>
+<td><code>freqMin</code></td>
+<td>ndarray(float)</td>
+<td>Minimum frequencies of sub-looks</td>
+</tr>
+<tr>
+<td><code>freqMax</code></td>
+<td>ndarray(float)</td>
+<td>Maximum frequencies of sub-looks</td>
+</tr>
+</tbody>
+</table>
+<h4 id="methods">Methods</h4>
+<h5 id="frequencycomputation"><code>frequencyComputation()</code></h5>
+<p>Computes the frequency bins and center frequencies for sub-look decomposition.</p>
+<pre class="codehilite"><code><span class="n">sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>
+</code></pre>
+<p><strong>Raises:</strong>
+- <code>AssertionError</code>: If sub-look frequencies exceed available bandwidth</p>
+<p><strong>Example:</strong></p>
+<pre class="codehilite"><code><span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">centroidSeparations</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub-look frequencies: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">freqCentr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h5 id="spectrumcomputationverbosefalse"><code>SpectrumComputation(VERBOSE=False)</code></h5>
+<p>Transforms SAR data to frequency domain and computes the spectrum.</p>
+<pre class="codehilite"><code><span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</code></pre>
+<p><strong>Parameters:</strong>
+- <code>VERBOSE</code> (bool, optional): Enable detailed output and plots. Default is False.</p>
+<p><strong>Raises:</strong>
+- <code>AssertionError</code>: If spectrum computation fails</p>
+<p><strong>Example:</strong></p>
+<pre class="codehilite"><code><span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># Shows spectrum plots</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Spectrum shape: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">SpectrumOneDim</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h5 id="ancillarydeweverbosefalse"><code>AncillaryDeWe(VERBOSE=False)</code></h5>
+<p>Performs de-weighting using ancillary data and theoretical weighting functions.</p>
+<pre class="codehilite"><code><span class="n">sla</span><span class="o">.</span><span class="n">AncillaryDeWe</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</code></pre>
+<p><strong>Parameters:</strong>
+- <code>VERBOSE</code> (bool, optional): Enable detailed output. Default is False.</p>
+<p><strong>Note:</strong> This method is used when <code>choiceDeWe = 0</code>.</p>
+<h5 id="generationverbosefalse"><code>Generation(VERBOSE=False)</code></h5>
+<p>Generates the final sub-look images by extracting sub-bands and applying inverse transforms.</p>
+<pre class="codehilite"><code><span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</code></pre>
+<p><strong>Parameters:</strong>
+- <code>VERBOSE</code> (bool, optional): Enable detailed output and visualization. Default is False.</p>
+<p><strong>Example:</strong></p>
+<pre class="codehilite"><code><span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1"># Access results</span>
+<span class="n">sublook_images</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">Looks</span>  <span class="c1"># Shape: (numberOfLooks, rows, cols)</span>
+
+<span class="c1"># Display first sub-look</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Sub-look 0&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h4 id="complete-processing-example">Complete Processing Example</h4>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.sla</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubLookAnalysis</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="c1"># Initialize and configure</span>
+<span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="s2">&quot;/path/to/sentinel1_product.zip&quot;</span><span class="p">)</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">choice</span> <span class="o">=</span> <span class="mi">1</span>                    <span class="c1"># Azimuth processing</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">=</span> <span class="mi">3</span>             <span class="c1"># Generate 3 sub-looks</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">centroidSeparations</span> <span class="o">=</span> <span class="mi">700</span>     <span class="c1"># 700 Hz separation</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">subLookBandwidth</span> <span class="o">=</span> <span class="mi">700</span>        <span class="c1"># 700 Hz bandwidth per sub-look</span>
+
+<span class="c1"># Execute processing chain</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># Step 1: Compute frequency bins</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub-look center frequencies: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">freqCentr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Step 2: Transform to frequency domain</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Step 3: Apply de-weighting</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">AncillaryDeWe</span><span class="p">()</span>
+
+    <span class="c1"># Step 4: Generate sub-look images</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Access results</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Generated </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span><span class="si">}</span><span class="s2"> sub-looks&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub-look shape: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Calculate coherence between sub-looks</span>
+    <span class="n">coherence</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span>
+        <span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> 
+        <span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Coherence between sub-looks 0 and 1: </span><span class="si">{</span><span class="n">coherence</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">except</span> <span class="ne">AssertionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter validation error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="handler"><code>Handler</code></h3>
+<p>Metadata extraction and processing class for SAR products.</p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.sla.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Handler</span>
+
+<span class="n">handler</span> <span class="o">=</span> <span class="n">Handler</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+</code></pre>
+<h4 id="constructor_1">Constructor</h4>
+<pre class="codehilite"><code><span class="n">Handler</span><span class="p">(</span><span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
+</code></pre>
+<p><strong>Parameters:</strong>
+- <code>filepath</code> (str): Path to the SAR product ZIP file</p>
+<p><strong>Attributes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PRF</code></td>
+<td>float</td>
+<td>Pulse Repetition Frequency</td>
+</tr>
+<tr>
+<td><code>AzimBand</code></td>
+<td>float</td>
+<td>Total azimuth bandwidth</td>
+</tr>
+<tr>
+<td><code>RangeBand</code></td>
+<td>float</td>
+<td>Total range bandwidth</td>
+</tr>
+<tr>
+<td><code>ChirpBand</code></td>
+<td>float</td>
+<td>Chirp bandwidth</td>
+</tr>
+<tr>
+<td><code>AzimRes</code></td>
+<td>int</td>
+<td>Azimuth resolution (default: 5)</td>
+</tr>
+<tr>
+<td><code>RangeRes</code></td>
+<td>int</td>
+<td>Range resolution (default: 20)</td>
+</tr>
+<tr>
+<td><code>AzimSpacing</code></td>
+<td>float</td>
+<td>Azimuth pixel spacing</td>
+</tr>
+<tr>
+<td><code>RangeSpacing</code></td>
+<td>float</td>
+<td>Range pixel spacing</td>
+</tr>
+<tr>
+<td><code>WeightFunctRange</code></td>
+<td>str</td>
+<td>Range weighting function type</td>
+</tr>
+<tr>
+<td><code>WeightFunctRangeParams</code></td>
+<td>float</td>
+<td>Range window coefficient</td>
+</tr>
+<tr>
+<td><code>WeightFunctAzim</code></td>
+<td>str</td>
+<td>Azimuth weighting function type</td>
+</tr>
+<tr>
+<td><code>WeightFunctAzimParams</code></td>
+<td>float</td>
+<td>Azimuth window coefficient</td>
+</tr>
+<tr>
+<td><code>CentralFreqRange</code></td>
+<td>int</td>
+<td>Central frequency for range processing</td>
+</tr>
+<tr>
+<td><code>CentralFreqAzim</code></td>
+<td>int</td>
+<td>Central frequency for azimuth processing</td>
+</tr>
+</tbody>
+</table>
+<h4 id="methods_1">Methods</h4>
+<h5 id="chain"><code>Chain()</code></h5>
+<p>Processes metadata from the ZIP file and extracts relevant parameters.</p>
+<pre class="codehilite"><code><span class="n">handler</span><span class="o">.</span><span class="n">Chain</span><span class="p">()</span>
+</code></pre>
+<p><strong>Example:</strong></p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.sla.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Handler</span>
+
+<span class="c1"># Extract metadata</span>
+<span class="n">handler</span> <span class="o">=</span> <span class="n">Handler</span><span class="p">(</span><span class="s2">&quot;/path/to/sentinel1_product.zip&quot;</span><span class="p">)</span>
+<span class="n">handler</span><span class="o">.</span><span class="n">Chain</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;PRF: </span><span class="si">{</span><span class="n">handler</span><span class="o">.</span><span class="n">PRF</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Azimuth bandwidth: </span><span class="si">{</span><span class="n">handler</span><span class="o">.</span><span class="n">AzimBand</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Range bandwidth: </span><span class="si">{</span><span class="n">handler</span><span class="o">.</span><span class="n">RangeBand</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Azimuth spacing: </span><span class="si">{</span><span class="n">handler</span><span class="o">.</span><span class="n">AzimSpacing</span><span class="si">}</span><span class="s2"> m&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Range spacing: </span><span class="si">{</span><span class="n">handler</span><span class="o">.</span><span class="n">RangeSpacing</span><span class="si">}</span><span class="s2"> m&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="utility-functions">Utility Functions</h2>
+<h3 id="processing-direction">Processing Direction</h3>
+<pre class="codehilite"><code><span class="c1"># Choose processing direction</span>
+<span class="n">RANGE_PROCESSING</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">AZIMUTH_PROCESSING</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="n">sla</span><span class="o">.</span><span class="n">choice</span> <span class="o">=</span> <span class="n">AZIMUTH_PROCESSING</span>  <span class="c1"># Most common for motion analysis</span>
+</code></pre>
+<h3 id="de-weighting-methods">De-weighting Methods</h3>
+<pre class="codehilite"><code><span class="c1"># Choose de-weighting method</span>
+<span class="n">ANCILLARY_DEWEIGHTING</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Use theoretical weighting functions</span>
+<span class="n">AVERAGE_DEWEIGHTING</span> <span class="o">=</span> <span class="mi">1</span>    <span class="c1"># Use average spectrum</span>
+
+<span class="n">sla</span><span class="o">.</span><span class="n">choiceDeWe</span> <span class="o">=</span> <span class="n">ANCILLARY_DEWEIGHTING</span>
+</code></pre>
+<h2 id="advanced-usage">Advanced Usage</h2>
+<h3 id="custom-parameter-optimization">Custom Parameter Optimization</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">optimize_sublook_parameters</span><span class="p">(</span><span class="n">sla</span><span class="p">,</span> <span class="n">target_coherence</span><span class="o">=</span><span class="mf">0.3</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Optimize sub-look parameters for desired coherence.&quot;&quot;&quot;</span>
+
+    <span class="n">best_params</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">best_coherence</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Test different parameter combinations</span>
+    <span class="k">for</span> <span class="n">n_looks</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">bandwidth</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">500</span><span class="p">,</span> <span class="mi">700</span><span class="p">,</span> <span class="mi">900</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">separation</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">400</span><span class="p">,</span> <span class="mi">600</span><span class="p">,</span> <span class="mi">800</span><span class="p">]:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">=</span> <span class="n">n_looks</span>
+                    <span class="n">sla</span><span class="o">.</span><span class="n">subLookBandwidth</span> <span class="o">=</span> <span class="n">bandwidth</span>
+                    <span class="n">sla</span><span class="o">.</span><span class="n">centroidSeparations</span> <span class="o">=</span> <span class="n">separation</span>
+
+                    <span class="n">sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>
+                    <span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">()</span>
+                    <span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">()</span>
+
+                    <span class="c1"># Calculate coherence</span>
+                    <span class="n">coherence</span> <span class="o">=</span> <span class="n">calculate_coherence</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">coherence</span> <span class="o">-</span> <span class="n">target_coherence</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">best_coherence</span><span class="p">:</span>
+                        <span class="n">best_coherence</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">coherence</span> <span class="o">-</span> <span class="n">target_coherence</span><span class="p">)</span>
+                        <span class="n">best_params</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_looks</span><span class="p">,</span> <span class="n">bandwidth</span><span class="p">,</span> <span class="n">separation</span><span class="p">)</span>
+
+                <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
+                    <span class="k">continue</span>  <span class="c1"># Skip invalid parameter combinations</span>
+
+    <span class="k">return</span> <span class="n">best_params</span>
+
+<span class="c1"># Usage</span>
+<span class="n">best_n_looks</span><span class="p">,</span> <span class="n">best_bw</span><span class="p">,</span> <span class="n">best_sep</span> <span class="o">=</span> <span class="n">optimize_sublook_parameters</span><span class="p">(</span><span class="n">sla</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Optimal parameters: </span><span class="si">{</span><span class="n">best_n_looks</span><span class="si">}</span><span class="s2"> looks, </span><span class="si">{</span><span class="n">best_bw</span><span class="si">}</span><span class="s2"> Hz BW, </span><span class="si">{</span><span class="n">best_sep</span><span class="si">}</span><span class="s2"> Hz sep&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="batch-processing">Batch Processing</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">process_multiple_products</span><span class="p">(</span><span class="n">product_list</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process multiple SAR products with same configuration.&quot;&quot;&quot;</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">product_path</span> <span class="ow">in</span> <span class="n">product_list</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+
+            <span class="c1"># Apply configuration</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">sla</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+            <span class="c1"># Process</span>
+            <span class="n">sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>
+            <span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">()</span>
+            <span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">()</span>
+
+            <span class="c1"># Store results</span>
+            <span class="n">results</span><span class="p">[</span><span class="n">product_path</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;looks&#39;</span><span class="p">:</span> <span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+                <span class="s1">&#39;frequencies&#39;</span><span class="p">:</span> <span class="n">sla</span><span class="o">.</span><span class="n">freqCentr</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+                <span class="s1">&#39;shape&#39;</span><span class="p">:</span> <span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="o">.</span><span class="n">shape</span>
+            <span class="p">}</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to process </span><span class="si">{</span><span class="n">product_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">results</span><span class="p">[</span><span class="n">product_path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">results</span>
+
+<span class="c1"># Usage</span>
+<span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;choice&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s1">&#39;numberOfLooks&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s1">&#39;centroidSeparations&#39;</span><span class="p">:</span> <span class="mi">700</span><span class="p">,</span>
+    <span class="s1">&#39;subLookBandwidth&#39;</span><span class="p">:</span> <span class="mi">700</span>
+<span class="p">}</span>
+
+<span class="n">products</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;/path/to/product1.zip&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;/path/to/product2.zip&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;/path/to/product3.zip&quot;</span>
+<span class="p">]</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="n">process_multiple_products</span><span class="p">(</span><span class="n">products</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+</code></pre>
+<h2 id="error-handling">Error Handling</h2>
+<h3 id="common-error-scenarios">Common Error Scenarios</h3>
+<ol>
+<li><strong>Invalid frequency parameters</strong>:</li>
+</ol>
+<pre class="codehilite"><code><span class="k">try</span><span class="p">:</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>
+<span class="k">except</span> <span class="ne">AssertionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="k">if</span> <span class="s2">&quot;sub-look spectrum outside&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Reduce sub-look bandwidth or adjust center frequencies&quot;</span><span class="p">)</span>
+</code></pre>
+<ol start="2">
+<li><strong>Memory limitations</strong>:</li>
+</ol>
+<pre class="codehilite"><code><span class="k">try</span><span class="p">:</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">()</span>
+<span class="k">except</span> <span class="ne">MemoryError</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Reduce data size or process in chunks&quot;</span><span class="p">)</span>
+</code></pre>
+<ol start="3">
+<li><strong>File access issues</strong>:</li>
+</ol>
+<pre class="codehilite"><code><span class="k">try</span><span class="p">:</span>
+    <span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Product file not found: </span><span class="si">{</span><span class="n">product_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="performance-considerations">Performance Considerations</h2>
+<h3 id="memory-usage">Memory Usage</h3>
+<ul>
+<li>Large datasets require significant memory for spectrum computation</li>
+<li>Consider processing smaller spatial subsets for initial testing</li>
+<li>Monitor memory usage with <code>psutil</code> for production workflows</li>
+</ul>
+<h3 id="computational-complexity">Computational Complexity</h3>
+<ul>
+<li>FFT operations scale as O(N log N)</li>
+<li>Processing time increases with number of looks and data size</li>
+<li>Azimuth processing typically faster than range processing</li>
+</ul>
+<h3 id="optimization-tips">Optimization Tips</h3>
+<pre class="codehilite"><code><span class="c1"># For better performance:</span>
+<span class="c1"># 1. Use appropriate data types</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">Box</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">Box</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">)</span>  <span class="c1"># If precision allows</span>
+
+<span class="c1"># 2. Process in chunks for very large data</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_in_chunks</span><span class="p">(</span><span class="n">sla</span><span class="p">,</span> <span class="n">chunk_size</span><span class="o">=</span><span class="mi">1024</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process large datasets in chunks.&quot;&quot;&quot;</span>
+    <span class="c1"># Implementation depends on specific use case</span>
+    <span class="k">pass</span>
+
+<span class="c1"># 3. Disable verbose output in production</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># Faster execution</span>
+</code></pre>
+<h2 id="related-functions">Related Functions</h2>
+<p>See also:
+- <a href="../utils/index.html"><code>sarpyx.utils</code></a> for visualization functions
+- <a href="../processor/index.html"><code>sarpyx.processor.autofocus.metrics</code></a> for quality assessment
+- <a href="../science/index.html"><code>sarpyx.science.indices</code></a> for analysis applications</p>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

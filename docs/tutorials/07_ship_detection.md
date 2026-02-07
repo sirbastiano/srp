@@ -2,7 +2,7 @@
 
 ## Overview
 
-This tutorial demonstrates how to use SARPYX for ship detection in SAR imagery using Constant False Alarm Rate (CFAR) algorithms. We'll explore different CFAR detectors and how to optimize their parameters for various sea conditions.
+This tutorial demonstrates how to use sarpyx for ship detection in SAR imagery using Constant False Alarm Rate (CFAR) algorithms. We'll explore different CFAR detectors and how to optimize their parameters for various sea conditions.
 
 ## Learning Objectives
 
@@ -901,4 +901,4 @@ class ShipTracker:
 
 ---
 
-*This tutorial demonstrates advanced ship detection capabilities in SARPYX. The techniques shown here form the foundation for operational maritime monitoring systems using SAR data.*
+*This tutorial demonstrates advanced ship detection capabilities in sarpyx. The techniques shown here form the foundation for operational maritime monitoring systems using SAR data.*

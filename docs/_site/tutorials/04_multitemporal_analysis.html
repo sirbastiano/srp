@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tutorial 4: Multi-temporal Analysis – sarpyx Docs</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../index.html"><img class="logo" src="../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../user_guide/index.html">Overview</a>
+<a href="../user_guide/installation.html">Installation</a>
+<a href="../user_guide/getting_started.html">Getting Started</a>
+<a href="../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../user_guide/data_formats.html">Data Formats</a>
+<a href="../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../user_guide/science_applications.html">Science Applications</a>
+<a href="../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../tutorials/index.html">Overview</a>
+<a href="../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../tutorials/04_multitemporal_analysis.html" class="active">04 – Multi-temporal</a>
+<a href="../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../api/index.html">Overview</a>
+<a href="../api/snapflow/index.html">Snapflow</a>
+<a href="../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../api/science/index.html">Science</a>
+<a href="../api/sla/index.html">SLA</a>
+<a href="../api/processor/index.html">Processor</a>
+<a href="../api/utils/index.html">Utils</a>
+<a href="../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../developer_guide/architecture.html">Architecture</a>
+<a href="../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="tutorial-4-multi-temporal-analysis">Tutorial 4: Multi-temporal Analysis</h1>
+<p>Learn to process time series of SAR data for change detection and temporal pattern analysis using sarpyx.</p>
+<h2 id="overview">Overview</h2>
+<p>This tutorial covers:
+- Loading and organizing multi-temporal SAR datasets
+- Temporal SLA processing workflows
+- Change detection techniques
+- Time series analysis and trend detection
+- Multi-temporal coherence analysis
+- Automated processing pipelines</p>
+<p><strong>Duration</strong>: 30 minutes<br>
+<strong>Prerequisites</strong>: Tutorials 1-3 completed<br>
+<strong>Data</strong>: Multi-temporal Sentinel-1 dataset (3+ acquisitions)</p>
+<h2 id="1-dataset-preparation-and-organization">1. Dataset Preparation and Organization</h2>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.sla</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubLookAnalysis</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.viz</span><span class="w"> </span><span class="kn">import</span> <span class="n">show_image</span><span class="p">,</span> <span class="n">show_histogram</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_matlab_mat</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">glob</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="c1"># Set up directories</span>
+<span class="n">data_dir</span> <span class="o">=</span> <span class="s2">&quot;path/to/multitemporal/data&quot;</span>
+<span class="n">output_dir</span> <span class="o">=</span> <span class="s2">&quot;tutorial4_outputs&quot;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Define temporal dataset</span>
+<span class="n">temporal_data</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;acquisition_1&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_dir</span><span class="si">}</span><span class="s2">/S1A_20230101_*.dim&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;date&#39;</span><span class="p">:</span> <span class="s1">&#39;2023-01-01&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;orbit&#39;</span><span class="p">:</span> <span class="s1">&#39;ascending&#39;</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;acquisition_2&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_dir</span><span class="si">}</span><span class="s2">/S1A_20230201_*.dim&quot;</span><span class="p">,</span> 
+        <span class="s1">&#39;date&#39;</span><span class="p">:</span> <span class="s1">&#39;2023-02-01&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;orbit&#39;</span><span class="p">:</span> <span class="s1">&#39;ascending&#39;</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;acquisition_3&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_dir</span><span class="si">}</span><span class="s2">/S1A_20230301_*.dim&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;date&#39;</span><span class="p">:</span> <span class="s1">&#39;2023-03-01&#39;</span><span class="p">,</span> 
+        <span class="s1">&#39;orbit&#39;</span><span class="p">:</span> <span class="s1">&#39;ascending&#39;</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;acquisition_4&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_dir</span><span class="si">}</span><span class="s2">/S1A_20230401_*.dim&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;date&#39;</span><span class="p">:</span> <span class="s1">&#39;2023-04-01&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;orbit&#39;</span><span class="p">:</span> <span class="s1">&#39;ascending&#39;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Multi-temporal dataset configuration:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">acq_id</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">temporal_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">acq_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;orbit&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="2-multi-temporal-sla-processing">2. Multi-temporal SLA Processing</h2>
+<h3 id="21-batch-processing-function">2.1 Batch Processing Function</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">process_temporal_sla</span><span class="p">(</span><span class="n">data_info</span><span class="p">,</span> <span class="n">band_name</span><span class="o">=</span><span class="s1">&#39;Sigma0_VV_slc&#39;</span><span class="p">,</span> 
+                        <span class="n">num_looks</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">overlap_factor</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process multiple acquisitions with consistent SLA parameters&quot;&quot;&quot;</span>
+
+    <span class="n">processed_data</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">acq_id</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">data_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing </span><span class="si">{</span><span class="n">acq_id</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">)...&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Find actual file path</span>
+        <span class="n">file_paths</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">file_paths</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Warning: No files found for </span><span class="si">{</span><span class="n">acq_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="n">file_path</span> <span class="o">=</span> <span class="n">file_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Take first match</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Initialize SLA processor</span>
+            <span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">()</span>
+
+            <span class="c1"># Load and process data</span>
+            <span class="n">sla</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">band_name</span><span class="o">=</span><span class="n">band_name</span><span class="p">)</span>
+            <span class="n">sla</span><span class="o">.</span><span class="n">set_sublook_parameters</span><span class="p">(</span><span class="n">num_looks</span><span class="o">=</span><span class="n">num_looks</span><span class="p">,</span> 
+                                     <span class="n">overlap_factor</span><span class="o">=</span><span class="n">overlap_factor</span><span class="p">)</span>
+            <span class="n">sla</span><span class="o">.</span><span class="n">decompose</span><span class="p">()</span>
+
+            <span class="c1"># Store results</span>
+            <span class="n">processed_data</span><span class="p">[</span><span class="n">acq_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;sla_processor&#39;</span><span class="p">:</span> <span class="n">sla</span><span class="p">,</span>
+                <span class="s1">&#39;sublooks&#39;</span><span class="p">:</span> <span class="n">sla</span><span class="o">.</span><span class="n">get_sublooks</span><span class="p">(),</span>
+                <span class="s1">&#39;master_image&#39;</span><span class="p">:</span> <span class="n">sla</span><span class="o">.</span><span class="n">get_master_image</span><span class="p">(),</span>
+                <span class="s1">&#39;coherence&#39;</span><span class="p">:</span> <span class="n">sla</span><span class="o">.</span><span class="n">get_coherence_matrix</span><span class="p">(),</span>
+                <span class="s1">&#39;date&#39;</span><span class="p">:</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;orbit&#39;</span><span class="p">:</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;orbit&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;file_path&#39;</span><span class="p">:</span> <span class="n">file_path</span>
+            <span class="p">}</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Successfully processed </span><span class="si">{</span><span class="n">acq_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Error processing </span><span class="si">{</span><span class="n">acq_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+    <span class="k">return</span> <span class="n">processed_data</span>
+
+<span class="c1"># Process all temporal acquisitions</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Starting multi-temporal SLA processing...&quot;</span><span class="p">)</span>
+<span class="n">temporal_results</span> <span class="o">=</span> <span class="n">process_temporal_sla</span><span class="p">(</span><span class="n">temporal_data</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Successfully processed </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">temporal_results</span><span class="p">)</span><span class="si">}</span><span class="s2"> acquisitions&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="22-data-alignment-and-registration">2.2 Data Alignment and Registration</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">align_temporal_data</span><span class="p">(</span><span class="n">temporal_results</span><span class="p">,</span> <span class="n">reference_key</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Align temporal data to common grid (basic implementation)&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">reference_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">reference_key</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">temporal_results</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Using </span><span class="si">{</span><span class="n">reference_key</span><span class="si">}</span><span class="s2"> as reference for alignment&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Get reference dimensions</span>
+    <span class="n">ref_master</span> <span class="o">=</span> <span class="n">temporal_results</span><span class="p">[</span><span class="n">reference_key</span><span class="p">][</span><span class="s1">&#39;master_image&#39;</span><span class="p">]</span>
+    <span class="n">ref_shape</span> <span class="o">=</span> <span class="n">ref_master</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="n">aligned_data</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">acq_id</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">temporal_results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">master</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;master_image&#39;</span><span class="p">]</span>
+
+        <span class="c1"># Simple alignment - crop/pad to reference size</span>
+        <span class="k">if</span> <span class="n">master</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">ref_shape</span><span class="p">:</span>
+            <span class="n">aligned_master</span> <span class="o">=</span> <span class="n">master</span>
+            <span class="n">aligned_sublooks</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;sublooks&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Crop to minimum common size (simplified approach)</span>
+            <span class="n">min_rows</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">master</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ref_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">min_cols</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">master</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">ref_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+            <span class="n">aligned_master</span> <span class="o">=</span> <span class="n">master</span><span class="p">[:</span><span class="n">min_rows</span><span class="p">,</span> <span class="p">:</span><span class="n">min_cols</span><span class="p">]</span>
+            <span class="n">aligned_sublooks</span> <span class="o">=</span> <span class="p">[</span><span class="n">sl</span><span class="p">[:</span><span class="n">min_rows</span><span class="p">,</span> <span class="p">:</span><span class="n">min_cols</span><span class="p">]</span> <span class="k">for</span> <span class="n">sl</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;sublooks&#39;</span><span class="p">]]</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">acq_id</span><span class="si">}</span><span class="s2">: resized from </span><span class="si">{</span><span class="n">master</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">aligned_master</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">aligned_data</span><span class="p">[</span><span class="n">acq_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="o">**</span><span class="n">data</span><span class="p">,</span>  <span class="c1"># Copy all original data</span>
+            <span class="s1">&#39;aligned_master&#39;</span><span class="p">:</span> <span class="n">aligned_master</span><span class="p">,</span>
+            <span class="s1">&#39;aligned_sublooks&#39;</span><span class="p">:</span> <span class="n">aligned_sublooks</span>
+        <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">aligned_data</span>
+
+<span class="c1"># Align all temporal data</span>
+<span class="n">aligned_results</span> <span class="o">=</span> <span class="n">align_temporal_data</span><span class="p">(</span><span class="n">temporal_results</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Temporal data alignment completed&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="3-change-detection-analysis">3. Change Detection Analysis</h2>
+<h3 id="31-intensity-based-change-detection">3.1 Intensity-based Change Detection</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">detect_intensity_changes</span><span class="p">(</span><span class="n">aligned_data</span><span class="p">,</span> <span class="n">threshold_db</span><span class="o">=</span><span class="mf">3.0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Detect changes based on intensity differences&quot;&quot;&quot;</span>
+
+    <span class="n">dates</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">aligned_data</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
+    <span class="n">acq_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">aligned_data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">dates</span><span class="p">]</span>
+
+    <span class="n">change_results</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># Calculate pairwise changes</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">acq_ids</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">acq1_id</span> <span class="o">=</span> <span class="n">acq_ids</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">acq2_id</span> <span class="o">=</span> <span class="n">acq_ids</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">master1</span> <span class="o">=</span> <span class="n">aligned_data</span><span class="p">[</span><span class="n">acq1_id</span><span class="p">][</span><span class="s1">&#39;aligned_master&#39;</span><span class="p">]</span>
+        <span class="n">master2</span> <span class="o">=</span> <span class="n">aligned_data</span><span class="p">[</span><span class="n">acq2_id</span><span class="p">][</span><span class="s1">&#39;aligned_master&#39;</span><span class="p">]</span>
+
+        <span class="c1"># Convert to dB</span>
+        <span class="n">master1_db</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">master1</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+        <span class="n">master2_db</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">master2</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+
+        <span class="c1"># Calculate change</span>
+        <span class="n">intensity_change</span> <span class="o">=</span> <span class="n">master2_db</span> <span class="o">-</span> <span class="n">master1_db</span>
+
+        <span class="c1"># Create change mask</span>
+        <span class="n">change_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">intensity_change</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">threshold_db</span>
+
+        <span class="n">change_pair</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">aligned_data</span><span class="p">[</span><span class="n">acq1_id</span><span class="p">][</span><span class="s1">&#39;date&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">_to_</span><span class="si">{</span><span class="n">aligned_data</span><span class="p">[</span><span class="n">acq2_id</span><span class="p">][</span><span class="s1">&#39;date&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="n">change_results</span><span class="p">[</span><span class="n">change_pair</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;intensity_change&#39;</span><span class="p">:</span> <span class="n">intensity_change</span><span class="p">,</span>
+            <span class="s1">&#39;change_mask&#39;</span><span class="p">:</span> <span class="n">change_mask</span><span class="p">,</span>
+            <span class="s1">&#39;change_percentage&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">change_mask</span><span class="p">)</span> <span class="o">/</span> <span class="n">change_mask</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span>
+            <span class="s1">&#39;mean_change&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">intensity_change</span><span class="p">),</span>
+            <span class="s1">&#39;std_change&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">intensity_change</span><span class="p">),</span>
+            <span class="s1">&#39;acq1_date&#39;</span><span class="p">:</span> <span class="n">aligned_data</span><span class="p">[</span><span class="n">acq1_id</span><span class="p">][</span><span class="s1">&#39;date&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;acq2_date&#39;</span><span class="p">:</span> <span class="n">aligned_data</span><span class="p">[</span><span class="n">acq2_id</span><span class="p">][</span><span class="s1">&#39;date&#39;</span><span class="p">]</span>
+        <span class="p">}</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Change detection </span><span class="si">{</span><span class="n">change_pair</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Changed pixels: </span><span class="si">{</span><span class="n">change_results</span><span class="p">[</span><span class="n">change_pair</span><span class="p">][</span><span class="s1">&#39;change_percentage&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Mean change: </span><span class="si">{</span><span class="n">change_results</span><span class="p">[</span><span class="n">change_pair</span><span class="p">][</span><span class="s1">&#39;mean_change&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">change_results</span>
+
+<span class="c1"># Perform change detection</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Performing intensity-based change detection...&quot;</span><span class="p">)</span>
+<span class="n">change_results</span> <span class="o">=</span> <span class="n">detect_intensity_changes</span><span class="p">(</span><span class="n">aligned_results</span><span class="p">,</span> <span class="n">threshold_db</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
+</code></pre>
+<h3 id="32-visualize-change-detection-results">3.2 Visualize Change Detection Results</h3>
+<pre class="codehilite"><code><span class="c1"># Visualize change detection results</span>
+<span class="n">num_changes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">change_results</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">num_changes</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="o">*</span><span class="n">num_changes</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+
+<span class="k">if</span> <span class="n">num_changes</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="n">axes</span> <span class="o">=</span> <span class="n">axes</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">change_pair</span><span class="p">,</span> <span class="n">results</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">change_results</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+    <span class="n">intensity_change</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;intensity_change&#39;</span><span class="p">]</span>
+    <span class="n">change_mask</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;change_mask&#39;</span><span class="p">]</span>
+
+    <span class="c1"># Plot intensity change</span>
+    <span class="n">im1</span> <span class="o">=</span> <span class="n">show_image</span><span class="p">(</span><span class="n">intensity_change</span><span class="p">,</span>
+                    <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Intensity Change (dB)</span><span class="se">\n</span><span class="si">{</span><span class="n">change_pair</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                    <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">],</span>
+                    <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdBu_r&#39;</span><span class="p">,</span>
+                    <span class="n">vmin</span><span class="o">=-</span><span class="mi">10</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im1</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">],</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+    <span class="c1"># Plot change mask</span>
+    <span class="n">im2</span> <span class="o">=</span> <span class="n">show_image</span><span class="p">(</span><span class="n">change_mask</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span>
+                    <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Change Mask</span><span class="se">\n</span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;change_percentage&quot;</span><span class="p">]</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">% changed&#39;</span><span class="p">,</span>
+                    <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">i</span><span class="p">],</span>
+                    <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;hot&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">i</span><span class="p">],</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/change_detection_results.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h3 id="33-coherence-based-change-detection">3.3 Coherence-based Change Detection</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">detect_coherence_changes</span><span class="p">(</span><span class="n">aligned_data</span><span class="p">,</span> <span class="n">coherence_threshold</span><span class="o">=</span><span class="mf">0.3</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Detect changes based on coherence analysis&quot;&quot;&quot;</span>
+
+    <span class="n">coherence_results</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">acq_ids</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">aligned_data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">acq_ids</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">acq1_id</span> <span class="o">=</span> <span class="n">acq_ids</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">acq2_id</span> <span class="o">=</span> <span class="n">acq_ids</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">sublooks1</span> <span class="o">=</span> <span class="n">aligned_data</span><span class="p">[</span><span class="n">acq1_id</span><span class="p">][</span><span class="s1">&#39;aligned_sublooks&#39;</span><span class="p">]</span>
+        <span class="n">sublooks2</span> <span class="o">=</span> <span class="n">aligned_data</span><span class="p">[</span><span class="n">acq2_id</span><span class="p">][</span><span class="s1">&#39;aligned_sublooks&#39;</span><span class="p">]</span>
+
+        <span class="c1"># Calculate inter-acquisition coherence</span>
+        <span class="n">inter_coherence</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">sl1</span><span class="p">,</span> <span class="n">sl2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sublooks1</span><span class="p">[:</span><span class="mi">4</span><span class="p">],</span> <span class="n">sublooks2</span><span class="p">[:</span><span class="mi">4</span><span class="p">]):</span>  <span class="c1"># Use first 4 sub-looks</span>
+            <span class="c1"># Calculate normalized cross-correlation</span>
+            <span class="n">numerator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">sl1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">sl2</span><span class="p">))</span>
+            <span class="n">denominator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sl1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sl2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+            <span class="n">coherence</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">numerator</span> <span class="o">/</span> <span class="p">(</span><span class="n">denominator</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">))</span>
+            <span class="n">inter_coherence</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">coherence</span><span class="p">)</span>
+
+        <span class="n">mean_inter_coherence</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">inter_coherence</span><span class="p">)</span>
+
+        <span class="c1"># Detect decorrelation (low coherence indicates change)</span>
+        <span class="n">change_indicator</span> <span class="o">=</span> <span class="n">mean_inter_coherence</span> <span class="o">&lt;</span> <span class="n">coherence_threshold</span>
+
+        <span class="n">change_pair</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">aligned_data</span><span class="p">[</span><span class="n">acq1_id</span><span class="p">][</span><span class="s1">&#39;date&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">_to_</span><span class="si">{</span><span class="n">aligned_data</span><span class="p">[</span><span class="n">acq2_id</span><span class="p">][</span><span class="s1">&#39;date&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="n">coherence_results</span><span class="p">[</span><span class="n">change_pair</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;inter_coherence&#39;</span><span class="p">:</span> <span class="n">inter_coherence</span><span class="p">,</span>
+            <span class="s1">&#39;mean_coherence&#39;</span><span class="p">:</span> <span class="n">mean_inter_coherence</span><span class="p">,</span>
+            <span class="s1">&#39;change_detected&#39;</span><span class="p">:</span> <span class="n">change_indicator</span><span class="p">,</span>
+            <span class="s1">&#39;decorrelation_level&#39;</span><span class="p">:</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">mean_inter_coherence</span>
+        <span class="p">}</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Coherence analysis </span><span class="si">{</span><span class="n">change_pair</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Mean inter-acquisition coherence: </span><span class="si">{</span><span class="n">mean_inter_coherence</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Change detected: </span><span class="si">{</span><span class="n">change_indicator</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">coherence_results</span>
+
+<span class="c1"># Perform coherence-based change detection</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Performing coherence-based change detection...&quot;</span><span class="p">)</span>
+<span class="n">coherence_changes</span> <span class="o">=</span> <span class="n">detect_coherence_changes</span><span class="p">(</span><span class="n">aligned_results</span><span class="p">)</span>
+</code></pre>
+<h2 id="4-time-series-analysis">4. Time Series Analysis</h2>
+<h3 id="41-temporal-intensity-evolution">4.1 Temporal Intensity Evolution</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">analyze_temporal_evolution</span><span class="p">(</span><span class="n">aligned_data</span><span class="p">,</span> <span class="n">sample_points</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analyze temporal evolution at specific points or regions&quot;&quot;&quot;</span>
+
+    <span class="n">dates</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">aligned_data</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
+    <span class="n">acq_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">aligned_data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">dates</span><span class="p">]</span>
+
+    <span class="c1"># Convert dates to datetime objects</span>
+    <span class="n">datetime_dates</span> <span class="o">=</span> <span class="p">[</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">date</span> <span class="ow">in</span> <span class="n">dates</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">sample_points</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Define default sample points (y, x coordinates)</span>
+        <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">aligned_data</span><span class="p">[</span><span class="n">acq_ids</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="s1">&#39;aligned_master&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">sample_points</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;point_1&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">height</span><span class="o">//</span><span class="mi">4</span><span class="p">,</span> <span class="n">width</span><span class="o">//</span><span class="mi">4</span><span class="p">),</span>
+            <span class="s1">&#39;point_2&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">height</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">width</span><span class="o">//</span><span class="mi">2</span><span class="p">),</span> 
+            <span class="s1">&#39;point_3&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">height</span><span class="o">//</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="o">*</span><span class="n">width</span><span class="o">//</span><span class="mi">4</span><span class="p">)</span>
+        <span class="p">}</span>
+
+    <span class="n">temporal_evolution</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">point_name</span><span class="p">,</span> <span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="ow">in</span> <span class="n">sample_points</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">intensities</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">intensities_db</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">acq_id</span> <span class="ow">in</span> <span class="n">acq_ids</span><span class="p">:</span>
+            <span class="n">master</span> <span class="o">=</span> <span class="n">aligned_data</span><span class="p">[</span><span class="n">acq_id</span><span class="p">][</span><span class="s1">&#39;aligned_master&#39;</span><span class="p">]</span>
+            <span class="n">intensity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">master</span><span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">])</span>
+            <span class="n">intensity_db</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">intensity</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+
+            <span class="n">intensities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">intensity</span><span class="p">)</span>
+            <span class="n">intensities_db</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">intensity_db</span><span class="p">)</span>
+
+        <span class="n">temporal_evolution</span><span class="p">[</span><span class="n">point_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;coordinates&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span>
+            <span class="s1">&#39;dates&#39;</span><span class="p">:</span> <span class="n">dates</span><span class="p">,</span>
+            <span class="s1">&#39;datetime_dates&#39;</span><span class="p">:</span> <span class="n">datetime_dates</span><span class="p">,</span>
+            <span class="s1">&#39;intensities&#39;</span><span class="p">:</span> <span class="n">intensities</span><span class="p">,</span>
+            <span class="s1">&#39;intensities_db&#39;</span><span class="p">:</span> <span class="n">intensities_db</span><span class="p">,</span>
+            <span class="s1">&#39;mean_intensity_db&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">intensities_db</span><span class="p">),</span>
+            <span class="s1">&#39;std_intensity_db&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">intensities_db</span><span class="p">),</span>
+            <span class="s1">&#39;trend&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">intensities_db</span><span class="p">)),</span> <span class="n">intensities_db</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Linear trend</span>
+        <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">temporal_evolution</span>
+
+<span class="c1"># Analyze temporal evolution</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Analyzing temporal intensity evolution...&quot;</span><span class="p">)</span>
+<span class="n">temporal_evolution</span> <span class="o">=</span> <span class="n">analyze_temporal_evolution</span><span class="p">(</span><span class="n">aligned_results</span><span class="p">)</span>
+
+<span class="c1"># Plot temporal evolution</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+
+<span class="c1"># Time series plot</span>
+<span class="k">for</span> <span class="n">point_name</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">temporal_evolution</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;datetime_dates&#39;</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;intensities_db&#39;</span><span class="p">],</span> 
+                   <span class="s1">&#39;o-&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">point_name</span><span class="si">}</span><span class="s2"> (trend: </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;trend&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> dB/month)&quot;</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Date&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Intensity (dB)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Temporal Intensity Evolution&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">)</span>
+
+<span class="c1"># Statistical summary</span>
+<span class="n">point_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">temporal_evolution</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<span class="n">means</span> <span class="o">=</span> <span class="p">[</span><span class="n">temporal_evolution</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;mean_intensity_db&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">point_names</span><span class="p">]</span>
+<span class="n">stds</span> <span class="o">=</span> <span class="p">[</span><span class="n">temporal_evolution</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;std_intensity_db&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">point_names</span><span class="p">]</span>
+<span class="n">trends</span> <span class="o">=</span> <span class="p">[</span><span class="n">temporal_evolution</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;trend&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">point_names</span><span class="p">]</span>
+
+<span class="n">x_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">point_names</span><span class="p">))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">x_pos</span> <span class="o">-</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">means</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Mean Intensity (dB)&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">x_pos</span> <span class="o">+</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">stds</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Std Intensity (dB)&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Sample Points&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Intensity (dB)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Statistical Summary&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">x_pos</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">point_names</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+<span class="c1"># Trend analysis</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">trends</span><span class="p">)),</span> <span class="n">trends</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> 
+              <span class="n">color</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;green&#39;</span> <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;red&#39;</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">trends</span><span class="p">])</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Sample Points&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Trend (dB/month)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Intensity Trends&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">point_names</span><span class="p">)))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">point_names</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="c1"># Show sample point locations</span>
+<span class="n">reference_master</span> <span class="o">=</span> <span class="n">aligned_results</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">aligned_results</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]][</span><span class="s1">&#39;aligned_master&#39;</span><span class="p">]</span>
+<span class="n">master_db</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">reference_master</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+<span class="n">im</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">master_db</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span>
+                      <span class="n">vmin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">master_db</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                      <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">master_db</span><span class="p">,</span> <span class="mi">95</span><span class="p">))</span>
+
+<span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="s1">&#39;blue&#39;</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">point_name</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">temporal_evolution</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+    <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;coordinates&#39;</span><span class="p">]</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">point_name</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Sample Point Locations&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/temporal_evolution_analysis.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># Print temporal evolution summary</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Temporal Evolution Summary:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">point_name</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">temporal_evolution</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">point_name</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Coordinates: </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;coordinates&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Mean intensity: </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;mean_intensity_db&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Intensity variability: </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;std_intensity_db&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Trend: </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;trend&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> dB/month&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="42-regional-change-analysis">4.2 Regional Change Analysis</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">analyze_regional_changes</span><span class="p">(</span><span class="n">aligned_data</span><span class="p">,</span> <span class="n">regions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analyze changes in specific regions over time&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">regions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Define default regions</span>
+        <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">aligned_data</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">aligned_data</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]][</span><span class="s1">&#39;aligned_master&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">regions</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;northwest&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">width</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">height</span><span class="o">//</span><span class="mi">2</span><span class="p">],</span>
+            <span class="s1">&#39;northeast&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">width</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">height</span><span class="o">//</span><span class="mi">2</span><span class="p">],</span>
+            <span class="s1">&#39;southwest&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">width</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">height</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">height</span><span class="p">],</span>
+            <span class="s1">&#39;southeast&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">width</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">height</span><span class="p">]</span>
+        <span class="p">}</span>
+
+    <span class="n">dates</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">aligned_data</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
+    <span class="n">acq_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">aligned_data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">dates</span><span class="p">]</span>
+
+    <span class="n">regional_stats</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">region_name</span><span class="p">,</span> <span class="n">coords</span> <span class="ow">in</span> <span class="n">regions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">coords</span>
+
+        <span class="n">regional_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;dates&#39;</span><span class="p">:</span> <span class="n">dates</span><span class="p">,</span>
+            <span class="s1">&#39;mean_intensities&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;std_intensities&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;area_size&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">x2</span><span class="o">-</span><span class="n">x1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">y2</span><span class="o">-</span><span class="n">y1</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">acq_id</span> <span class="ow">in</span> <span class="n">acq_ids</span><span class="p">:</span>
+            <span class="n">master</span> <span class="o">=</span> <span class="n">aligned_data</span><span class="p">[</span><span class="n">acq_id</span><span class="p">][</span><span class="s1">&#39;aligned_master&#39;</span><span class="p">]</span>
+            <span class="n">region_data</span> <span class="o">=</span> <span class="n">master</span><span class="p">[</span><span class="n">y1</span><span class="p">:</span><span class="n">y2</span><span class="p">,</span> <span class="n">x1</span><span class="p">:</span><span class="n">x2</span><span class="p">]</span>
+
+            <span class="n">mean_intensity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">region_data</span><span class="p">))</span>
+            <span class="n">std_intensity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">region_data</span><span class="p">))</span>
+
+            <span class="n">regional_data</span><span class="p">[</span><span class="s1">&#39;mean_intensities&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mean_intensity</span><span class="p">)</span>
+            <span class="n">regional_data</span><span class="p">[</span><span class="s1">&#39;std_intensities&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">std_intensity</span><span class="p">)</span>
+
+        <span class="c1"># Convert to dB</span>
+        <span class="n">regional_data</span><span class="p">[</span><span class="s1">&#39;mean_intensities_db&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span> 
+                                              <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">regional_data</span><span class="p">[</span><span class="s1">&#39;mean_intensities&#39;</span><span class="p">]]</span>
+
+        <span class="c1"># Calculate regional statistics</span>
+        <span class="n">regional_data</span><span class="p">[</span><span class="s1">&#39;overall_mean&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">regional_data</span><span class="p">[</span><span class="s1">&#39;mean_intensities_db&#39;</span><span class="p">])</span>
+        <span class="n">regional_data</span><span class="p">[</span><span class="s1">&#39;temporal_variability&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">regional_data</span><span class="p">[</span><span class="s1">&#39;mean_intensities_db&#39;</span><span class="p">])</span>
+        <span class="n">regional_data</span><span class="p">[</span><span class="s1">&#39;trend&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">regional_data</span><span class="p">[</span><span class="s1">&#39;mean_intensities_db&#39;</span><span class="p">])),</span> 
+                                          <span class="n">regional_data</span><span class="p">[</span><span class="s1">&#39;mean_intensities_db&#39;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">regional_stats</span><span class="p">[</span><span class="n">region_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">regional_data</span>
+
+    <span class="k">return</span> <span class="n">regional_stats</span>
+
+<span class="c1"># Perform regional analysis</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Analyzing regional changes...&quot;</span><span class="p">)</span>
+<span class="n">regional_analysis</span> <span class="o">=</span> <span class="n">analyze_regional_changes</span><span class="p">(</span><span class="n">aligned_results</span><span class="p">)</span>
+
+<span class="c1"># Visualize regional analysis</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+
+<span class="c1"># Regional time series</span>
+<span class="k">for</span> <span class="n">region_name</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">regional_analysis</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">datetime_dates</span> <span class="o">=</span> <span class="p">[</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">date</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;dates&#39;</span><span class="p">]]</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">datetime_dates</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;mean_intensities_db&#39;</span><span class="p">],</span> <span class="s1">&#39;o-&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">region_name</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Date&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Mean Intensity (dB)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Regional Intensity Evolution&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">)</span>
+
+<span class="c1"># Regional variability comparison</span>
+<span class="n">region_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">regional_analysis</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<span class="n">variabilities</span> <span class="o">=</span> <span class="p">[</span><span class="n">regional_analysis</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;temporal_variability&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">region_names</span><span class="p">]</span>
+<span class="n">overall_means</span> <span class="o">=</span> <span class="p">[</span><span class="n">regional_analysis</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;overall_mean&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">region_names</span><span class="p">]</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">overall_means</span><span class="p">,</span> <span class="n">variabilities</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">region_names</span><span class="p">):</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">overall_means</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">variabilities</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> 
+                       <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">textcoords</span><span class="o">=</span><span class="s1">&#39;offset points&#39;</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Overall Mean Intensity (dB)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Temporal Variability (dB)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Regional Characteristics&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="c1"># Regional trends</span>
+<span class="n">trends</span> <span class="o">=</span> <span class="p">[</span><span class="n">regional_analysis</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;trend&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">region_names</span><span class="p">]</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">trends</span><span class="p">)),</span> <span class="n">trends</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+              <span class="n">color</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;green&#39;</span> <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;red&#39;</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">trends</span><span class="p">])</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Regions&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Trend (dB/month)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Regional Intensity Trends&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">region_names</span><span class="p">)))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">region_names</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="c1"># Regional map</span>
+<span class="n">reference_master</span> <span class="o">=</span> <span class="n">aligned_results</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">aligned_results</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]][</span><span class="s1">&#39;aligned_master&#39;</span><span class="p">]</span>
+<span class="n">master_db</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">reference_master</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+<span class="n">im</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">master_db</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span>
+                      <span class="n">vmin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">master_db</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                      <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">master_db</span><span class="p">,</span> <span class="mi">95</span><span class="p">))</span>
+
+<span class="c1"># Overlay region boundaries</span>
+<span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">master_db</span><span class="o">.</span><span class="n">shape</span>
+<span class="n">regions_default</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;northwest&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">width</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">height</span><span class="o">//</span><span class="mi">2</span><span class="p">],</span>
+    <span class="s1">&#39;northeast&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">width</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">height</span><span class="o">//</span><span class="mi">2</span><span class="p">],</span>
+    <span class="s1">&#39;southwest&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">width</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">height</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">height</span><span class="p">],</span>
+    <span class="s1">&#39;southeast&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">width</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">height</span><span class="p">]</span>
+<span class="p">}</span>
+
+<span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="s1">&#39;orange&#39;</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">region_name</span><span class="p">,</span> <span class="n">coords</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">regions_default</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+    <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">coords</span>
+    <span class="n">rect</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">Rectangle</span><span class="p">((</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">),</span> <span class="n">x2</span><span class="o">-</span><span class="n">x1</span><span class="p">,</span> <span class="n">y2</span><span class="o">-</span><span class="n">y1</span><span class="p">,</span> 
+                        <span class="n">fill</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">rect</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">x1</span><span class="o">+</span><span class="mi">5</span><span class="p">,</span> <span class="n">y1</span><span class="o">+</span><span class="mi">10</span><span class="p">,</span> <span class="n">region_name</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Regional Boundaries&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/regional_analysis.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># Print regional analysis summary</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Regional Analysis Summary:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">region_name</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">regional_analysis</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">region_name</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Overall mean: </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;overall_mean&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Temporal variability: </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;temporal_variability&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Trend: </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;trend&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> dB/month&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="5-automated-processing-pipeline">5. Automated Processing Pipeline</h2>
+<h3 id="51-complete-multi-temporal-workflow">5.1 Complete Multi-temporal Workflow</h3>
+<pre class="codehilite"><code><span class="k">class</span><span class="w"> </span><span class="nc">MultiTemporalSLA</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Automated multi-temporal SLA processing pipeline&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">band_name</span><span class="o">=</span><span class="s1">&#39;Sigma0_VV_slc&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span> <span class="o">=</span> <span class="n">output_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">band_name</span> <span class="o">=</span> <span class="n">band_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">temporal_data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">processed_results</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">analysis_results</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_acquisition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acq_id</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">orbit</span><span class="o">=</span><span class="s1">&#39;ascending&#39;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add acquisition to processing queue&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">temporal_data</span><span class="p">[</span><span class="n">acq_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="n">file_path</span><span class="p">,</span>
+            <span class="s1">&#39;date&#39;</span><span class="p">:</span> <span class="n">date</span><span class="p">,</span>
+            <span class="s1">&#39;orbit&#39;</span><span class="p">:</span> <span class="n">orbit</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_all_acquisitions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_looks</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">overlap_factor</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process all acquisitions with consistent parameters&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Processing all acquisitions...&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">processed_results</span> <span class="o">=</span> <span class="n">process_temporal_sla</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">temporal_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">band_name</span><span class="p">,</span> <span class="n">num_looks</span><span class="p">,</span> <span class="n">overlap_factor</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Align data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aligned_results</span> <span class="o">=</span> <span class="n">align_temporal_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_results</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">analyze_changes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">intensity_threshold</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">coherence_threshold</span><span class="o">=</span><span class="mf">0.3</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform comprehensive change analysis&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Analyzing temporal changes...&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Intensity-based change detection</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">analysis_results</span><span class="p">[</span><span class="s1">&#39;intensity_changes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">detect_intensity_changes</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aligned_results</span><span class="p">,</span> <span class="n">intensity_threshold</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Coherence-based change detection</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">analysis_results</span><span class="p">[</span><span class="s1">&#39;coherence_changes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">detect_coherence_changes</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aligned_results</span><span class="p">,</span> <span class="n">coherence_threshold</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Temporal evolution analysis</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">analysis_results</span><span class="p">[</span><span class="s1">&#39;temporal_evolution&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">analyze_temporal_evolution</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aligned_results</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Regional analysis</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">analysis_results</span><span class="p">[</span><span class="s1">&#39;regional_analysis&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">analyze_regional_changes</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aligned_results</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate comprehensive multi-temporal analysis report&quot;&quot;&quot;</span>
+
+        <span class="n">report</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;processing_info&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;num_acquisitions&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_results</span><span class="p">),</span>
+                <span class="s1">&#39;date_range&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_date_range</span><span class="p">(),</span>
+                <span class="s1">&#39;band_processed&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">band_name</span>
+            <span class="p">},</span>
+            <span class="s1">&#39;change_detection&#39;</span><span class="p">:</span> <span class="p">{},</span>
+            <span class="s1">&#39;temporal_trends&#39;</span><span class="p">:</span> <span class="p">{},</span>
+            <span class="s1">&#39;summary_statistics&#39;</span><span class="p">:</span> <span class="p">{}</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Change detection summary</span>
+        <span class="k">if</span> <span class="s1">&#39;intensity_changes&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis_results</span><span class="p">:</span>
+            <span class="n">intensity_changes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis_results</span><span class="p">[</span><span class="s1">&#39;intensity_changes&#39;</span><span class="p">]</span>
+            <span class="n">report</span><span class="p">[</span><span class="s1">&#39;change_detection&#39;</span><span class="p">][</span><span class="s1">&#39;intensity_based&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;num_change_pairs&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">intensity_changes</span><span class="p">),</span>
+                <span class="s1">&#39;mean_change_percentage&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;change_percentage&#39;</span><span class="p">]</span> 
+                                                 <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">intensity_changes</span><span class="o">.</span><span class="n">values</span><span class="p">()]),</span>
+                <span class="s1">&#39;max_change_percentage&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;change_percentage&#39;</span><span class="p">]</span> 
+                                               <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">intensity_changes</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
+            <span class="p">}</span>
+
+        <span class="c1"># Temporal trends summary</span>
+        <span class="k">if</span> <span class="s1">&#39;temporal_evolution&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis_results</span><span class="p">:</span>
+            <span class="n">evolution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis_results</span><span class="p">[</span><span class="s1">&#39;temporal_evolution&#39;</span><span class="p">]</span>
+            <span class="n">trends</span> <span class="o">=</span> <span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;trend&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">evolution</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+            <span class="n">report</span><span class="p">[</span><span class="s1">&#39;temporal_trends&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;mean_trend&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">trends</span><span class="p">),</span>
+                <span class="s1">&#39;trend_variability&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">trends</span><span class="p">),</span>
+                <span class="s1">&#39;increasing_points&#39;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">trends</span> <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="s1">&#39;decreasing_points&#39;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">trends</span> <span class="k">if</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="p">}</span>
+
+        <span class="c1"># Save report</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/multitemporal_report.json&quot;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">report</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">report</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_date_range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get date range of processed acquisitions&quot;&quot;&quot;</span>
+        <span class="n">dates</span> <span class="o">=</span> <span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">processed_results</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;start&#39;</span><span class="p">:</span> <span class="nb">min</span><span class="p">(</span><span class="n">dates</span><span class="p">),</span> <span class="s1">&#39;end&#39;</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">dates</span><span class="p">)}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_results</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Save all processing results&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving results...&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Save aligned master images</span>
+        <span class="k">for</span> <span class="n">acq_id</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">aligned_results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/master_</span><span class="si">{</span><span class="n">acq_id</span><span class="si">}</span><span class="s2">.npy&quot;</span><span class="p">,</span> 
+                   <span class="n">data</span><span class="p">[</span><span class="s1">&#39;aligned_master&#39;</span><span class="p">])</span>
+
+        <span class="c1"># Save change detection results</span>
+        <span class="k">if</span> <span class="s1">&#39;intensity_changes&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis_results</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">change_pair</span><span class="p">,</span> <span class="n">results</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis_results</span><span class="p">[</span><span class="s1">&#39;intensity_changes&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/change_</span><span class="si">{</span><span class="n">change_pair</span><span class="si">}</span><span class="s2">.npy&quot;</span><span class="p">,</span>
+                       <span class="n">results</span><span class="p">[</span><span class="s1">&#39;intensity_change&#39;</span><span class="p">])</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/mask_</span><span class="si">{</span><span class="n">change_pair</span><span class="si">}</span><span class="s2">.npy&quot;</span><span class="p">,</span>
+                       <span class="n">results</span><span class="p">[</span><span class="s1">&#39;change_mask&#39;</span><span class="p">])</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Results saved to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Example usage of automated pipeline</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== AUTOMATED MULTI-TEMPORAL PROCESSING ===&quot;</span><span class="p">)</span>
+
+<span class="c1"># Initialize pipeline</span>
+<span class="n">mt_pipeline</span> <span class="o">=</span> <span class="n">MultiTemporalSLA</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+
+<span class="c1"># Add acquisitions (update paths as needed)</span>
+<span class="k">for</span> <span class="n">acq_id</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">temporal_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">mt_pipeline</span><span class="o">.</span><span class="n">add_acquisition</span><span class="p">(</span><span class="n">acq_id</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">],</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">],</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;orbit&#39;</span><span class="p">])</span>
+
+<span class="c1"># Process all acquisitions</span>
+<span class="n">mt_pipeline</span><span class="o">.</span><span class="n">process_all_acquisitions</span><span class="p">(</span><span class="n">num_looks</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">overlap_factor</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="c1"># Analyze changes</span>
+<span class="n">mt_pipeline</span><span class="o">.</span><span class="n">analyze_changes</span><span class="p">(</span><span class="n">intensity_threshold</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">coherence_threshold</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="c1"># Generate and display report</span>
+<span class="n">report</span> <span class="o">=</span> <span class="n">mt_pipeline</span><span class="o">.</span><span class="n">generate_report</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Multi-temporal Processing Report:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processed acquisitions: </span><span class="si">{</span><span class="n">report</span><span class="p">[</span><span class="s1">&#39;processing_info&#39;</span><span class="p">][</span><span class="s1">&#39;num_acquisitions&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Date range: </span><span class="si">{</span><span class="n">report</span><span class="p">[</span><span class="s1">&#39;processing_info&#39;</span><span class="p">][</span><span class="s1">&#39;date_range&#39;</span><span class="p">][</span><span class="s1">&#39;start&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">report</span><span class="p">[</span><span class="s1">&#39;processing_info&#39;</span><span class="p">][</span><span class="s1">&#39;date_range&#39;</span><span class="p">][</span><span class="s1">&#39;end&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="s1">&#39;intensity_based&#39;</span> <span class="ow">in</span> <span class="n">report</span><span class="p">[</span><span class="s1">&#39;change_detection&#39;</span><span class="p">]:</span>
+    <span class="n">intensity_stats</span> <span class="o">=</span> <span class="n">report</span><span class="p">[</span><span class="s1">&#39;change_detection&#39;</span><span class="p">][</span><span class="s1">&#39;intensity_based&#39;</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean change percentage: </span><span class="si">{</span><span class="n">intensity_stats</span><span class="p">[</span><span class="s1">&#39;mean_change_percentage&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Maximum change percentage: </span><span class="si">{</span><span class="n">intensity_stats</span><span class="p">[</span><span class="s1">&#39;max_change_percentage&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="s1">&#39;temporal_trends&#39;</span> <span class="ow">in</span> <span class="n">report</span><span class="p">:</span>
+    <span class="n">trend_stats</span> <span class="o">=</span> <span class="n">report</span><span class="p">[</span><span class="s1">&#39;temporal_trends&#39;</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean temporal trend: </span><span class="si">{</span><span class="n">trend_stats</span><span class="p">[</span><span class="s1">&#39;mean_trend&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> dB/month&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Points with increasing trend: </span><span class="si">{</span><span class="n">trend_stats</span><span class="p">[</span><span class="s1">&#39;increasing_points&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Points with decreasing trend: </span><span class="si">{</span><span class="n">trend_stats</span><span class="p">[</span><span class="s1">&#39;decreasing_points&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Save all results</span>
+<span class="n">mt_pipeline</span><span class="o">.</span><span class="n">save_results</span><span class="p">()</span>
+</code></pre>
+<h2 id="6-export-and-visualization-summary">6. Export and Visualization Summary</h2>
+<pre class="codehilite"><code><span class="c1"># Create final summary visualization</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">18</span><span class="p">))</span>
+
+<span class="c1"># 1. Temporal data overview</span>
+<span class="n">acq_ids</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">aligned_results</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<span class="n">dates</span> <span class="o">=</span> <span class="p">[</span><span class="n">aligned_results</span><span class="p">[</span><span class="n">acq_id</span><span class="p">][</span><span class="s1">&#39;date&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">acq_id</span> <span class="ow">in</span> <span class="n">acq_ids</span><span class="p">]</span>
+<span class="n">datetime_dates</span> <span class="o">=</span> <span class="p">[</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">date</span> <span class="ow">in</span> <span class="n">dates</span><span class="p">]</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">acq_id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">acq_ids</span><span class="p">):</span>
+    <span class="n">master</span> <span class="o">=</span> <span class="n">aligned_results</span><span class="p">[</span><span class="n">acq_id</span><span class="p">][</span><span class="s1">&#39;aligned_master&#39;</span><span class="p">]</span>
+    <span class="n">master_db</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">master</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+
+    <span class="c1"># Show subset for clarity</span>
+    <span class="n">subset</span> <span class="o">=</span> <span class="n">master_db</span><span class="p">[::</span><span class="mi">4</span><span class="p">,</span> <span class="p">::</span><span class="mi">4</span><span class="p">]</span>  <span class="c1"># Downsample for overview</span>
+
+    <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># Show first two acquisitions</span>
+        <span class="n">im</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">subset</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span>
+                              <span class="n">vmin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">subset</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                              <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">subset</span><span class="p">,</span> <span class="mi">95</span><span class="p">))</span>
+        <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Acquisition </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">dates</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">])</span>
+
+<span class="c1"># 2. Change detection summary</span>
+<span class="k">if</span> <span class="n">change_results</span><span class="p">:</span>
+    <span class="n">change_pair</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">change_results</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">change_data</span> <span class="o">=</span> <span class="n">change_results</span><span class="p">[</span><span class="n">change_pair</span><span class="p">]</span>
+
+    <span class="c1"># Show change map</span>
+    <span class="n">subset_change</span> <span class="o">=</span> <span class="n">change_data</span><span class="p">[</span><span class="s1">&#39;intensity_change&#39;</span><span class="p">][::</span><span class="mi">4</span><span class="p">,</span> <span class="p">::</span><span class="mi">4</span><span class="p">]</span>
+    <span class="n">im1</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">subset_change</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdBu_r&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="mi">10</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Intensity Change</span><span class="se">\n</span><span class="si">{</span><span class="n">change_pair</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im1</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+
+    <span class="c1"># Show change statistics</span>
+    <span class="n">change_percentages</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;change_percentage&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">change_results</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+    <span class="n">change_pairs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">change_results</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">change_percentages</span><span class="p">)),</span> <span class="n">change_percentages</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Time Period&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Change Percentage (%)&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Change Detection Summary&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">change_pairs</span><span class="p">)))</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([</span><span class="n">cp</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_to_&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">5</span><span class="p">:]</span> <span class="o">+</span> <span class="s1">&#39; to &#39;</span> <span class="o">+</span> <span class="n">cp</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_to_&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">][</span><span class="o">-</span><span class="mi">5</span><span class="p">:]</span> 
+                               <span class="k">for</span> <span class="n">cp</span> <span class="ow">in</span> <span class="n">change_pairs</span><span class="p">],</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">)</span>
+
+<span class="c1"># 3. Temporal evolution summary</span>
+<span class="k">if</span> <span class="n">temporal_evolution</span><span class="p">:</span>
+    <span class="c1"># Plot all point evolutions</span>
+    <span class="k">for</span> <span class="n">point_name</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">temporal_evolution</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">datetime_dates</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;intensities_db&#39;</span><span class="p">],</span> <span class="s1">&#39;o-&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">point_name</span><span class="p">)</span>
+
+    <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Date&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Intensity (dB)&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Temporal Evolution Summary&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">)</span>
+
+    <span class="c1"># Summary statistics</span>
+    <span class="n">trends</span> <span class="o">=</span> <span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;trend&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">temporal_evolution</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+    <span class="n">point_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">temporal_evolution</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">trends</span><span class="p">)),</span> <span class="n">trends</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+                  <span class="n">color</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;green&#39;</span> <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;red&#39;</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">trends</span><span class="p">])</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Sample Points&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Trend (dB/month)&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Temporal Trends&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">point_names</span><span class="p">)))</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">point_names</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/multitemporal_summary.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Multi-temporal analysis complete!&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Output files saved to: </span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Generated files:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- change_detection_results.png&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- temporal_evolution_analysis.png&quot;</span><span class="p">)</span> 
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- regional_analysis.png&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- multitemporal_summary.png&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- multitemporal_report.json&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- master_*.npy (aligned master images)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- change_*.npy (change maps)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- mask_*.npy (change masks)&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="summary">Summary</h2>
+<p>In this tutorial, you learned:</p>
+<ol>
+<li><strong>Multi-temporal dataset organization</strong> and batch processing</li>
+<li><strong>Temporal alignment</strong> techniques for consistent analysis</li>
+<li><strong>Change detection</strong> using intensity and coherence methods</li>
+<li><strong>Time series analysis</strong> for trend detection</li>
+<li><strong>Regional analysis</strong> for spatial pattern assessment</li>
+<li><strong>Automated processing pipelines</strong> for efficient workflows</li>
+</ol>
+<h2 id="next-steps">Next Steps</h2>
+<ul>
+<li><strong>Tutorial 5</strong>: Polarimetric analysis with dual-pol data</li>
+<li><strong>Tutorial 6</strong>: Custom processing workflows for specific applications</li>
+<li>Experiment with different change detection thresholds</li>
+<li>Apply to longer time series datasets</li>
+<li>Integrate with external change validation data</li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<p><strong>Common Issues:</strong></p>
+<ol>
+<li><strong>Memory limitations</strong>: Process smaller spatial subsets or reduce temporal sampling</li>
+<li><strong>Registration errors</strong>: Use more sophisticated co-registration techniques</li>
+<li><strong>Temporal decorrelation</strong>: Adjust coherence thresholds based on temporal baseline</li>
+<li><strong>Inconsistent illumination</strong>: Apply radiometric normalization</li>
+<li><strong>Seasonal effects</strong>: Consider phenological cycles in trend analysis</li>
+</ol>
+<p>For more help, see the <a href="../user_guide/troubleshooting.html">Troubleshooting Guide</a>.</p>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

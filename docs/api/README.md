@@ -1,16 +1,16 @@
 # API Reference
 
-Comprehensive documentation for all SARPyX modules, classes, and functions.
+Comprehensive documentation for all sarpyx modules, classes, and functions.
 
 ## Overview
 
-The SARPyX API is organized into several main modules, each serving specific aspects of SAR processing:
+The sarpyx API is organized into several main modules, each serving specific aspects of SAR processing:
 
 - **[processor](processor/README.md)**: Core SAR processing algorithms and utilities
 - **[sla](sla/README.md)**: Sub-Look Analysis for aperture decomposition  
-- **[snap](snap/README.md)**: Integration with ESA's SNAP platform
+- **[snapflow](snapflow/README.md)**: Integration with ESA's SNAP platform (GPT wrapper)
 - **[science](science/README.md)**: Scientific analysis tools and indices
-- **[utils](utils/README.md)**: General utilities and visualization tools
+- **[utils](utils/README.md)**: General utilities, visualization, geometry, and DEM tools
 
 ## Quick Reference
 
@@ -19,7 +19,7 @@ The SARPyX API is organized into several main modules, each serving specific asp
 | Class | Module | Description |
 |-------|--------|-------------|
 | `SubLookAnalysis` | `sarpyx.sla` | Main class for sub-aperture analysis |
-| `GPT` | `sarpyx.snap` | SNAP Graph Processing Tool wrapper |
+| `GPT` | `sarpyx.snapflow` | SNAP Graph Processing Tool wrapper |
 | `Handler` | `sarpyx.sla.core` | Metadata extraction and handling |
 
 ### Most Common Functions
@@ -31,8 +31,10 @@ The SARPyX API is organized into several main modules, each serving specific asp
 | `calculate_entropy()` | `sarpyx.processor.autofocus.metrics` | Image focus quality metric |
 | `calculate_ndpoll()` | `sarpyx.science.indices` | Normalized Difference Polarization Index |
 | `save_matlab_mat()` | `sarpyx.utils.io` | Save data in MATLAB format |
-| `Calibration()` | `sarpyx.snap.GPT` | SNAP radiometric calibration |
-| `TerrainCorrection()` | `sarpyx.snap.GPT` | SNAP geometric terrain correction |
+| `download_tiles_for_wkt()` | `sarpyx.utils.dem_utils` | Download Copernicus DEM tiles for a WKT geometry |
+| `tiles_from_wkt()` | `sarpyx.utils.dem_utils` | Compute DEM tile grid for a WKT geometry |
+| `Calibration()` | `sarpyx.snapflow.GPT` | SNAP radiometric calibration |
+| `TerrainCorrection()` | `sarpyx.snapflow.GPT` | SNAP geometric terrain correction |
 
 ## Module Structure
 
@@ -47,9 +49,21 @@ sarpyx/
 ├── sla/               # Sub-Look Analysis
 │   ├── core/          # Main SLA implementation
 │   └── utils/         # SLA-specific utilities
-├── snap/              # SNAP integration
+├── snapflow/          # SNAP GPT integration
 ├── science/           # Scientific analysis tools
+├── cli/               # Command-line interfaces (worldsar)
+├── algorithms/        # High-level algorithm wrappers
 └── utils/             # General utilities
+    ├── viz.py         # Visualization and plotting
+    ├── io.py          # File I/O, format conversion
+    ├── dem_utils.py   # Copernicus DEM tile download
+    ├── geos.py        # Geometry and grid utilities
+    ├── grid.py        # Grid management
+    ├── wkt_utils.py   # WKT extraction from products
+    ├── nisar_utils.py # NISAR product utilities
+    ├── executor.py    # Async/parallel execution helpers
+    ├── meta.py        # Metadata utilities
+    └── ...            # Additional utility modules
 ```
 
 ## Usage Patterns
@@ -58,22 +72,23 @@ sarpyx/
 
 ```python
 # Import main modules
-from sarpyx import sla, snap, utils, science
+from sarpyx import sla, snapflow, utils, science
 
 # Import specific classes
 from sarpyx.sla import SubLookAnalysis
-from sarpyx.snap import GPT
-from sarpyx.utils import show_image
+from sarpyx.snapflow.engine import GPT
+from sarpyx.utils import show_image, download_tiles_for_wkt
 
 # Import specific functions
 from sarpyx.science.indices import calculate_rvi, calculate_ndpoll
 from sarpyx.processor.autofocus.metrics import calculate_entropy
+from sarpyx.utils.dem_utils import tiles_from_wkt, build_vrt
 ```
 
 ### Common API Patterns
 
 #### Configuration Objects
-Many SARPyX classes use attribute-based configuration:
+Many sarpyx classes use attribute-based configuration:
 
 ```python
 # Configure SubLookAnalysis
@@ -90,9 +105,9 @@ Some operations can be chained:
 ```python
 # SNAP processing chain
 gpt = GPT(product=path, outdir=output)
-result = (gpt.Calibration()
-             .ThermalNoiseRemoval()
-             .TerrainCorrection())
+result = (gpt.calibration()
+             .thermal_noise_removal()
+             .terrain_correction())
 ```
 
 #### Verbose Output
@@ -185,7 +200,7 @@ def process_with_memory_check(data):
 
 ```python
 import sarpyx
-print(f"SARPyX version: {sarpyx.__version__}")
+print(f"sarpyx version: {sarpyx.__version__}")
 
 # Check module versions
 from sarpyx import processor
@@ -253,6 +268,6 @@ Use the module-specific API documentation pages for detailed information:
 
 - **[Processor API](processor/README.md)**: Core processing algorithms
 - **[SLA API](sla/README.md)**: Sub-Look Analysis
-- **[SNAP API](snap/README.md)**: SNAP integration  
+- **[Snapflow API](snapflow/README.md)**: SNAP GPT integration  
 - **[Science API](science/README.md)**: Scientific analysis
-- **[Utils API](utils/README.md)**: Utilities and visualization
+- **[Utils API](utils/README.md)**: Utilities, visualization, and DEM tools

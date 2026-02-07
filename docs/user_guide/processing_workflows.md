@@ -1,10 +1,10 @@
 # Processing Workflows
 
-This guide covers the various processing workflows available in SARPyX, from basic sub-look analysis to advanced SNAP-integrated processing chains for ship detection and scientific applications.
+This guide covers the various processing workflows available in sarpyx, from basic sub-look analysis to advanced SNAP-integrated processing chains for ship detection and scientific applications.
 
 ## Overview
 
-SARPyX provides several processing pathways depending on your objectives:
+sarpyx provides several processing pathways depending on your objectives:
 
 1. **Sub-Look Analysis (SLA)**: Core functionality for azimuthal/range frequency decomposition
 2. **SNAP Integration**: SAR preprocessing using SNAP GPT (Graph Processing Tool)
@@ -13,7 +13,7 @@ SARPyX provides several processing pathways depending on your objectives:
 
 ## Sub-Look Analysis Workflow
 
-The Sub-Look Analysis is SARPyX's core functionality for performing azimuthal sub-band partitioning.
+The Sub-Look Analysis is sarpyx's core functionality for performing azimuthal sub-band partitioning.
 
 ### Basic SLA Pipeline
 
@@ -159,12 +159,12 @@ def validate_sublook_quality(sla, min_correlation=0.3, max_correlation=0.8):
 
 ## SNAP Integration Workflows
 
-SARPyX integrates with ESA's SNAP (Sentinel Application Platform) for comprehensive SAR preprocessing.
+sarpyx integrates with ESA's SNAP (Sentinel Application Platform) for comprehensive SAR preprocessing.
 
 ### Basic SNAP Processing Chain
 
 ```python
-from sarpyx.snap import GPT
+from sarpyx.snapflow.engine import GPT
 
 # Initialize GPT processor
 gpt = GPT(product_path="input.zip", 
@@ -248,12 +248,12 @@ def preprocess_cosmo_skymed(input_path, output_dir):
 
 ## Ship Detection Workflow (CFAR)
 
-SARPyX provides automated ship detection using Constant False Alarm Rate (CFAR) algorithms.
+sarpyx provides automated ship detection using Constant False Alarm Rate (CFAR) algorithms.
 
 ### Single Product CFAR
 
 ```python
-from sarpyx.snap import CFAR
+from sarpyx.snapflow.engine import CFAR
 
 # Basic ship detection
 first_product, excel_results = CFAR(

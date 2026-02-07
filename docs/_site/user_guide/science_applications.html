@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Science Applications – sarpyx Docs</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../index.html"><img class="logo" src="../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../user_guide/index.html">Overview</a>
+<a href="../user_guide/installation.html">Installation</a>
+<a href="../user_guide/getting_started.html">Getting Started</a>
+<a href="../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../user_guide/data_formats.html">Data Formats</a>
+<a href="../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../user_guide/science_applications.html" class="active">Science Applications</a>
+<a href="../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../tutorials/index.html">Overview</a>
+<a href="../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../api/index.html">Overview</a>
+<a href="../api/snapflow/index.html">Snapflow</a>
+<a href="../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../api/science/index.html">Science</a>
+<a href="../api/sla/index.html">SLA</a>
+<a href="../api/processor/index.html">Processor</a>
+<a href="../api/utils/index.html">Utils</a>
+<a href="../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../developer_guide/architecture.html">Architecture</a>
+<a href="../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="science-applications">Science Applications</h1>
+<p>sarpyx provides specialized algorithms and indices for various scientific applications using SAR data. This guide covers vegetation monitoring, polarimetric analysis, and other Earth observation applications.</p>
+<h2 id="overview">Overview</h2>
+<p>The <code>sarpyx.science</code> module contains scientifically validated algorithms for:</p>
+<ul>
+<li><strong>Vegetation Monitoring</strong>: Radar vegetation indices for crop monitoring and forest analysis</li>
+<li><strong>Polarimetric Analysis</strong>: Multi-polarization data exploitation </li>
+<li><strong>Land Cover Classification</strong>: Indices supporting classification workflows</li>
+<li><strong>Change Detection</strong>: Multi-temporal analysis capabilities</li>
+<li><strong>Environmental Monitoring</strong>: Forest degradation and agricultural applications</li>
+</ul>
+<h2 id="vegetation-indices">Vegetation Indices</h2>
+<h3 id="radar-vegetation-index-rvi">Radar Vegetation Index (RVI)</h3>
+<p>The Radar Vegetation Index is designed to monitor vegetation density and health using dual-polarization SAR data.</p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science.indices</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_rvi</span>
+
+<span class="c1"># Load backscatter data (linear scale)</span>
+<span class="n">sigma_vv</span> <span class="o">=</span> <span class="n">load_sentinel1_band</span><span class="p">(</span><span class="s1">&#39;VV_band.tif&#39;</span><span class="p">)</span>  <span class="c1"># Your loading function</span>
+<span class="n">sigma_vh</span> <span class="o">=</span> <span class="n">load_sentinel1_band</span><span class="p">(</span><span class="s1">&#39;VH_band.tif&#39;</span><span class="p">)</span>
+
+<span class="c1"># Calculate RVI</span>
+<span class="n">rvi</span> <span class="o">=</span> <span class="n">calculate_rvi</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+
+<span class="c1"># RVI ranges from 0 (low vegetation) to 1 (high vegetation)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RVI range: </span><span class="si">{</span><span class="n">rvi</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">rvi</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<p><strong>Formula</strong>: <code>RVI = (4 * σ⁰_VH) / (σ⁰_VV + σ⁰_VH)</code></p>
+<p><strong>Applications</strong>:
+- Crop growth monitoring
+- Forest biomass estimation<br>
+- Vegetation change detection
+- Agricultural phenology tracking</p>
+<h3 id="normalized-difference-polarization-index-ndpoll">Normalized Difference Polarization Index (NDPoll)</h3>
+<p>NDPoll exploits the polarization signature difference for vegetation characterization.</p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science.indices</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_ndpoll</span>
+
+<span class="c1"># Calculate NDPoll</span>
+<span class="n">ndpoll</span> <span class="o">=</span> <span class="n">calculate_ndpoll</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+
+<span class="c1"># NDPoll ranges from -1 to +1</span>
+<span class="c1"># Positive values typically indicate vegetated areas</span>
+<span class="c1"># Negative values often correspond to bare soil or water</span>
+</code></pre>
+<p><strong>Formula</strong>: <code>NDPoll = (σ⁰_VV - σ⁰_VH) / (σ⁰_VV + σ⁰_VH)</code></p>
+<p><strong>Applications</strong>:
+- Land cover discrimination
+- Urban vs. vegetated area mapping
+- Water body detection</p>
+<h3 id="dual-pol-diagonal-distance-dpdd">Dual-Pol Diagonal Distance (DPDD)</h3>
+<p>DPDD provides a geometric interpretation of dual-polarization scattering.</p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science.indices</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_dpdd</span>
+
+<span class="c1"># Calculate DPDD</span>
+<span class="n">dpdd</span> <span class="o">=</span> <span class="n">calculate_dpdd</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+
+<span class="c1"># DPDD represents the total scattering power</span>
+</code></pre>
+<p><strong>Formula</strong>: <code>DPDD = (σ⁰_VV + σ⁰_VH) / √2</code></p>
+<p><strong>Applications</strong>:
+- Total scattering power assessment
+- Temporal change analysis
+- Flood mapping support</p>
+<h2 id="advanced-vegetation-indices">Advanced Vegetation Indices</h2>
+<h3 id="dual-polarized-radar-vegetation-indices">Dual-Polarized Radar Vegetation Indices</h3>
+<p>For specific polarization combinations:</p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science.indices</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_dprvi_vv</span><span class="p">,</span> <span class="n">calculate_dprvi_hh</span>
+
+<span class="c1"># VV-based DpRVI (for Sentinel-1 VV/VH data)</span>
+<span class="n">dprvi_vv</span> <span class="o">=</span> <span class="n">calculate_dprvi_vv</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+
+<span class="c1"># HH-based DpRVI (for ALOS PALSAR HH/HV data) </span>
+<span class="n">dprvi_hh</span> <span class="o">=</span> <span class="n">calculate_dprvi_hh</span><span class="p">(</span><span class="n">sigma_hh</span><span class="p">,</span> <span class="n">sigma_hv</span><span class="p">)</span>
+</code></pre>
+<h3 id="quad-polarized-radar-vegetation-index-qprvi">Quad-Polarized Radar Vegetation Index (QpRVI)</h3>
+<p>For fully polarimetric data (L-band missions like ALOS PALSAR):</p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science.indices</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_qprvi</span>
+
+<span class="c1"># Requires HH, VV, and HV channels</span>
+<span class="n">qprvi</span> <span class="o">=</span> <span class="n">calculate_qprvi</span><span class="p">(</span><span class="n">sigma_hh</span><span class="p">,</span> <span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_hv</span><span class="p">)</span>
+</code></pre>
+<p><strong>Formula</strong>: <code>QpRVI = (8 * σ⁰_HV) / (σ⁰_HH + σ⁰_VV + 2 * σ⁰_HV)</code></p>
+<h3 id="forest-monitoring-indices">Forest Monitoring Indices</h3>
+<h4 id="radar-forest-degradation-index-rfdi">Radar Forest Degradation Index (RFDI)</h4>
+<p>Specifically designed for forest degradation monitoring:</p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science.indices</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_rfdi</span>
+
+<span class="c1"># Requires HH and HV polarizations (L-band optimal)</span>
+<span class="n">rfdi</span> <span class="o">=</span> <span class="n">calculate_rfdi</span><span class="p">(</span><span class="n">sigma_hh</span><span class="p">,</span> <span class="n">sigma_hv</span><span class="p">)</span>
+
+<span class="c1"># RFDI &lt; 0: Intact forest</span>
+<span class="c1"># RFDI &gt; 0: Degraded/deforested areas</span>
+</code></pre>
+<h4 id="vertical-dual-de-polarization-index-vddpi">Vertical Dual De-Polarization Index (VDDPI)</h4>
+<p>Measures depolarization effects in vegetation:</p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science.indices</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_vddpi</span>
+
+<span class="n">vddpi</span> <span class="o">=</span> <span class="n">calculate_vddpi</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+</code></pre>
+<h2 id="complete-vegetation-analysis-workflow">Complete Vegetation Analysis Workflow</h2>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science.indices</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">calculate_rvi</span><span class="p">,</span> <span class="n">calculate_ndpoll</span><span class="p">,</span> <span class="n">calculate_dpdd</span><span class="p">,</span>
+    <span class="n">calculate_dprvi_vv</span><span class="p">,</span> <span class="n">calculate_vddpi</span>
+<span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">vegetation_analysis_workflow</span><span class="p">(</span><span class="n">vv_path</span><span class="p">,</span> <span class="n">vh_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Complete vegetation index analysis.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Load data (implement your data loader)</span>
+    <span class="n">sigma_vv</span> <span class="o">=</span> <span class="n">load_geotiff</span><span class="p">(</span><span class="n">vv_path</span><span class="p">)</span>
+    <span class="n">sigma_vh</span> <span class="o">=</span> <span class="n">load_geotiff</span><span class="p">(</span><span class="n">vh_path</span><span class="p">)</span>
+
+    <span class="c1"># Create output directory</span>
+    <span class="n">output_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+    <span class="n">output_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Calculate all relevant indices</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;RVI&#39;</span><span class="p">:</span> <span class="n">calculate_rvi</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">),</span>
+        <span class="s1">&#39;NDPoll&#39;</span><span class="p">:</span> <span class="n">calculate_ndpoll</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">),</span>
+        <span class="s1">&#39;DPDD&#39;</span><span class="p">:</span> <span class="n">calculate_dpdd</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">),</span>
+        <span class="s1">&#39;DpRVI_VV&#39;</span><span class="p">:</span> <span class="n">calculate_dprvi_vv</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">),</span>
+        <span class="s1">&#39;VDDPI&#39;</span><span class="p">:</span> <span class="n">calculate_vddpi</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Save results</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">indices</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">output_file</span> <span class="o">=</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.tif&quot;</span>
+        <span class="n">save_geotiff</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">geotransform</span><span class="p">,</span> <span class="n">projection</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saved </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">output_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Generate statistics</span>
+    <span class="n">stats</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">indices</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">valid_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+        <span class="n">stats</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;mean&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]),</span>
+            <span class="s1">&#39;std&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]),</span>
+            <span class="s1">&#39;min&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]),</span>
+            <span class="s1">&#39;max&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]),</span>
+            <span class="s1">&#39;valid_pixels&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">valid_mask</span><span class="p">)</span>
+        <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">indices</span><span class="p">,</span> <span class="n">stats</span>
+
+<span class="c1"># Example usage</span>
+<span class="n">indices</span><span class="p">,</span> <span class="n">statistics</span> <span class="o">=</span> <span class="n">vegetation_analysis_workflow</span><span class="p">(</span>
+    <span class="s1">&#39;sentinel1_vv.tif&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sentinel1_vh.tif&#39;</span><span class="p">,</span> 
+    <span class="s1">&#39;vegetation_analysis_results/&#39;</span>
+<span class="p">)</span>
+
+<span class="c1"># Print summary statistics</span>
+<span class="k">for</span> <span class="n">index_name</span><span class="p">,</span> <span class="n">stats</span> <span class="ow">in</span> <span class="n">statistics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">index_name</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Mean: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;mean&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Std:  </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;std&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Range: [</span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;min&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;max&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="multi-temporal-analysis">Multi-Temporal Analysis</h2>
+<h3 id="time-series-vegetation-monitoring">Time Series Vegetation Monitoring</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">temporal_vegetation_analysis</span><span class="p">(</span><span class="n">time_series_paths</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analyze vegetation changes over time.&quot;&quot;&quot;</span>
+
+    <span class="n">time_series_indices</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">date</span><span class="p">,</span> <span class="p">(</span><span class="n">vv_path</span><span class="p">,</span> <span class="n">vh_path</span><span class="p">)</span> <span class="ow">in</span> <span class="n">time_series_paths</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="c1"># Load data for this date</span>
+        <span class="n">sigma_vv</span> <span class="o">=</span> <span class="n">load_geotiff</span><span class="p">(</span><span class="n">vv_path</span><span class="p">)</span>
+        <span class="n">sigma_vh</span> <span class="o">=</span> <span class="n">load_geotiff</span><span class="p">(</span><span class="n">vh_path</span><span class="p">)</span>
+
+        <span class="c1"># Calculate indices</span>
+        <span class="n">time_series_indices</span><span class="p">[</span><span class="n">date</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;RVI&#39;</span><span class="p">:</span> <span class="n">calculate_rvi</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">),</span>
+            <span class="s1">&#39;NDPoll&#39;</span><span class="p">:</span> <span class="n">calculate_ndpoll</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+        <span class="p">}</span>
+
+    <span class="c1"># Calculate temporal statistics</span>
+    <span class="n">dates</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">time_series_indices</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="c1"># RVI temporal analysis</span>
+    <span class="n">rvi_stack</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">time_series_indices</span><span class="p">[</span><span class="n">date</span><span class="p">][</span><span class="s1">&#39;RVI&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">date</span> <span class="ow">in</span> <span class="n">dates</span><span class="p">])</span>
+
+    <span class="c1"># Temporal mean and standard deviation</span>
+    <span class="n">rvi_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">rvi_stack</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">rvi_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">rvi_stack</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Trend analysis (simple linear fit)</span>
+    <span class="n">rvi_trend</span> <span class="o">=</span> <span class="n">calculate_temporal_trend</span><span class="p">(</span><span class="n">rvi_stack</span><span class="p">)</span>
+
+    <span class="c1"># Save temporal products</span>
+    <span class="n">save_geotiff</span><span class="p">(</span><span class="n">rvi_mean</span><span class="p">,</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="s2">&quot;RVI_temporal_mean.tif&quot;</span><span class="p">)</span>
+    <span class="n">save_geotiff</span><span class="p">(</span><span class="n">rvi_std</span><span class="p">,</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="s2">&quot;RVI_temporal_std.tif&quot;</span><span class="p">)</span>
+    <span class="n">save_geotiff</span><span class="p">(</span><span class="n">rvi_trend</span><span class="p">,</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="s2">&quot;RVI_trend.tif&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;temporal_mean&#39;</span><span class="p">:</span> <span class="n">rvi_mean</span><span class="p">,</span>
+        <span class="s1">&#39;temporal_std&#39;</span><span class="p">:</span> <span class="n">rvi_std</span><span class="p">,</span>
+        <span class="s1">&#39;trend&#39;</span><span class="p">:</span> <span class="n">rvi_trend</span>
+    <span class="p">}</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">calculate_temporal_trend</span><span class="p">(</span><span class="n">time_stack</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate linear trend over time dimension.&quot;&quot;&quot;</span>
+    <span class="n">n_times</span> <span class="o">=</span> <span class="n">time_stack</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">time_vector</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_times</span><span class="p">)</span>
+
+    <span class="c1"># Vectorized linear regression</span>
+    <span class="n">trend</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">time_stack</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">time_stack</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">time_stack</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]):</span>
+            <span class="n">pixel_series</span> <span class="o">=</span> <span class="n">time_stack</span><span class="p">[:,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+            <span class="n">valid_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">pixel_series</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">valid_mask</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># Need at least 3 points</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">time_vector</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">pixel_series</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+                <span class="n">trend</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Slope only</span>
+
+    <span class="k">return</span> <span class="n">trend</span>
+</code></pre>
+<h2 id="polarimetric-scattering-analysis">Polarimetric Scattering Analysis</h2>
+<h3 id="polarization-ratio-analysis">Polarization Ratio Analysis</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">polarization_ratios</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">,</span> <span class="n">sigma_hh</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sigma_hv</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate various polarization ratios.&quot;&quot;&quot;</span>
+
+    <span class="n">ratios</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># VV/VH ratio (depolarization ratio)</span>
+    <span class="n">ratios</span><span class="p">[</span><span class="s1">&#39;VV_VH_ratio&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">calculate_vvvhr</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+
+    <span class="c1"># VH/VV ratio (cross-pol ratio)</span>
+    <span class="n">ratios</span><span class="p">[</span><span class="s1">&#39;VH_VV_ratio&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">calculate_vhvvr</span><span class="p">(</span><span class="n">sigma_vh</span><span class="p">,</span> <span class="n">sigma_vv</span><span class="p">)</span>
+
+    <span class="c1"># VV+VH sum (total power)</span>
+    <span class="n">ratios</span><span class="p">[</span><span class="s1">&#39;VV_VH_sum&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">calculate_vvvhs</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+
+    <span class="c1"># If quad-pol data available</span>
+    <span class="k">if</span> <span class="n">sigma_hh</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">sigma_hv</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ratios</span><span class="p">[</span><span class="s1">&#39;HH_HV_ratio&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sigma_hh</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">sigma_hv</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sigma_hv</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="n">ratios</span><span class="p">[</span><span class="s1">&#39;co_cross_ratio&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">sigma_vv</span> <span class="o">+</span> <span class="n">sigma_hh</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">sigma_vh</span> <span class="o">+</span> <span class="n">sigma_hv</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ratios</span>
+
+<span class="c1"># Example usage</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science.indices</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_vvvhr</span><span class="p">,</span> <span class="n">calculate_vhvvr</span><span class="p">,</span> <span class="n">calculate_vvvhs</span>
+
+<span class="n">ratios</span> <span class="o">=</span> <span class="n">polarization_ratios</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+</code></pre>
+<h2 id="agricultural-applications">Agricultural Applications</h2>
+<h3 id="crop-phenology-monitoring">Crop Phenology Monitoring</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">crop_phenology_analysis</span><span class="p">(</span><span class="n">field_boundaries</span><span class="p">,</span> <span class="n">time_series_data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Monitor crop development stages using radar indices.&quot;&quot;&quot;</span>
+
+    <span class="n">phenology_metrics</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">field_id</span><span class="p">,</span> <span class="n">field_polygon</span> <span class="ow">in</span> <span class="n">field_boundaries</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">field_time_series</span> <span class="o">=</span> <span class="n">extract_field_statistics</span><span class="p">(</span><span class="n">time_series_data</span><span class="p">,</span> <span class="n">field_polygon</span><span class="p">)</span>
+
+        <span class="c1"># Calculate RVI for each date</span>
+        <span class="n">rvi_series</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">date</span><span class="p">,</span> <span class="p">(</span><span class="n">vv</span><span class="p">,</span> <span class="n">vh</span><span class="p">)</span> <span class="ow">in</span> <span class="n">field_time_series</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">field_rvi</span> <span class="o">=</span> <span class="n">calculate_rvi</span><span class="p">(</span><span class="n">vv</span><span class="p">,</span> <span class="n">vh</span><span class="p">)</span>
+            <span class="n">rvi_series</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">date</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">field_rvi</span><span class="p">)))</span>
+
+        <span class="c1"># Identify phenological stages</span>
+        <span class="n">phenology_metrics</span><span class="p">[</span><span class="n">field_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;emergence&#39;</span><span class="p">:</span> <span class="n">detect_emergence</span><span class="p">(</span><span class="n">rvi_series</span><span class="p">),</span>
+            <span class="s1">&#39;peak_growth&#39;</span><span class="p">:</span> <span class="n">detect_peak_growth</span><span class="p">(</span><span class="n">rvi_series</span><span class="p">),</span>
+            <span class="s1">&#39;senescence&#39;</span><span class="p">:</span> <span class="n">detect_senescence</span><span class="p">(</span><span class="n">rvi_series</span><span class="p">),</span>
+            <span class="s1">&#39;harvest&#39;</span><span class="p">:</span> <span class="n">detect_harvest</span><span class="p">(</span><span class="n">rvi_series</span><span class="p">)</span>
+        <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">phenology_metrics</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">detect_peak_growth</span><span class="p">(</span><span class="n">rvi_time_series</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Detect peak growth stage from RVI time series.&quot;&quot;&quot;</span>
+    <span class="n">dates</span><span class="p">,</span> <span class="n">rvi_values</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">rvi_time_series</span><span class="p">)</span>
+    <span class="n">peak_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">rvi_values</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dates</span><span class="p">[</span><span class="n">peak_idx</span><span class="p">],</span> <span class="n">rvi_values</span><span class="p">[</span><span class="n">peak_idx</span><span class="p">]</span>
+</code></pre>
+<h2 id="forest-applications">Forest Applications</h2>
+<h3 id="forest-biomass-estimation">Forest Biomass Estimation</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">forest_biomass_estimation</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">,</span> <span class="n">biomass_model</span><span class="o">=</span><span class="s1">&#39;rvi_power&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Estimate forest biomass using radar indices.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Calculate RVI</span>
+    <span class="n">rvi</span> <span class="o">=</span> <span class="n">calculate_rvi</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">biomass_model</span> <span class="o">==</span> <span class="s1">&#39;rvi_power&#39;</span><span class="p">:</span>
+        <span class="c1"># Power law relationship: Biomass = a * RVI^b</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="mf">150.0</span><span class="p">,</span> <span class="mf">0.8</span>  <span class="c1"># Model coefficients (site-specific)</span>
+        <span class="n">biomass</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">rvi</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">biomass_model</span> <span class="o">==</span> <span class="s1">&#39;multi_index&#39;</span><span class="p">:</span>
+        <span class="c1"># Multi-index approach</span>
+        <span class="n">ndpoll</span> <span class="o">=</span> <span class="n">calculate_ndpoll</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+        <span class="n">dpdd</span> <span class="o">=</span> <span class="n">calculate_dpdd</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+
+        <span class="c1"># Linear combination (coefficients from regression)</span>
+        <span class="n">biomass</span> <span class="o">=</span> <span class="mf">45.2</span> <span class="o">*</span> <span class="n">rvi</span> <span class="o">+</span> <span class="mf">32.1</span> <span class="o">*</span> <span class="n">ndpoll</span> <span class="o">+</span> <span class="mf">0.8</span> <span class="o">*</span> <span class="n">dpdd</span> <span class="o">+</span> <span class="mf">25.0</span>
+
+    <span class="c1"># Apply realistic constraints</span>
+    <span class="n">biomass</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">biomass</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>  <span class="c1"># Typical forest range: 0-500 Mg/ha</span>
+
+    <span class="k">return</span> <span class="n">biomass</span>
+
+<span class="c1"># Example usage</span>
+<span class="n">estimated_biomass</span> <span class="o">=</span> <span class="n">forest_biomass_estimation</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">,</span> <span class="s1">&#39;multi_index&#39;</span><span class="p">)</span>
+<span class="n">save_geotiff</span><span class="p">(</span><span class="n">estimated_biomass</span><span class="p">,</span> <span class="s1">&#39;forest_biomass_estimate.tif&#39;</span><span class="p">)</span>
+</code></pre>
+<h2 id="best-practices-and-considerations">Best Practices and Considerations</h2>
+<h3 id="data-requirements">Data Requirements</h3>
+<ol>
+<li><strong>Input Data Scale</strong>: All functions expect linear backscatter coefficients (σ⁰), not dB values</li>
+<li><strong>Calibration</strong>: Ensure radiometric calibration for absolute backscatter values</li>
+<li><strong>Noise Floor</strong>: Consider radar noise floor, especially for low backscatter areas</li>
+<li><strong>Temporal Consistency</strong>: Use consistent processing for time series analysis</li>
+</ol>
+<h3 id="quality-control">Quality Control</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">quality_control_vegetation_indices</span><span class="p">(</span><span class="n">indices_dict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply quality control to vegetation indices.&quot;&quot;&quot;</span>
+
+    <span class="n">qc_results</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">indices_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="c1"># Remove invalid values</span>
+        <span class="n">valid_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+
+        <span class="c1"># Apply physical constraints</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;RVI&#39;</span><span class="p">:</span>
+            <span class="c1"># RVI should be between 0 and 1</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">index</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">index</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">),</span> <span class="n">index</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;NDPoll&#39;</span><span class="p">:</span>
+            <span class="c1"># NDPoll should be between -1 and 1  </span>
+            <span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">index</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">index</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">),</span> <span class="n">index</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+        <span class="c1"># Flag outliers (3-sigma rule)</span>
+        <span class="n">mean_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+        <span class="n">std_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+        <span class="n">outlier_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">index</span> <span class="o">-</span> <span class="n">mean_val</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">std_val</span>
+        <span class="n">index</span><span class="p">[</span><span class="n">outlier_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="n">qc_results</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;processed_index&#39;</span><span class="p">:</span> <span class="n">index</span><span class="p">,</span>
+            <span class="s1">&#39;valid_pixels&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">index</span><span class="p">)),</span>
+            <span class="s1">&#39;outliers_removed&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">outlier_mask</span><span class="p">)</span>
+        <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">qc_results</span>
+</code></pre>
+<h3 id="validation-and-accuracy-assessment">Validation and Accuracy Assessment</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">validate_against_ground_truth</span><span class="p">(</span><span class="n">predicted_indices</span><span class="p">,</span> <span class="n">ground_truth_data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate radar indices against field measurements.&quot;&quot;&quot;</span>
+
+    <span class="n">validation_results</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">index_name</span><span class="p">,</span> <span class="n">index_values</span> <span class="ow">in</span> <span class="n">predicted_indices</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">index_name</span> <span class="ow">in</span> <span class="n">ground_truth_data</span><span class="p">:</span>
+            <span class="n">gt_values</span> <span class="o">=</span> <span class="n">ground_truth_data</span><span class="p">[</span><span class="n">index_name</span><span class="p">]</span>
+
+            <span class="c1"># Extract co-located values</span>
+            <span class="n">valid_mask</span> <span class="o">=</span> <span class="o">~</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">index_values</span><span class="p">)</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">gt_values</span><span class="p">))</span>
+            <span class="n">pred_valid</span> <span class="o">=</span> <span class="n">index_values</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+            <span class="n">gt_valid</span> <span class="o">=</span> <span class="n">gt_values</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+
+            <span class="c1"># Calculate validation metrics</span>
+            <span class="n">correlation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">pred_valid</span><span class="p">,</span> <span class="n">gt_valid</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">rmse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">pred_valid</span> <span class="o">-</span> <span class="n">gt_valid</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+            <span class="n">bias</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">pred_valid</span> <span class="o">-</span> <span class="n">gt_valid</span><span class="p">)</span>
+
+            <span class="n">validation_results</span><span class="p">[</span><span class="n">index_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;correlation&#39;</span><span class="p">:</span> <span class="n">correlation</span><span class="p">,</span>
+                <span class="s1">&#39;rmse&#39;</span><span class="p">:</span> <span class="n">rmse</span><span class="p">,</span>
+                <span class="s1">&#39;bias&#39;</span><span class="p">:</span> <span class="n">bias</span><span class="p">,</span>
+                <span class="s1">&#39;n_samples&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">pred_valid</span><span class="p">)</span>
+            <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">validation_results</span>
+</code></pre>
+<h2 id="integration-with-sub-look-analysis">Integration with Sub-Look Analysis</h2>
+<p>Combine vegetation indices with sub-look analysis for enhanced vegetation characterization:</p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.sla</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubLookAnalysis</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">enhanced_vegetation_analysis</span><span class="p">(</span><span class="n">slc_product</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Combine sub-look analysis with vegetation indices.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Perform sub-look decomposition</span>
+    <span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">slc_product</span><span class="p">)</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">choice</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># Azimuth processing</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">=</span> <span class="mi">3</span>
+
+    <span class="n">sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">()</span> 
+    <span class="n">sla</span><span class="o">.</span><span class="n">AncillaryDeWe</span><span class="p">()</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">()</span>
+
+    <span class="c1"># Extract sub-look intensity</span>
+    <span class="n">sublook_intensity</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">look</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">):</span>
+        <span class="n">sublook_intensity</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;look_</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">look</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+
+    <span class="c1"># Calculate vegetation indices for each sub-look</span>
+    <span class="n">vegetation_results</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">look_name</span><span class="p">,</span> <span class="n">intensity</span> <span class="ow">in</span> <span class="n">sublook_intensity</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="c1"># Convert to equivalent VV/VH for vegetation analysis</span>
+        <span class="c1"># (specific conversion depends on original polarization)</span>
+        <span class="n">vv_equiv</span> <span class="o">=</span> <span class="n">intensity</span>  <span class="c1"># Simplified assumption</span>
+        <span class="n">vh_equiv</span> <span class="o">=</span> <span class="n">intensity</span> <span class="o">*</span> <span class="mf">0.1</span>  <span class="c1"># Typical cross-pol ratio</span>
+
+        <span class="n">vegetation_results</span><span class="p">[</span><span class="n">look_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;RVI&#39;</span><span class="p">:</span> <span class="n">calculate_rvi</span><span class="p">(</span><span class="n">vv_equiv</span><span class="p">,</span> <span class="n">vh_equiv</span><span class="p">),</span>
+            <span class="s1">&#39;NDPoll&#39;</span><span class="p">:</span> <span class="n">calculate_ndpoll</span><span class="p">(</span><span class="n">vv_equiv</span><span class="p">,</span> <span class="n">vh_equiv</span><span class="p">)</span>
+        <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">sla</span><span class="p">,</span> <span class="n">vegetation_results</span>
+</code></pre>
+<h2 id="references-and-further-reading">References and Further Reading</h2>
+<h3 id="key-publications">Key Publications</h3>
+<ol>
+<li><strong>RVI Development</strong>: Kim &amp; van Zyl (2009) - &ldquo;A Time-Series Approach to Estimate Soil Moisture Using Polarimetric Radar Data&rdquo;</li>
+<li><strong>NDPoll Applications</strong>: Trudel et al. (2012) - &ldquo;Using RADARSAT-2 polarimetric and ENVISAT-ASAR dual-polarization data for estimating soil moisture&rdquo;</li>
+<li><strong>DPDD Method</strong>: Mandal et al. (2018) - &ldquo;Dual polarimetric radar vegetation index for crop growth monitoring using sentinel-1 SAR data&rdquo;</li>
+<li><strong>Forest Applications</strong>: Antropov et al. (2017) - &ldquo;Stand-level stem volume of boreal forests from spaceborne SAR imagery&rdquo;</li>
+</ol>
+<h3 id="online-resources">Online Resources</h3>
+<ul>
+<li><a href="https://step.esa.int/main/toolboxes/snap/">ESA SNAP Tutorials</a></li>
+<li><a href="https://appliedsciences.nasa.gov/join-mission/training/english/arset-synthetic-aperture-radar">NASA ARSET SAR Training</a></li>
+<li><a href="https://sentinels.copernicus.eu/web/sentinel/user-guides/sentinel-1-sar">Sentinel-1 User Guide</a></li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<ol>
+<li><strong>NaN Values</strong>: Check for zero denominators in ratio calculations</li>
+<li><strong>Unrealistic Index Values</strong>: Verify input data scale (linear vs. dB)</li>
+<li><strong>Memory Issues</strong>: Process large datasets in chunks or use memory mapping</li>
+<li><strong>Noisy Results</strong>: Apply spatial filtering or temporal averaging</li>
+</ol>
+<h3 id="performance-optimization">Performance Optimization</h3>
+<pre class="codehilite"><code><span class="c1"># For large datasets, use chunked processing</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_large_dataset_chunked</span><span class="p">(</span><span class="n">large_array_vv</span><span class="p">,</span> <span class="n">large_array_vh</span><span class="p">,</span> <span class="n">chunk_size</span><span class="o">=</span><span class="mi">1024</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process large arrays in memory-efficient chunks.&quot;&quot;&quot;</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">large_array_vv</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">large_array_vv</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">chunk_size</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">large_array_vv</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">chunk_size</span><span class="p">):</span>
+            <span class="c1"># Extract chunk</span>
+            <span class="n">vv_chunk</span> <span class="o">=</span> <span class="n">large_array_vv</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">chunk_size</span><span class="p">,</span> <span class="n">j</span><span class="p">:</span><span class="n">j</span><span class="o">+</span><span class="n">chunk_size</span><span class="p">]</span>
+            <span class="n">vh_chunk</span> <span class="o">=</span> <span class="n">large_array_vh</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">chunk_size</span><span class="p">,</span> <span class="n">j</span><span class="p">:</span><span class="n">j</span><span class="o">+</span><span class="n">chunk_size</span><span class="p">]</span>
+
+            <span class="c1"># Process chunk</span>
+            <span class="n">result_chunk</span> <span class="o">=</span> <span class="n">calculate_rvi</span><span class="p">(</span><span class="n">vv_chunk</span><span class="p">,</span> <span class="n">vh_chunk</span><span class="p">)</span>
+
+            <span class="c1"># Store result</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">chunk_size</span><span class="p">,</span> <span class="n">j</span><span class="p">:</span><span class="n">j</span><span class="o">+</span><span class="n">chunk_size</span><span class="p">]</span> <span class="o">=</span> <span class="n">result_chunk</span>
+
+    <span class="k">return</span> <span class="n">result</span>
+</code></pre>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

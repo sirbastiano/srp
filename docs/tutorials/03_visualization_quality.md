@@ -1,6 +1,6 @@
 # Tutorial 3: Visualization and Quality Assessment
 
-Learn to effectively visualize SLA results and assess processing quality using SARPyX's built-in tools.
+Learn to effectively visualize SLA results and assess processing quality using sarpyx's built-in tools.
 
 ## Overview
 

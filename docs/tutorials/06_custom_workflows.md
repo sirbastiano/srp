@@ -1,6 +1,6 @@
 # Tutorial 6: Custom Processing Workflows
 
-Learn to build custom processing pipelines for specific applications using SARPyX's modular architecture.
+Learn to build custom processing pipelines for specific applications using sarpyx's modular architecture.
 
 ## Overview
 
@@ -30,7 +30,7 @@ import json
 import time
 import logging
 from sarpyx.sla import SubLookAnalysis
-from sarpyx.snap import GPT
+from sarpyx.snapflow.engine import GPT
 from sarpyx.science.indices import *
 from sarpyx.utils.viz import show_image
 from sarpyx.utils.io import save_matlab_mat

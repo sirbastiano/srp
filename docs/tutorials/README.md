@@ -1,6 +1,6 @@
 # Tutorials
 
-Step-by-step tutorials for learning SARPyX capabilities and SAR processing techniques.
+Step-by-step tutorials for learning sarpyx capabilities and SAR processing techniques.
 
 ## Getting Started Tutorials
 
@@ -11,7 +11,7 @@ Learn the basics of sub-look decomposition with a simple Sentinel-1 example.
 - **Data**: Sample Sentinel-1 SLC product
 
 ### [Tutorial 2: SNAP Integration Basics](02_snap_integration_basics.md)
-Use SARPyX to automate SNAP processing workflows.
+Use sarpyx to automate SNAP processing workflows.
 - **Duration**: 20 minutes  
 - **Prerequisites**: SNAP installation, Tutorial 1
 - **Data**: Sentinel-1 GRD product
@@ -196,7 +196,7 @@ Cloud-based execution for users without local setup:
 
 We welcome community contributions! Guidelines:
 
-1. **Topic Relevance**: Should demonstrate SARPyX capabilities
+1. **Topic Relevance**: Should demonstrate sarpyx capabilities
 2. **Clear Structure**: Follow established tutorial format
 3. **Tested Code**: All code must run successfully
 4. **Documentation**: Include clear explanations
@@ -240,7 +240,7 @@ import matplotlib.pyplot as plt
 
 - **Tutorial Issues**: [GitHub Issues](https://github.com/ESA-PhiLab/sarpyx/issues)
 - **General Questions**: [GitHub Discussions](https://github.com/ESA-PhiLab/sarpyx/discussions)
-- **Community Forum**: [SARPyX Community](https://community.sarpyx.org)
+- **Community Forum**: [sarpyx Community](https://community.sarpyx.org)
 
 ## Additional Resources
 

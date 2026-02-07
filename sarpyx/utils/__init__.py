@@ -6,13 +6,19 @@ including visualization tools and image processing utilities.
 
 # Import key functions and classes to make them available at the package level
 from .viz import show_image, image_histogram_equalization, show_histogram, show_histogram_equalization
+from .dem_utils import download_tiles_for_wkt, tiles_from_wkt, tile_name, tile_url, build_vrt
 
 # Define __all__ to explicitly specify what should be exported when using "from utils import *"
 __all__ = [
     'show_image',
     'image_histogram_equalization',
     'show_histogram',
-    'show_histogram_equalization'
+    'show_histogram_equalization',
+    'download_tiles_for_wkt',
+    'tiles_from_wkt',
+    'tile_name',
+    'tile_url',
+    'build_vrt',
 ]
 
 # Version information

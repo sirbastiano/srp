@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Processor Module API – sarpyx Docs</title>
+  <link rel="stylesheet" href="../../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../../index.html"><img class="logo" src="../../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../../user_guide/index.html">Overview</a>
+<a href="../../user_guide/installation.html">Installation</a>
+<a href="../../user_guide/getting_started.html">Getting Started</a>
+<a href="../../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../../user_guide/data_formats.html">Data Formats</a>
+<a href="../../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../../user_guide/science_applications.html">Science Applications</a>
+<a href="../../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../../tutorials/index.html">Overview</a>
+<a href="../../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../../api/index.html">Overview</a>
+<a href="../../api/snapflow/index.html">Snapflow</a>
+<a href="../../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../../api/science/index.html">Science</a>
+<a href="../../api/sla/index.html">SLA</a>
+<a href="../../api/processor/index.html" class="active">Processor</a>
+<a href="../../api/utils/index.html">Utils</a>
+<a href="../../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../../developer_guide/architecture.html">Architecture</a>
+<a href="../../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="processor-module-api">Processor Module API</h1>
+<p>The <code>sarpyx.processor</code> module provides comprehensive SAR processing capabilities including focusing algorithms, autofocus methods, data I/O, and various processing utilities.</p>
+<h2 id="module-structure">Module Structure</h2>
+<pre><code>sarpyx.processor/
+├── core/          # Core processing algorithms (focus, decode, transforms)
+├── autofocus/     # Autofocus algorithms and quality metrics  
+├── algorithms/    # High-level processing algorithms (RDA, back-projection)
+├── data/          # Data readers, writers, and format converters
+├── utils/         # Processing utilities and helper functions
+└── AutoFocusNet/  # Legacy AutoFocusNet implementation (maintained for compatibility)
+</code></pre>
+<h2 id="quick-start">Quick Start</h2>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx</span><span class="w"> </span><span class="kn">import</span> <span class="n">processor</span>
+
+<span class="c1"># Import specific submodules</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.processor</span><span class="w"> </span><span class="kn">import</span> <span class="n">core</span><span class="p">,</span> <span class="n">autofocus</span><span class="p">,</span> <span class="n">algorithms</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">utils</span>
+
+<span class="c1"># Import specific functions</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.processor.autofocus.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_entropy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.processor.core.focus</span><span class="w"> </span><span class="kn">import</span> <span class="n">range_compression</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.processor.utils.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_matlab_mat</span>
+</code></pre>
+<h2 id="core-submodules">Core Submodules</h2>
+<h3 id="core"><a href="core/index.html">core</a></h3>
+<p>Core SAR processing algorithms including:
+- <strong>focus</strong>: Range and azimuth compression algorithms
+- <strong>decode</strong>: Signal decoding and preprocessing
+- <strong>transforms</strong>: Fourier and other mathematical transforms<br>
+- <strong>constants</strong>: Physical and processing constants
+- <strong>rda_simple</strong>: Simplified Range-Doppler Algorithm implementation</p>
+<p><strong>Key Functions:</strong>
+- <code>range_compression()</code>: Applies range compression to SAR data
+- <code>azimuth_compression()</code>: Applies azimuth compression<br>
+- <code>fft_shift()</code>: Optimized FFT operations for SAR processing</p>
+<h3 id="autofocus"><a href="autofocus/index.html">autofocus</a></h3>
+<p>Autofocus algorithms and image quality metrics including:
+- <strong>metrics</strong>: Focus quality assessment functions
+- <strong>compressor</strong>: Autofocus algorithm implementations
+- <strong>constants</strong>: Autofocus-specific parameters</p>
+<p><strong>Key Functions:</strong>
+- <code>calculate_entropy()</code>: Computes image entropy for focus assessment
+- <code>calculate_contrast()</code>: Measures image contrast
+- <code>phase_gradient_autofocus()</code>: PGA autofocus implementation</p>
+<h3 id="algorithms"><a href="algorithms/index.html">algorithms</a></h3>
+<p>High-level SAR processing algorithms including:
+- <strong>rda</strong>: Range-Doppler Algorithm implementation
+- <strong>backprojection</strong>: Time-domain back-projection algorithms</p>
+<p><strong>Key Classes:</strong>
+- <code>RDA</code>: Range-Doppler Algorithm processor
+- <code>BackProjection</code>: Back-projection algorithm implementation</p>
+<h3 id="data"><a href="data/index.html">data</a></h3>
+<p>Data I/O and format conversion utilities including:
+- <strong>readers</strong>: SAR data format readers
+- <strong>writers</strong>: Output format writers
+- <strong>formatters</strong>: Data format conversion utilities</p>
+<p><strong>Key Functions:</strong>
+- <code>read_sar_data()</code>: Generic SAR data reader
+- <code>write_geotiff()</code>: GeoTIFF output writer
+- <code>format_converter()</code>: Convert between SAR data formats</p>
+<h3 id="utils"><a href="utils/index.html">utils</a></h3>
+<p>Processing utilities and helper functions including:
+- <strong>io</strong>: Input/output utilities
+- <strong>printsummary</strong>: Data summary and diagnostic functions</p>
+<p><strong>Key Functions:</strong>
+- <code>save_matlab_mat()</code>: Save data in MATLAB format
+- <code>print_sar_summary()</code>: Display SAR data information
+- <code>validate_sar_data()</code>: Data validation utilities</p>
+<h2 id="usage-examples">Usage Examples</h2>
+<h3 id="basic-sar-processing-workflow">Basic SAR Processing Workflow</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.processor</span><span class="w"> </span><span class="kn">import</span> <span class="n">core</span><span class="p">,</span> <span class="n">autofocus</span><span class="p">,</span> <span class="n">data</span>
+
+<span class="c1"># Read SAR data</span>
+<span class="n">sar_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">readers</span><span class="o">.</span><span class="n">read_sar_data</span><span class="p">(</span><span class="s1">&#39;path/to/sar_file.slc&#39;</span><span class="p">)</span>
+
+<span class="c1"># Apply range compression</span>
+<span class="n">range_compressed</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">focus</span><span class="o">.</span><span class="n">range_compression</span><span class="p">(</span><span class="n">sar_data</span><span class="p">)</span>
+
+<span class="c1"># Apply azimuth compression  </span>
+<span class="n">focused_data</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">focus</span><span class="o">.</span><span class="n">azimuth_compression</span><span class="p">(</span><span class="n">range_compressed</span><span class="p">)</span>
+
+<span class="c1"># Assess focus quality</span>
+<span class="n">entropy</span> <span class="o">=</span> <span class="n">autofocus</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">calculate_entropy</span><span class="p">(</span><span class="n">focused_data</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Focus quality (entropy): </span><span class="si">{</span><span class="n">entropy</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Save results</span>
+<span class="n">data</span><span class="o">.</span><span class="n">writers</span><span class="o">.</span><span class="n">write_geotiff</span><span class="p">(</span><span class="n">focused_data</span><span class="p">,</span> <span class="s1">&#39;output.tif&#39;</span><span class="p">)</span>
+</code></pre>
+<h3 id="autofocus-processing">Autofocus Processing</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.processor.autofocus</span><span class="w"> </span><span class="kn">import</span> <span class="n">metrics</span><span class="p">,</span> <span class="n">compressor</span>
+
+<span class="c1"># Load unfocused SAR data</span>
+<span class="n">unfocused_data</span> <span class="o">=</span> <span class="n">load_sar_data</span><span class="p">()</span>
+
+<span class="c1"># Calculate initial focus metrics</span>
+<span class="n">initial_entropy</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">calculate_entropy</span><span class="p">(</span><span class="n">unfocused_data</span><span class="p">)</span>
+<span class="n">initial_contrast</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">calculate_contrast</span><span class="p">(</span><span class="n">unfocused_data</span><span class="p">)</span>
+
+<span class="c1"># Apply Phase Gradient Autofocus</span>
+<span class="n">focused_data</span> <span class="o">=</span> <span class="n">compressor</span><span class="o">.</span><span class="n">phase_gradient_autofocus</span><span class="p">(</span><span class="n">unfocused_data</span><span class="p">)</span>
+
+<span class="c1"># Compare focus improvement</span>
+<span class="n">final_entropy</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">calculate_entropy</span><span class="p">(</span><span class="n">focused_data</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Focus improvement: </span><span class="si">{</span><span class="n">final_entropy</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">initial_entropy</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="range-doppler-algorithm-processing">Range-Doppler Algorithm Processing</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.processor.algorithms</span><span class="w"> </span><span class="kn">import</span> <span class="n">rda</span>
+
+<span class="c1"># Initialize RDA processor</span>
+<span class="n">processor</span> <span class="o">=</span> <span class="n">rda</span><span class="o">.</span><span class="n">RDA</span><span class="p">(</span>
+    <span class="n">range_bandwidth</span><span class="o">=</span><span class="mf">40e6</span><span class="p">,</span>  <span class="c1"># 40 MHz</span>
+    <span class="n">prf</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>              <span class="c1"># 1 kHz PRF</span>
+    <span class="n">platform_velocity</span><span class="o">=</span><span class="mi">7000</span> <span class="c1"># 7 km/s</span>
+<span class="p">)</span>
+
+<span class="c1"># Process raw SAR data</span>
+<span class="n">focused_image</span> <span class="o">=</span> <span class="n">processor</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">raw_data</span><span class="p">)</span>
+</code></pre>
+<h2 id="configuration">Configuration</h2>
+<h3 id="processing-parameters">Processing Parameters</h3>
+<p>Many processor functions accept configuration parameters:</p>
+<pre class="codehilite"><code><span class="c1"># Range compression with custom parameters</span>
+<span class="n">compressed</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">focus</span><span class="o">.</span><span class="n">range_compression</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">sar_data</span><span class="p">,</span>
+    <span class="n">bandwidth</span><span class="o">=</span><span class="mf">40e6</span><span class="p">,</span>
+    <span class="n">window_function</span><span class="o">=</span><span class="s1">&#39;hamming&#39;</span><span class="p">,</span>
+    <span class="n">zero_padding</span><span class="o">=</span><span class="mi">2</span>
+<span class="p">)</span>
+
+<span class="c1"># Autofocus with custom settings</span>
+<span class="n">focused</span> <span class="o">=</span> <span class="n">compressor</span><span class="o">.</span><span class="n">phase_gradient_autofocus</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">unfocused_data</span><span class="p">,</span>
+    <span class="n">iterations</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">window_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+    <span class="n">overlap</span><span class="o">=</span><span class="mf">0.5</span>
+<span class="p">)</span>
+</code></pre>
+<h3 id="output-formats">Output Formats</h3>
+<p>The processor module supports multiple output formats:</p>
+<pre class="codehilite"><code><span class="c1"># Save as MATLAB format</span>
+<span class="n">data</span><span class="o">.</span><span class="n">writers</span><span class="o">.</span><span class="n">save_matlab_mat</span><span class="p">(</span><span class="n">processed_data</span><span class="p">,</span> <span class="s1">&#39;output.mat&#39;</span><span class="p">)</span>
+
+<span class="c1"># Save as GeoTIFF</span>
+<span class="n">data</span><span class="o">.</span><span class="n">writers</span><span class="o">.</span><span class="n">write_geotiff</span><span class="p">(</span><span class="n">processed_data</span><span class="p">,</span> <span class="s1">&#39;output.tif&#39;</span><span class="p">,</span> 
+                          <span class="n">projection</span><span class="o">=</span><span class="s1">&#39;EPSG:4326&#39;</span><span class="p">)</span>
+
+<span class="c1"># Save as HDF5</span>
+<span class="n">data</span><span class="o">.</span><span class="n">writers</span><span class="o">.</span><span class="n">write_hdf5</span><span class="p">(</span><span class="n">processed_data</span><span class="p">,</span> <span class="s1">&#39;output.h5&#39;</span><span class="p">)</span>
+</code></pre>
+<h2 id="performance-considerations">Performance Considerations</h2>
+<h3 id="memory-management">Memory Management</h3>
+<p>For large SAR datasets:</p>
+<pre class="codehilite"><code><span class="c1"># Process data in chunks to manage memory</span>
+<span class="n">chunk_size</span> <span class="o">=</span> <span class="mi">1024</span>  <span class="c1"># Process 1024 lines at a time</span>
+
+<span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">chunk_processor</span><span class="p">(</span><span class="n">sar_data</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">):</span>
+    <span class="n">processed_chunk</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">focus</span><span class="o">.</span><span class="n">range_compression</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+    <span class="c1"># Save or accumulate results</span>
+</code></pre>
+<h3 id="parallel-processing">Parallel Processing</h3>
+<p>Use built-in parallelization for improved performance:</p>
+<pre class="codehilite"><code><span class="c1"># Enable parallel processing</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">multiprocessing</span>
+<span class="n">processor</span><span class="o">.</span><span class="n">set_num_threads</span><span class="p">(</span><span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">())</span>
+
+<span class="c1"># Process with parallel algorithms</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">algorithms</span><span class="o">.</span><span class="n">rda</span><span class="o">.</span><span class="n">process_parallel</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">num_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+</code></pre>
+<h2 id="error-handling">Error Handling</h2>
+<p>The processor module includes comprehensive error handling:</p>
+<pre class="codehilite"><code><span class="k">try</span><span class="p">:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">focus</span><span class="o">.</span><span class="n">range_compression</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">processor</span><span class="o">.</span><span class="n">ProcessingError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Handle specific processing errors</span>
+<span class="k">except</span> <span class="n">processor</span><span class="o">.</span><span class="n">DataFormatError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data format error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Handle data format issues</span>
+</code></pre>
+<h2 id="legacy-support">Legacy Support</h2>
+<h3 id="autofocusnet">AutoFocusNet</h3>
+<p>The original AutoFocusNet implementation is maintained for backward compatibility:</p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.processor</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoFocusNet</span>
+
+<span class="c1"># Use legacy AutoFocusNet</span>
+<span class="n">legacy_processor</span> <span class="o">=</span> <span class="n">AutoFocusNet</span><span class="o">.</span><span class="n">AutoFocus</span><span class="p">()</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">legacy_processor</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</code></pre>
+<p>Note: New projects should use the updated <code>autofocus</code> submodule for better performance and features.</p>
+<h2 id="see-also">See Also</h2>
+<ul>
+<li><a href="../sla/index.html">SLA Module</a>: Sub-Look Analysis capabilities</li>
+<li><a href="../snap/index.html">SNAP Module</a>: SNAP integration for preprocessing</li>
+<li><a href="../science/index.html">Science Module</a>: Scientific analysis tools</li>
+<li><a href="../utils/index.html">Utils Module</a>: General utilities and visualization</li>
+</ul>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

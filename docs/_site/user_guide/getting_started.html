@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Getting Started with sarpyx – sarpyx Docs</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../index.html"><img class="logo" src="../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../user_guide/index.html">Overview</a>
+<a href="../user_guide/installation.html">Installation</a>
+<a href="../user_guide/getting_started.html" class="active">Getting Started</a>
+<a href="../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../user_guide/data_formats.html">Data Formats</a>
+<a href="../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../user_guide/science_applications.html">Science Applications</a>
+<a href="../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../tutorials/index.html">Overview</a>
+<a href="../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../api/index.html">Overview</a>
+<a href="../api/snapflow/index.html">Snapflow</a>
+<a href="../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../api/science/index.html">Science</a>
+<a href="../api/sla/index.html">SLA</a>
+<a href="../api/processor/index.html">Processor</a>
+<a href="../api/utils/index.html">Utils</a>
+<a href="../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../developer_guide/architecture.html">Architecture</a>
+<a href="../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="getting-started-with-sarpyx">Getting Started with sarpyx</h1>
+<p>This guide provides a quick introduction to sarpyx and walks you through your first SAR processing tasks.</p>
+<h2 id="your-first-sarpyx-program">Your First sarpyx Program</h2>
+<p>Let&rsquo;s start with a simple example using sarpyx&rsquo;s visualization utilities:</p>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">show_image</span><span class="p">,</span> <span class="n">image_histogram_equalization</span>
+
+<span class="c1"># Create sample SAR-like data</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rayleigh</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">))</span>
+
+<span class="c1"># Display the image</span>
+<span class="n">show_image</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Sample SAR Data&quot;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+
+<span class="c1"># Apply histogram equalization</span>
+<span class="n">enhanced_data</span> <span class="o">=</span> <span class="n">image_histogram_equalization</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="n">show_image</span><span class="p">(</span><span class="n">enhanced_data</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Enhanced SAR Data&quot;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+</code></pre>
+<h2 id="basic-workflow-overview">Basic Workflow Overview</h2>
+<p>sarpyx follows a modular approach to SAR processing:</p>
+<ol>
+<li><strong>Data Loading</strong>: Import SAR data from various formats</li>
+<li><strong>Preprocessing</strong>: Apply calibration, filtering, and corrections</li>
+<li><strong>Core Processing</strong>: Execute focusing, autofocus, or analysis algorithms</li>
+<li><strong>Analysis</strong>: Perform sub-look analysis, interferometry, or scientific applications</li>
+<li><strong>Visualization</strong>: Display results and generate reports</li>
+</ol>
+<h2 id="working-with-real-sar-data">Working with Real SAR Data</h2>
+<h3 id="sub-look-analysis-example">Sub-Look Analysis Example</h3>
+<p>Sub-Look Analysis (SLA) is one of sarpyx&rsquo;s core capabilities:</p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.sla</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubLookAnalysis</span>
+
+<span class="c1"># Initialize SLA processor with Sentinel-1 data</span>
+<span class="n">product_path</span> <span class="o">=</span> <span class="s2">&quot;path/to/your/S1A_IW_SLC_*.zip&quot;</span>
+<span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+
+<span class="c1"># Configure analysis parameters</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">choice</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># Azimuth direction (0 for range)</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">centroidSeparations</span> <span class="o">=</span> <span class="mi">700</span>  <span class="c1"># Hz</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">subLookBandwidth</span> <span class="o">=</span> <span class="mi">700</span>     <span class="c1"># Hz</span>
+
+<span class="c1"># Execute the processing chain</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">AncillaryDeWe</span><span class="p">()</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Access results</span>
+<span class="n">sublook_images</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">Looks</span>  <span class="c1"># Shape: (numberOfLooks, rows, cols)</span>
+</code></pre>
+<h3 id="snap-integration-example">SNAP Integration Example</h3>
+<p>sarpyx provides seamless integration with ESA SNAP:</p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.snapflow.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPT</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="c1"># Initialize GPT processor</span>
+<span class="n">product_path</span> <span class="o">=</span> <span class="s2">&quot;S1A_IW_GRDH_*.zip&quot;</span>
+<span class="n">output_dir</span> <span class="o">=</span> <span class="s2">&quot;processed_data&quot;</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">product_path</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">)</span>
+
+<span class="c1"># Apply thermal noise removal</span>
+<span class="n">gpt</span><span class="o">.</span><span class="n">ThermalNoiseRemoval</span><span class="p">()</span>
+
+<span class="c1"># Apply radiometric calibration</span>
+<span class="n">calibrated</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">(</span><span class="n">outputSigmaBand</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Apply terrain correction</span>
+<span class="n">terrain_corrected</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">TerrainCorrection</span><span class="p">(</span>
+    <span class="n">demName</span><span class="o">=</span><span class="s1">&#39;SRTM 1Sec HGT&#39;</span><span class="p">,</span>
+    <span class="n">pixelSpacingInMeter</span><span class="o">=</span><span class="mf">10.0</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processed product saved to: </span><span class="si">{</span><span class="n">terrain_corrected</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="science-applications">Science Applications</h3>
+<p>Calculate vegetation indices from dual-polarization SAR data:</p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science.indices</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_rvi</span><span class="p">,</span> <span class="n">calculate_ndpoll</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Load dual-pol data (replace with actual data loading)</span>
+<span class="n">sigma_vv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">gamma</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">))</span>  <span class="c1"># VV backscatter</span>
+<span class="n">sigma_vh</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">gamma</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">))</span>  <span class="c1"># VH backscatter</span>
+
+<span class="c1"># Calculate Radar Vegetation Index</span>
+<span class="n">rvi</span> <span class="o">=</span> <span class="n">calculate_rvi</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+
+<span class="c1"># Calculate Normalized Difference Polarization Index  </span>
+<span class="n">ndpoll</span> <span class="o">=</span> <span class="n">calculate_ndpoll</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+
+<span class="c1"># Visualize results</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">show_image</span>
+<span class="n">show_image</span><span class="p">(</span><span class="n">rvi</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Radar Vegetation Index&quot;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdYlGn&#39;</span><span class="p">)</span>
+<span class="n">show_image</span><span class="p">(</span><span class="n">ndpoll</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;NDPOLL Index&quot;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdBu&#39;</span><span class="p">)</span>
+</code></pre>
+<h2 id="understanding-the-module-structure">Understanding the Module Structure</h2>
+<p>sarpyx is organized into several main modules:</p>
+<h3 id="sarpyxprocessor"><code>sarpyx.processor</code></h3>
+<p>Core SAR processing algorithms:
+- <code>core</code>: Focus algorithms, transforms, decoding
+- <code>autofocus</code>: Quality metrics and autofocus methods
+- <code>algorithms</code>: High-level algorithms (RDA, back-projection)
+- <code>data</code>: Data I/O and format conversion
+- <code>utils</code>: Processing utilities</p>
+<h3 id="sarpyxsla"><code>sarpyx.sla</code></h3>
+<p>Sub-Look Analysis for aperture decomposition:
+- Frequency domain processing
+- Sub-aperture extraction
+- Motion analysis capabilities</p>
+<h3 id="sarpyxsnapflow"><code>sarpyx.snapflow</code></h3>
+<p>SNAP integration:
+- GPT workflow automation
+- Graph processing chains
+- Product manipulation</p>
+<h3 id="sarpyxscience"><code>sarpyx.science</code></h3>
+<p>Scientific analysis tools:
+- Vegetation indices
+- Polarimetric analysis
+- Change detection methods</p>
+<h3 id="sarpyxutils"><code>sarpyx.utils</code></h3>
+<p>General utilities:
+- Visualization functions
+- Image processing helpers
+- Data manipulation tools</p>
+<h2 id="configuration-and-parameters">Configuration and Parameters</h2>
+<h3 id="setting-processing-parameters">Setting Processing Parameters</h3>
+<p>Many sarpyx functions accept configuration parameters:</p>
+<pre class="codehilite"><code><span class="c1"># Configure sub-look analysis</span>
+<span class="n">sla_config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;choice&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>              <span class="c1"># Processing direction</span>
+    <span class="s1">&#39;numberOfLooks&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>       <span class="c1"># Number of sub-looks</span>
+    <span class="s1">&#39;centroidSeparations&#39;</span><span class="p">:</span> <span class="mi">700</span><span class="p">,</span>  <span class="c1"># Frequency separation</span>
+    <span class="s1">&#39;subLookBandwidth&#39;</span><span class="p">:</span> <span class="mi">700</span>      <span class="c1"># Sub-look bandwidth</span>
+<span class="p">}</span>
+
+<span class="c1"># Apply configuration</span>
+<span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">sla_config</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">sla</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</code></pre>
+<h3 id="working-with-different-sar-sensors">Working with Different SAR Sensors</h3>
+<p>sarpyx supports multiple SAR missions:</p>
+<pre class="codehilite"><code><span class="c1"># Sentinel-1 processing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.snapflow.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPT</span>
+<span class="n">gpt_s1</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="s2">&quot;S1A_*.zip&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;MacOS&quot;</span><span class="p">)</span>
+
+<span class="c1"># COSMO-SkyMed processing  </span>
+<span class="n">gpt_csk</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="s2">&quot;CSK_*.h5&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;Ubuntu&quot;</span><span class="p">)</span>
+
+<span class="c1"># SAO-COM processing</span>
+<span class="n">gpt_sao</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="s2">&quot;SAO_*.zip&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre>
+<h2 id="error-handling-and-debugging">Error Handling and Debugging</h2>
+<p>sarpyx provides verbose options for debugging:</p>
+<pre class="codehilite"><code><span class="c1"># Enable verbose output</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Error handling</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>
+<span class="k">except</span> <span class="ne">AssertionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter validation failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="performance-considerations">Performance Considerations</h2>
+<h3 id="memory-management">Memory Management</h3>
+<p>For large datasets:
+- Process data in chunks
+- Use appropriate data types
+- Monitor memory usage</p>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">psutil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
+
+<span class="c1"># Monitor memory before processing</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Memory usage: </span><span class="si">{</span><span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span><span class="o">.</span><span class="n">percent</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+
+<span class="c1"># Process data</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">your_processing_function</span><span class="p">()</span>
+
+<span class="c1"># Clean up</span>
+<span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Memory usage after cleanup: </span><span class="si">{</span><span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span><span class="o">.</span><span class="n">percent</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="parallel-processing">Parallel Processing</h3>
+<p>sarpyx can leverage multiple cores:
+- GDAL operations are often parallelized
+- NumPy operations use multiple threads
+- Custom parallel processing can be implemented</p>
+<h2 id="next-steps">Next Steps</h2>
+<p>After completing this guide:</p>
+<ol>
+<li><strong>Learn the fundamentals</strong>: Read <a href="basic_concepts.html">Basic Concepts</a></li>
+<li><strong>Explore data formats</strong>: See <a href="data_formats.html">Data Formats</a>  </li>
+<li><strong>Try advanced workflows</strong>: Check <a href="processing_workflows.html">Processing Workflows</a></li>
+<li><strong>Run examples</strong>: Browse the <a href="../examples/index.html">Examples</a> directory</li>
+<li><strong>API deep dive</strong>: Explore the <a href="../api/index.html">API Reference</a></li>
+</ol>
+<h2 id="common-patterns">Common Patterns</h2>
+<h3 id="batch-processing">Batch Processing</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">process_sar_batch</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process multiple SAR products in batch.&quot;&quot;&quot;</span>
+    <span class="n">input_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">input_dir</span><span class="p">)</span>
+    <span class="n">output_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">product</span> <span class="ow">in</span> <span class="n">input_path</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.zip&quot;</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">product</span><span class="p">),</span> <span class="n">outdir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">output_path</span><span class="p">))</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processed: </span><span class="si">{</span><span class="n">product</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to process </span><span class="si">{</span><span class="n">product</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Usage</span>
+<span class="n">process_sar_batch</span><span class="p">(</span><span class="s2">&quot;input_products&quot;</span><span class="p">,</span> <span class="s2">&quot;processed_products&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="pipeline-chaining">Pipeline Chaining</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">sar_processing_pipeline</span><span class="p">(</span><span class="n">product_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Complete SAR processing pipeline.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Step 1: SNAP preprocessing</span>
+    <span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">product_path</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s2">&quot;temp&quot;</span><span class="p">)</span>
+    <span class="n">calibrated</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">()</span>
+    <span class="n">corrected</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">TerrainCorrection</span><span class="p">()</span>
+
+    <span class="c1"># Step 2: Sub-look analysis</span>
+    <span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">corrected</span><span class="p">)</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">choice</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">()</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">()</span>
+
+    <span class="c1"># Step 3: Analysis</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science.indices</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_rvi</span>
+    <span class="c1"># Additional processing...</span>
+
+    <span class="k">return</span> <span class="n">sla</span><span class="o">.</span><span class="n">Looks</span>
+
+<span class="c1"># Execute pipeline</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">sar_processing_pipeline</span><span class="p">(</span><span class="s2">&quot;my_product.zip&quot;</span><span class="p">)</span>
+</code></pre>
+<p>Ready to dive deeper? Continue with <a href="basic_concepts.html">Basic Concepts</a> to understand the theoretical foundations of SAR processing with sarpyx.</p>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

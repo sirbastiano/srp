@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Utils Module API – sarpyx Docs</title>
+  <link rel="stylesheet" href="../../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../../index.html"><img class="logo" src="../../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../../user_guide/index.html">Overview</a>
+<a href="../../user_guide/installation.html">Installation</a>
+<a href="../../user_guide/getting_started.html">Getting Started</a>
+<a href="../../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../../user_guide/data_formats.html">Data Formats</a>
+<a href="../../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../../user_guide/science_applications.html">Science Applications</a>
+<a href="../../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../../tutorials/index.html">Overview</a>
+<a href="../../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../../api/index.html">Overview</a>
+<a href="../../api/snapflow/index.html">Snapflow</a>
+<a href="../../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../../api/science/index.html">Science</a>
+<a href="../../api/sla/index.html">SLA</a>
+<a href="../../api/processor/index.html">Processor</a>
+<a href="../../api/utils/index.html" class="active">Utils</a>
+<a href="../../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../../developer_guide/architecture.html">Architecture</a>
+<a href="../../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="utils-module-api">Utils Module API</h1>
+<p>The <code>sarpyx.utils</code> module provides essential utility functions for data visualization, input/output operations, geometry and grid handling, DEM management, and general helper functions that support the entire sarpyx ecosystem.</p>
+<h2 id="overview">Overview</h2>
+<p>The utils module includes:
+- <strong>Visualization functions</strong> for displaying SAR data and analysis results
+- <strong>I/O utilities</strong> for data format conversion and file management<br>
+- <strong>DEM utilities</strong> for downloading Copernicus DEM tiles by WKT geometry
+- <strong>Geometry utilities</strong> for WKT parsing, grid navigation, and spatial queries
+- <strong>WKT extraction</strong> from Sentinel-1 and TerraSAR-X products
+- <strong>NISAR utilities</strong> for reading and cutting NISAR products
+- <strong>Execution helpers</strong> for async and parallel processing</p>
+<h2 id="module-structure">Module Structure</h2>
+<pre><code>sarpyx.utils/
+├── viz.py           # Visualization and plotting functions
+├── io.py            # Input/output and file management utilities
+├── dem_utils.py     # Copernicus DEM tile download and management
+├── geos.py          # Geometry utilities, grid navigation, WKT operations
+├── grid.py          # Grid management and tiling
+├── wkt_utils.py     # WKT footprint extraction from SAR products
+├── nisar_utils.py   # NISAR product reader and cutter
+├── executor.py      # Async/parallel execution helpers
+├── meta.py          # Metadata utilities
+├── hf.py            # Hugging Face integration utilities
+├── up.py            # Upload utilities
+├── zarr_utils.py    # Zarr archive utilities
+├── metrics.py       # Quality metrics
+├── losses.py        # Loss function utilities
+├── complex_losses.py # Complex-valued loss functions
+├── sar_loss.py      # SAR-specific loss functions
+└── rfigen.py        # RFI generation utilities
+</code></pre>
+<h2 id="quick-start">Quick Start</h2>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">show_image</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Display SAR data</span>
+<span class="n">sar_image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">))</span>
+<span class="n">show_image</span><span class="p">(</span><span class="n">sar_image</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;SAR Amplitude&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+
+<span class="c1"># I/O operations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_matlab_mat</span>
+<span class="n">save_matlab_mat</span><span class="p">(</span><span class="n">sar_image</span><span class="p">,</span> <span class="s1">&#39;sar_data.mat&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)</span>
+</code></pre>
+<h2 id="visualization-functions">Visualization Functions</h2>
+<h3 id="show_image">show_image()</h3>
+<pre class="codehilite"><code><span class="n">show_image</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+           <span class="n">colorbar</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre>
+<p>Display an image using matplotlib with optional customization.</p>
+<p><strong>Parameters:</strong>
+- <code>image</code> (np.ndarray): Input image to display
+- <code>title</code> (str, optional): Title to display above the image
+- <code>cmap</code> (str, optional): Matplotlib colormap name
+- <code>vmin</code> (float, optional): Minimum value for colormap scaling
+- <code>vmax</code> (float, optional): Maximum value for colormap scaling
+- <code>colorbar</code> (bool): Whether to add a colorbar (default: True)
+- <code>ax</code> (plt.Axes, optional): Matplotlib axes to plot on</p>
+<p><strong>Returns:</strong>
+- <code>plt.Axes</code>: The matplotlib axes containing the image</p>
+<p><strong>Examples:</strong></p>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">show_image</span>
+
+<span class="c1"># Basic image display</span>
+<span class="n">sar_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">))</span>
+<span class="n">show_image</span><span class="p">(</span><span class="n">sar_data</span><span class="p">)</span>
+
+<span class="c1"># Customized display</span>
+<span class="n">show_image</span><span class="p">(</span><span class="n">sar_data</span><span class="p">,</span> 
+          <span class="n">title</span><span class="o">=</span><span class="s1">&#39;SAR Backscatter&#39;</span><span class="p">,</span> 
+          <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span>
+          <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+          <span class="n">colorbar</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Multiple subplots</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">show_image</span><span class="p">(</span><span class="n">vv_data</span><span class="p">,</span> <span class="s1">&#39;VV Polarization&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">show_image</span><span class="p">(</span><span class="n">vh_data</span><span class="p">,</span> <span class="s1">&#39;VH Polarization&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</code></pre>
+<h3 id="show_histogram">show_histogram()</h3>
+<pre class="codehilite"><code><span class="n">show_histogram</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre>
+<p>Display a histogram of pixel values in an image.</p>
+<p><strong>Parameters:</strong>
+- <code>image</code> (np.ndarray): Input image as a numpy array
+- <code>title</code> (str, optional): Title for the histogram
+- <code>ax</code> (plt.Axes, optional): Matplotlib axes to plot on</p>
+<p><strong>Returns:</strong>
+- <code>plt.Axes</code>: The matplotlib axes containing the histogram</p>
+<p><strong>Example:</strong></p>
+<pre class="codehilite"><code><span class="c1"># Display intensity distribution</span>
+<span class="n">sar_intensity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sar_complex</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+<span class="n">show_histogram</span><span class="p">(</span><span class="n">sar_intensity</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;SAR Intensity Distribution&#39;</span><span class="p">)</span>
+
+<span class="c1"># Compare distributions</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">show_histogram</span><span class="p">(</span><span class="n">before_filtering</span><span class="p">,</span> <span class="s1">&#39;Before Filtering&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">show_histogram</span><span class="p">(</span><span class="n">after_filtering</span><span class="p">,</span> <span class="s1">&#39;After Filtering&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</code></pre>
+<h3 id="image_histogram_equalization">image_histogram_equalization()</h3>
+<pre class="codehilite"><code><span class="n">image_histogram_equalization</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">number_bins</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+</code></pre>
+<p>Perform histogram equalization on an image to enhance contrast.</p>
+<p><strong>Parameters:</strong>
+- <code>image</code> (np.ndarray): Input image
+- <code>number_bins</code> (int): Number of bins for histogram computation</p>
+<p><strong>Returns:</strong>
+- <code>tuple</code>: (equalized_image, cdf_normalized)</p>
+<p><strong>Example:</strong></p>
+<pre class="codehilite"><code><span class="c1"># Enhance SAR image contrast</span>
+<span class="n">enhanced_image</span><span class="p">,</span> <span class="n">cdf</span> <span class="o">=</span> <span class="n">image_histogram_equalization</span><span class="p">(</span><span class="n">sar_image</span><span class="p">,</span> <span class="n">number_bins</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+
+<span class="c1"># Display comparison</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">show_image</span><span class="p">(</span><span class="n">sar_image</span><span class="p">,</span> <span class="s1">&#39;Original&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">show_image</span><span class="p">(</span><span class="n">enhanced_image</span><span class="p">,</span> <span class="s1">&#39;Enhanced&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</code></pre>
+<h3 id="show_histogram_equalization">show_histogram_equalization()</h3>
+<pre class="codehilite"><code><span class="n">show_histogram_equalization</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">number_bins</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre>
+<p>Display the histogram of an equalized image.</p>
+<p><strong>Parameters:</strong>
+- <code>image</code> (np.ndarray): Input image
+- <code>number_bins</code> (int): Number of bins for histogram equalization
+- <code>title</code> (str, optional): Title for the histogram
+- <code>ax</code> (plt.Axes, optional): Matplotlib axes to plot on</p>
+<p><strong>Returns:</strong>
+- <code>plt.Axes</code>: The matplotlib axes containing the histogram</p>
+<h2 id="io-utilities">I/O Utilities</h2>
+<h3 id="save_matlab_mat">save_matlab_mat()</h3>
+<pre class="codehilite"><code><span class="n">save_matlab_mat</span><span class="p">(</span><span class="n">data_object</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">filepath</span><span class="p">)</span>
+</code></pre>
+<p>Save data in MATLAB .mat format.</p>
+<p><strong>Parameters:</strong>
+- <code>data_object</code> (Any): Data to save
+- <code>filename</code> (str): Output filename (without extension)
+- <code>filepath</code> (str | Path): Directory path for output file</p>
+<p><strong>Returns:</strong>
+- <code>bool</code>: True if successful, False otherwise</p>
+<p><strong>Example:</strong></p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_matlab_mat</span>
+
+<span class="c1"># Save processing results</span>
+<span class="n">results</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;amplitude&#39;</span><span class="p">:</span> <span class="n">sar_amplitude</span><span class="p">,</span>
+    <span class="s1">&#39;phase&#39;</span><span class="p">:</span> <span class="n">sar_phase</span><span class="p">,</span>
+    <span class="s1">&#39;metadata&#39;</span><span class="p">:</span> <span class="n">processing_info</span>
+<span class="p">}</span>
+
+<span class="n">success</span> <span class="o">=</span> <span class="n">save_matlab_mat</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="s1">&#39;sar_results&#39;</span><span class="p">,</span> <span class="s1">&#39;./output/&#39;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">success</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Data saved successfully&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="delete">delete()</h3>
+<pre class="codehilite"><code><span class="n">delete</span><span class="p">(</span><span class="n">path_to_delete</span><span class="p">)</span>
+</code></pre>
+<p>Safely delete files or directories.</p>
+<p><strong>Parameters:</strong>
+- <code>path_to_delete</code> (str | Path): Path to file or directory to delete</p>
+<p><strong>Example:</strong></p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">delete</span>
+
+<span class="c1"># Clean up temporary files</span>
+<span class="n">delete</span><span class="p">(</span><span class="s1">&#39;./temp_processing/&#39;</span><span class="p">)</span>
+<span class="n">delete</span><span class="p">(</span><span class="s1">&#39;./intermediate_result.tif&#39;</span><span class="p">)</span>
+</code></pre>
+<h3 id="unzip">unzip()</h3>
+<pre class="codehilite"><code><span class="n">unzip</span><span class="p">(</span><span class="n">path_to_zip_file</span><span class="p">)</span>
+</code></pre>
+<p>Extract ZIP archives, commonly used for SAR data products.</p>
+<p><strong>Parameters:</strong>
+- <code>path_to_zip_file</code> (str | Path): Path to ZIP file</p>
+<p><strong>Example:</strong></p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">unzip</span>
+
+<span class="c1"># Extract Sentinel-1 product</span>
+<span class="n">unzip</span><span class="p">(</span><span class="s1">&#39;./S1A_IW_SLC__1SDV_20230101T120000.zip&#39;</span><span class="p">)</span>
+</code></pre>
+<h3 id="delprod">delProd()</h3>
+<pre class="codehilite"><code><span class="n">delProd</span><span class="p">(</span><span class="n">prodToDelete</span><span class="p">)</span>
+</code></pre>
+<p>Delete SNAP/SAR products and associated files.</p>
+<p><strong>Parameters:</strong>
+- <code>prodToDelete</code> (str | Path): Path to product to delete</p>
+<h3 id="command_line">command_line()</h3>
+<pre class="codehilite"><code><span class="n">command_line</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+</code></pre>
+<p>Execute command line operations safely.</p>
+<p><strong>Parameters:</strong>
+- <code>cmd</code> (str): Command to execute</p>
+<h3 id="mode_identifier">mode_identifier()</h3>
+<pre class="codehilite"><code><span class="n">mode_identifier</span><span class="p">(</span><span class="n">product_name</span><span class="p">)</span>
+</code></pre>
+<p>Identify SAR product type from filename.</p>
+<p><strong>Parameters:</strong>
+- <code>product_name</code> (str | Path): Product filename or path</p>
+<p><strong>Returns:</strong>
+- <code>str</code>: Product type identifier (&lsquo;SEN&rsquo;, &lsquo;CSK&rsquo;, &lsquo;SAO&rsquo;, etc.)</p>
+<p><strong>Example:</strong></p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">mode_identifier</span>
+
+<span class="n">product_type</span> <span class="o">=</span> <span class="n">mode_identifier</span><span class="p">(</span><span class="s1">&#39;S1A_IW_SLC__1SDV_20230101.SAFE&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Product type: </span><span class="si">{</span><span class="n">product_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># Output: SEN</span>
+</code></pre>
+<h2 id="usage-examples">Usage Examples</h2>
+<h3 id="sar-data-visualization-workflow">SAR Data Visualization Workflow</h3>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">show_image</span><span class="p">,</span> <span class="n">show_histogram</span>
+
+<span class="c1"># Load and display SAR data</span>
+<span class="n">sar_complex</span> <span class="o">=</span> <span class="n">load_sar_data</span><span class="p">()</span>
+<span class="n">amplitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sar_complex</span><span class="p">)</span>
+<span class="n">phase</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">sar_complex</span><span class="p">)</span>
+
+<span class="c1"># Create comprehensive visualization</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+
+<span class="c1"># Display amplitude with different visualizations</span>
+<span class="n">show_image</span><span class="p">(</span><span class="n">amplitude</span><span class="p">,</span> <span class="s1">&#39;Amplitude (Linear)&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+<span class="n">show_image</span><span class="p">(</span><span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">amplitude</span><span class="p">),</span> <span class="s1">&#39;Amplitude (dB)&#39;</span><span class="p">,</span> 
+          <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="n">show_histogram</span><span class="p">(</span><span class="n">amplitude</span><span class="p">,</span> <span class="s1">&#39;Amplitude Distribution&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+
+<span class="c1"># Display phase</span>
+<span class="n">show_image</span><span class="p">(</span><span class="n">phase</span><span class="p">,</span> <span class="s1">&#39;Phase&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;hsv&#39;</span><span class="p">,</span> 
+          <span class="n">vmin</span><span class="o">=-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+
+<span class="c1"># Enhanced contrast version</span>
+<span class="n">enhanced_amp</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">image_histogram_equalization</span><span class="p">(</span><span class="n">amplitude</span><span class="p">)</span>
+<span class="n">show_image</span><span class="p">(</span><span class="n">enhanced_amp</span><span class="p">,</span> <span class="s1">&#39;Enhanced Amplitude&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="n">show_histogram</span><span class="p">(</span><span class="n">enhanced_amp</span><span class="p">,</span> <span class="s1">&#39;Enhanced Distribution&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h3 id="multi-temporal-data-analysis">Multi-Temporal Data Analysis</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">show_image</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science</span><span class="w"> </span><span class="kn">import</span> <span class="n">indices</span>
+
+<span class="c1"># Load time series</span>
+<span class="n">dates</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;2023-01&#39;</span><span class="p">,</span> <span class="s1">&#39;2023-04&#39;</span><span class="p">,</span> <span class="s1">&#39;2023-07&#39;</span><span class="p">,</span> <span class="s1">&#39;2023-10&#39;</span><span class="p">]</span>
+<span class="n">rvi_series</span> <span class="o">=</span> <span class="p">[</span><span class="n">load_rvi_data</span><span class="p">(</span><span class="n">date</span><span class="p">)</span> <span class="k">for</span> <span class="n">date</span> <span class="ow">in</span> <span class="n">dates</span><span class="p">]</span>
+
+<span class="c1"># Visualize temporal changes</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">axes</span> <span class="o">=</span> <span class="n">axes</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">rvi</span><span class="p">,</span> <span class="n">date</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">rvi_series</span><span class="p">,</span> <span class="n">dates</span><span class="p">)):</span>
+    <span class="n">show_image</span><span class="p">(</span><span class="n">rvi</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;RVI </span><span class="si">{</span><span class="n">date</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> 
+              <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> 
+              <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdYlGn&#39;</span><span class="p">,</span> 
+              <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># Calculate and visualize temporal statistics</span>
+<span class="n">rvi_stack</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">rvi_series</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">rvi_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">rvi_stack</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">rvi_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">rvi_stack</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="n">show_image</span><span class="p">(</span><span class="n">rvi_mean</span><span class="p">,</span> <span class="s1">&#39;Mean RVI&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">show_image</span><span class="p">(</span><span class="n">rvi_std</span><span class="p">,</span> <span class="s1">&#39;RVI Variability&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</code></pre>
+<h3 id="quality-assessment-visualization">Quality Assessment Visualization</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">visualize_processing_quality</span><span class="p">(</span><span class="n">original</span><span class="p">,</span> <span class="n">processed</span><span class="p">,</span> <span class="n">title_prefix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualize before/after processing comparison.&quot;&quot;&quot;</span>
+
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+
+    <span class="c1"># Original data</span>
+    <span class="n">show_image</span><span class="p">(</span><span class="n">original</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">title_prefix</span><span class="si">}</span><span class="s1">Original&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+    <span class="n">show_histogram</span><span class="p">(</span><span class="n">original</span><span class="p">,</span> <span class="s1">&#39;Original Distribution&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># Processed data</span>
+    <span class="n">show_image</span><span class="p">(</span><span class="n">processed</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">title_prefix</span><span class="si">}</span><span class="s1">Processed&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+    <span class="n">show_histogram</span><span class="p">(</span><span class="n">processed</span><span class="p">,</span> <span class="s1">&#39;Processed Distribution&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># Difference</span>
+    <span class="n">difference</span> <span class="o">=</span> <span class="n">processed</span> <span class="o">-</span> <span class="n">original</span>
+    <span class="n">show_image</span><span class="p">(</span><span class="n">difference</span><span class="p">,</span> <span class="s1">&#39;Difference&#39;</span><span class="p">,</span> 
+              <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdBu_r&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+
+    <span class="c1"># Statistics</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Original Mean: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">original</span><span class="p">)</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Processed Mean: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">processed</span><span class="p">)</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Std Original: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">original</span><span class="p">)</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Std Processed: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">processed</span><span class="p">)</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Statistics&#39;</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">fig</span>
+
+<span class="c1"># Use for speckle filtering assessment</span>
+<span class="n">original_sar</span> <span class="o">=</span> <span class="n">load_sar_data</span><span class="p">()</span>
+<span class="n">filtered_sar</span> <span class="o">=</span> <span class="n">apply_speckle_filter</span><span class="p">(</span><span class="n">original_sar</span><span class="p">)</span>
+<span class="n">visualize_processing_quality</span><span class="p">(</span><span class="n">original_sar</span><span class="p">,</span> <span class="n">filtered_sar</span><span class="p">,</span> <span class="s2">&quot;Speckle Filter &quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="data-export-and-documentation">Data Export and Documentation</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_matlab_mat</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">export_analysis_results</span><span class="p">(</span><span class="n">results_dict</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">session_name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Export analysis results in multiple formats.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Save numerical data as MATLAB file</span>
+    <span class="n">matlab_data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;amplitude&#39;</span><span class="p">:</span> <span class="n">results_dict</span><span class="p">[</span><span class="s1">&#39;amplitude&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;phase&#39;</span><span class="p">:</span> <span class="n">results_dict</span><span class="p">[</span><span class="s1">&#39;phase&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;vegetation_indices&#39;</span><span class="p">:</span> <span class="n">results_dict</span><span class="p">[</span><span class="s1">&#39;indices&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;processing_parameters&#39;</span><span class="p">:</span> <span class="n">results_dict</span><span class="p">[</span><span class="s1">&#39;parameters&#39;</span><span class="p">]</span>
+    <span class="p">}</span>
+
+    <span class="n">save_matlab_mat</span><span class="p">(</span><span class="n">matlab_data</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">session_name</span><span class="si">}</span><span class="s1">_data&#39;</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">)</span>
+
+    <span class="c1"># Save metadata as JSON</span>
+    <span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;session_name&#39;</span><span class="p">:</span> <span class="n">session_name</span><span class="p">,</span>
+        <span class="s1">&#39;processing_date&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()),</span>
+        <span class="s1">&#39;input_files&#39;</span><span class="p">:</span> <span class="n">results_dict</span><span class="p">[</span><span class="s1">&#39;input_files&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;processing_steps&#39;</span><span class="p">:</span> <span class="n">results_dict</span><span class="p">[</span><span class="s1">&#39;processing_steps&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;quality_metrics&#39;</span><span class="p">:</span> <span class="n">results_dict</span><span class="p">[</span><span class="s1">&#39;quality_metrics&#39;</span><span class="p">]</span>
+    <span class="p">}</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">session_name</span><span class="si">}</span><span class="s1">_metadata.json&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># Generate visualization report</span>
+    <span class="n">create_visualization_report</span><span class="p">(</span><span class="n">results_dict</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">session_name</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">create_visualization_report</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">session_name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create comprehensive visualization report.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Create multi-page visualization</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">15</span><span class="p">))</span>
+
+    <span class="c1"># Page 1: Raw data</span>
+    <span class="n">show_image</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;amplitude&#39;</span><span class="p">],</span> <span class="s1">&#39;Amplitude&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+    <span class="n">show_image</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;phase&#39;</span><span class="p">],</span> <span class="s1">&#39;Phase&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">show_histogram</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;amplitude&#39;</span><span class="p">],</span> <span class="s1">&#39;Amplitude Hist&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+
+    <span class="c1"># Page 2: Vegetation indices</span>
+    <span class="n">show_image</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;indices&#39;</span><span class="p">][</span><span class="s1">&#39;rvi&#39;</span><span class="p">],</span> <span class="s1">&#39;RVI&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+    <span class="n">show_image</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;indices&#39;</span><span class="p">][</span><span class="s1">&#39;ndpoll&#39;</span><span class="p">],</span> <span class="s1">&#39;NDPoll&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">show_image</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;indices&#39;</span><span class="p">][</span><span class="s1">&#39;dprvi&#39;</span><span class="p">],</span> <span class="s1">&#39;DpRVI&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+
+    <span class="c1"># Page 3: Quality metrics</span>
+    <span class="n">show_image</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;quality&#39;</span><span class="p">][</span><span class="s1">&#39;coherence&#39;</span><span class="p">],</span> <span class="s1">&#39;Coherence&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+    <span class="n">show_image</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;quality&#39;</span><span class="p">][</span><span class="s1">&#39;intensity_variance&#39;</span><span class="p">],</span> <span class="s1">&#39;Intensity Var&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># Summary statistics</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Mean RVI: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;indices&#39;</span><span class="p">][</span><span class="s1">&#39;rvi&#39;</span><span class="p">])</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Vegetated area: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;indices&#39;</span><span class="p">][</span><span class="s1">&#39;rvi&#39;</span><span class="p">]</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Summary Statistics&#39;</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">session_name</span><span class="si">}</span><span class="s1">_report.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</code></pre>
+<h3 id="integration-with-other-modules">Integration with Other Modules</h3>
+<pre class="codehilite"><code><span class="c1"># Integrated workflow with SLA and visualization</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.sla</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubLookAnalysis</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">show_image</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science</span><span class="w"> </span><span class="kn">import</span> <span class="n">indices</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">analyze_and_visualize_sublooks</span><span class="p">(</span><span class="n">product_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Complete sub-look analysis with visualization.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Perform SLA</span>
+    <span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">choice</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">()</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">()</span>
+
+    <span class="c1"># Extract sub-looks</span>
+    <span class="n">sublooks</span> <span class="o">=</span> <span class="p">[</span><span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span><span class="p">)]</span>
+
+    <span class="c1"># Visualize sub-looks</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sublooks</span><span class="p">),</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">sublook</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">sublooks</span><span class="p">,</span> <span class="n">axes</span><span class="p">)):</span>
+        <span class="n">show_image</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sublook</span><span class="p">),</span> <span class="sa">f</span><span class="s1">&#39;Sub-look </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/sublooks_comparison.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+
+    <span class="c1"># Calculate vegetation indices if dual-pol</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">sla</span><span class="p">,</span> <span class="s1">&#39;vh_data&#39;</span><span class="p">):</span>
+        <span class="n">rvi_sublooks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sublooks</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sublooks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>  <span class="c1"># Multi-polarization</span>
+                <span class="n">rvi</span> <span class="o">=</span> <span class="n">indices</span><span class="o">.</span><span class="n">calculate_rvi</span><span class="p">(</span><span class="n">sublooks</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">sublooks</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">rvi_sublooks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rvi</span><span class="p">)</span>
+
+        <span class="c1"># Visualize RVI differences</span>
+        <span class="k">if</span> <span class="n">rvi_sublooks</span><span class="p">:</span>
+            <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">rvi_sublooks</span><span class="p">),</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">rvi</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">rvi_sublooks</span><span class="p">,</span> <span class="n">axes</span><span class="p">)):</span>
+                <span class="n">show_image</span><span class="p">(</span><span class="n">rvi</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;RVI Sub-look </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> 
+                          <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+
+            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/rvi_sublooks.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">sublooks</span>
+</code></pre>
+<h2 id="performance-and-best-practices">Performance and Best Practices</h2>
+<h3 id="memory-efficient-visualization">Memory-Efficient Visualization</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">visualize_large_dataset</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">chunk_size</span><span class="o">=</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualize large datasets without loading everything into memory.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Load only a representative subset</span>
+    <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">data_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
+        <span class="c1"># Read a central chunk</span>
+        <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="n">src</span><span class="o">.</span><span class="n">width</span>
+        <span class="n">row_start</span> <span class="o">=</span> <span class="n">height</span> <span class="o">//</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">chunk_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="n">col_start</span> <span class="o">=</span> <span class="n">width</span> <span class="o">//</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">chunk_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">//</span> <span class="mi">2</span>
+
+        <span class="n">window</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">windows</span><span class="o">.</span><span class="n">Window</span><span class="p">(</span>
+            <span class="n">col_start</span><span class="p">,</span> <span class="n">row_start</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">chunk_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="n">data_chunk</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">)</span>
+
+    <span class="c1"># Visualize the subset</span>
+    <span class="n">show_image</span><span class="p">(</span><span class="n">data_chunk</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Sample from </span><span class="si">{</span><span class="n">Path</span><span class="p">(</span><span class="n">data_path</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">data_chunk</span>
+</code></pre>
+<h3 id="automated-visualization-reports">Automated Visualization Reports</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">create_automated_report</span><span class="p">(</span><span class="n">processing_results</span><span class="p">,</span> <span class="n">output_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create standardized visualization reports.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Define standard visualizations</span>
+    <span class="n">visualizations</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s1">&#39;amplitude&#39;</span><span class="p">,</span> <span class="s1">&#39;SAR Amplitude&#39;</span><span class="p">,</span> <span class="s1">&#39;gray&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">&#39;phase&#39;</span><span class="p">,</span> <span class="s1">&#39;SAR Phase&#39;</span><span class="p">,</span> <span class="s1">&#39;hsv&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">&#39;coherence&#39;</span><span class="p">,</span> <span class="s1">&#39;Coherence&#39;</span><span class="p">,</span> <span class="s1">&#39;viridis&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">&#39;vegetation_index&#39;</span><span class="p">,</span> <span class="s1">&#39;Vegetation Index&#39;</span><span class="p">,</span> <span class="s1">&#39;RdYlGn&#39;</span><span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="n">n_plots</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">visualizations</span><span class="p">)</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+    <span class="n">axes</span> <span class="o">=</span> <span class="n">axes</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">cmap</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">visualizations</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">processing_results</span><span class="p">:</span>
+            <span class="n">show_image</span><span class="p">(</span><span class="n">processing_results</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">title</span><span class="p">,</span> 
+                      <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">title</span><span class="si">}</span><span class="se">\n</span><span class="s1">Not Available&#39;</span><span class="p">,</span> 
+                        <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">)</span>
+            <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</code></pre>
+<h2 id="see-also">See Also</h2>
+<ul>
+<li><a href="dem_utils.html">DEM Utilities (dem_utils)</a>: Copernicus DEM tile download and management</li>
+<li><a href="../index.html">API Reference</a>: Overview of all sarpyx modules</li>
+<li><a href="../sla/index.html">SLA Module</a>: Sub-aperture analysis visualization</li>
+<li><a href="../science/index.html">Science Module</a>: Scientific analysis and indices</li>
+<li><a href="../../examples/index.html">Examples</a>: Ready-to-run visualization examples</li>
+</ul>
+<hr>
+<h2 id="dem-utilities">DEM Utilities</h2>
+<p>See the dedicated <a href="dem_utils.html">DEM Utilities documentation</a> for the full API reference of <code>sarpyx.utils.dem_utils</code>, including:</p>
+<ul>
+<li><code>download_tiles_for_wkt()</code> — download Copernicus DEM tiles for a WKT geometry</li>
+<li><code>tiles_from_wkt()</code> — compute which 1×1° tiles intersect a geometry</li>
+<li><code>tile_name()</code> / <code>tile_url()</code> — build tile names and download URLs</li>
+<li><code>build_vrt()</code> — merge tiles into a GDAL Virtual Raster</li>
+</ul>
+<h3 id="quick-example">Quick Example</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.dem_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">download_tiles_for_wkt</span>
+
+<span class="n">wkt</span> <span class="o">=</span> <span class="s2">&quot;POLYGON ((-3.18 54.28, -3.78 55.89, 0.31 56.30, 0.75 54.69, -3.18 54.28))&quot;</span>
+<span class="n">tiles</span> <span class="o">=</span> <span class="n">download_tiles_for_wkt</span><span class="p">(</span><span class="n">wkt</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;./dem_tiles&quot;</span><span class="p">,</span> <span class="n">resolution_m</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+</code></pre>
+<hr>
+<h2 id="geometry-utilities">Geometry Utilities</h2>
+<p>The <code>sarpyx.utils.geos</code> module provides spatial query and grid navigation functions:</p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.geos</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_points_in_polygon</span><span class="p">,</span> <span class="n">rectangle_to_wkt</span>
+</code></pre>
+<h3 id="key-functions">Key Functions</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>check_points_in_polygon(wkt, geojson)</code></td>
+<td>Find grid points inside a WKT polygon</td>
+</tr>
+<tr>
+<td><code>get_point_names(wkt, geojson)</code></td>
+<td>Get grid cell names inside a polygon</td>
+</tr>
+<tr>
+<td><code>get_point_coordinates(wkt, geojson)</code></td>
+<td>Get coordinates of grid cells inside a polygon</td>
+</tr>
+<tr>
+<td><code>rectangle_to_wkt(rect)</code></td>
+<td>Convert a rectangle dict to a WKT POLYGON string</td>
+</tr>
+<tr>
+<td><code>rectanglify(contained)</code></td>
+<td>Build cutting rectangles from contained grid points</td>
+</tr>
+<tr>
+<td><code>GridNavigator</code></td>
+<td>Class for navigating the 10 km grid system</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="wkt-utilities">WKT Utilities</h2>
+<p>The <code>sarpyx.utils.wkt_utils</code> module extracts WKT footprints from SAR products:</p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.wkt_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">sentinel1_wkt_extractor_cdse</span>
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sentinel1_wkt_extractor_cdse(product_name)</code></td>
+<td>Extract WKT footprint from Sentinel-1 via Copernicus Data Space API</td>
+</tr>
+<tr>
+<td><code>terrasar_wkt_extractor(product_path)</code></td>
+<td>Extract WKT footprint from TerraSAR-X XML metadata</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="nisar-utilities">NISAR Utilities</h2>
+<p>The <code>sarpyx.utils.nisar_utils</code> module provides NISAR product reading and cutting:</p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.nisar_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">NISARReader</span><span class="p">,</span> <span class="n">NISARCutter</span>
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NISARReader</code></td>
+<td>Read NISAR GSLC/RSLC HDF5 products</td>
+</tr>
+<tr>
+<td><code>NISARCutter</code></td>
+<td>Cut NISAR products into grid-aligned tiles</td>
+</tr>
+</tbody>
+</table>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

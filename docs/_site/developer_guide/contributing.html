@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Contributing to sarpyx – sarpyx Docs</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../index.html"><img class="logo" src="../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../user_guide/index.html">Overview</a>
+<a href="../user_guide/installation.html">Installation</a>
+<a href="../user_guide/getting_started.html">Getting Started</a>
+<a href="../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../user_guide/data_formats.html">Data Formats</a>
+<a href="../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../user_guide/science_applications.html">Science Applications</a>
+<a href="../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../tutorials/index.html">Overview</a>
+<a href="../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../api/index.html">Overview</a>
+<a href="../api/snapflow/index.html">Snapflow</a>
+<a href="../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../api/science/index.html">Science</a>
+<a href="../api/sla/index.html">SLA</a>
+<a href="../api/processor/index.html">Processor</a>
+<a href="../api/utils/index.html">Utils</a>
+<a href="../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../developer_guide/architecture.html">Architecture</a>
+<a href="../developer_guide/contributing.html" class="active">Contributing</a>
+<h3>Reference</h3>
+<a href="../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="contributing-to-sarpyx">Contributing to sarpyx</h1>
+<p>Thank you for your interest in contributing to sarpyx! This guide will help you get started with developing and contributing to the library.</p>
+<h2 id="quick-start-for-contributors">Quick Start for Contributors</h2>
+<h3 id="1-development-setup">1. Development Setup</h3>
+<pre class="codehilite"><code><span class="c1"># Clone the repository</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/ESA-sarpyx/sarpyx.git
+<span class="nb">cd</span><span class="w"> </span>sarpyx
+
+<span class="c1"># Create a virtual environment</span>
+python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
+<span class="nb">source</span><span class="w"> </span>venv/bin/activate<span class="w">  </span><span class="c1"># On Windows: venv\Scripts\activate</span>
+
+<span class="c1"># Install in development mode</span>
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
+
+<span class="c1"># Install pre-commit hooks</span>
+pre-commit<span class="w"> </span>install
+</code></pre>
+<h3 id="2-development-workflow">2. Development Workflow</h3>
+<ol>
+<li><strong>Fork and Clone</strong>: Fork the repository and clone your fork</li>
+<li><strong>Branch</strong>: Create a feature branch from <code>main</code></li>
+<li><strong>Develop</strong>: Make your changes with tests</li>
+<li><strong>Test</strong>: Run the test suite</li>
+<li><strong>Document</strong>: Update documentation if needed</li>
+<li><strong>Submit</strong>: Create a pull request</li>
+</ol>
+<h2 id="code-standards">Code Standards</h2>
+<h3 id="code-style">Code Style</h3>
+<p>We follow PEP 8 with some modifications:
+- Line length: 88 characters (Black default)
+- Use type hints for all public functions
+- Use docstrings for all public classes and functions</p>
+<h3 id="pre-commit-hooks">Pre-commit Hooks</h3>
+<p>We use pre-commit hooks to ensure code quality:</p>
+<pre class="codehilite"><code><span class="c1"># .pre-commit-config.yaml</span>
+<span class="nt">repos</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">repo</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/psf/black</span>
+<span class="w">    </span><span class="nt">rev</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">23.3.0</span>
+<span class="w">    </span><span class="nt">hooks</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">black</span>
+<span class="w">        </span><span class="nt">language_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python3</span>
+
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">repo</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/pycqa/isort</span>
+<span class="w">    </span><span class="nt">rev</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5.12.0</span>
+<span class="w">    </span><span class="nt">hooks</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">isort</span>
+<span class="w">        </span><span class="nt">args</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;--profile&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;black&quot;</span><span class="p p-Indicator">]</span>
+
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">repo</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/pycqa/flake8</span>
+<span class="w">    </span><span class="nt">rev</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6.0.0</span>
+<span class="w">    </span><span class="nt">hooks</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">flake8</span>
+<span class="w">        </span><span class="nt">args</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">--max-line-length=88</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">--extend-ignore=E203</span><span class="p p-Indicator">]</span>
+
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">repo</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/pre-commit/mirrors-mypy</span>
+<span class="w">    </span><span class="nt">rev</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.3.0</span>
+<span class="w">    </span><span class="nt">hooks</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mypy</span>
+<span class="w">        </span><span class="nt">additional_dependencies</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">types-all</span><span class="p p-Indicator">]</span>
+</code></pre>
+<h3 id="docstring-format">Docstring Format</h3>
+<p>We use NumPy style docstrings:</p>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">sub_look_decomposition</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">n_sublooks</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="n">overlap</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">window_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;hann&quot;</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Perform sub-look decomposition of SAR data.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : np.ndarray</span>
+<span class="sd">        Input SAR data array with shape (height, width).</span>
+<span class="sd">    n_sublooks : int, optional</span>
+<span class="sd">        Number of sub-looks to generate, by default 8.</span>
+<span class="sd">    overlap : float, optional</span>
+<span class="sd">        Overlap between sub-looks as fraction, by default 0.5.</span>
+<span class="sd">    window_type : str, optional</span>
+<span class="sd">        Window function type, by default &quot;hann&quot;.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tuple[np.ndarray, np.ndarray]</span>
+<span class="sd">        Sub-look data and coherence maps.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If n_sublooks is less than 2.</span>
+<span class="sd">    TypeError</span>
+<span class="sd">        If data is not a numpy array.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; data = np.random.complex128((1000, 1000))</span>
+<span class="sd">    &gt;&gt;&gt; sublooks, coherence = sub_look_decomposition(data, n_sublooks=4)</span>
+<span class="sd">    &gt;&gt;&gt; print(sublooks.shape)</span>
+<span class="sd">    (4, 1000, 1000)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+</code></pre>
+<h2 id="testing">Testing</h2>
+<h3 id="test-structure">Test Structure</h3>
+<pre><code>tests/
+├── conftest.py          # pytest configuration and fixtures
+├── test_sla/           # Sub-look analysis tests
+│   ├── test_decomposition.py
+│   └── test_coherence.py
+├── test_snap/          # SNAP integration tests
+│   ├── test_workflows.py
+│   └── test_operators.py
+├── test_science/       # Science modules tests
+│   ├── test_indices.py
+│   └── test_polarimetry.py
+└── test_utils/         # Utilities tests
+    ├── test_io.py
+    └── test_visualization.py
+</code></pre>
+<h3 id="writing-tests">Writing Tests</h3>
+<p>Use pytest for all tests:</p>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.sla</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubLookAnalyzer</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">TestSubLookAnalyzer</span><span class="p">:</span>
+    <span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create sample SAR data for testing.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">complex128</span><span class="p">((</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_decomposition_basic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_data</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Test basic sub-look decomposition.&quot;&quot;&quot;</span>
+        <span class="n">analyzer</span> <span class="o">=</span> <span class="n">SubLookAnalyzer</span><span class="p">(</span><span class="n">n_sublooks</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">decompose</span><span class="p">(</span><span class="n">sample_data</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">sublooks</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span>
+        <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">coherence</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">sample_data</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">&quot;n_sublooks&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">16</span><span class="p">])</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_decomposition_different_sublooks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_data</span><span class="p">,</span> <span class="n">n_sublooks</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Test decomposition with different numbers of sub-looks.&quot;&quot;&quot;</span>
+        <span class="n">analyzer</span> <span class="o">=</span> <span class="n">SubLookAnalyzer</span><span class="p">(</span><span class="n">n_sublooks</span><span class="o">=</span><span class="n">n_sublooks</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">decompose</span><span class="p">(</span><span class="n">sample_data</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">sublooks</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">n_sublooks</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_invalid_input</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Test handling of invalid inputs.&quot;&quot;&quot;</span>
+        <span class="n">analyzer</span> <span class="o">=</span> <span class="n">SubLookAnalyzer</span><span class="p">(</span><span class="n">n_sublooks</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">):</span>
+            <span class="n">analyzer</span><span class="o">.</span><span class="n">decompose</span><span class="p">(</span><span class="s2">&quot;not_an_array&quot;</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+            <span class="n">SubLookAnalyzer</span><span class="p">(</span><span class="n">n_sublooks</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre>
+<h3 id="running-tests">Running Tests</h3>
+<pre class="codehilite"><code><span class="c1"># Run all tests</span>
+pytest
+
+<span class="c1"># Run specific test file</span>
+pytest<span class="w"> </span>tests/test_sla/test_decomposition.py
+
+<span class="c1"># Run with coverage</span>
+pytest<span class="w"> </span>--cov<span class="o">=</span>sarpyx<span class="w"> </span>--cov-report<span class="o">=</span>html
+
+<span class="c1"># Run with verbose output</span>
+pytest<span class="w"> </span>-v
+
+<span class="c1"># Run tests for specific module</span>
+pytest<span class="w"> </span>tests/test_sla/
+</code></pre>
+<h2 id="documentation">Documentation</h2>
+<h3 id="building-documentation">Building Documentation</h3>
+<p>We use Sphinx for documentation generation:</p>
+<pre class="codehilite"><code><span class="c1"># Install documentation dependencies</span>
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[docs]&quot;</span>
+
+<span class="c1"># Build documentation</span>
+<span class="nb">cd</span><span class="w"> </span>docs
+make<span class="w"> </span>html
+
+<span class="c1"># Serve documentation locally</span>
+python<span class="w"> </span>-m<span class="w"> </span>http.server<span class="w"> </span><span class="m">8000</span><span class="w"> </span>-d<span class="w"> </span>_build/html
+</code></pre>
+<h3 id="documentation-guidelines">Documentation Guidelines</h3>
+<ol>
+<li><strong>Update docstrings</strong> for any new or modified functions</li>
+<li><strong>Add examples</strong> to the examples directory</li>
+<li><strong>Update tutorials</strong> if adding new features</li>
+<li><strong>Update API documentation</strong> for new modules</li>
+<li><strong>Test documentation examples</strong> to ensure they work</li>
+</ol>
+<h3 id="adding-examples">Adding Examples</h3>
+<p>When adding examples:</p>
+<ol>
+<li>Place in appropriate directory (<code>basic/</code>, <code>intermediate/</code>, <code>advanced/</code>)</li>
+<li>Include comprehensive docstrings</li>
+<li>Add error handling</li>
+<li>Include visualization when relevant</li>
+<li>Update the examples README</li>
+</ol>
+<h2 id="module-development">Module Development</h2>
+<h3 id="adding-new-modules">Adding New Modules</h3>
+<ol>
+<li><strong>Create module directory</strong> under <code>sarpyx/</code></li>
+<li><strong>Add <code>__init__.py</code></strong> with public API</li>
+<li><strong>Create implementation files</strong></li>
+<li><strong>Add comprehensive tests</strong></li>
+<li><strong>Update main <code>__init__.py</code></strong></li>
+<li><strong>Add documentation</strong></li>
+</ol>
+<p>Example structure for new module:</p>
+<pre><code>sarpyx/
+└── new_module/
+    ├── __init__.py
+    ├── core.py
+    ├── algorithms.py
+    └── utils.py
+</code></pre>
+<h3 id="api-design-guidelines">API Design Guidelines</h3>
+<ol>
+<li><strong>Consistent naming</strong>: Use descriptive, consistent function names</li>
+<li><strong>Type hints</strong>: Always include type hints</li>
+<li><strong>Default parameters</strong>: Provide sensible defaults</li>
+<li><strong>Error handling</strong>: Include proper error messages</li>
+<li><strong>Documentation</strong>: Comprehensive docstrings with examples</li>
+</ol>
+<h2 id="performance-guidelines">Performance Guidelines</h2>
+<h3 id="memory-management">Memory Management</h3>
+<pre class="codehilite"><code><span class="c1"># Good: Use memory-efficient operations</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_large_data</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="c1"># Process in chunks to avoid memory issues</span>
+    <span class="n">chunk_size</span> <span class="o">=</span> <span class="mi">1000</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">chunk_size</span><span class="p">):</span>
+        <span class="n">end_idx</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="n">chunk_size</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">chunk</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">end_idx</span><span class="p">]</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">end_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">process_chunk</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span>
+
+<span class="c1"># Bad: Load everything into memory</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_large_data_bad</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="c1"># Creates unnecessary copies</span>
+    <span class="n">temp1</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">temp2</span> <span class="o">=</span> <span class="n">temp1</span> <span class="o">*</span> <span class="mi">2</span>
+    <span class="n">temp3</span> <span class="o">=</span> <span class="n">temp2</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">temp3</span>
+</code></pre>
+<h3 id="numba-optimization">Numba Optimization</h3>
+<p>Use Numba for performance-critical functions:</p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">numba</span><span class="w"> </span><span class="kn">import</span> <span class="n">jit</span><span class="p">,</span> <span class="n">prange</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="nd">@jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">fast_coherence_calculation</span><span class="p">(</span>
+    <span class="n">data1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> 
+    <span class="n">data2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">window_size</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fast coherence calculation using Numba.&quot;&quot;&quot;</span>
+    <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">data1</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">coherence</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">prange</span><span class="p">(</span><span class="n">window_size</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">height</span> <span class="o">-</span> <span class="n">window_size</span><span class="o">//</span><span class="mi">2</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">window_size</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">width</span> <span class="o">-</span> <span class="n">window_size</span><span class="o">//</span><span class="mi">2</span><span class="p">):</span>
+            <span class="c1"># Calculate coherence for window</span>
+            <span class="n">window1</span> <span class="o">=</span> <span class="n">data1</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="n">window_size</span><span class="o">//</span><span class="mi">2</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">window_size</span><span class="o">//</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span>
+                           <span class="n">j</span><span class="o">-</span><span class="n">window_size</span><span class="o">//</span><span class="mi">2</span><span class="p">:</span><span class="n">j</span><span class="o">+</span><span class="n">window_size</span><span class="o">//</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">window2</span> <span class="o">=</span> <span class="n">data2</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="n">window_size</span><span class="o">//</span><span class="mi">2</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">window_size</span><span class="o">//</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span>
+                           <span class="n">j</span><span class="o">-</span><span class="n">window_size</span><span class="o">//</span><span class="mi">2</span><span class="p">:</span><span class="n">j</span><span class="o">+</span><span class="n">window_size</span><span class="o">//</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="n">coherence</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">calculate_window_coherence</span><span class="p">(</span><span class="n">window1</span><span class="p">,</span> <span class="n">window2</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">coherence</span>
+</code></pre>
+<h2 id="release-process">Release Process</h2>
+<h3 id="version-management">Version Management</h3>
+<p>We use semantic versioning (MAJOR.MINOR.PATCH):</p>
+<ul>
+<li><strong>MAJOR</strong>: Incompatible API changes</li>
+<li><strong>MINOR</strong>: New functionality (backward compatible)</li>
+<li><strong>PATCH</strong>: Bug fixes (backward compatible)</li>
+</ul>
+<h3 id="creating-a-release">Creating a Release</h3>
+<ol>
+<li><strong>Update version</strong> in <code>pyproject.toml</code></li>
+<li><strong>Update CHANGELOG.md</strong></li>
+<li><strong>Create release branch</strong></li>
+<li><strong>Run full test suite</strong></li>
+<li><strong>Build documentation</strong></li>
+<li><strong>Create GitHub release</strong></li>
+<li><strong>Upload to PyPI</strong></li>
+</ol>
+<pre class="codehilite"><code><span class="c1"># Build package</span>
+python<span class="w"> </span>-m<span class="w"> </span>build
+
+<span class="c1"># Upload to PyPI (test first)</span>
+python<span class="w"> </span>-m<span class="w"> </span>twine<span class="w"> </span>upload<span class="w"> </span>--repository<span class="w"> </span>testpypi<span class="w"> </span>dist/*
+python<span class="w"> </span>-m<span class="w"> </span>twine<span class="w"> </span>upload<span class="w"> </span>dist/*
+</code></pre>
+<h2 id="getting-help">Getting Help</h2>
+<ul>
+<li><strong>Issues</strong>: Report bugs and request features on GitHub Issues</li>
+<li><strong>Discussions</strong>: Join GitHub Discussions for questions</li>
+<li><strong>Email</strong>: Contact maintainers at roberto.delprete@esa.int</li>
+<li><strong>Documentation</strong>: Check the full documentation at <a href="../index.html">docs</a></li>
+</ul>
+<h2 id="code-of-conduct">Code of Conduct</h2>
+<p>Please read and follow our <a href="code_of_conduct.html">Code of Conduct</a> to ensure a welcoming environment for all contributors.</p>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>
