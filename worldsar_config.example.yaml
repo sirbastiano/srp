@@ -1,0 +1,44 @@
+# WorldSAR Configuration File Example
+# This file demonstrates all available configuration options for the worldsar CLI
+# You can use this file with: sarpyx worldsar --config worldsar_config.yaml
+
+# ===== ESSENTIAL CONFIGURATION =====
+# Required: Input product and processing mode
+input: "/path/to/your/product.SAFE"
+mode: "S1TOPS"  # Options: S1TOPS, S1STRIP, BM, NISAR, TSX, CSG
+wkt: "POLYGON((lon1 lat1, lon2 lat2, lon3 lat3, lon4 lat4, lon1 lat1))"
+
+# ===== OUTPUT CONFIGURATION =====
+# Where to store processed data
+output: "./worldsar_output"
+tiles: "./worldsar_tiles"
+create_database: false
+# db_dir: "/path/to/database"  # Optional: Override DB_DIR env var
+
+# ===== PROCESSING OPTIONS =====
+# Control what processing steps to run
+skip_preprocessing: false  # Set to true to skip preprocessing
+skip_tiling: false         # Set to true to skip tiling
+use_graph: false           # Use GPT graph XML pipeline (faster for batch)
+
+# ===== SNAP/GPT CONFIGURATION =====
+# Configure the SNAP processing engine
+# gpt_path: "/path/to/gpt"       # Optional: Override GPT path
+gpt_memory: "16G"                # Java heap size for GPT
+gpt_parallelism: 4               # Number of parallel tiles
+# snap_userdir: "/path/to/.snap" # Optional: Override SNAP user directory
+
+# ===== GRID CONFIGURATION =====
+# Configure the tiling grid system
+# grid_path: "/path/to/grid.geojson"  # Optional: Override grid path
+
+# ===== ORBIT CONFIGURATION (Sentinel-1 only) =====
+# Configure orbit file handling
+orbit_type: "Sentinel Precise (Auto Download)"
+orbit_continue_on_fail: false
+prefetch_orbits: false    # Set to true to prefetch orbit files
+# orbit_years: "2024"     # Required if prefetch_orbits is true
+# orbit_satellites: "S1A,S1B,S1C"
+# orbit_download_type: "POEORB"  # POEORB or RESORB
+# orbit_base_url: "https://step.esa.int/auxdata/orbits/Sentinel-1"
+# orbit_outdir: "/path/to/orbits"
