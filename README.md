@@ -2,12 +2,7 @@
 
 <img src="src/sarpyx_logo.png" width="1400px" alt="sarpyx">
 
-_sarpyx — professional-grade SAR processing, built for researchers and production._
-
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-black.svg)](https://www.apache.org/licenses/LICENSE-2.0)
-![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-1f425f.svg)
-![GitHub stars](https://img.shields.io/github/stars/sirbastiano/srp.svg)
-![GitHub issues](https://img.shields.io/github/issues/sirbastiano/srp.svg)
+<br />
 
 <a href="docs/user_manual.md">
   <img alt="User Manual" src="https://img.shields.io/badge/Read-User%20Manual-111827?style=for-the-badge" />
