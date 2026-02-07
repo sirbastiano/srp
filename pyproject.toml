@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sarpyx"
-version = "0.1.6"
+version = "0.1.5"
 description = "A swissknife for SAR processing."
 authors = [
     { name = "Roberto Del Prete", email = "roberto.delprete@esa.int" }
@@ -21,7 +21,6 @@ dependencies = [
     "h5py",
     "numba",
     "jupyter",
-    "phidown>=0.1.24",
     "rasterio>=1.4.3",
     "zarr>=3.0.0",
     "joblib>=1.5.1",
@@ -45,6 +44,14 @@ dependencies = [
     "dotenv>=0.9.9",
     "pyarrow>=23.0.0",
     "fastparquet>=2025.12.0"
+]
+
+[project.optional-dependencies]
+sar-decode = [
+    "s1isp @ git+https://github.com/avalentino/s1isp.git@26d850f9fb6a343bb1475fa162ba88f944d5b52d"
+]
+copernicus = [
+    "phidown>=0.1.24"
 ]
 
 [project.scripts]

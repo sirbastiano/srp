@@ -6,10 +6,12 @@ package:
   version: {{ version }}
 
 source:
+  # TODO: replace with release tarball URL + sha256 for conda-forge.
   path: ..
 
 build:
   noarch: python
+  number: 0
   script: "{{ PYTHON }} -m pip install . -vv --no-deps"
 
 requirements:
@@ -29,7 +31,6 @@ requirements:
     - h5py
     - numba
     - jupyter
-    - phidown >=0.1.24
     - rasterio >=1.4.3
     - zarr >=3.0.0
     - joblib >=1.5.1
@@ -62,7 +63,11 @@ test:
 
 about:
   summary: A swissknife for SAR processing.
-  home: https://github.com/sirbastiano/sarpyx
+  home: https://github.com/sirbastiano/srp
   license: Apache-2.0
   license_family: Apache
   license_file: LICENSE
+
+extra:
+  recipe-maintainers:
+    - sirbastiano

@@ -5,7 +5,7 @@ data processing, including sub-look analysis, visualization, and integration
 with processing frameworks.
 """
 
-__version__ = '0.1.6'
+__version__ = '0.1.5'
 __author__ = 'ESA Phi-Lab'
 
 __all__ = [
