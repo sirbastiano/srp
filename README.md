@@ -1,71 +1,76 @@
+<div align="center">
+
+<img src="src/sarpyx_logo.png" width="1400px" alt="sarpyx">
+
+_sarpyx — professional-grade SAR processing, built for researchers and production._
+
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-black.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-1f425f.svg)
 ![GitHub stars](https://img.shields.io/github/stars/sirbastiano/srp.svg)
-![GitHub forks](https://img.shields.io/github/forks/sirbastiano/srp.svg)
 ![GitHub issues](https://img.shields.io/github/issues/sirbastiano/srp.svg)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/sirbastiano/srp.svg)
-![GitHub last commit](https://img.shields.io/github/last-commit/sirbastiano/srp.svg)
-![GitHub code size](https://img.shields.io/github/languages/code-size/sirbastiano/srp.svg)
-![GitHub top language](https://img.shields.io/github/languages/top/sirbastiano/srp.svg)
-![GitHub repo size](https://img.shields.io/github/repo-size/sirbastiano/srp.svg)
-![GitHub contributors](https://img.shields.io/github/contributors/sirbastiano/srp.svg)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://makeapullrequest.com)
 
+<a href="docs/user_manual.md">
+  <img alt="User Manual" src="https://img.shields.io/badge/Read-User%20Manual-111827?style=for-the-badge" />
+</a>
+<a href="docs/user_manual.md#quick-start">
+  <img alt="Quick Start" src="https://img.shields.io/badge/Start-Quick%20Start-0f766e?style=for-the-badge" />
+</a>
+<a href="LICENSE">
+  <img alt="License" src="https://img.shields.io/badge/License-Apache--2.0-374151?style=for-the-badge" />
+</a>
+</div>
 
+##
 
-<p align="center">
-    <img src="src/sarpyx_logo.png" alt="sarpyx logo" width="1200"/>
-</p>
+**sarpyx** is a specialized Python toolkit for **Synthetic Aperture Radar (SAR)** processing with tight integration to ESA **SNAP**. It focuses on reproducible pipelines, fast tiling workflows, and advanced research features like **sub-aperture decomposition**.
 
+## Highlights
 
-**sarpyx** is a specialized Python package for advanced Synthetic Aperture Radar (SAR) data processing, **sub-aperture decomposition** and full integration with ESA's **SNAP (Sentinel Application Platform)** engine. It is tailored for researchers and developers.
+- SNAP GPT integration with configurable graphs and operator chaining.
+- Sub-aperture decomposition for squint-angle diversity and motion sensitivity.
+- Parallel tiling and batch processing for large product volumes.
+- Geocoded outputs ready for GIS and downstream ML.
+- Extensible architecture compatible with `rasterio`, `geopandas`, and `pyproj`.
 
-## Key Features
+## Install
 
-- 🛰️ **Sub-Aperture Decomposition**  
-  Perform azimuthal sub-band partitioning for enhanced resolution, motion sensitivity, and squint-angle diversity exploitation.
+<details open>
+<summary><strong>Using uv (recommended)</strong></summary>
 
-- ⚙️ **SNAP Engine Integration**  
-  Interface directly with the SNAP Graph Processing Tool (GPT) to automate calibration, coregistration, interferometry, and other Level-1/2 workflows.
+```bash
+uv sync --extra copernicus
+```
 
-- 🗂️ **Modular Processing Pipeline**  
-  Chain together preprocessing, sub-aperture slicing, interferogram generation, and differential phase analysis with customizable steps.
+For development installation with extras:
 
-- 📦 **Data Compatibility**  
-  - Native support for Sentinel-1 SLC (SAFE format)
-  - Efficient in-memory SAR matrix manipulation via `xarray` and `numpy`
-  - Output geocoded products for GIS integration
+```bash
+uv sync --extra copernicus --extra dev --extra test --extra docs
+```
+</details>
 
-- 🔌 **Extensible Architecture**  
-  Designed for interoperability with geospatial libraries like `rasterio`, `geopandas`, and `pyproj`.
+<details>
+<summary><strong>Using pip (editable)</strong></summary>
 
-## Installation
+```bash
+python -m pip install -e .
+```
+</details>
 
-### Using PDM (recommended)
+## Quick start
 
-1. Make sure you have [PDM](https://pdm.fming.dev/latest/#installation) installed:
-   ```bash
-   pip install pdm
-   ```
+```bash
+sarpyx worldsar -i /path/to/S1A_*.SAFE \
+  -o /path/to/output \
+  --cuts-outdir /path/to/tiles
+```
 
-2. Clone the repository:
-   ```bash
-   git clone https://github.com/sirbastiano/sarpyx.git
-   cd sarpyx
-   ```
+## Docs
 
-3. Install with PDM:
-   ```bash
-   pdm install
-   ```
+See `docs/user_manual.md` for full CLI usage and end-to-end workflows.
 
-4. For development installation with extras:
-   ```bash
-   pdm install -G dev -G test -G docs
-   ```
+##
+<div align="center">
 
-### Using pip
+**With Love By:** Roberto Del Prete
 
-Coming soon: pip install sarpyx
-
----
+</div>

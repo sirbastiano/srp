@@ -287,6 +287,21 @@ class GPT:
         except subprocess.TimeoutExpired:
             print('Error: GPT command timed out after 1 hour')
             return False
+        except subprocess.CalledProcessError as e:
+            print(f'Error executing GPT command: {cmd_str}')
+            print(f'Return code: {e.returncode}')
+            if e.stdout:
+                print(f'Stdout: {e.stdout}')
+            if e.stderr:
+                print(f'Stderr: {e.stderr}')
+            return False
+        except FileNotFoundError:
+            print(f"Error: GPT executable '{self.gpt_executable}' not found!")
+            print('Ensure SNAP is installed and configured correctly.')
+            return False
+        except Exception as e:
+            print(f'Unexpected error during GPT execution: {type(e).__name__}: {e}')
+            return False
 
     def _get_operator_label(self) -> str:
         """Infer a readable operator label from the current command."""
@@ -312,24 +327,6 @@ class GPT:
         print(banner)
         print(f'OPERATOR: {operator_label}')
         print(banner)
-            
-        except subprocess.CalledProcessError as e:
-            print(f'Error executing GPT command: {cmd_str}')
-            print(f'Return code: {e.returncode}')
-            if e.stdout:
-                print(f'Stdout: {e.stdout}')
-            if e.stderr:
-                print(f'Stderr: {e.stderr}')
-            return False
-            
-        except FileNotFoundError:
-            print(f"Error: GPT executable '{self.gpt_executable}' not found!")
-            print('Ensure SNAP is installed and configured correctly.')
-            return False
-            
-        except Exception as e:
-            print(f'Unexpected error during GPT execution: {type(e).__name__}: {e}')
-            return False
 
     def _call(self, suffix: str, output_name: Optional[str] = None) -> Optional[str]:
         """Finalize and execute the GPT command.
