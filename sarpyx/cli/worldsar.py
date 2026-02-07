@@ -72,13 +72,13 @@ Supported modes: S1TOPS, S1STRIP, BM (BIOMASS), NISAR, TSX (TerraSAR-X), CSG (CO
     )
     
     # ===== ESSENTIAL ARGUMENTS =====
-    essential = parser.add_argument_group('Essential Arguments', 'Core arguments required for processing')
+    essential = parser.add_argument_group('Essential Arguments', 'Core arguments required for processing (can be provided via --config)')
     essential.add_argument(
         '--input',
         '-i',
         dest='product_path',
         type=str,
-        required=True,
+        required=False,  # Can be provided via config file
         help='Path to the input SAR product (e.g., S1A_*.SAFE, *.h5)'
     )
     essential.add_argument(
@@ -86,7 +86,7 @@ Supported modes: S1TOPS, S1STRIP, BM (BIOMASS), NISAR, TSX (TerraSAR-X), CSG (CO
         '-m',
         dest='prod_mode',
         type=str,
-        required=True,
+        required=False,  # Can be provided via config file
         choices=['S1TOPS', 'S1STRIP', 'BM', 'NISAR', 'TSX', 'CSG'],
         help='Processing mode based on satellite/product type'
     )
@@ -95,7 +95,7 @@ Supported modes: S1TOPS, S1STRIP, BM (BIOMASS), NISAR, TSX (TerraSAR-X), CSG (CO
         '-w',
         dest='product_wkt',
         type=str,
-        required=True,
+        required=False,  # Can be provided via config file
         help='WKT string defining the region of interest (e.g., "POLYGON((lon lat, ...))")'
     )
     
@@ -329,11 +329,20 @@ def merge_config_with_args(args: argparse.Namespace) -> argparse.Namespace:
         }
         
         # Apply config values only if not provided via command line
+        # We use parser defaults to determine if a value was user-provided
+        parser_defaults = {
+            'output_dir': './worldsar_output',
+            'cuts_outdir': './worldsar_tiles',
+            'orbit_type': 'Sentinel Precise (Auto Download)',
+            'orbit_satellites': 'S1A,S1B,S1C',
+            'orbit_download_type': 'POEORB',
+        }
+        
         for config_key, arg_name in config_mapping.items():
             if config_key in config:
-                # Only set from config if argument is at default value or None
                 current_val = getattr(args, arg_name, None)
-                if current_val is None or (isinstance(current_val, bool) and not current_val):
+                # Only set from config if argument is None or at its default value
+                if current_val is None or current_val == parser_defaults.get(arg_name):
                     setattr(args, arg_name, config[config_key])
     
     return args
@@ -867,7 +876,7 @@ def main():
     # Set processing flags
     prepro = not args.skip_prepro
     tiling = not args.skip_tiling
-    db_indexing = args.create_database if hasattr(args, 'create_database') else False
+    db_indexing = args.create_database
 
     # Extract arguments
     product_path = Path(args.product_path)
@@ -964,25 +973,29 @@ def main():
             raise ValueError(f"Could not extract product id from: {product_path}")
         
         for idx, rect in enumerate(rectangles, 1):
-            print(f"  Processing tile {idx}/{len(rectangles)}: {rect['BL']['properties']['name']}", end='')
-            geo_region = rectangle_to_wkt(rect)
-            if product_mode != 'NISAR':
-                final_product = subset(
-                    product_path,
-                    cuts_outdir / name,
-                    output_name=rect['BL']['properties']['name'],
-                    geo_region=geo_region,
-                    gpt_memory=gpt_memory,
-                    gpt_parallelism=gpt_parallelism,
-                )
-                print(f" ✓")
-            else:
-                reader = NISARReader(product_path.as_posix())
-                cutter = NISARCutter(reader)
-                subset_data = cutter.cut_by_wkt(geo_region, "HH", apply_mask=False)
-                nisar_tile_path = cuts_outdir / name / f"{rect['BL']['properties']['name']}.tiff"
-                cutter.save_subset(subset_data, nisar_tile_path)
-                print(f" ✓")
+            tile_name = rect['BL']['properties']['name']
+            print(f"  Processing tile {idx}/{len(rectangles)}: {tile_name}", end='', flush=True)
+            try:
+                geo_region = rectangle_to_wkt(rect)
+                if product_mode != 'NISAR':
+                    final_product = subset(
+                        product_path,
+                        cuts_outdir / name,
+                        output_name=tile_name,
+                        geo_region=geo_region,
+                        gpt_memory=gpt_memory,
+                        gpt_parallelism=gpt_parallelism,
+                    )
+                else:
+                    reader = NISARReader(product_path.as_posix())
+                    cutter = NISARCutter(reader)
+                    subset_data = cutter.cut_by_wkt(geo_region, "HH", apply_mask=False)
+                    nisar_tile_path = cuts_outdir / name / f"{tile_name}.tiff"
+                    cutter.save_subset(subset_data, nisar_tile_path)
+                print(" ✓")
+            except Exception as e:
+                print(f" ✗ Error: {e}")
+                raise
                 
         total_tiles = len(rectangles)
         num_cuts = list(Path(cuts_outdir / name).rglob('*.h5'))

@@ -367,7 +367,7 @@ def _add_worldsar_arguments(parser: argparse.ArgumentParser) -> None:
         '-i',
         dest='product_path',
         type=str,
-        required=True,
+        required=False,
         help='Path to the input SAR product (e.g., S1A_*.SAFE, *.h5)'
     )
     parser.add_argument(
@@ -375,7 +375,7 @@ def _add_worldsar_arguments(parser: argparse.ArgumentParser) -> None:
         '-m',
         dest='prod_mode',
         type=str,
-        required=True,
+        required=False,
         choices=['S1TOPS', 'S1STRIP', 'BM', 'NISAR', 'TSX', 'CSG'],
         help='Processing mode based on satellite/product type'
     )
@@ -384,7 +384,7 @@ def _add_worldsar_arguments(parser: argparse.ArgumentParser) -> None:
         '-w',
         dest='product_wkt',
         type=str,
-        required=True,
+        required=False,
         help='WKT string defining the region of interest'
     )
     
