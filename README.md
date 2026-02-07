@@ -69,3 +69,31 @@
 Coming soon: pip install sarpyx
 
 ---
+
+## Quick Start
+
+### WorldSAR CLI - Simplified!
+
+Process SAR data from multiple missions with just 3 required arguments:
+
+```bash
+# Basic usage - only 3 arguments needed!
+sarpyx worldsar --input product.SAFE --mode S1TOPS --wkt "POLYGON(...)"
+
+# Custom output directories
+sarpyx worldsar -i product.SAFE -m S1TOPS -w "POLYGON(...)" \
+                -o ./processed -t ./tiles
+
+# High-performance processing
+sarpyx worldsar -i product.SAFE -m S1TOPS -w "POLYGON(...)" \
+                --gpt-memory 24G --gpt-parallelism 8
+
+# Use configuration file for complex setups
+sarpyx worldsar --config my_config.yaml
+```
+
+**Supported modes:** `S1TOPS`, `S1STRIP`, `BM` (BIOMASS), `NISAR`, `TSX` (TerraSAR-X), `CSG` (COSMO-SkyMed)
+
+For complete documentation, see [WorldSAR User Guide](docs/WORLDSAR_GUIDE.md) or [Quick Reference](docs/WORLDSAR_QUICKREF.md).
+
+---
