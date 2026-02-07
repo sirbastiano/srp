@@ -20,6 +20,7 @@ from urllib import request
 import pandas as pd
 from functools import partial
 import argparse
+import yaml
 
 from sarpyx.snapflow.engine import GPT
 from sarpyx.utils.geos import check_points_in_polygon, rectangle_to_wkt, rectanglify
@@ -47,150 +48,220 @@ def create_parser() -> argparse.ArgumentParser:
     Returns:
         argparse.ArgumentParser: Parser for worldsar command.
     """
-    parser = argparse.ArgumentParser(description='Process SAR data using SNAP GPT and sarpyx pipelines.')
-    parser.add_argument(
+    parser = argparse.ArgumentParser(
+        description='Process SAR data using SNAP GPT and sarpyx pipelines.',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Simple processing with minimal arguments (recommended for beginners)
+  worldsar --input product.SAFE --mode S1TOPS --wkt "POLYGON(...)"
+  
+  # Specify custom output directories
+  worldsar --input product.SAFE --mode S1TOPS --wkt "POLYGON(...)" \\
+           --output ./processed --tiles ./tiles
+  
+  # Use a configuration file for complex setups
+  worldsar --config worldsar_config.yaml
+  
+  # Advanced: Custom GPT settings and orbit prefetch
+  worldsar --input product.SAFE --mode S1TOPS --wkt "POLYGON(...)" \\
+           --gpt-memory 24G --gpt-parallelism 4 --prefetch-orbits
+
+Supported modes: S1TOPS, S1STRIP, BM (BIOMASS), NISAR, TSX (TerraSAR-X), CSG (COSMO-SkyMed)
+"""
+    )
+    
+    # ===== ESSENTIAL ARGUMENTS =====
+    essential = parser.add_argument_group('Essential Arguments', 'Core arguments required for processing')
+    essential.add_argument(
         '--input',
         '-i',
         dest='product_path',
         type=str,
         required=True,
-        help='Path to the input SAR product.'
+        help='Path to the input SAR product (e.g., S1A_*.SAFE, *.h5)'
     )
-    parser.add_argument(
+    essential.add_argument(
+        '--mode',
+        '-m',
+        dest='prod_mode',
+        type=str,
+        required=True,
+        choices=['S1TOPS', 'S1STRIP', 'BM', 'NISAR', 'TSX', 'CSG'],
+        help='Processing mode based on satellite/product type'
+    )
+    essential.add_argument(
+        '--wkt',
+        '-w',
+        dest='product_wkt',
+        type=str,
+        required=True,
+        help='WKT string defining the region of interest (e.g., "POLYGON((lon lat, ...))")'
+    )
+    
+    # ===== OUTPUT CONFIGURATION =====
+    output_group = parser.add_argument_group('Output Configuration', 'Control where processed data is saved')
+    output_group.add_argument(
         '--output',
         '-o',
         dest='output_dir',
         type=str,
-        required=True,
-        help='Directory to save the processed output.'
+        default='./worldsar_output',
+        help='Directory for intermediate processing outputs (default: ./worldsar_output)'
     )
-    parser.add_argument(
-        '--cuts-outdir',
-        '--cuts_outdir',
+    output_group.add_argument(
+        '--tiles',
+        '-t',
         dest='cuts_outdir',
         type=str,
-        required=True,
-        help='Where to store the tiles after extraction.'
+        default='./worldsar_tiles',
+        help='Directory for extracted tiles (default: ./worldsar_tiles)'
     )
-    parser.add_argument(
-        '--product-wkt',
-        '--product_wkt',
-        dest='product_wkt',
-        type=str,
-        required=True,
-        help='WKT string defining the product region of interest.'
+    output_group.add_argument(
+        '--create-db',
+        dest='create_database',
+        action='store_true',
+        help='Create a metadata database from tiles (default: disabled)'
     )
-    parser.add_argument(
-        '--prod-mode',
-        '--prod_mode',
-        dest='prod_mode',
-        type=str,
-        required=True,
-        help='Product mode: ["S1TOPS", "S1STRIP", "BM", "NISAR", "TSX", "CSG", "ICE"].'
-    )
-    parser.add_argument(
-        '--gpt-path',
-        dest='gpt_path',
-        type=str,
-        default=None,
-        help='Override GPT executable path (default: gpt_path env var).'
-    )
-    parser.add_argument(
-        '--grid-path',
-        dest='grid_path',
-        type=str,
-        default=None,
-        help='Override grid GeoJSON path (default: grid_path env var).'
-    )
-    parser.add_argument(
+    output_group.add_argument(
         '--db-dir',
         dest='db_dir',
         type=str,
         default=None,
-        help='Override database output directory (default: db_dir env var).'
+        help='Database output directory (default: from DB_DIR env var)'
     )
-    parser.add_argument(
+    
+    # ===== PROCESSING OPTIONS =====
+    processing = parser.add_argument_group('Processing Options', 'Control processing behavior')
+    processing.add_argument(
+        '--skip-preprocessing',
+        dest='skip_prepro',
+        action='store_true',
+        help='Skip preprocessing step (use if product is already preprocessed)'
+    )
+    processing.add_argument(
+        '--skip-tiling',
+        dest='skip_tiling',
+        action='store_true',
+        help='Skip tiling step (only preprocess the product)'
+    )
+    processing.add_argument(
+        '--use-graph',
+        dest='use_graph',
+        action='store_true',
+        help='Use GPT graph XML pipeline (faster for batch processing)'
+    )
+    
+    # ===== SNAP/GPT CONFIGURATION =====
+    snap_group = parser.add_argument_group('SNAP/GPT Configuration', 'Configure SNAP processing engine')
+    snap_group.add_argument(
+        '--gpt-path',
+        dest='gpt_path',
+        type=str,
+        default=None,
+        help='Path to GPT executable (default: from gpt_path env var or system PATH)'
+    )
+    snap_group.add_argument(
         '--gpt-memory',
         dest='gpt_memory',
         type=str,
         default=None,
-        help='Override GPT Java heap (e.g., 24G).'
+        help='GPT Java heap size (e.g., "8G", "24G") (default: SNAP defaults)'
     )
-    parser.add_argument(
+    snap_group.add_argument(
         '--gpt-parallelism',
         dest='gpt_parallelism',
         type=int,
         default=None,
-        help='Override GPT parallelism (number of tiles).'
+        help='Number of parallel tiles to process (default: auto)'
     )
-    parser.add_argument(
+    snap_group.add_argument(
         '--snap-userdir',
         dest='snap_userdir',
         type=str,
         default=None,
-        help='Override SNAP user directory (default: SNAP_USERDIR env or project .snap).'
+        help='SNAP user directory (default: from SNAP_USERDIR env or .snap/)'
     )
-    parser.add_argument(
+    
+    # ===== GRID CONFIGURATION =====
+    grid_group = parser.add_argument_group('Grid Configuration', 'Configure tiling grid system')
+    grid_group.add_argument(
+        '--grid-path',
+        dest='grid_path',
+        type=str,
+        default=None,
+        help='Path to grid GeoJSON file (default: from grid_path env var)'
+    )
+    
+    # ===== ORBIT CONFIGURATION =====
+    orbit_group = parser.add_argument_group('Orbit Configuration', 'Configure orbit file handling (Sentinel-1 only)')
+    orbit_group.add_argument(
         '--orbit-type',
         dest='orbit_type',
         type=str,
         default='Sentinel Precise (Auto Download)',
-        help='SNAP Apply-Orbit-File orbitType string.'
+        help='Orbit file type for SNAP Apply-Orbit-File (default: Sentinel Precise Auto Download)'
     )
-    parser.add_argument(
+    orbit_group.add_argument(
         '--orbit-continue-on-fail',
         dest='orbit_continue_on_fail',
         action='store_true',
-        help='Continue processing if orbit file cannot be applied.'
+        help='Continue processing if orbit file cannot be applied'
     )
-    parser.add_argument(
-        '--orbit-download-type',
-        dest='orbit_download_type',
-        type=str,
-        default='POEORB',
-        choices=['POEORB', 'RESORB'],
-        help='Orbit type to prefetch (POEORB or RESORB).'
+    orbit_group.add_argument(
+        '--prefetch-orbits',
+        dest='prefetch_orbits',
+        action='store_true',
+        help='Prefetch orbit files before processing'
     )
-    parser.add_argument(
+    orbit_group.add_argument(
         '--orbit-years',
         dest='orbit_years',
         type=str,
         default=None,
-        help='Years to prefetch orbits for (e.g., "2024,2025" or "2020-2026").'
+        help='Years for orbit prefetch (e.g., "2024" or "2020-2026") (required if --prefetch-orbits)'
     )
-    parser.add_argument(
+    orbit_group.add_argument(
         '--orbit-satellites',
         dest='orbit_satellites',
         type=str,
         default='S1A,S1B,S1C',
-        help='Comma-separated satellites to prefetch (e.g., "S1A,S1C").'
+        help='Satellites for orbit prefetch, comma-separated (default: S1A,S1B,S1C)'
     )
-    parser.add_argument(
+    orbit_group.add_argument(
+        '--orbit-type-download',
+        dest='orbit_download_type',
+        type=str,
+        default='POEORB',
+        choices=['POEORB', 'RESORB'],
+        help='Orbit file type to download: POEORB (precise) or RESORB (restituted) (default: POEORB)'
+    )
+    orbit_group.add_argument(
         '--orbit-base-url',
         dest='orbit_base_url',
         type=str,
         default=None,
-        help='Base URL for orbit downloads (default: step.esa.int auxdata).'
+        help='Base URL for orbit downloads (default: https://step.esa.int/auxdata/orbits/Sentinel-1)'
     )
-    parser.add_argument(
+    orbit_group.add_argument(
         '--orbit-outdir',
         dest='orbit_outdir',
         type=str,
         default=None,
-        help='Override orbit storage directory (default: SNAP_USERDIR/auxdata/Orbits/Sentinel-1).'
+        help='Directory to store downloaded orbits (default: SNAP_USERDIR/auxdata/Orbits/Sentinel-1)'
     )
-    parser.add_argument(
-        '--prefetch-orbits',
-        dest='prefetch_orbits',
-        action='store_true',
-        help='Download orbit files in advance for selected years.'
+    
+    # ===== CONFIGURATION FILE =====
+    config_group = parser.add_argument_group('Configuration File', 'Use a YAML file for complex configurations')
+    config_group.add_argument(
+        '--config',
+        '-c',
+        dest='config_file',
+        type=str,
+        default=None,
+        help='Load settings from a YAML configuration file (overrides command-line args)'
     )
-    parser.add_argument(
-        '--use-graph',
-        dest='use_graph',
-        action='store_true',
-        help='Use unique GPT graph pipeline instead of op.OperatorCall steps.'
-    )
+    
     return parser
 
 
@@ -200,8 +271,75 @@ def create_parser() -> argparse.ArgumentParser:
 
 # ======================================================================================================================== SETTINGS
 """ Processing settings"""
-#TODO: to be removed in final.
 
+def load_config_file(config_path: str) -> dict:
+    """
+    Load configuration from YAML file.
+    
+    Args:
+        config_path: Path to YAML configuration file
+        
+    Returns:
+        Dictionary with configuration values
+    """
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+    return config or {}
+
+
+def merge_config_with_args(args: argparse.Namespace) -> argparse.Namespace:
+    """
+    Merge configuration file with command-line arguments.
+    Command-line arguments take precedence.
+    
+    Args:
+        args: Parsed command-line arguments
+        
+    Returns:
+        Updated arguments with config file values
+    """
+    if args.config_file:
+        config = load_config_file(args.config_file)
+        
+        # Map config keys to argument names
+        config_mapping = {
+            'input': 'product_path',
+            'output': 'output_dir',
+            'tiles': 'cuts_outdir',
+            'wkt': 'product_wkt',
+            'mode': 'prod_mode',
+            'grid_path': 'grid_path',
+            'db_dir': 'db_dir',
+            'create_database': 'create_database',
+            'skip_preprocessing': 'skip_prepro',
+            'skip_tiling': 'skip_tiling',
+            'use_graph': 'use_graph',
+            'gpt_path': 'gpt_path',
+            'gpt_memory': 'gpt_memory',
+            'gpt_parallelism': 'gpt_parallelism',
+            'snap_userdir': 'snap_userdir',
+            'orbit_type': 'orbit_type',
+            'orbit_continue_on_fail': 'orbit_continue_on_fail',
+            'prefetch_orbits': 'prefetch_orbits',
+            'orbit_years': 'orbit_years',
+            'orbit_satellites': 'orbit_satellites',
+            'orbit_download_type': 'orbit_download_type',
+            'orbit_base_url': 'orbit_base_url',
+            'orbit_outdir': 'orbit_outdir',
+        }
+        
+        # Apply config values only if not provided via command line
+        for config_key, arg_name in config_mapping.items():
+            if config_key in config:
+                # Only set from config if argument is at default value or None
+                current_val = getattr(args, arg_name, None)
+                if current_val is None or (isinstance(current_val, bool) and not current_val):
+                    setattr(args, arg_name, config[config_key])
+    
+    return args
+
+
+# Processing control flags (can be overridden by arguments)
 prepro = True
 tiling = True
 db_indexing = False
@@ -697,8 +835,25 @@ ROUTER_PIPE = {
 def main():
     parser = create_parser()
     args = parser.parse_args()
+    
+    # Load configuration file if provided
+    args = merge_config_with_args(args)
+    
+    # Validate required arguments
+    if not args.product_path:
+        parser.error("--input is required")
+    if not args.prod_mode:
+        parser.error("--mode is required")
+    if not args.product_wkt:
+        parser.error("--wkt is required")
+    
+    # Handle orbit prefetch validation
+    if args.prefetch_orbits and not args.orbit_years:
+        parser.error("--orbit-years is required when using --prefetch-orbits")
 
-    global GPT_PATH, GRID_PATH, DB_DIR, SNAP_USERDIR
+    global GPT_PATH, GRID_PATH, DB_DIR, SNAP_USERDIR, prepro, tiling, db_indexing
+    
+    # Override global settings from arguments
     if args.gpt_path:
         GPT_PATH = args.gpt_path
     if args.grid_path:
@@ -708,7 +863,13 @@ def main():
     if args.snap_userdir:
         SNAP_USERDIR = args.snap_userdir
         os.environ['SNAP_USERDIR'] = SNAP_USERDIR
+    
+    # Set processing flags
+    prepro = not args.skip_prepro
+    tiling = not args.skip_tiling
+    db_indexing = args.create_database if hasattr(args, 'create_database') else False
 
+    # Extract arguments
     product_path = Path(args.product_path)
     output_dir = Path(args.output_dir)
     product_wkt = args.product_wkt
@@ -721,9 +882,27 @@ def main():
     orbit_continue_on_fail = args.orbit_continue_on_fail
     use_graph = args.use_graph
 
+    # Print processing configuration
+    print(f"\n{'='*80}")
+    print(f"WorldSAR Processing Configuration")
+    print(f"{'='*80}")
+    print(f"Input Product:     {product_path}")
+    print(f"Product Mode:      {product_mode}")
+    print(f"Output Directory:  {output_dir}")
+    print(f"Tiles Directory:   {cuts_outdir}")
+    print(f"Preprocessing:     {'Enabled' if prepro else 'Skipped'}")
+    print(f"Tiling:            {'Enabled' if tiling else 'Skipped'}")
+    print(f"Database Creation: {'Enabled' if db_indexing else 'Disabled'}")
+    if gpt_memory:
+        print(f"GPT Memory:        {gpt_memory}")
+    if gpt_parallelism:
+        print(f"GPT Parallelism:   {gpt_parallelism}")
+    print(f"{'='*80}\n")
+
     orbit_base_url = args.orbit_base_url or ORBIT_BASE_URL
     orbit_outdir = Path(args.orbit_outdir) if args.orbit_outdir else Path(SNAP_USERDIR) / 'auxdata' / 'Orbits' / 'Sentinel-1'
     if args.prefetch_orbits:
+        print("Prefetching orbit files...")
         years = _parse_years(args.orbit_years)
         satellites = _parse_csv_list(args.orbit_satellites)
         if not years:
@@ -738,8 +917,9 @@ def main():
             base_url=orbit_base_url,
         )
 
-    # STEP1:
+    # STEP1: Preprocessing
     if prepro:
+        print(f"\nStep 1: Preprocessing {product_mode} product...")
         intermediate_product = ROUTER_PIPE[product_mode](
             product_path,
             output_dir,
@@ -749,30 +929,42 @@ def main():
             gpt_memory=gpt_memory,
             gpt_parallelism=gpt_parallelism,
         )
-        print(f"Intermediate processed product located at: {intermediate_product}")
+        print(f"✓ Preprocessing complete. Output: {intermediate_product}")
         assert Path(intermediate_product).exists(), f"Intermediate product {intermediate_product} does not exist."
+    else:
+        print("\nStep 1: Preprocessing skipped (using input product directly)")
+        intermediate_product = product_path
 
-    # STEP2:
+    # STEP2: Tiling
     if tiling:
+        print(f"\nStep 2: Tiling product into grid system...")
         # ------ Cutting according to the tile griding system: UTM / WGS84 Auto ------
-        print(f'Checking points within polygon: {product_wkt}')
-        assert grid_geoj_path is not None and grid_geoj_path.exists(), 'grid_10km.geojson does not exist.'
+        print(f'Checking grid points within polygon...')
+        assert grid_geoj_path is not None and grid_geoj_path.exists(), f'Grid GeoJSON not found: {grid_geoj_path}'
+        
         # step 1: check the contained grid points in the prod
         contained = check_points_in_polygon(product_wkt, geojson_path=grid_geoj_path)
         if not contained:
-            print('No grid points contained within the provided WKT.')
+            print('⚠ No grid points contained within the provided WKT.')
             raise ValueError('No grid points contained; check WKT and grid CRS alignment.')
+        
+        print(f"Found {len(contained)} grid points in region")
+        
         # step 2: Build the rectangles for cutting
         rectangles = rectanglify(contained)
         if not rectangles:
-            print('No rectangles could be formed from contained points.')
+            print('⚠ No rectangles could be formed from contained points.')
             raise ValueError('No rectangles formed; check WKT coverage and grid alignment.')
+        
+        print(f"Created {len(rectangles)} tiles to extract")
+        
         product_path = Path(intermediate_product)
         name = extract_product_id(product_path.as_posix()) if product_mode != 'NISAR' else product_path.stem
         if name is None:
             raise ValueError(f"Could not extract product id from: {product_path}")
         
-        for rect in rectangles: # CUT!
+        for idx, rect in enumerate(rectangles, 1):
+            print(f"  Processing tile {idx}/{len(rectangles)}: {rect['BL']['properties']['name']}", end='')
             geo_region = rectangle_to_wkt(rect)
             if product_mode != 'NISAR':
                 final_product = subset(
@@ -783,31 +975,36 @@ def main():
                     gpt_memory=gpt_memory,
                     gpt_parallelism=gpt_parallelism,
                 )
-                print(f"Final processed product located at: {final_product}")
+                print(f" ✓")
             else:
                 reader = NISARReader(product_path.as_posix())
                 cutter = NISARCutter(reader)
                 subset_data = cutter.cut_by_wkt(geo_region, "HH", apply_mask=False)
                 nisar_tile_path = cuts_outdir / name / f"{rect['BL']['properties']['name']}.tiff"
                 cutter.save_subset(subset_data, nisar_tile_path)
-                # TODO: write write method to save to h5.
-                print(f"Final processed NISAR tile saved at: {nisar_tile_path}")
-                
-                
+                print(f" ✓")
                 
         total_tiles = len(rectangles)
         num_cuts = list(Path(cuts_outdir / name).rglob('*.h5'))
+        print(f"✓ Tiling complete. Generated {len(num_cuts)} tiles (expected {total_tiles})")
         assert total_tiles == len(num_cuts), f"Expected {total_tiles} tiles, but found {len(num_cuts)}."
-        
+    else:
+        print("\nStep 2: Tiling skipped")
             
-    # STEP3:
-    # Database indexing
+    # STEP3: Database indexing
     if db_indexing:
+        print(f"\nStep 3: Creating metadata database...")
         cuts_folder = cuts_outdir / name
         db = create_tile_database(cuts_folder.as_posix(), DB_DIR) # type: ignore
         assert not db.empty, "Database creation failed, resulting DataFrame is empty."
-        print("Database created successfully.")
-        
+        print("✓ Database created successfully")
+    else:
+        print("\nStep 3: Database creation disabled")
+    
+    print(f"\n{'='*80}")
+    print("WorldSAR Processing Complete!")
+    print(f"{'='*80}\n")
+    
     sys.exit(0)
 # ========================================================================================================================================  
 

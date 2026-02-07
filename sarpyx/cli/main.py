@@ -36,9 +36,7 @@ Examples:
   sarpyx shipdet --product-path /path/to/S1A_*.SAFE --outdir /path/to/output
   sarpyx unzip --input /path/to/file.zip --output /path/to/output
   sarpyx upload --folder /path/to/folder --repo username/dataset-name
-  sarpyx worldsar --input /path/to/product --output /path/to/output \\
-                 --cuts-outdir /path/to/tiles --product-wkt "POLYGON ((...))" \\
-                 --prod-mode S1TOPS
+  sarpyx worldsar --input product.SAFE --mode S1TOPS --wkt "POLYGON ((...))"
   
 For command-specific help:
   sarpyx <command> --help
@@ -363,80 +361,95 @@ def _add_worldsar_arguments(parser: argparse.ArgumentParser) -> None:
     Args:
         parser: The subparser for worldsar command.
     """
+    # Essential arguments
     parser.add_argument(
         '--input',
         '-i',
         dest='product_path',
         type=str,
         required=True,
-        help='Path to the input SAR product.'
+        help='Path to the input SAR product (e.g., S1A_*.SAFE, *.h5)'
     )
+    parser.add_argument(
+        '--mode',
+        '-m',
+        dest='prod_mode',
+        type=str,
+        required=True,
+        choices=['S1TOPS', 'S1STRIP', 'BM', 'NISAR', 'TSX', 'CSG'],
+        help='Processing mode based on satellite/product type'
+    )
+    parser.add_argument(
+        '--wkt',
+        '-w',
+        dest='product_wkt',
+        type=str,
+        required=True,
+        help='WKT string defining the region of interest'
+    )
+    
+    # Output configuration
     parser.add_argument(
         '--output',
         '-o',
         dest='output_dir',
         type=str,
-        required=True,
-        help='Directory to save the processed output.'
+        default='./worldsar_output',
+        help='Directory for processed outputs (default: ./worldsar_output)'
     )
     parser.add_argument(
-        '--cuts-outdir',
-        '--cuts_outdir',
+        '--tiles',
+        '-t',
         dest='cuts_outdir',
         type=str,
-        required=True,
-        help='Where to store the tiles after extraction.'
+        default='./worldsar_tiles',
+        help='Directory for tiles (default: ./worldsar_tiles)'
     )
+    
+    # Configuration file
     parser.add_argument(
-        '--product-wkt',
-        '--product_wkt',
-        dest='product_wkt',
+        '--config',
+        '-c',
+        dest='config_file',
         type=str,
-        required=True,
-        help='WKT string defining the product region of interest.'
+        help='YAML configuration file for advanced options'
     )
-    parser.add_argument(
-        '--prod-mode',
-        '--prod_mode',
-        dest='prod_mode',
-        type=str,
-        required=True,
-        help='Product mode: ["S1TOPS", "S1STRIP", "BM", "NISAR", "TSX", "CSG", "ICE"].'
-    )
+    
+    # Common options
     parser.add_argument(
         '--gpt-path',
         dest='gpt_path',
         type=str,
         default=None,
-        help='Override GPT executable path (default: gpt_path env var).'
+        help='Path to GPT executable'
     )
     parser.add_argument(
         '--grid-path',
         dest='grid_path',
         type=str,
         default=None,
-        help='Override grid GeoJSON path (default: grid_path env var).'
+        help='Path to grid GeoJSON file'
     )
     parser.add_argument(
         '--db-dir',
         dest='db_dir',
         type=str,
         default=None,
-        help='Override database output directory (default: db_dir env var).'
+        help='Database output directory'
     )
     parser.add_argument(
         '--gpt-memory',
         dest='gpt_memory',
         type=str,
         default=None,
-        help='Override GPT Java heap (e.g., 24G).'
+        help='GPT Java heap (e.g., "8G", "24G")'
     )
     parser.add_argument(
         '--gpt-parallelism',
         dest='gpt_parallelism',
         type=int,
         default=None,
-        help='Override GPT parallelism (number of tiles).'
+        help='Number of parallel tiles'
     )
 
 
