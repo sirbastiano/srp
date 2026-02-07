@@ -5,8 +5,122 @@ the Copernicus Data Search API and from Terrasar-X product XML files.
 
 from pathlib import Path
 from phidown.search import CopernicusDataSearcher
-from shapely.geometry import shape, MultiPolygon
+from shapely.geometry import shape, MultiPolygon, Polygon
 import xml.etree.ElementTree as ET
+
+def _parse_gml_coordinates(text: str, axis_order: str) -> list[tuple[float, float]]:
+    points: list[tuple[float, float]] = []
+    for token in text.strip().split():
+        if not token:
+            continue
+        parts = token.split(',')
+        if len(parts) < 2:
+            continue
+        first = float(parts[0])
+        second = float(parts[1])
+        if axis_order == 'latlon':
+            lat, lon = first, second
+        else:
+            lon, lat = first, second
+        points.append((lon, lat))
+    return points
+
+
+def _parse_gml_pos_list(text: str, axis_order: str) -> list[tuple[float, float]]:
+    values = [float(value) for value in text.replace(',', ' ').split()]
+    points: list[tuple[float, float]] = []
+    for i in range(0, len(values) - 1, 2):
+        first = values[i]
+        second = values[i + 1]
+        if axis_order == 'latlon':
+            lat, lon = first, second
+        else:
+            lon, lat = first, second
+        points.append((lon, lat))
+    return points
+
+
+def sentinel1_wkt_extractor_manifest(
+    product_path: str | Path,
+    display_results: bool = False,
+    verbose: bool = False,
+    axis_order: str = 'latlon',
+) -> str | None:
+    """
+    Extract WKT footprint from Sentinel-1 SAFE manifest (offline).
+
+    Args:
+        product_path (str | Path): Path to the Sentinel-1 SAFE folder or manifest.safe file.
+        display_results (bool): Whether to display extracted coordinates. Defaults to False.
+        verbose (bool): Whether to print debug output. Defaults to False.
+        axis_order (str): Coordinate order in the manifest ('latlon' or 'lonlat'). Defaults to 'latlon'.
+
+    Returns:
+        str | None: WKT representation of the footprint polygon, or None if not found.
+    """
+    if axis_order not in {'latlon', 'lonlat'}:
+        raise ValueError("axis_order must be 'latlon' or 'lonlat'.")
+
+    if isinstance(product_path, str):
+        product_path = Path(product_path)
+
+    if product_path.is_dir():
+        manifest_path = product_path / 'manifest.safe'
+    elif product_path.name.lower() == 'manifest.safe':
+        manifest_path = product_path
+    elif product_path.parent.suffix.upper() == '.SAFE':
+        manifest_path = product_path.parent / 'manifest.safe'
+    else:
+        manifest_path = product_path
+
+    if not manifest_path.exists():
+        if verbose:
+            print(f"Manifest not found: {manifest_path}")
+        return None
+
+    if verbose:
+        print(f"Reading manifest: {manifest_path}")
+
+    tree = ET.parse(manifest_path)
+    root = tree.getroot()
+    namespaces = {
+        'safe': 'http://www.esa.int/safe/sentinel-1.0',
+        'gml': 'http://www.opengis.net/gml',
+    }
+
+    polygons: list[Polygon] = []
+    for footprint in root.findall('.//safe:footPrint', namespaces):
+        coords_el = footprint.find('.//gml:coordinates', namespaces)
+        if coords_el is not None and coords_el.text:
+            coords = _parse_gml_coordinates(coords_el.text, axis_order=axis_order)
+        else:
+            poslist_el = footprint.find('.//gml:posList', namespaces)
+            if poslist_el is None or not poslist_el.text:
+                continue
+            coords = _parse_gml_pos_list(poslist_el.text, axis_order=axis_order)
+
+        if len(coords) < 3:
+            continue
+        if coords[0] != coords[-1]:
+            coords.append(coords[0])
+        polygons.append(Polygon(coords))
+
+    if not polygons:
+        if verbose:
+            print("No footprint coordinates found in manifest.")
+        return None
+
+    if len(polygons) == 1:
+        polygon = polygons[0]
+    else:
+        polygon = MultiPolygon(polygons).convex_hull
+
+    wkt_polygon = polygon.wkt
+    if display_results:
+        print(wkt_polygon)
+    if verbose:
+        print(f"WKT Polygon: {wkt_polygon}")
+    return wkt_polygon
 
 
 

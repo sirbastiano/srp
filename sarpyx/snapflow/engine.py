@@ -118,6 +118,7 @@ class GPT:
         snap_userdir: Optional[str | Path] = None,
         cache_size: Optional[str] = None,
         timeout: Optional[int] = 3600,
+        mode: Optional[str] = None,
     ):
         """Initialize SNAP GPT processing engine.
         
@@ -130,6 +131,8 @@ class GPT:
             memory: Java heap size for GPT (e.g., "32G"). If None, SNAP defaults apply.
             cache_size: Tile cache size for GPT (-c option). If None, SNAP defaults apply.
             timeout: Max seconds for a single GPT invocation. If None, no timeout is enforced.
+            mode: Platform mode hint ('Ubuntu', 'MacOS', 'Windows') used to resolve
+                the default GPT path when gpt_path is not provided.
             
         Raises:
             AssertionError: If product path doesn't exist, format is unsupported,
@@ -157,6 +160,7 @@ class GPT:
         self.memory = memory
         self.cache_size = cache_size
         self.timeout = timeout
+        self.mode = mode
 
         if snap_userdir is None:
             snap_userdir = os.getenv('SNAP_USERDIR') or os.getenv('snap_userdir')
@@ -256,7 +260,8 @@ class GPT:
         Returns:
             True if command executed successfully, False otherwise.
         """
-        print("=" * 120)
+        operator_label = self._get_operator_label()
+        self._print_operator_banner(operator_label)
         cmd_str = ' '.join(self.current_cmd)
         print(f'Executing GPT command: {cmd_str}')
         
@@ -282,6 +287,31 @@ class GPT:
         except subprocess.TimeoutExpired:
             print('Error: GPT command timed out after 1 hour')
             return False
+
+    def _get_operator_label(self) -> str:
+        """Infer a readable operator label from the current command."""
+        operator_part = None
+        for part in self.current_cmd:
+            if part.startswith('-'):
+                continue
+            operator_part = part
+
+        if not operator_part:
+            return 'Unknown Operator'
+
+        operator_token = operator_part.split()[0]
+        if operator_token.lower().endswith('.xml'):
+            graph_name = Path(operator_token).name
+            return f'Graph: {graph_name}'
+
+        return operator_token
+
+    def _print_operator_banner(self, operator_label: str) -> None:
+        """Print a clear operator banner bounded by 120 '*' characters."""
+        banner = '*' * 120
+        print(banner)
+        print(f'OPERATOR: {operator_label}')
+        print(banner)
             
         except subprocess.CalledProcessError as e:
             print(f'Error executing GPT command: {cmd_str}')

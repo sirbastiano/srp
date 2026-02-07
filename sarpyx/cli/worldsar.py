@@ -11,6 +11,7 @@ import asyncio
 import hashlib
 import os
 import re
+import subprocess
 import sys
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
@@ -24,16 +25,18 @@ from sarpyx.snapflow.engine import GPT
 from sarpyx.utils.geos import check_points_in_polygon, rectangle_to_wkt, rectanglify
 from sarpyx.utils.io import read_h5
 from sarpyx.utils.nisar_utils import NISARCutter, NISARReader
-from sarpyx.utils.wkt_utils import sentinel1_wkt_extractor_cdse
+from sarpyx.utils.wkt_utils import sentinel1_wkt_extractor_cdse, sentinel1_wkt_extractor_manifest
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Read paths from environment variables
-GPT_PATH = os.getenv('gpt_path')
-GRID_PATH = os.getenv('grid_path')
-DB_DIR = os.getenv('db_dir')
+# Read paths from environment variables (accept legacy/uppercase names)
+GPT_PATH = os.getenv('gpt_path') or os.getenv('GPT_PATH')
+GRID_PATH = os.getenv('grid_path') or os.getenv('GRID_PATH')
+DB_DIR = os.getenv('db_dir') or os.getenv('DB_DIR')
+CUTS_OUTDIR = os.getenv('cuts_outdir') or os.getenv('OUTPUT_CUTS_DIR')
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
+BASE_PATH = os.getenv('base_path') or os.getenv('BASE_PATH') or str(PROJECT_ROOT)
 SNAP_USERDIR = os.getenv('SNAP_USERDIR') or os.getenv('snap_userdir') or str(PROJECT_ROOT / '.snap')
 os.environ.setdefault('SNAP_USERDIR', SNAP_USERDIR)
 ORBIT_BASE_URL = os.getenv('orbit_base_url') or os.getenv('ORBIT_BASE_URL') or 'https://step.esa.int/auxdata/orbits/Sentinel-1'
@@ -70,8 +73,9 @@ def create_parser() -> argparse.ArgumentParser:
         '--cuts_outdir',
         dest='cuts_outdir',
         type=str,
-        required=True,
-        help='Where to store the tiles after extraction.',
+        required=False,
+        default=None,
+        help='Where to store the tiles after extraction (default: cuts_outdir env var).',
     )
     parser.add_argument(
         '--product-wkt',
@@ -107,14 +111,14 @@ def create_parser() -> argparse.ArgumentParser:
         '--gpt-memory',
         dest='gpt_memory',
         type=str,
-        default=None,
+        default="16G",
         help='Override GPT Java heap (e.g., 24G).',
     )
     parser.add_argument(
         '--gpt-parallelism',
         dest='gpt_parallelism',
         type=int,
-        default=None,
+        default=10,
         help='Override GPT parallelism (number of tiles).',
     )
     parser.add_argument(
@@ -871,6 +875,25 @@ def _compute_cut_workers(rectangles: list, gpt_memory: str | None) -> int:
     return max_workers
 
 
+
+
+def _ensure_grid_file(grid_path: Path, base_path: Path) -> Path:
+    if grid_path.exists():
+        return grid_path
+
+    grid_dir = base_path / 'grid'
+    grid_dir.mkdir(parents=True, exist_ok=True)
+    print(f'Grid file not found at {grid_path}. Generating grid_10km.geojson in {grid_dir}.')
+    subprocess.run([sys.executable, '-m', 'sarpyx.utils.grid'], cwd=grid_dir, check=True)
+
+    generated = grid_dir / 'grid_10km.geojson'
+    if not generated.exists():
+        raise FileNotFoundError(
+            f'Grid generation completed, but {generated} was not created. Check sarpyx.utils.grid output.'
+        )
+    return generated
+
+
 def _run_preprocessing(
     product_path: Path,
     output_dir: Path,
@@ -973,15 +996,24 @@ def main():
 
     product_path = Path(args.product_path)
     output_dir = Path(args.output_dir)
-    cuts_outdir = Path(args.cuts_outdir)
-    grid_geoj_path = Path(GRID_PATH) if GRID_PATH else None
+    if CUTS_OUTDIR is None:
+        print('Warning: cuts_outdir env var not found. Set cuts_outdir to avoid passing --cuts-outdir each run.')
+    cuts_outdir_value = args.cuts_outdir or CUTS_OUTDIR
+    if not cuts_outdir_value:
+        raise ValueError('cuts_outdir not provided. Set cuts_outdir env var or pass --cuts-outdir.')
+    cuts_outdir = Path(cuts_outdir_value)
+    base_path = Path(BASE_PATH)
+    grid_geoj_path = Path(GRID_PATH) if GRID_PATH else base_path / 'grid' / 'grid_10km.geojson'
+    grid_geoj_path = _ensure_grid_file(grid_geoj_path, base_path)
 
     product_mode = infer_product_mode(product_path)
     print(f'Inferred product mode: {product_mode}')
     if args.product_wkt is not None:
         product_wkt = args.product_wkt
     elif product_mode in {'S1TOPS', 'S1STRIP'}:
-        product_wkt = sentinel1_wkt_extractor_cdse(product_path.as_posix(), display_results=False)
+        product_wkt = sentinel1_wkt_extractor_manifest(product_path, display_results=False)
+        if product_wkt is None:
+            product_wkt = sentinel1_wkt_extractor_cdse(product_path.name, display_results=False)
         if product_wkt is None:
             raise ValueError(f'Failed to extract Sentinel-1 WKT for product: {product_path}')
     else:
