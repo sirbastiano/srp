@@ -5,7 +5,7 @@ the Copernicus Data Search API and from Terrasar-X product XML files.
 
 from pathlib import Path
 from phidown.search import CopernicusDataSearcher
-from shapely.geometry import shape
+from shapely.geometry import shape, MultiPolygon
 import xml.etree.ElementTree as ET
 
 
@@ -40,6 +40,9 @@ def sentinel1_wkt_extractor_cdse(product_name: str, display_results: bool = Fals
             print(f"Product with GeoFootprint: '{geofootprint}' found.")
         
         polygon = shape(geofootprint)
+        if isinstance(polygon, MultiPolygon):
+            # Take the convex hull to merge into a single polygon
+            polygon = polygon.convex_hull
         wkt_polygon = polygon.wkt
         
         if verbose:

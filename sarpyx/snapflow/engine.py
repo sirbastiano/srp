@@ -113,9 +113,11 @@ class GPT:
         outdir: str | Path,
         format: str = 'BEAM-DIMAP',
         gpt_path: Optional[str] = '/usr/local/snap/bin/gpt',
-        memory: str = '64G',
+        memory: Optional[str] = None,
         parallelism: Optional[int] = 14,
         snap_userdir: Optional[str | Path] = None,
+        cache_size: Optional[str] = None,
+        timeout: Optional[int] = 3600,
     ):
         """Initialize SNAP GPT processing engine.
         
@@ -125,6 +127,9 @@ class GPT:
             format: Output format for processed data. Defaults to 'BEAM-DIMAP'.
             gpt_path: Path to the SNAP GPT executable.
                 Defaults to '/usr/local/snap/bin/gpt'.
+            memory: Java heap size for GPT (e.g., "32G"). If None, SNAP defaults apply.
+            cache_size: Tile cache size for GPT (-c option). If None, SNAP defaults apply.
+            timeout: Max seconds for a single GPT invocation. If None, no timeout is enforced.
             
         Raises:
             AssertionError: If product path doesn't exist, format is unsupported,
@@ -150,6 +155,8 @@ class GPT:
         
         self.parallelism = parallelism
         self.memory = memory
+        self.cache_size = cache_size
+        self.timeout = timeout
 
         if snap_userdir is None:
             snap_userdir = os.getenv('SNAP_USERDIR') or os.getenv('snap_userdir')
@@ -168,7 +175,9 @@ class GPT:
         if self.parallelism:
             cmd.append(f'-q {self.parallelism}')
         if self.memory:
-            cmd.append(f'-c {self.memory}')
+            cmd.append(f'-J-Xmx{self.memory}')
+        if self.cache_size:
+            cmd.append(f'-c {self.cache_size}')
         cmd.extend(['-x', '-e'])
         return cmd
 
@@ -252,14 +261,15 @@ class GPT:
         print(f'Executing GPT command: {cmd_str}')
         
         try:
-            process = subprocess.run(
-                cmd_str,
-                shell=True,
-                check=True,
-                capture_output=True,
-                text=True,
-                timeout=3600
-            )
+            run_kwargs = {
+                "shell": True,
+                "check": True,
+                "capture_output": True,
+                "text": True,
+            }
+            if self.timeout is not None:
+                run_kwargs["timeout"] = self.timeout
+            process = subprocess.run(cmd_str, **run_kwargs)
             
             if process.stdout:
                 print(f'GPT Output: {process.stdout}')
@@ -6192,5 +6202,3 @@ class GPT:
     Binning = binning
     FuClassification = fu_classification
     FlhMci = flh_mci
-
-

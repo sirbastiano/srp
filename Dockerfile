@@ -25,10 +25,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install SNAP
-RUN wget -q "https://download.esa.int/step/snap/12.0/installers/esa-snap_all_linux-${SNAP_VERSION}.sh" -O /tmp/snap_installer.sh && \
-    chmod +x /tmp/snap_installer.sh && \
-    /tmp/snap_installer.sh -q -dir "${SNAP_HOME}" && \
-    rm -f /tmp/snap_installer.sh
+COPY support/snap-install.sh /tmp/snap-install.sh
+COPY support/snap.varfile /tmp/snap.varfile
+RUN chmod +x /tmp/snap-install.sh && /tmp/snap-install.sh -v && rm -f /tmp/snap-install.sh /tmp/snap.varfile
+
+# RUN wget -q "https://download.esa.int/step/snap/12.0/installers/esa-snap_all_linux-${SNAP_VERSION}.sh" -O /tmp/snap_installer.sh && \
+#     chmod +x /tmp/snap_installer.sh && \
+#     /tmp/snap_installer.sh -q -dir "${SNAP_HOME}" && \
+#     rm -f /tmp/snap_installer.sh
 
 # Install pip
 RUN curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && \

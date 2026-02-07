@@ -37,8 +37,7 @@ Examples:
   sarpyx unzip --input /path/to/file.zip --output /path/to/output
   sarpyx upload --folder /path/to/folder --repo username/dataset-name
   sarpyx worldsar --input /path/to/product --output /path/to/output \\
-                 --cuts-outdir /path/to/tiles --product-wkt "POLYGON ((...))" \\
-                 --prod-mode S1TOPS
+                 --cuts-outdir /path/to/tiles --product-wkt "POLYGON ((...))"
   
 For command-specific help:
   sarpyx <command> --help
@@ -392,16 +391,9 @@ def _add_worldsar_arguments(parser: argparse.ArgumentParser) -> None:
         '--product_wkt',
         dest='product_wkt',
         type=str,
-        required=True,
+        required=False,
+        default=None,
         help='WKT string defining the product region of interest.'
-    )
-    parser.add_argument(
-        '--prod-mode',
-        '--prod_mode',
-        dest='prod_mode',
-        type=str,
-        required=True,
-        help='Product mode: ["S1TOPS", "S1STRIP", "BM", "NISAR", "TSX", "CSG", "ICE"].'
     )
     parser.add_argument(
         '--gpt-path',
@@ -437,6 +429,13 @@ def _add_worldsar_arguments(parser: argparse.ArgumentParser) -> None:
         type=int,
         default=None,
         help='Override GPT parallelism (number of tiles).'
+    )
+    parser.add_argument(
+        '--gpt-timeout',
+        dest='gpt_timeout',
+        type=int,
+        default=None,
+        help='Override GPT timeout in seconds for a single invocation.'
     )
 
 

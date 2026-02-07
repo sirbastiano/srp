@@ -86,3 +86,6 @@ S1*
 AGENTS.md
 support/esa-snap_sentinel_linux-13.0.0.sh
 esa-snap_sentinel_linux-13.0.0.sh
+support/esa-snap_all_linux-12.0.0.sh
+.gitignore
+support/esa-snap_sentinel_linux-12.0.0.sh
