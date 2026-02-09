@@ -1438,6 +1438,8 @@ class CoarseRDA:
         # Step 2: Range compression
         self.range_compression()
         self.range_compressed_data = ifft2d(copy.deepcopy(self.radar_data))
+        # Trim padded range dimension to original width (padding is appended on the right).
+        self.range_compressed_data = self.range_compressed_data[:, :self.len_range_line]
         if self._verbose:
             print(f'Range compressed data shape: {self.radar_data.shape}')
             print_memory()
