@@ -1,4 +1,17 @@
-.PHONY: clean_venv install_pdm pdm_install_toml install_snap
+# ──────────────────────────────────────────────────────────────
+# sarpyx – Makefile
+# ──────────────────────────────────────────────────────────────
+
+DOCKER_IMAGE   ?= sirbastiano94/sarpyx
+DOCKER_TAG     ?= latest
+DOCKER_FULL    := $(DOCKER_IMAGE):$(DOCKER_TAG)
+PLATFORM       ?= linux/amd64
+
+.PHONY: clean_venv install_pdm pdm_install_deps install_phidown install_snap \
+        setup prune_docker up_recreate up \
+        docker-build docker-test docker-push docker-all
+
+# ──────────────────────────  Python / PDM  ──────────────────────────
 
 clean_venv:
 	@echo 'Removing virtual environment...'
@@ -16,7 +29,11 @@ pdm_install_deps:
 install_phidown:
 	@echo 'Installing phi-down...'
 	pdm add phidown
- 
+
+setup: clean_venv install_pdm pdm_install_deps
+	@echo 'Setup complete.'
+
+# ──────────────────────────  SNAP  ──────────────────────────────────
 
 install_snap:
 	@echo 'Installing packages for S1 data processing...'
@@ -33,8 +50,21 @@ install_snap:
 	echo "-Xmx8G" > $(CURDIR)/snap/bin/gpt.vmoptions
 	@echo 'SNAP installation complete.'
 
-setup: clean_venv install_pdm pdm_install_deps
-	@echo 'Setup complete.'
+# ──────────────────────────  Docker  ───────────────────────────────
+
+docker-build:
+	@echo "Building Docker image $(DOCKER_FULL) ..."
+	docker build --platform $(PLATFORM) -t $(DOCKER_FULL) .
+
+docker-test: docker-build
+	@echo "Running Docker build tests …"
+	docker run --rm $(DOCKER_FULL) python3.11 -m pytest /workspace/tests/test_docker.py -v
+
+docker-push: docker-build
+	@echo "Pushing $(DOCKER_FULL) …"
+	docker push $(DOCKER_FULL)
+
+docker-all: docker-build docker-test docker-push
 
 prune_docker:
 	@echo 'Pruning Docker system...'

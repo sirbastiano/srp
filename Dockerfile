@@ -48,6 +48,7 @@ WORKDIR /workspace
 # Copy only essential files
 COPY pyproject.toml ./
 COPY sarpyx ./sarpyx
+COPY tests ./tests
 
 # Install sarpyx in development mode and verify import
 RUN python3.11 -m pip install -e . && \
