@@ -58,7 +58,7 @@ docker-build:
 
 docker-test: docker-build
 	@echo "Running Docker build tests …"
-	docker run --rm $(DOCKER_FULL) python3.11 -m pytest /workspace/tests/test_docker.py -v
+	docker run --rm $(DOCKER_FULL) python3.11 /workspace/tests/test_docker.py
 
 docker-push: docker-build
 	@echo "Pushing $(DOCKER_FULL) …"
