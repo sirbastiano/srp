@@ -117,7 +117,7 @@ class GPT:
         parallelism: Optional[int] = 14,
         snap_userdir: Optional[str | Path] = None,
         cache_size: Optional[str] = None,
-        timeout: Optional[int] = 3600,
+        timeout: Optional[int] = 7200,
         mode: Optional[str] = None,
     ):
         """Initialize SNAP GPT processing engine.
