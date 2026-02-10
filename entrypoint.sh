@@ -17,8 +17,12 @@ fi
 echo "Generating grid..."
 mkdir -p /workspace/grid
 cd /workspace/grid
-python3.11 -m sarpyx.utils.grid
-echo "Grid generation completed."
+if python3.11 -m sarpyx.utils.grid; then
+    echo "Grid generation completed."
+else
+    echo "Error: Grid generation failed"
+    exit 1
+fi
 
 # Execute the CMD passed to the container
 echo "Starting main process..."
