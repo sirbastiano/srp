@@ -2989,7 +2989,7 @@ requires-dist = [
     { name = "einops", specifier = ">=0.8.1" },
     { name = "fastparquet", specifier = ">=2025.12.0" },
     { name = "folium", specifier = ">=0.20.0" },
-    { name = "gdal", specifier = "==3.11.0" },
+    { name = "gdal", specifier = ">=3.4.0" },
     { name = "geographiclib", specifier = ">=2.1" },
     { name = "geopandas", specifier = ">=1.1.1" },
     { name = "h5py" },
