@@ -5,8 +5,10 @@ ENV TZ=Etc/UTC
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ARG SNAP_VERSION=12.0.0
+ARG SNAP_SKIP_UPDATES=1
 ENV JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"
 ENV SNAP_HOME="/usr/local/snap"
+ENV SNAP_SKIP_UPDATES="${SNAP_SKIP_UPDATES}"
 ENV PATH="${PATH}:${SNAP_HOME}/bin"
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 ENV PIP_NO_CACHE_DIR=1
@@ -48,6 +50,7 @@ WORKDIR /workspace
 # Copy only essential files
 COPY pyproject.toml ./
 COPY sarpyx ./sarpyx
+COPY tests ./tests
 
 # Install sarpyx in development mode and verify import
 RUN python3.11 -m pip install -e . && \
