@@ -19,6 +19,11 @@ jobs:
             with:
               python-version: "3.x"
 
+          - name: Install GDAL System Dependencies
+            run: |
+              sudo apt-get update
+              sudo apt-get install -y gdal-bin libgdal-dev
+
           - name: Configure PDM Environment
             uses: pdm-project/setup-pdm@v4
             with:
