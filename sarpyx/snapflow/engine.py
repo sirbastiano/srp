@@ -10,8 +10,9 @@ import subprocess
 import warnings
 import zipfile
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 from urllib import request
+import json
 
 warnings.filterwarnings('ignore')
 
@@ -2489,7 +2490,76 @@ class GPT:
 
         self.current_cmd.append(f'SAR-Mosaic {" ".join(cmd_params)}')
         return self._call(suffix='SMOS', output_name=output_name)
-       
+
+    def do_subaps(
+        self,
+        dim_path: Optional[Union[str, Path]] = None,
+        safe_path: Optional[Union[str, Path]] = None,
+        numberofLooks: int = 3,
+        n_decompositions: Optional[Union[int, List[int]]] = None,
+        DownSample: bool = True,
+        byte_order: int = 1,
+        prefix: str = "",
+        VERBOSE: bool = False,
+    ) -> Path:
+        """
+        Run sub-aperture decomposition on a SNAP DIM product.
+
+        Parameters
+        ----------
+        dim_path : Path or str, optional
+            Path to the DIM product to process.
+            If None, self.prod_path is used.
+        safe_path : Path or str
+            Path to the original SAFE product (required by sub-aperture processing).
+        numberofLooks : int
+            Number of looks used for azimuth bandwidth estimation.
+        n_decompositions : int or list[int], optional
+            Sub-aperture decomposition scheme (e.g. [2, 3]).
+        DownSample : bool
+            Whether to downsample the output images.
+        byte_order : int
+            Byte order of output ENVI files (0=little endian, 1=big endian).
+        prefix : str
+            Prefix for generated band names.
+        VERBOSE : bool
+            Verbose mode.
+
+        Returns
+        -------
+        Path
+            Path to the processed DIM product.
+        """
+
+        # Local import to avoid circular dependencies
+        from sarpyx.processor.core.subaperture_full_img import do_subaps as _do_subaps
+
+        # Use current product if dim_path is not provided
+        dim_path = Path(dim_path) if dim_path is not None else Path(self.prod_path)
+
+        if dim_path.suffix.lower() != ".dim":
+            raise ValueError(
+                f"do_subaps expects a DIM product, got: {dim_path}"
+            )
+
+        if safe_path is None:
+            raise ValueError(
+                "safe_path must be provided (path to original SAFE product)"
+            )
+
+        _do_subaps(
+            dim_path=str(dim_path),
+            safe_path=str(safe_path),
+            numberofLooks=numberofLooks,
+            n_decompositions=n_decompositions,
+            DownSample=DownSample,
+            byte_order=byte_order,
+            prefix=prefix,
+            VERBOSE=VERBOSE,
+        )
+
+        return dim_path
+        
     def demodulate(self, output_name: Optional[str] = None) -> Optional[str]:
         """Perform demodulation and deramping of SLC data.
         
@@ -2609,45 +2679,60 @@ class GPT:
         self.current_cmd.append(f'TileWriter {" ".join(cmd_params)}')
         return self._call(suffix='TILES', output_name=output_name)
 
-    def band_maths(
-        self,
-        target_bands: Optional[List[dict]] = None,
-        variables: Optional[List[dict]] = None,
-        output_name: Optional[str] = None
-    ) -> Optional[str]:
-        """Create a product with one or more bands using mathematical expressions.
+#     def band_maths(
+#         self,
+#         target_bands: Optional[List[dict]] = None,
+#         variables: Optional[List[dict]] = None,
+#         output_name: Optional[str] = None
+#     ) -> Optional[str]:
+#         """Create a product with one or more bands using mathematical expressions.
         
-        This method allows creating new bands based on mathematical expressions
-        applied to existing bands, enabling complex band arithmetic and transformations.
+#         This method allows creating new bands based on mathematical expressions
+#         applied to existing bands, enabling complex band arithmetic and transformations.
         
-        Args:
-            target_bands: List of target band dictionaries. Each dict should contain:
-                - name (str): Band name
-                - type (str): Data type (e.g., 'float32')
-                - expression (str): Mathematical expression
-                - description (str, optional): Band description
-                - unit (str, optional): Band unit
-                - no_data_value (float, optional): NoData value
-            variables: List of variable dictionaries for use in expressions.
-                Each dict should contain:
-                - name (str): Variable name
-                - type (str): Data type
-                - value (str): Variable value
-            output_name: Custom output filename (without extension).
+#         Args:
+#             target_bands: List of target band dictionaries. Each dict should contain:
+#                 - name (str): Band name
+#                 - type (str): Data type (e.g., 'float32')
+#                 - expression (str): Mathematical expression
+#                 - description (str, optional): Band description
+#                 - unit (str, optional): Band unit
+#                 - no_data_value (float, optional): NoData value
+#             variables: List of variable dictionaries for use in expressions.
+#                 Each dict should contain:
+#                 - name (str): Variable name
+#                 - type (str): Data type
+#                 - value (str): Variable value
+#             output_name: Custom output filename (without extension).
         
-        Returns:
-            Path to output product with computed bands, or None if failed.
-        """
+#         Returns:
+#             Path to output product with computed bands, or None if failed.
+#         """
+#         self._reset_command()
+        
+#         cmd_params = []
+        
+#         # Note: Complex parameters like targetBands and variables are typically 
+#         # better handled via XML graphs. For simple cases, consider using
+#         # BandSelect or other operators.
+        
+#         self.current_cmd.append(f'BandMaths {" ".join(cmd_params)}')
+#         return self._call(suffix='BMTH', output_name=output_name)
+
+
+    def band_maths(self, target_bands=None, variables=None, output_name=None):
         self._reset_command()
-        
         cmd_params = []
-        
-        # Note: Complex parameters like targetBands and variables are typically 
-        # better handled via XML graphs. For simple cases, consider using
-        # BandSelect or other operators.
-        
+
+        if target_bands:
+            cmd_params.append(f"-PtargetBands={json.dumps(target_bands)}")
+
+        if variables:
+            cmd_params.append(f"-Pvariables={json.dumps(variables)}")
+
         self.current_cmd.append(f'BandMaths {" ".join(cmd_params)}')
-        return self._call(suffix='BMTH', output_name=output_name)
+        return self._call(suffix="BMTH", output_name=output_name)
+
 
     def band_select(
         self,
