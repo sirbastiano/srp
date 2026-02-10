@@ -18,8 +18,10 @@ training
 
 *.csv
 *.txt
+*.geojson
 
 
+AGENTS.md
 hparams.yaml
 metrics_*.json
 results/
@@ -27,7 +29,7 @@ results/
 SSM4SAR/maya4_data/
 SSM4SAR/src/
 SSM4SAR
-
+outputs/
 data/
 decoded_data/
 focused_data/
@@ -83,3 +85,4 @@ S1*
 *.pth
 *.ckpt
 **/.ipynb_checkpoints/
+worldsar.sh
