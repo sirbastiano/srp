@@ -13,7 +13,7 @@ ENV PATH="${PATH}:${SNAP_HOME}/bin"
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 ENV PIP_NO_CACHE_DIR=1
 
-# Install only essential packages
+# Install essential packages and GDAL system libraries
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     python3.11 \
@@ -24,6 +24,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     build-essential \
     openjdk-8-jdk \
+    gdal-bin \
+    libgdal-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install SNAP
