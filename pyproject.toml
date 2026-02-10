@@ -28,7 +28,7 @@ dependencies = [
     "lxml>=5.4.0",
     "huggingface-hub>=0.34.1",
     "tifffile>=2025.6.11",
-    "GDAL==3.11.0",
+    "GDAL>=3.4.0",
     "folium>=0.20.0",
     "plotly>=6.2.0",
     "lightning>=2.5.3",

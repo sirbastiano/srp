@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
@@ -16,6 +16,9 @@ ENV PIP_NO_CACHE_DIR=1
 # Install only essential packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
+    software-properties-common \
+    && add-apt-repository ppa:ubuntugis/ubuntugis-unstable \
+    && apt-get update && apt-get install -y --no-install-recommends \
     python3.11 \
     python3.11-venv \
     python3.11-dev \
@@ -24,7 +27,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     build-essential \
     openjdk-8-jdk \
+    gdal-bin \
+    libgdal-dev \
+    libhdf5-dev \
+    libxml2-dev \
+    libxslt1-dev \
+    libproj-dev \
+    libgeos-dev \
     && rm -rf /var/lib/apt/lists/*
+
+# Set GDAL environment variables
+ENV GDAL_CONFIG=/usr/bin/gdal-config
 
 # Install SNAP
 COPY support/snap-install.sh /tmp/snap-install.sh
@@ -53,7 +66,11 @@ COPY sarpyx ./sarpyx
 COPY tests ./tests
 
 # Install sarpyx in development mode and verify import
-RUN python3.11 -m pip install -e . && \
+RUN python3.11 -m pip install --upgrade pip setuptools wheel && \
+    python3.11 -m pip install numpy && \
+    GDAL_VERSION=$(gdal-config --version) && \
+    python3.11 -m pip install GDAL==${GDAL_VERSION} && \
+    python3.11 -m pip install -e . && \
     python3.11 -c "import sarpyx; print('sarpyx installed successfully')"
 
 # Copy and set up entrypoint script
