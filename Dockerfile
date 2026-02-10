@@ -53,8 +53,9 @@ COPY sarpyx ./sarpyx
 RUN python3.11 -m pip install -e . && \
     python3.11 -c "import sarpyx; print('sarpyx installed successfully')"
 
-# Make the grid
-RUN mkdir grid && cd grid && python3.11 -m sarpyx.utils.grid 
+# Copy and set up entrypoint script
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
-
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["python3.11", "-c", "import sarpyx; print('sarpyx version:', getattr(sarpyx, '__version__', 'unknown'))"]
