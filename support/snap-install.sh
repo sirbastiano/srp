@@ -15,13 +15,17 @@ VERSION=12
 # SNAP 13MacOS-ARM: https://download.esa.int/step/snap/13.0/installers/esa-snap_sentinel_macos_arm-13.0.0.dmg
 # SNAP 13Windows: https://download.esa.int/step/snap/13.0/installers/esa-snap_sentinel_windows-13.0.0.exe
 
-# get filepath of current file (BASH_SOURCE works with both 'source' and direct execution)
-CURRENT_FILE_PATH="$(realpath "${BASH_SOURCE[0]}")"
-# go up two directories (snap-install.sh → support/ → srp/)
-BASE_DIR="$(dirname "$(dirname "$CURRENT_FILE_PATH")")"
-
-
-SNAP_DIR="${BASE_DIR}/snap${VERSION}"
+# Determine SNAP installation directory
+# Use SNAP_HOME if set, otherwise calculate from script location
+if [ -n "${SNAP_HOME}" ]; then
+    SNAP_DIR="${SNAP_HOME}"
+else
+    # get filepath of current file (BASH_SOURCE works with both 'source' and direct execution)
+    CURRENT_FILE_PATH="$(realpath "${BASH_SOURCE[0]}")"
+    # go up two directories (snap-install.sh → support/ → srp/)
+    BASE_DIR="$(dirname "$(dirname "$CURRENT_FILE_PATH")")"
+    SNAP_DIR="${BASE_DIR}/snap${VERSION}"
+fi
 
 SKIP_SNAP_UPDATES="${SNAP_SKIP_UPDATES:-}"
 if [ -n "${CI:-}" ] && [ -z "$SKIP_SNAP_UPDATES" ]; then
@@ -37,20 +41,36 @@ maybe_update_snap_modules() {
     "${SNAP_DIR}/bin/snap" --nosplash --nogui --modules --update-all
 }
 
+# Check if running with root privileges (needed for apt commands)
+USE_SUDO=""
+if [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null 2>&1; then
+    USE_SUDO="sudo"
+fi
+
 echo "Installing SNAP version $VERSION..."
 # Install required packages
 echo 'Installing packages for S1 data processing...'
-sudo apt update
-sudo apt-get install -y libfftw3-dev libtiff5-dev gdal-bin gfortran libgfortran5 jblas git curl --fix-missing 
+${USE_SUDO} apt-get update
+${USE_SUDO} apt-get install -y libfftw3-dev libtiff5-dev gdal-bin gfortran libgfortran5 jblas git curl --fix-missing 
 
 if [ "$VERSION" = "12" ]; then
     # VERSION 12 installation
     echo 'Configuring SNAP 12 installation...'
     curl -O https://download.esa.int/step/snap/12.0/installers/esa-snap_all_linux-12.0.0.sh
     chmod +x esa-snap_all_linux-12.0.0.sh
-    echo -e "deleteAllSnapEngineDir\$Boolean=false\ndeleteOnlySnapDesktopDir\$Boolean=false\nexecuteLauncherWithPythonAction\$Boolean=false\nforcePython\$Boolean=false\npythonExecutable=/usr/bin/python\nsys.adminRights\$Boolean=true\nsys.component.RSTB\$Boolean=true\nsys.component.S1TBX\$Boolean=true\nsys.component.S2TBX\$Boolean=false\nsys.component.S3TBX\$Boolean=false\nsys.component.SNAP\$Boolean=true\nsys.installationDir=$(pwd)/snap\nsys.languageId=en\nsys.programGroupDisabled\$Boolean=false\nsys.symlinkDir=/usr/local/bin" > snap.varfile
-    echo 'Installing SNAP 12...'
-    ./esa-snap_all_linux-12.0.0.sh -q -varfile "$(pwd)/snap.varfile" -dir "${SNAP_DIR}"
+    
+    # Use the provided snap.varfile if it exists, otherwise generate one
+    if [ -f "/tmp/snap.varfile" ]; then
+        echo 'Using provided snap.varfile...'
+        VARFILE="/tmp/snap.varfile"
+    else
+        echo 'Generating snap.varfile...'
+        echo -e "deleteAllSnapEngineDir\$Boolean=false\ndeleteOnlySnapDesktopDir\$Boolean=false\nexecuteLauncherWithPythonAction\$Boolean=false\nforcePython\$Boolean=false\npythonExecutable=/usr/bin/python\nsys.adminRights\$Boolean=true\nsys.component.RSTB\$Boolean=true\nsys.component.S1TBX\$Boolean=true\nsys.component.S2TBX\$Boolean=false\nsys.component.S3TBX\$Boolean=false\nsys.component.SNAP\$Boolean=true\nsys.installationDir=${SNAP_DIR}\nsys.languageId=en\nsys.programGroupDisabled\$Boolean=false\nsys.symlinkDir=/usr/local/bin" > snap.varfile
+        VARFILE="$(pwd)/snap.varfile"
+    fi
+    
+    echo "Installing SNAP 12 to ${SNAP_DIR}..."
+    ./esa-snap_all_linux-12.0.0.sh -q -varfile "${VARFILE}" -dir "${SNAP_DIR}"
     echo 'Configuring SNAP memory settings...'
     echo "-Xmx8G" > "${SNAP_DIR}/bin/gpt.vmoptions"
     echo 'SNAP 12 installation complete.'
@@ -61,9 +81,19 @@ elif [ "$VERSION" = "13" ]; then
     echo 'Configuring SNAP 13 installation...'
     curl -O https://download.esa.int/step/snap/13.0/installers/esa-snap_sentinel_linux-13.0.0.sh
     chmod +x esa-snap_sentinel_linux-13.0.0.sh
-    echo -e "deleteAllSnapEngineDir\$Boolean=false\ndeleteOnlySnapDesktopDir\$Boolean=false\nexecuteLauncherWithPythonAction\$Boolean=false\nforcePython\$Boolean=false\npythonExecutable=/usr/bin/python\nsys.adminRights\$Boolean=true\nsys.component.RSTB\$Boolean=true\nsys.component.S1TBX\$Boolean=true\nsys.component.S2TBX\$Boolean=false\nsys.component.S3TBX\$Boolean=false\nsys.component.SNAP\$Boolean=true\nsys.installationDir=${SNAP_DIR}\nsys.languageId=en\nsys.programGroupDisabled\$Boolean=false\nsys.symlinkDir=/usr/local/bin" > snap.varfile
-    echo 'Installing SNAP 13...'
-    ./esa-snap_sentinel_linux-13.0.0.sh -q -varfile "$(pwd)/snap.varfile" -dir "${SNAP_DIR}"
+    
+    # Use the provided snap.varfile if it exists, otherwise generate one
+    if [ -f "/tmp/snap.varfile" ]; then
+        echo 'Using provided snap.varfile...'
+        VARFILE="/tmp/snap.varfile"
+    else
+        echo 'Generating snap.varfile...'
+        echo -e "deleteAllSnapEngineDir\$Boolean=false\ndeleteOnlySnapDesktopDir\$Boolean=false\nexecuteLauncherWithPythonAction\$Boolean=false\nforcePython\$Boolean=false\npythonExecutable=/usr/bin/python\nsys.adminRights\$Boolean=true\nsys.component.RSTB\$Boolean=true\nsys.component.S1TBX\$Boolean=true\nsys.component.S2TBX\$Boolean=false\nsys.component.S3TBX\$Boolean=false\nsys.component.SNAP\$Boolean=true\nsys.installationDir=${SNAP_DIR}\nsys.languageId=en\nsys.programGroupDisabled\$Boolean=false\nsys.symlinkDir=/usr/local/bin" > snap.varfile
+        VARFILE="$(pwd)/snap.varfile"
+    fi
+    
+    echo "Installing SNAP 13 to ${SNAP_DIR}..."
+    ./esa-snap_sentinel_linux-13.0.0.sh -q -varfile "${VARFILE}" -dir "${SNAP_DIR}"
     echo 'Configuring SNAP memory settings...'
     echo "-Xmx8G" > "${SNAP_DIR}/bin/gpt.vmoptions"
     echo 'SNAP 13 installation complete.'
