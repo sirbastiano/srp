@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>sarpyx Documentation – sarpyx Docs</title>
+  <link rel="stylesheet" href="./assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="./assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="./index.html"><img class="logo" src="./assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="./index.html" class="active">Introduction</a>
+<h3>User Guide</h3>
+<a href="./user_guide/index.html">Overview</a>
+<a href="./user_guide/installation.html">Installation</a>
+<a href="./user_guide/getting_started.html">Getting Started</a>
+<a href="./user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="./user_guide/data_formats.html">Data Formats</a>
+<a href="./user_guide/snap_integration.html">SNAP Integration</a>
+<a href="./user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="./user_guide/science_applications.html">Science Applications</a>
+<a href="./user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="./user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="./tutorials/index.html">Overview</a>
+<a href="./tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="./tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="./tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="./tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="./tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="./tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="./tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="./tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="./api/index.html">Overview</a>
+<a href="./api/snapflow/index.html">Snapflow</a>
+<a href="./api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="./api/science/index.html">Science</a>
+<a href="./api/sla/index.html">SLA</a>
+<a href="./api/processor/index.html">Processor</a>
+<a href="./api/utils/index.html">Utils</a>
+<a href="./api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="./examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="./developer_guide/architecture.html">Architecture</a>
+<a href="./developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="./metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="sarpyx-documentation">sarpyx Documentation</h1>
+<p>Welcome to the sarpyx documentation! sarpyx is a specialized Python package for advanced Synthetic Aperture Radar (SAR) data processing, sub-aperture decomposition, and full integration with ESA&rsquo;s SNAP (Sentinel Application Platform) engine.</p>
+<p align="center">
+    <img src="./assets/sarpyx_logo.png" alt="sarpyx logo" width="1200"/>
+</p>
+
+<h2 id="table-of-contents">Table of Contents</h2>
+<h3 id="user-guide">📚 <a href="user_guide/index.html">User Guide</a></h3>
+<p>Complete guide for getting started with sarpyx, including installation, basic concepts, and common workflows.</p>
+<h3 id="tutorials">🎯 <a href="tutorials/index.html">Tutorials</a></h3>
+<p>Step-by-step tutorials covering various SAR processing techniques and real-world applications.</p>
+<h3 id="examples">💻 <a href="examples/index.html">Examples</a></h3>
+<p>Ready-to-run code examples demonstrating key features and processing workflows.</p>
+<h3 id="api-reference">🔧 <a href="api/index.html">API Reference</a></h3>
+<p>Comprehensive API documentation for all modules, classes, and functions.</p>
+<h3 id="developer-guide">👩‍💻 <a href="developer_guide/index.html">Developer Guide</a></h3>
+<p>Information for developers contributing to sarpyx, including architecture, coding standards, and contribution guidelines.</p>
+<h3 id="metaparams-reference">📖 <a href="metaParams.html">MetaParams Reference</a></h3>
+<p>SAR metadata parameter documentation and external resources.</p>
+<h2 id="quick-start">Quick Start</h2>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">sarpyx</span>
+
+<span class="c1"># Example: Calculate vegetation indices from Sentinel-1 data</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science.indices</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_rvi</span><span class="p">,</span> <span class="n">calculate_ndpoll</span>
+
+<span class="c1"># Load your SAR data (VV and VH polarizations)</span>
+<span class="n">sigma_vv</span> <span class="o">=</span> <span class="n">your_vv_data</span>  <span class="c1"># Linear scale backscatter coefficients</span>
+<span class="n">sigma_vh</span> <span class="o">=</span> <span class="n">your_vh_data</span>  <span class="c1"># Linear scale backscatter coefficients</span>
+
+<span class="c1"># Calculate Radar Vegetation Index</span>
+<span class="n">rvi</span> <span class="o">=</span> <span class="n">calculate_rvi</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+
+<span class="c1"># Calculate Normalized Difference Polarization Index</span>
+<span class="n">ndpoll</span> <span class="o">=</span> <span class="n">calculate_ndpoll</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+</code></pre>
+<h2 id="key-features">Key Features</h2>
+<ul>
+<li>🛰️ <strong>Sub-Aperture Decomposition</strong>: Azimuthal sub-band partitioning for enhanced resolution</li>
+<li>⚙️ <strong>SNAP Engine Integration</strong>: Direct interface with SNAP Graph Processing Tool (GPT)</li>
+<li>🗂️ <strong>Modular Processing Pipeline</strong>: Customizable preprocessing and analysis workflows</li>
+<li>📦 <strong>Data Compatibility</strong>: Support for Sentinel-1, COSMO-SkyMed, and other SAR missions</li>
+<li>🔌 <strong>Extensible Architecture</strong>: Designed for interoperability with geospatial libraries</li>
+</ul>
+<h2 id="installation">Installation</h2>
+<pre class="codehilite"><code>pip<span class="w"> </span>install<span class="w"> </span>sarpyx
+</code></pre>
+<p>For development installation:</p>
+<pre class="codehilite"><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/ESA-PhiLab/sarpyx.git
+<span class="nb">cd</span><span class="w"> </span>sarpyx
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</code></pre>
+<h2 id="support-and-community">Support and Community</h2>
+<ul>
+<li>📧 <strong>Issues</strong>: <a href="https://github.com/ESA-PhiLab/sarpyx/issues">GitHub Issues</a></li>
+<li>💬 <strong>Discussions</strong>: <a href="https://github.com/ESA-PhiLab/sarpyx/discussions">GitHub Discussions</a></li>
+<li>📖 <strong>Documentation</strong>: <a href="https://sarpyx.readthedocs.io">Full Documentation</a></li>
+</ul>
+<h2 id="license">License</h2>
+<p>sarpyx is released under the Apache 2.0 License. See the <a href="../LICENSE">LICENSE</a> file for details.</p>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

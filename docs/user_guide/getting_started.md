@@ -1,10 +1,10 @@
-# Getting Started with SARPyX
+# Getting Started with sarpyx
 
-This guide provides a quick introduction to SARPyX and walks you through your first SAR processing tasks.
+This guide provides a quick introduction to sarpyx and walks you through your first SAR processing tasks.
 
-## Your First SARPyX Program
+## Your First sarpyx Program
 
-Let's start with a simple example using SARPyX's visualization utilities:
+Let's start with a simple example using sarpyx's visualization utilities:
 
 ```python
 import numpy as np
@@ -23,7 +23,7 @@ show_image(enhanced_data, title="Enhanced SAR Data", cmap='gray')
 
 ## Basic Workflow Overview
 
-SARPyX follows a modular approach to SAR processing:
+sarpyx follows a modular approach to SAR processing:
 
 1. **Data Loading**: Import SAR data from various formats
 2. **Preprocessing**: Apply calibration, filtering, and corrections
@@ -35,7 +35,7 @@ SARPyX follows a modular approach to SAR processing:
 
 ### Sub-Look Analysis Example
 
-Sub-Look Analysis (SLA) is one of SARPyX's core capabilities:
+Sub-Look Analysis (SLA) is one of sarpyx's core capabilities:
 
 ```python
 from sarpyx.sla import SubLookAnalysis
@@ -62,10 +62,10 @@ sublook_images = sla.Looks  # Shape: (numberOfLooks, rows, cols)
 
 ### SNAP Integration Example
 
-SARPyX provides seamless integration with ESA SNAP:
+sarpyx provides seamless integration with ESA SNAP:
 
 ```python
-from sarpyx.snap import GPT
+from sarpyx.snapflow.engine import GPT
 from pathlib import Path
 
 # Initialize GPT processor
@@ -114,7 +114,7 @@ show_image(ndpoll, title="NDPOLL Index", cmap='RdBu')
 
 ## Understanding the Module Structure
 
-SARPyX is organized into several main modules:
+sarpyx is organized into several main modules:
 
 ### `sarpyx.processor`
 Core SAR processing algorithms:
@@ -130,7 +130,7 @@ Sub-Look Analysis for aperture decomposition:
 - Sub-aperture extraction
 - Motion analysis capabilities
 
-### `sarpyx.snap`
+### `sarpyx.snapflow`
 SNAP integration:
 - GPT workflow automation
 - Graph processing chains
@@ -152,7 +152,7 @@ General utilities:
 
 ### Setting Processing Parameters
 
-Many SARPyX functions accept configuration parameters:
+Many sarpyx functions accept configuration parameters:
 
 ```python
 # Configure sub-look analysis
@@ -171,11 +171,11 @@ for key, value in sla_config.items():
 
 ### Working with Different SAR Sensors
 
-SARPyX supports multiple SAR missions:
+sarpyx supports multiple SAR missions:
 
 ```python
 # Sentinel-1 processing
-from sarpyx.snap import GPT
+from sarpyx.snapflow.engine import GPT
 gpt_s1 = GPT(product="S1A_*.zip", mode="MacOS")
 
 # COSMO-SkyMed processing  
@@ -187,7 +187,7 @@ gpt_sao = GPT(product="SAO_*.zip", mode=None)
 
 ## Error Handling and Debugging
 
-SARPyX provides verbose options for debugging:
+sarpyx provides verbose options for debugging:
 
 ```python
 # Enable verbose output
@@ -227,7 +227,7 @@ print(f"Memory usage after cleanup: {psutil.virtual_memory().percent}%")
 ```
 
 ### Parallel Processing
-SARPyX can leverage multiple cores:
+sarpyx can leverage multiple cores:
 - GDAL operations are often parallelized
 - NumPy operations use multiple threads
 - Custom parallel processing can be implemented
@@ -295,4 +295,4 @@ def sar_processing_pipeline(product_path):
 results = sar_processing_pipeline("my_product.zip")
 ```
 
-Ready to dive deeper? Continue with [Basic Concepts](basic_concepts.md) to understand the theoretical foundations of SAR processing with SARPyX.
+Ready to dive deeper? Continue with [Basic Concepts](basic_concepts.md) to understand the theoretical foundations of SAR processing with sarpyx.

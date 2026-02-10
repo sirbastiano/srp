@@ -8,13 +8,27 @@ import json
 
 import numpy as np
 import pandas as pd
-from s1isp.decoder import (
-    EUdfDecodingMode, 
-    SubCommutatedDataDecoder,
-    decode_stream, 
-    decoded_stream_to_dict, 
-    decoded_subcomm_to_dict
-)
+
+# Optional s1isp import - required for SAR decoding functionality
+try:
+    from s1isp.decoder import (
+        EUdfDecodingMode, 
+        SubCommutatedDataDecoder,
+        decode_stream, 
+        decoded_stream_to_dict, 
+        decoded_subcomm_to_dict
+    )
+    S1ISP_AVAILABLE = True
+except ImportError as e:
+    S1ISP_AVAILABLE = False
+    _IMPORT_ERROR = str(e)
+    # Create dummy classes/functions to prevent immediate failures
+    EUdfDecodingMode = None
+    SubCommutatedDataDecoder = None
+    decode_stream = None
+    decoded_stream_to_dict = None
+    decoded_subcomm_to_dict = None
+
 from . import code2physical as pt
 from ...utils import zarr_utils
 
@@ -23,6 +37,19 @@ save_array_to_zarr = zarr_utils.save_array_to_zarr  # Ensure zarr_utils is impor
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+
+def _check_s1isp_available():
+    """Check if s1isp is available and raise informative error if not."""
+    if not S1ISP_AVAILABLE:
+        error_msg = (
+            f"s1isp package is not available: {_IMPORT_ERROR}\n"
+            f"SAR decoding functionality requires s1isp to be installed.\n"
+            f"Please install it separately using:\n"
+            f"  pip install git+https://github.com/avalentino/s1isp.git\n"
+            f"Or see docs/user_guide/INSTALL_S1ISP.md for detailed instructions."
+        )
+        raise ImportError(error_msg)
 
 
 def extract_echo_bursts(records: List[Any]) -> Tuple[List[List[Any]], List[int]]:
@@ -143,7 +170,11 @@ def extract_headers(file_path: Union[str, Path], mode: str = 's1isp', apply_tran
         ValueError: If mode is not supported or file_path is invalid.
         FileNotFoundError: If file_path does not exist.
         RuntimeError: If decoding fails or transformation fails.
+        ImportError: If s1isp is not available.
     """
+    # Check if s1isp is available
+    _check_s1isp_available()
+    
     supported_modes = ['richa', 's1isp']
     if mode not in supported_modes:
         raise ValueError(f"Mode must be one of {supported_modes}, got '{mode}'")
@@ -283,7 +314,11 @@ def decode_radar_file(input_file: Union[str, Path], apply_transformations: bool 
     Raises:
         FileNotFoundError: If input file does not exist.
         RuntimeError: If decoding process fails.
+        ImportError: If s1isp is not available.
     """
+    # Check if s1isp is available
+    _check_s1isp_available()
+    
     input_file = Path(input_file)
     if not input_file.exists():
         raise FileNotFoundError(f'Input file not found: {input_file}')

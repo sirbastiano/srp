@@ -114,8 +114,12 @@ class GPT:
         outdir: str | Path,
         format: str = 'BEAM-DIMAP',
         gpt_path: Optional[str] = '/usr/local/snap/bin/gpt',
-        memory: str = '64G',
-        parallelism: Optional[int] = 16,
+        memory: Optional[str] = None,
+        parallelism: Optional[int] = 14,
+        snap_userdir: Optional[str | Path] = None,
+        cache_size: Optional[str] = None,
+        timeout: Optional[int] = 7200,
+        mode: Optional[str] = None,
     ):
         """Initialize SNAP GPT processing engine.
         
@@ -125,6 +129,11 @@ class GPT:
             format: Output format for processed data. Defaults to 'BEAM-DIMAP'.
             gpt_path: Path to the SNAP GPT executable.
                 Defaults to '/usr/local/snap/bin/gpt'.
+            memory: Java heap size for GPT (e.g., "32G"). If None, SNAP defaults apply.
+            cache_size: Tile cache size for GPT (-c option). If None, SNAP defaults apply.
+            timeout: Max seconds for a single GPT invocation. If None, no timeout is enforced.
+            mode: Platform mode hint ('Ubuntu', 'MacOS', 'Windows') used to resolve
+                the default GPT path when gpt_path is not provided.
             
         Raises:
             AssertionError: If product path doesn't exist, format is unsupported,
@@ -150,9 +159,32 @@ class GPT:
         
         self.parallelism = parallelism
         self.memory = memory
+        self.cache_size = cache_size
+        self.timeout = timeout
+        self.mode = mode
+
+        if snap_userdir is None:
+            snap_userdir = os.getenv('SNAP_USERDIR') or os.getenv('snap_userdir')
+        self.snap_userdir = Path(snap_userdir).expanduser() if snap_userdir else None
+        if self.snap_userdir:
+            self.snap_userdir.mkdir(parents=True, exist_ok=True)
         
         self.gpt_executable = self._get_gpt_executable(gpt_path)
         self.current_cmd: List[str] = []
+
+    def _base_cmd(self) -> List[str]:
+        """Build the base GPT command with shared options."""
+        cmd = [self.gpt_executable]
+        if self.snap_userdir:
+            cmd.append(f'-J-Dsnap.userdir={self.snap_userdir.as_posix()}')
+        if self.parallelism:
+            cmd.append(f'-q {self.parallelism}')
+        if self.memory:
+            cmd.append(f'-J-Xmx{self.memory}')
+        if self.cache_size:
+            cmd.append(f'-c {self.cache_size}')
+        cmd.extend(['-x', '-e'])
+        return cmd
 
     def _get_gpt_executable(self, gpt_path: Optional[str] = None) -> str:
         """Determine the correct GPT executable path.
@@ -181,14 +213,27 @@ class GPT:
 
     def _reset_command(self) -> None:
         """Reset the command list for a new GPT operation."""
-        self.current_cmd = [
-            self.gpt_executable,
-            f'-q {self.parallelism}',
-            f'-c {self.memory}',
-            '-x',
-            '-e',
-            f'-Ssource={self.prod_path.as_posix()}'
-        ]
+        self.current_cmd = self._base_cmd()
+        self.current_cmd.append(f'-Ssource={self.prod_path.as_posix()}')
+
+    def run_graph(
+        self,
+        graph_path: str | Path,
+        output_path: str | Path,
+        delete_graph: bool = False,
+    ) -> Optional[str]:
+        """Execute a standalone GPT XML graph file."""
+        graph_path = Path(graph_path)
+        output_path = Path(output_path)
+        self.current_cmd = self._base_cmd()
+        self.current_cmd.append(graph_path.as_posix())
+
+        if self._execute_command():
+            self.prod_path = output_path
+            if delete_graph:
+                graph_path.unlink(missing_ok=True)
+            return output_path.as_posix()
+        return None
 
     def _build_output_path(self, suffix: str, output_name: Optional[str] = None) -> Path:
         """Build the output path for a processing step.
@@ -216,18 +261,21 @@ class GPT:
         Returns:
             True if command executed successfully, False otherwise.
         """
+        operator_label = self._get_operator_label()
+        self._print_operator_banner(operator_label)
         cmd_str = ' '.join(self.current_cmd)
         print(f'Executing GPT command: {cmd_str}')
         
         try:
-            process = subprocess.run(
-                cmd_str,
-                shell=True,
-                check=True,
-                capture_output=True,
-                text=True,
-                timeout=3600
-            )
+            run_kwargs = {
+                "shell": True,
+                "check": True,
+                "capture_output": True,
+                "text": True,
+            }
+            if self.timeout is not None:
+                run_kwargs["timeout"] = self.timeout
+            process = subprocess.run(cmd_str, **run_kwargs)
             
             if process.stdout:
                 print(f'GPT Output: {process.stdout}')
@@ -240,7 +288,6 @@ class GPT:
         except subprocess.TimeoutExpired:
             print('Error: GPT command timed out after 1 hour')
             return False
-            
         except subprocess.CalledProcessError as e:
             print(f'Error executing GPT command: {cmd_str}')
             print(f'Return code: {e.returncode}')
@@ -249,15 +296,38 @@ class GPT:
             if e.stderr:
                 print(f'Stderr: {e.stderr}')
             return False
-            
         except FileNotFoundError:
             print(f"Error: GPT executable '{self.gpt_executable}' not found!")
             print('Ensure SNAP is installed and configured correctly.')
             return False
-            
         except Exception as e:
             print(f'Unexpected error during GPT execution: {type(e).__name__}: {e}')
             return False
+
+    def _get_operator_label(self) -> str:
+        """Infer a readable operator label from the current command."""
+        operator_part = None
+        for part in self.current_cmd:
+            if part.startswith('-'):
+                continue
+            operator_part = part
+
+        if not operator_part:
+            return 'Unknown Operator'
+
+        operator_token = operator_part.split()[0]
+        if operator_token.lower().endswith('.xml'):
+            graph_name = Path(operator_token).name
+            return f'Graph: {graph_name}'
+
+        return operator_token
+
+    def _print_operator_banner(self, operator_label: str) -> None:
+        """Print a clear operator banner bounded by 120 '*' characters."""
+        banner = '*' * 120
+        print(banner)
+        print(f'OPERATOR: {operator_label}')
+        print(banner)
 
     def _call(self, suffix: str, output_name: Optional[str] = None) -> Optional[str]:
         """Finalize and execute the GPT command.
@@ -421,13 +491,12 @@ class GPT:
 
         try:
             xml_path.write_text(graph_xml, encoding='utf-8')
-            self.current_cmd = [self.gpt_executable, xml_path.as_posix()]
-
-            if self._execute_command():
-                self.prod_path = output_path
-                xml_path.unlink(missing_ok=True)
-                return output_path.as_posix()
-            return None
+            result = self.run_graph(
+                graph_path=xml_path,
+                output_path=output_path,
+                delete_graph=True,
+            )
+            return result
 
         except Exception as e:
             print(f'Error generating LandMask XML graph: {e}')
@@ -2187,7 +2256,7 @@ class GPT:
         standard_grid_origin_y: float = 0.0,
         nodata_value_at_sea: bool = False,
         save_dem: bool = True,
-        save_lat_lon: bool = True,
+        save_lat_lon: bool = False,
         save_incidence_angle_from_ellipsoid: bool = False,
         save_local_incidence_angle: bool = True,
         save_projected_local_incidence_angle: bool = False,
@@ -2196,7 +2265,7 @@ class GPT:
         output_complex: bool = True,
         apply_radiometric_normalization: bool = False,
         save_sigma_nought: bool = False,
-        save_gamma_nought: bool = True,
+        save_gamma_nought: bool = False,
         save_beta_nought: bool = False,
         incidence_angle_for_sigma0: str = 'Use projected local incidence angle from DEM',
         incidence_angle_for_gamma0: str = 'Use projected local incidence angle from DEM',
@@ -6245,6 +6314,3 @@ class GPT:
     Binning = binning
     FuClassification = fu_classification
     FlhMci = flh_mci
-
-
-

@@ -1,6 +1,6 @@
-# SARPYX Examples
+# sarpyx Examples
 
-This directory contains ready-to-run code examples demonstrating SARPYX features and real-world applications. Examples are organized by complexity and application domain.
+This directory contains ready-to-run code examples demonstrating sarpyx features and real-world applications. Examples are organized by complexity and application domain.
 
 ## 📁 Directory Structure
 
@@ -50,7 +50,7 @@ sla.Generation()
 
 ### SNAP Workflow Automation
 ```python
-from sarpyx.snap import GPT
+from sarpyx.snapflow.engine import GPT
 
 # Automated SNAP processing
 gpt = GPT(product="data/sample_s1_grd/S1A_IW_GRDH_1SDV.zip", outdir="output")
@@ -139,7 +139,7 @@ Process multiple SAR products automatically with error handling and quality cont
 Memory-efficient processing for large datasets and production workflows.
 
 ### [Integration Examples](advanced/integration.py)
-Integrating SARPyX with other geospatial libraries like GDAL, rasterio, and geopandas.
+Integrating sarpyx with other geospatial libraries like GDAL, rasterio, and geopandas.
 
 ## Utility Examples
 
@@ -250,7 +250,7 @@ Many examples are available as Google Colab notebooks:
 ## 📋 Example Categories
 
 ### Basic Examples (`basic/`)
-Perfect for getting started with SARPYX:
+Perfect for getting started with sarpyx:
 - **basic_sublook_analysis.py**: Core SLA functionality demonstration
 - **snap_integration.py**: SNAP GPT automation basics  
 - **visualization_gallery.py**: Plotting and display utilities
@@ -280,7 +280,7 @@ Jupyter notebooks with step-by-step explanations:
 
 ### Prerequisites
 ```bash
-# Install SARPYX with all dependencies
+# Install sarpyx with all dependencies
 pip install sarpyx[full]
 
 # Or for development
@@ -482,7 +482,7 @@ We welcome contributions! To add a new example:
 5. **Submit a pull request**
 
 ### Example Contribution Checklist
-- [ ] Code follows SARPYX style guidelines
+- [ ] Code follows sarpyx style guidelines
 - [ ] Includes comprehensive docstrings
 - [ ] Has corresponding test data
 - [ ] Generates expected outputs
@@ -521,12 +521,12 @@ input_file = os.path.abspath("data/sample.zip")
 ### Getting Help
 - Check the [troubleshooting guide](../user_guide/troubleshooting.md)
 - Review [API documentation](../api/)
-- Post issues on [GitHub](https://github.com/your-repo/SARPYX/issues)
+- Post issues on [GitHub](https://github.com/your-repo/sarpyx/issues)
 
 ## 📄 License
 
-All examples are provided under the same license as SARPYX. See LICENSE file for details.
+All examples are provided under the same license as sarpyx. See LICENSE file for details.
 
 ---
 
-*Start with the basic examples and gradually progress to more complex applications. Each example builds upon previous concepts and introduces new SARPYX capabilities.*
+*Start with the basic examples and gradually progress to more complex applications. Each example builds upon previous concepts and introduces new sarpyx capabilities.*

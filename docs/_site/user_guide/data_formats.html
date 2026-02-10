@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Data Formats and Compatibility – sarpyx Docs</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../index.html"><img class="logo" src="../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../user_guide/index.html">Overview</a>
+<a href="../user_guide/installation.html">Installation</a>
+<a href="../user_guide/getting_started.html">Getting Started</a>
+<a href="../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../user_guide/data_formats.html" class="active">Data Formats</a>
+<a href="../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../user_guide/science_applications.html">Science Applications</a>
+<a href="../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../tutorials/index.html">Overview</a>
+<a href="../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../api/index.html">Overview</a>
+<a href="../api/snapflow/index.html">Snapflow</a>
+<a href="../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../api/science/index.html">Science</a>
+<a href="../api/sla/index.html">SLA</a>
+<a href="../api/processor/index.html">Processor</a>
+<a href="../api/utils/index.html">Utils</a>
+<a href="../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../developer_guide/architecture.html">Architecture</a>
+<a href="../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="data-formats-and-compatibility">Data Formats and Compatibility</h1>
+<p>This guide covers the data formats supported by sarpyx for input and output operations, along with format-specific considerations and best practices.</p>
+<h2 id="supported-input-formats">Supported Input Formats</h2>
+<h3 id="sar-product-formats">SAR Product Formats</h3>
+<p>sarpyx supports the following SAR mission data formats:</p>
+<h4 id="sentinel-1-copernicus">Sentinel-1 (Copernicus)</h4>
+<ul>
+<li><strong>Format</strong>: SAFE (Standard Archive Format for Europe)</li>
+<li><strong>File Extension</strong>: <code>.zip</code> (compressed SAFE packages)</li>
+<li><strong>Product Types</strong>: </li>
+<li>SLC (Single Look Complex)</li>
+<li>GRD (Ground Range Detected)</li>
+<li><strong>Polarizations</strong>: VV, VH, HH, HV (mission dependent)</li>
+<li><strong>Processing Levels</strong>: Level-1 and Level-2</li>
+</ul>
+<pre class="codehilite"><code><span class="c1"># Example: Loading Sentinel-1 SLC data</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.sla</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubLookAnalysis</span>
+
+<span class="c1"># Input: ZIP file containing SAFE format</span>
+<span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="s2">&quot;S1A_IW_SLC_1SDV_20230101T120000_20230101T120030_046123_058A2B_1234.zip&quot;</span><span class="p">)</span>
+</code></pre>
+<h4 id="cosmo-skymed-italian-space-agency">COSMO-SkyMed (Italian Space Agency)</h4>
+<ul>
+<li><strong>Format</strong>: HDF5-based proprietary format</li>
+<li><strong>File Extension</strong>: Various (<code>.h5</code>, custom extensions)</li>
+<li><strong>Product Types</strong>: SCS (Single Look Complex Slant Range)</li>
+<li><strong>Polarizations</strong>: HH, HV, VH, VV</li>
+<li><strong>Processing Levels</strong>: Level-1A, Level-1B</li>
+</ul>
+<pre class="codehilite"><code><span class="c1"># Example: COSMO-SkyMed processing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.snapflow.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPT</span>
+
+<span class="c1"># Initialize with COSMO-SkyMed product</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product_path</span><span class="o">=</span><span class="s2">&quot;CSK_product.h5&quot;</span><span class="p">,</span> 
+          <span class="n">outdir</span><span class="o">=</span><span class="s2">&quot;output/&quot;</span><span class="p">,</span> 
+          <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;MacOS&quot;</span><span class="p">)</span>  <span class="c1"># or &quot;Ubuntu&quot;</span>
+</code></pre>
+<h4 id="alos-palsar-alos-2-palsar-2-jaxa">ALOS PALSAR / ALOS-2 PALSAR-2 (JAXA)</h4>
+<ul>
+<li><strong>Format</strong>: CEOS (Committee on Earth Observation Satellites)</li>
+<li><strong>File Extension</strong>: Various (directory structures)</li>
+<li><strong>Product Types</strong>: Level 1.1, Level 1.5</li>
+<li><strong>Polarizations</strong>: HH, HV, VH, VV</li>
+<li><strong>Band</strong>: L-band</li>
+</ul>
+<h3 id="derived-data-formats">Derived Data Formats</h3>
+<h4 id="complex-sar-data">Complex SAR Data</h4>
+<ul>
+<li><strong>Format</strong>: GeoTIFF with complex data types</li>
+<li><strong>File Extension</strong>: <code>.tif</code>, <code>.tiff</code></li>
+<li><strong>Data Type</strong>: Complex64 (32-bit real + 32-bit imaginary)</li>
+<li><strong>Usage</strong>: Output from sub-look analysis, interferometric processing</li>
+</ul>
+<pre class="codehilite"><code><span class="c1"># Reading complex GeoTIFF</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">osgeo</span><span class="w"> </span><span class="kn">import</span> <span class="n">gdal</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Open complex image (I/Q channels)</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="s2">&quot;complex_data.tif&quot;</span><span class="p">)</span>
+<span class="n">real_band</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">()</span>
+<span class="n">imag_band</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">()</span>
+<span class="n">complex_data</span> <span class="o">=</span> <span class="n">real_band</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">imag_band</span>
+</code></pre>
+<h4 id="amplitudeintensity-images">Amplitude/Intensity Images</h4>
+<ul>
+<li><strong>Format</strong>: GeoTIFF (single-band)</li>
+<li><strong>File Extension</strong>: <code>.tif</code>, <code>.tiff</code></li>
+<li><strong>Data Type</strong>: Float32, UInt16</li>
+<li><strong>Usage</strong>: Calibrated backscatter, derived indices</li>
+</ul>
+<h2 id="snap-integration-formats">SNAP Integration Formats</h2>
+<p>sarpyx integrates with ESA&rsquo;s SNAP (Sentinel Application Platform) for advanced processing workflows.</p>
+<h3 id="snap-native-formats">SNAP Native Formats</h3>
+<ul>
+<li><strong>BEAM-DIMAP</strong>: <code>.dim</code> + <code>.data</code> directory</li>
+<li><strong>NetCDF</strong>: <code>.nc</code> files</li>
+<li><strong>GeoTIFF</strong>: <code>.tif</code> for final products</li>
+<li><strong>HDF5</strong>: <code>.h5</code> for complex datasets</li>
+</ul>
+<h3 id="processing-chain-output">Processing Chain Output</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.snapflow.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPT</span>
+
+<span class="c1"># Example SNAP processing chain</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product_path</span><span class="o">=</span><span class="s2">&quot;input.zip&quot;</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s2">&quot;output/&quot;</span><span class="p">)</span>
+
+<span class="c1"># Calibration (outputs BEAM-DIMAP by default)</span>
+<span class="n">cal_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">(</span><span class="n">Pols</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;VV&#39;</span><span class="p">,</span> <span class="s1">&#39;VH&#39;</span><span class="p">])</span>
+
+<span class="c1"># Export to GeoTIFF for external use</span>
+<span class="n">gpt</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="s1">&#39;GeoTIFF&#39;</span>
+<span class="n">final_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;FINAL&#39;</span><span class="p">)</span>
+</code></pre>
+<h2 id="output-formats-and-data-products">Output Formats and Data Products</h2>
+<h3 id="sub-look-analysis-products">Sub-Look Analysis Products</h3>
+<h4 id="numpy-arrays-npz">NumPy Arrays (.npz)</h4>
+<p>Compressed arrays containing sub-look decomposition results:</p>
+<pre class="codehilite"><code><span class="c1"># Save sub-look data</span>
+<span class="n">np</span><span class="o">.</span><span class="n">savez_compressed</span><span class="p">(</span>
+    <span class="s1">&#39;sublook_results.npz&#39;</span><span class="p">,</span>
+    <span class="n">looks</span><span class="o">=</span><span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">,</span>                    <span class="c1"># Complex sub-look images</span>
+    <span class="n">frequencies</span><span class="o">=</span><span class="n">sla</span><span class="o">.</span><span class="n">freqCentr</span><span class="p">,</span>          <span class="c1"># Center frequencies</span>
+    <span class="n">freq_min</span><span class="o">=</span><span class="n">sla</span><span class="o">.</span><span class="n">freqMin</span><span class="p">,</span>              <span class="c1"># Minimum frequencies  </span>
+    <span class="n">freq_max</span><span class="o">=</span><span class="n">sla</span><span class="o">.</span><span class="n">freqMax</span>               <span class="c1"># Maximum frequencies</span>
+<span class="p">)</span>
+
+<span class="c1"># Load sub-look data</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;sublook_results.npz&#39;</span><span class="p">)</span>
+<span class="n">sublooks</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;looks&#39;</span><span class="p">]</span>
+</code></pre>
+<h4 id="metadata-json">Metadata (JSON)</h4>
+<p>Processing parameters and quality metrics:</p>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;processing_parameters&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;numberOfLooks&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="s1">&#39;centroidSeparations&#39;</span><span class="p">:</span> <span class="mi">700</span><span class="p">,</span>
+        <span class="s1">&#39;subLookBandwidth&#39;</span><span class="p">:</span> <span class="mi">700</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;quality_metrics&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;coherence&#39;</span><span class="p">:</span> <span class="n">coherence_values</span><span class="p">,</span>
+        <span class="s1">&#39;snr&#39;</span><span class="p">:</span> <span class="n">signal_to_noise_ratio</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;metadata.json&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</code></pre>
+<h3 id="scientific-products">Scientific Products</h3>
+<h4 id="vegetation-indices">Vegetation Indices</h4>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science.indices</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_rvi</span><span class="p">,</span> <span class="n">calculate_ndpoll</span>
+
+<span class="c1"># Calculate indices (returns NumPy arrays)</span>
+<span class="n">rvi</span> <span class="o">=</span> <span class="n">calculate_rvi</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+<span class="n">ndpoll</span> <span class="o">=</span> <span class="n">calculate_ndpoll</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+
+<span class="c1"># Save as GeoTIFF with spatial reference</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">osgeo</span><span class="w"> </span><span class="kn">import</span> <span class="n">gdal</span><span class="p">,</span> <span class="n">osr</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">save_geotiff</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">geotransform</span><span class="p">,</span> <span class="n">projection</span><span class="p">):</span>
+    <span class="n">driver</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GetDriverByName</span><span class="p">(</span><span class="s1">&#39;GTiff&#39;</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">Create</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GDT_Float32</span><span class="p">)</span>
+    <span class="n">dataset</span><span class="o">.</span><span class="n">SetGeoTransform</span><span class="p">(</span><span class="n">geotransform</span><span class="p">)</span>
+    <span class="n">dataset</span><span class="o">.</span><span class="n">SetProjection</span><span class="p">(</span><span class="n">projection</span><span class="p">)</span>
+    <span class="n">dataset</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">WriteArray</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre>
+<h3 id="visualization-outputs">Visualization Outputs</h3>
+<h4 id="matplotlib-figures-png-pdf">Matplotlib Figures (.png, .pdf)</h4>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="c1"># High-quality figure export</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sublook_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Sub-look 1 Amplitude&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;sublook_amplitude.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;sublook_amplitude.pdf&#39;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>  <span class="c1"># Vector format</span>
+</code></pre>
+<h2 id="format-conversion-utilities">Format Conversion Utilities</h2>
+<h3 id="matlab-compatibility">MATLAB Compatibility</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_matlab_mat</span>
+
+<span class="c1"># Save data for MATLAB analysis</span>
+<span class="n">save_matlab_mat</span><span class="p">(</span><span class="n">sublook_data</span><span class="p">,</span> <span class="s2">&quot;sublooks&quot;</span><span class="p">,</span> <span class="s2">&quot;output/&quot;</span><span class="p">)</span>
+<span class="c1"># Creates: output/sublooks.mat</span>
+</code></pre>
+<h3 id="data-type-conversions">Data Type Conversions</h3>
+<pre class="codehilite"><code><span class="c1"># Convert complex to amplitude/phase</span>
+<span class="n">amplitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">complex_data</span><span class="p">)</span>
+<span class="n">phase</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">complex_data</span><span class="p">)</span>
+
+<span class="c1"># Convert to dB scale</span>
+<span class="n">amplitude_db</span> <span class="o">=</span> <span class="mi">20</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">amplitude</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>  <span class="c1"># Avoid log(0)</span>
+
+<span class="c1"># Normalize for visualization</span>
+<span class="n">normalized</span> <span class="o">=</span> <span class="p">(</span><span class="n">amplitude</span> <span class="o">-</span> <span class="n">amplitude</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">/</span> <span class="p">(</span><span class="n">amplitude</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">amplitude</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+</code></pre>
+<h2 id="file-organization-best-practices">File Organization Best Practices</h2>
+<h3 id="recommended-directory-structure">Recommended Directory Structure</h3>
+<pre><code>project/
+├── data/
+│   ├── raw/                    # Original SAR products
+│   │   ├── S1A_IW_SLC_*.zip
+│   │   └── CSK_*.h5
+│   ├── processed/              # Intermediate products
+│   │   ├── calibrated/
+│   │   ├── coregistered/
+│   │   └── filtered/
+│   └── products/               # Final outputs
+│       ├── sublooks/
+│       ├── indices/
+│       └── figures/
+├── scripts/                    # Processing scripts
+├── config/                     # Configuration files
+└── docs/                       # Documentation
+</code></pre>
+<h3 id="naming-conventions">Naming Conventions</h3>
+<pre class="codehilite"><code><span class="c1"># Recommended file naming patterns</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_filename</span><span class="p">(</span><span class="n">product_type</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">polarization</span><span class="p">,</span> <span class="n">processing_level</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">product_type</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">date</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">polarization</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">processing_level</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<span class="c1"># Examples:</span>
+<span class="c1"># S1A_SLC_20230101_VV_L1.tif</span>
+<span class="c1"># CSK_SCS_20230101_HH_sublook.npz</span>
+<span class="c1"># indices_RVI_20230101_VV_VH.tif</span>
+</code></pre>
+<h2 id="performance-considerations">Performance Considerations</h2>
+<h3 id="memory-efficient-processing">Memory-Efficient Processing</h3>
+<pre class="codehilite"><code><span class="c1"># For large datasets, process in chunks</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_large_image</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">chunk_size</span><span class="o">=</span><span class="mi">1024</span><span class="p">):</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">input_path</span><span class="p">)</span>
+    <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">RasterYSize</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">RasterXSize</span>
+
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">):</span>
+            <span class="c1"># Read chunk</span>
+            <span class="n">window</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> 
+                                       <span class="nb">min</span><span class="p">(</span><span class="n">chunk_size</span><span class="p">,</span> <span class="n">cols</span><span class="o">-</span><span class="n">col</span><span class="p">),</span>
+                                       <span class="nb">min</span><span class="p">(</span><span class="n">chunk_size</span><span class="p">,</span> <span class="n">rows</span><span class="o">-</span><span class="n">row</span><span class="p">))</span>
+            <span class="c1"># Process chunk</span>
+            <span class="n">processed</span> <span class="o">=</span> <span class="n">process_chunk</span><span class="p">(</span><span class="n">window</span><span class="p">)</span>
+            <span class="c1"># Save result</span>
+            <span class="n">save_chunk</span><span class="p">(</span><span class="n">processed</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+</code></pre>
+<h3 id="compression-settings">Compression Settings</h3>
+<pre class="codehilite"><code><span class="c1"># Optimal compression for different data types</span>
+<span class="n">compression_settings</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;complex_data&#39;</span><span class="p">:</span> <span class="s1">&#39;LZW&#39;</span><span class="p">,</span>      <span class="c1"># Good for complex patterns</span>
+    <span class="s1">&#39;amplitude&#39;</span><span class="p">:</span> <span class="s1">&#39;DEFLATE&#39;</span><span class="p">,</span>     <span class="c1"># Better for smooth amplitude</span>
+    <span class="s1">&#39;binary_mask&#39;</span><span class="p">:</span> <span class="s1">&#39;CCITT_T6&#39;</span><span class="p">,</span>  <span class="c1"># Best for binary data</span>
+    <span class="s1">&#39;indices&#39;</span><span class="p">:</span> <span class="s1">&#39;LZW&#39;</span>            <span class="c1"># Good for scientific data</span>
+<span class="p">}</span>
+</code></pre>
+<h2 id="common-format-issues-and-solutions">Common Format Issues and Solutions</h2>
+<h3 id="issue-1-large-file-sizes">Issue 1: Large File Sizes</h3>
+<p><strong>Problem</strong>: SAR products can be very large (&gt;1GB)
+<strong>Solution</strong>: Use chunked processing and compression</p>
+<pre class="codehilite"><code><span class="c1"># Enable chunked reading</span>
+<span class="n">gdal</span><span class="o">.</span><span class="n">SetConfigOption</span><span class="p">(</span><span class="s1">&#39;GDAL_CACHEMAX&#39;</span><span class="p">,</span> <span class="s1">&#39;512&#39;</span><span class="p">)</span>  <span class="c1"># 512MB cache</span>
+<span class="n">gdal</span><span class="o">.</span><span class="n">SetConfigOption</span><span class="p">(</span><span class="s1">&#39;VSI_CACHE&#39;</span><span class="p">,</span> <span class="s1">&#39;TRUE&#39;</span><span class="p">)</span>
+</code></pre>
+<h3 id="issue-2-coordinate-reference-systems">Issue 2: Coordinate Reference Systems</h3>
+<p><strong>Problem</strong>: Inconsistent CRS between products
+<strong>Solution</strong>: Standardize to common projection</p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">osgeo</span><span class="w"> </span><span class="kn">import</span> <span class="n">osr</span>
+
+<span class="c1"># Define target CRS (e.g., UTM)</span>
+<span class="n">target_srs</span> <span class="o">=</span> <span class="n">osr</span><span class="o">.</span><span class="n">SpatialReference</span><span class="p">()</span>
+<span class="n">target_srs</span><span class="o">.</span><span class="n">ImportFromEPSG</span><span class="p">(</span><span class="mi">32633</span><span class="p">)</span>  <span class="c1"># UTM Zone 33N</span>
+
+<span class="c1"># Reproject if needed</span>
+<span class="n">gdal</span><span class="o">.</span><span class="n">Warp</span><span class="p">(</span><span class="s1">&#39;output_reprojected.tif&#39;</span><span class="p">,</span> <span class="s1">&#39;input.tif&#39;</span><span class="p">,</span> <span class="n">dstSRS</span><span class="o">=</span><span class="n">target_srs</span><span class="p">)</span>
+</code></pre>
+<h3 id="issue-3-complex-data-visualization">Issue 3: Complex Data Visualization</h3>
+<p><strong>Problem</strong>: Complex data cannot be directly displayed
+<strong>Solution</strong>: Use amplitude/phase or RGB composite</p>
+<pre class="codehilite"><code><span class="c1"># Create RGB composite from complex data</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">complex_to_rgb</span><span class="p">(</span><span class="n">complex_data</span><span class="p">):</span>
+    <span class="n">amplitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">complex_data</span><span class="p">)</span>
+    <span class="n">phase</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">complex_data</span><span class="p">)</span>
+
+    <span class="c1"># Normalize</span>
+    <span class="n">amp_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">amplitude</span> <span class="o">/</span> <span class="n">amplitude</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">*</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+    <span class="n">phase_norm</span> <span class="o">=</span> <span class="p">((</span><span class="n">phase</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+
+    <span class="c1"># Create RGB (R=amplitude, G=phase, B=constant)</span>
+    <span class="n">rgb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">amp_norm</span><span class="p">,</span> <span class="n">phase_norm</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">amp_norm</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">rgb</span>
+</code></pre>
+<h2 id="integration-with-external-tools">Integration with External Tools</h2>
+<h3 id="qgis-integration">QGIS Integration</h3>
+<ul>
+<li>Export to GeoTIFF with proper CRS</li>
+<li>Use .qml files for consistent styling</li>
+<li>Create pyramids for large datasets</li>
+</ul>
+<h3 id="python-ecosystem">Python Ecosystem</h3>
+<ul>
+<li><strong>rasterio</strong>: Modern raster I/O</li>
+<li><strong>xarray</strong>: N-dimensional labeled arrays</li>
+<li><strong>dask</strong>: Parallel processing for large datasets</li>
+<li><strong>geopandas</strong>: Vector data integration</li>
+</ul>
+<pre class="codehilite"><code><span class="c1"># Example: Using rasterio for modern I/O</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">rasterio</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rasterio.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">Resampling</span>
+
+<span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;input.tif&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
+    <span class="c1"># Read with resampling</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">out_shape</span><span class="o">=</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">count</span><span class="p">,</span> <span class="n">src</span><span class="o">.</span><span class="n">height</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">src</span><span class="o">.</span><span class="n">width</span><span class="o">//</span><span class="mi">2</span><span class="p">),</span>
+                   <span class="n">resampling</span><span class="o">=</span><span class="n">Resampling</span><span class="o">.</span><span class="n">bilinear</span><span class="p">)</span>
+</code></pre>
+<p>For more information on specific format requirements or conversion utilities, see the <a href="../api/index.html">API Reference</a> or check the <a href="../examples/index.html">examples</a> for practical implementations.</p>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,6 +1,6 @@
-# SNAP Module API
+# Snapflow Module API
 
-The `sarpyx.snap` module provides seamless integration with ESA's SNAP (Sentinel Application Platform) Graph Processing Tool (GPT), enabling automated SAR preprocessing, calibration, coregistration, and advanced processing workflows.
+The `sarpyx.snapflow` module provides seamless integration with ESA's SNAP (Sentinel Application Platform) Graph Processing Tool (GPT), enabling automated SAR preprocessing, calibration, coregistration, and advanced processing workflows.
 
 ## Overview
 
@@ -9,12 +9,12 @@ The SNAP module serves as a Python wrapper for SNAP's command-line GPT tool, all
 - Chain multiple processing operations
 - Handle different SAR missions (Sentinel-1, COSMO-SkyMed, etc.)
 - Automate batch processing workflows
-- Integrate SNAP preprocessing with SARPyX analysis
+- Integrate SNAP preprocessing with sarpyx analysis
 
 ## Quick Start
 
 ```python
-from sarpyx.snap import GPT
+from sarpyx.snapflow.engine import GPT
 
 # Initialize GPT processor
 gpt = GPT(
@@ -209,7 +209,7 @@ Imports vector data for masking or analysis.
 ### Basic Sentinel-1 Processing
 
 ```python
-from sarpyx.snap import GPT
+from sarpyx.snapflow.engine import GPT
 
 # Standard Sentinel-1 preprocessing workflow
 gpt = GPT(product='S1A_IW_SLC__1SDV.SAFE', outdir='output/')
@@ -318,7 +318,7 @@ for roi in areas_of_interest:
 
 ### CFAR Batch Processing
 ```python
-from sarpyx.snap.engine import CFAR
+from sarpyx.snapflow.engine import CFAR
 
 # Process single product with multiple thresholds
 result = CFAR(
@@ -420,12 +420,12 @@ except subprocess.CalledProcessError as e:
     print(f"SNAP GPT error: {e}")
 ```
 
-## Integration with Other SARPyX Modules
+## Integration with Other sarpyx Modules
 
 ### With Sub-Look Analysis
 
 ```python
-from sarpyx.snap import GPT
+from sarpyx.snapflow.engine import GPT
 from sarpyx.sla import SubLookAnalysis
 
 # Preprocess with SNAP
@@ -443,7 +443,7 @@ sla.Generation()
 ### With Science Applications
 
 ```python
-from sarpyx.snap import GPT
+from sarpyx.snapflow.engine import GPT
 from sarpyx.science import indices
 
 # Preprocess dual-pol data

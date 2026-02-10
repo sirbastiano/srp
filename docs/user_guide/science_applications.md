@@ -1,6 +1,6 @@
 # Science Applications
 
-SARPyX provides specialized algorithms and indices for various scientific applications using SAR data. This guide covers vegetation monitoring, polarimetric analysis, and other Earth observation applications.
+sarpyx provides specialized algorithms and indices for various scientific applications using SAR data. This guide covers vegetation monitoring, polarimetric analysis, and other Earth observation applications.
 
 ## Overview
 

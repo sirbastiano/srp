@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Architecture Guide – sarpyx Docs</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../index.html"><img class="logo" src="../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../user_guide/index.html">Overview</a>
+<a href="../user_guide/installation.html">Installation</a>
+<a href="../user_guide/getting_started.html">Getting Started</a>
+<a href="../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../user_guide/data_formats.html">Data Formats</a>
+<a href="../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../user_guide/science_applications.html">Science Applications</a>
+<a href="../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../tutorials/index.html">Overview</a>
+<a href="../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../api/index.html">Overview</a>
+<a href="../api/snapflow/index.html">Snapflow</a>
+<a href="../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../api/science/index.html">Science</a>
+<a href="../api/sla/index.html">SLA</a>
+<a href="../api/processor/index.html">Processor</a>
+<a href="../api/utils/index.html">Utils</a>
+<a href="../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../developer_guide/architecture.html" class="active">Architecture</a>
+<a href="../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="architecture-guide">Architecture Guide</h1>
+<p>This document provides an overview of sarpyx&rsquo;s architecture, design patterns, and implementation details for developers.</p>
+<h2 id="overview">Overview</h2>
+<p>sarpyx is designed as a modular SAR processing library with the following core principles:</p>
+<ul>
+<li><strong>Modularity</strong>: Each component has a clear, well-defined responsibility</li>
+<li><strong>Extensibility</strong>: Easy to add new algorithms and processing methods</li>
+<li><strong>Performance</strong>: Optimized for large-scale SAR data processing</li>
+<li><strong>Integration</strong>: Seamless integration with existing SAR tools (SNAP, GDAL)</li>
+<li><strong>Usability</strong>: Intuitive API for both beginners and experts</li>
+</ul>
+<h2 id="architecture-overview">Architecture Overview</h2>
+<pre><code>sarpyx Architecture
+
+┌─────────────────────────────────────────────────────────────┐
+│                    Public API Layer                        │
+├─────────────────────────────────────────────────────────────┤
+│  sla/        │  snap/       │  science/    │  utils/        │
+│  (Sub-Look   │  (SNAP       │  (Scientific │  (Utilities)   │
+│   Analysis)  │   Integration)│   Algorithms)│                │
+├─────────────────────────────────────────────────────────────┤
+│                   Core Processing Layer                     │
+├─────────────────────────────────────────────────────────────┤
+│                    I/O and Data Layer                       │
+├─────────────────────────────────────────────────────────────┤
+│                 External Dependencies                       │
+│  NumPy  │ SciPy │ GDAL │ SNAP │ Matplotlib │ Numba │ ...   │
+└─────────────────────────────────────────────────────────────┘
+</code></pre>
+<h2 id="module-structure">Module Structure</h2>
+<h3 id="1-sub-look-analysis-sla">1. Sub-Look Analysis (<code>sla/</code>)</h3>
+<p>Core module for sub-look decomposition and analysis.</p>
+<pre class="codehilite"><code><span class="n">sla</span><span class="o">/</span>
+<span class="err">├──</span> <span class="fm">__init__</span><span class="o">.</span><span class="n">py</span>           <span class="c1"># Public API exports</span>
+<span class="err">├──</span> <span class="n">core</span><span class="o">.</span><span class="n">py</span>              <span class="c1"># Main SubLookAnalyzer class</span>
+<span class="err">├──</span> <span class="n">decomposition</span><span class="o">.</span><span class="n">py</span>     <span class="c1"># Decomposition algorithms</span>
+<span class="err">├──</span> <span class="n">coherence</span><span class="o">.</span><span class="n">py</span>         <span class="c1"># Coherence estimation</span>
+<span class="err">├──</span> <span class="n">statistics</span><span class="o">.</span><span class="n">py</span>        <span class="c1"># Statistical analysis</span>
+<span class="err">└──</span> <span class="n">validation</span><span class="o">.</span><span class="n">py</span>        <span class="c1"># Quality assessment</span>
+</code></pre>
+<p><strong>Key Classes:</strong></p>
+<ul>
+<li><code>SubLookAnalyzer</code>: Main interface for sub-look analysis</li>
+<li><code>DecompositionResult</code>: Container for decomposition outputs</li>
+<li><code>CoherenceEstimator</code>: Coherence calculation algorithms</li>
+<li><code>StatisticalAnalyzer</code>: Statistical metrics and validation</li>
+</ul>
+<p><strong>Design Patterns:</strong></p>
+<pre class="codehilite"><code><span class="c1"># Factory pattern for different decomposition methods</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DecompositionFactory</span><span class="p">:</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_decomposer</span><span class="p">(</span><span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseDecomposer</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;frequency&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">FrequencyDecomposer</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;spatial&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">SpatialDecomposer</span><span class="p">()</span>
+        <span class="c1"># ...</span>
+
+<span class="c1"># Strategy pattern for different coherence estimators</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CoherenceEstimator</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">strategy</span><span class="p">:</span> <span class="n">CoherenceStrategy</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_strategy</span> <span class="o">=</span> <span class="n">strategy</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">estimate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data1</span><span class="p">,</span> <span class="n">data2</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_strategy</span><span class="o">.</span><span class="n">calculate</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">data2</span><span class="p">)</span>
+</code></pre>
+<h3 id="2-snap-integration-snap">2. SNAP Integration (<code>snap/</code>)</h3>
+<p>Interface layer for ESA SNAP toolkit integration.</p>
+<pre class="codehilite"><code><span class="n">snap</span><span class="o">/</span>
+<span class="err">├──</span> <span class="fm">__init__</span><span class="o">.</span><span class="n">py</span>           <span class="c1"># Public API exports</span>
+<span class="err">├──</span> <span class="n">workflows</span><span class="o">.</span><span class="n">py</span>         <span class="c1"># Pre-defined processing workflows</span>
+<span class="err">├──</span> <span class="n">operators</span><span class="o">.</span><span class="n">py</span>         <span class="c1"># Individual SNAP operators</span>
+<span class="err">├──</span> <span class="n">graph_builder</span><span class="o">.</span><span class="n">py</span>     <span class="c1"># Processing graph construction</span>
+<span class="err">└──</span> <span class="n">batch_processing</span><span class="o">.</span><span class="n">py</span>  <span class="c1"># Batch processing utilities</span>
+</code></pre>
+<p><strong>Key Classes:</strong></p>
+<ul>
+<li><code>SNAPWorkflow</code>: High-level workflow orchestration</li>
+<li><code>GraphBuilder</code>: Dynamic processing graph creation</li>
+<li><code>OperatorWrapper</code>: Python wrapper for SNAP operators</li>
+<li><code>BatchProcessor</code>: Large-scale batch processing</li>
+</ul>
+<p><strong>Architecture:</strong></p>
+<pre class="codehilite"><code><span class="c1"># Command pattern for SNAP operations</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SNAPOperation</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operator</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">operator</span> <span class="o">=</span> <span class="n">operator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">parameters</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_product</span><span class="p">):</span>
+        <span class="c1"># Execute SNAP operation</span>
+        <span class="k">pass</span>
+
+<span class="c1"># Builder pattern for processing graphs</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GraphBuilder</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operation</span><span class="p">:</span> <span class="n">SNAPOperation</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">operation</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProcessingGraph</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ProcessingGraph</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_operations</span><span class="p">)</span>
+</code></pre>
+<h3 id="3-science-algorithms-science">3. Science Algorithms (<code>science/</code>)</h3>
+<p>Scientific algorithms and indices for SAR analysis.</p>
+<pre class="codehilite"><code><span class="n">science</span><span class="o">/</span>
+<span class="err">├──</span> <span class="fm">__init__</span><span class="o">.</span><span class="n">py</span>           <span class="c1"># Public API exports</span>
+<span class="err">├──</span> <span class="n">indices</span><span class="o">.</span><span class="n">py</span>           <span class="c1"># Vegetation and polarimetric indices</span>
+<span class="err">├──</span> <span class="n">polarimetry</span><span class="o">.</span><span class="n">py</span>       <span class="c1"># Polarimetric decomposition</span>
+<span class="err">├──</span> <span class="n">interferometry</span><span class="o">.</span><span class="n">py</span>    <span class="c1"># InSAR processing</span>
+<span class="err">├──</span> <span class="n">target_detection</span><span class="o">.</span><span class="n">py</span>  <span class="c1"># Target detection algorithms</span>
+<span class="err">└──</span> <span class="n">time_series</span><span class="o">.</span><span class="n">py</span>       <span class="c1"># Time series analysis</span>
+</code></pre>
+<p><strong>Key Classes:</strong></p>
+<ul>
+<li><code>VegetationIndices</code>: Vegetation monitoring algorithms</li>
+<li><code>PolarimetricDecomposer</code>: H/A/α, Freeman-Durden, etc.</li>
+<li><code>InterferogramProcessor</code>: InSAR processing</li>
+<li><code>CFARDetector</code>: Target detection algorithms</li>
+<li><code>TimeSeriesAnalyzer</code>: Temporal analysis</li>
+</ul>
+<h3 id="4-utilities-utils">4. Utilities (<code>utils/</code>)</h3>
+<p>Common utilities and helper functions.</p>
+<pre class="codehilite"><code><span class="n">utils</span><span class="o">/</span>
+<span class="err">├──</span> <span class="fm">__init__</span><span class="o">.</span><span class="n">py</span>           <span class="c1"># Public API exports</span>
+<span class="err">├──</span> <span class="n">io</span><span class="o">.</span><span class="n">py</span>                <span class="c1"># Data I/O operations</span>
+<span class="err">├──</span> <span class="n">visualization</span><span class="o">.</span><span class="n">py</span>     <span class="c1"># Plotting and visualization</span>
+<span class="err">├──</span> <span class="n">validation</span><span class="o">.</span><span class="n">py</span>        <span class="c1"># Data validation</span>
+<span class="err">├──</span> <span class="n">performance</span><span class="o">.</span><span class="n">py</span>       <span class="c1"># Performance monitoring</span>
+<span class="err">└──</span> <span class="n">config</span><span class="o">.</span><span class="n">py</span>            <span class="c1"># Configuration management</span>
+</code></pre>
+<h2 id="data-flow-architecture">Data Flow Architecture</h2>
+<h3 id="1-input-processing">1. Input Processing</h3>
+<pre class="codehilite"><code><span class="c1"># Data ingestion pipeline</span>
+<span class="n">Input</span> <span class="n">Data</span> <span class="p">(</span><span class="n">SAR</span> <span class="n">Product</span><span class="p">)</span>
+    <span class="err">↓</span>
+<span class="n">Format</span> <span class="n">Detection</span> <span class="p">(</span><span class="n">SAFE</span><span class="p">,</span> <span class="n">GeoTIFF</span><span class="p">,</span> <span class="n">etc</span><span class="o">.</span><span class="p">)</span>
+    <span class="err">↓</span>
+<span class="n">Metadata</span> <span class="n">Extraction</span>
+    <span class="err">↓</span>
+<span class="n">Data</span> <span class="n">Validation</span>
+    <span class="err">↓</span>
+<span class="n">Memory</span> <span class="n">Mapping</span> <span class="p">(</span><span class="k">for</span> <span class="n">large</span> <span class="n">files</span><span class="p">)</span>
+    <span class="err">↓</span>
+<span class="n">Ready</span> <span class="k">for</span> <span class="n">Processing</span>
+</code></pre>
+<h3 id="2-processing-pipeline">2. Processing Pipeline</h3>
+<pre class="codehilite"><code><span class="c1"># Configurable processing pipeline</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProcessingPipeline</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stages</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_stage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">:</span> <span class="n">ProcessingStage</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stage</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">SARData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProcessingResult</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">stage</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stages</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">stage</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span>
+</code></pre>
+<h3 id="3-output-handling">3. Output Handling</h3>
+<pre class="codehilite"><code><span class="c1"># Results management</span>
+<span class="n">Processing</span> <span class="n">Result</span>
+    <span class="err">↓</span>
+<span class="n">Format</span> <span class="n">Conversion</span> <span class="p">(</span><span class="k">if</span> <span class="n">needed</span><span class="p">)</span>
+    <span class="err">↓</span>
+<span class="n">Metadata</span> <span class="n">Preservation</span>
+    <span class="err">↓</span>
+<span class="n">Quality</span> <span class="n">Assessment</span>
+    <span class="err">↓</span>
+<span class="n">Output</span> <span class="n">Writing</span>
+    <span class="err">↓</span>
+<span class="n">Final</span> <span class="n">Product</span>
+</code></pre>
+<h2 id="performance-architecture">Performance Architecture</h2>
+<h3 id="1-memory-management">1. Memory Management</h3>
+<ul>
+<li><strong>Lazy Loading</strong>: Data loaded only when needed</li>
+<li><strong>Memory Mapping</strong>: Large files processed without full loading</li>
+<li><strong>Chunked Processing</strong>: Large datasets processed in chunks</li>
+<li><strong>Garbage Collection</strong>: Explicit memory cleanup</li>
+</ul>
+<pre class="codehilite"><code><span class="k">class</span><span class="w"> </span><span class="nc">MemoryEfficientProcessor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chunk_size</span> <span class="o">=</span> <span class="n">chunk_size</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_large_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="c1"># Process in chunks to avoid memory issues</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">chunk_size</span><span class="p">):</span>
+            <span class="n">chunk</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">chunk_size</span><span class="p">]</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">chunk_size</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_chunk</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+
+            <span class="c1"># Explicit cleanup</span>
+            <span class="k">del</span> <span class="n">chunk</span>
+            <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+</code></pre>
+<h3 id="2-parallel-processing">2. Parallel Processing</h3>
+<ul>
+<li><strong>Thread-level parallelism</strong>: For I/O bound operations</li>
+<li><strong>Process-level parallelism</strong>: For CPU-intensive tasks</li>
+<li><strong>Numba acceleration</strong>: JIT compilation for hot paths</li>
+<li><strong>GPU acceleration</strong>: CUDA support for applicable algorithms</li>
+</ul>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProcessPoolExecutor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numba</span><span class="w"> </span><span class="kn">import</span> <span class="n">jit</span><span class="p">,</span> <span class="n">cuda</span>
+
+<span class="c1"># CPU parallelization</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">parallel_processing</span><span class="p">(</span><span class="n">data_chunks</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">ProcessPoolExecutor</span><span class="p">()</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">executor</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">process_chunk</span><span class="p">,</span> <span class="n">data_chunks</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+
+<span class="c1"># GPU acceleration</span>
+<span class="nd">@cuda</span><span class="o">.</span><span class="n">jit</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gpu_coherence_kernel</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">data2</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+    <span class="c1"># CUDA kernel for coherence calculation</span>
+    <span class="k">pass</span>
+</code></pre>
+<h3 id="3-caching-strategy">3. Caching Strategy</h3>
+<ul>
+<li><strong>Result caching</strong>: Cache expensive computations</li>
+<li><strong>Disk caching</strong>: Temporary results stored on disk</li>
+<li><strong>Memory caching</strong>: Frequently accessed data in memory</li>
+</ul>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">lru_cache</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">diskcache</span><span class="w"> </span><span class="kn">import</span> <span class="n">Cache</span>
+
+<span class="c1"># Memory caching</span>
+<span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">128</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">expensive_computation</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+    <span class="c1"># Expensive calculation</span>
+    <span class="k">pass</span>
+
+<span class="c1"># Disk caching</span>
+<span class="n">cache</span> <span class="o">=</span> <span class="n">Cache</span><span class="p">(</span><span class="s1">&#39;/tmp/sarpyx_cache&#39;</span><span class="p">)</span>
+
+<span class="nd">@cache</span><span class="o">.</span><span class="n">memoize</span><span class="p">(</span><span class="n">expire</span><span class="o">=</span><span class="mi">3600</span><span class="p">)</span>  <span class="c1"># 1 hour expiry</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">very_expensive_computation</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="c1"># Very expensive calculation</span>
+    <span class="k">pass</span>
+</code></pre>
+<h2 id="error-handling-architecture">Error Handling Architecture</h2>
+<h3 id="1-exception-hierarchy">1. Exception Hierarchy</h3>
+<pre class="codehilite"><code><span class="k">class</span><span class="w"> </span><span class="nc">sarpyxError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base exception for sarpyx.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DataError</span><span class="p">(</span><span class="n">sarpyxError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Data-related errors.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ProcessingError</span><span class="p">(</span><span class="n">sarpyxError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Processing-related errors.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ValidationError</span><span class="p">(</span><span class="n">sarpyxError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validation-related errors.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SNAPError</span><span class="p">(</span><span class="n">sarpyxError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;SNAP integration errors.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+</code></pre>
+<h3 id="2-error-handling-patterns">2. Error Handling Patterns</h3>
+<pre class="codehilite"><code><span class="c1"># Context manager for resource cleanup</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SARDataProcessor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_allocate_resources</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_val</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cleanup_resources</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">exc_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log_error</span><span class="p">(</span><span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_val</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">)</span>
+
+<span class="c1"># Retry pattern for unreliable operations</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">with_retry</span><span class="p">(</span><span class="n">max_attempts</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_attempts</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">RetryableError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">attempt</span> <span class="o">==</span> <span class="n">max_attempts</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="k">raise</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">delay</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">attempt</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">wrapper</span>
+    <span class="k">return</span> <span class="n">decorator</span>
+</code></pre>
+<h2 id="configuration-architecture">Configuration Architecture</h2>
+<h3 id="1-configuration-management">1. Configuration Management</h3>
+<pre class="codehilite"><code><span class="c1"># Hierarchical configuration</span>
+<span class="n">config</span><span class="o">/</span>
+<span class="err">├──</span> <span class="n">default</span><span class="o">.</span><span class="n">yaml</span>         <span class="c1"># Default settings</span>
+<span class="err">├──</span> <span class="n">development</span><span class="o">.</span><span class="n">yaml</span>     <span class="c1"># Development overrides</span>
+<span class="err">├──</span> <span class="n">production</span><span class="o">.</span><span class="n">yaml</span>      <span class="c1"># Production overrides</span>
+<span class="err">└──</span> <span class="n">user</span><span class="o">.</span><span class="n">yaml</span>           <span class="c1"># User customizations</span>
+</code></pre>
+<h3 id="2-configuration-loading">2. Configuration Loading</h3>
+<pre class="codehilite"><code><span class="k">class</span><span class="w"> </span><span class="nc">ConfigManager</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_config</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+        <span class="c1"># Load default configuration</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">load_yaml</span><span class="p">(</span><span class="s2">&quot;config/default.yaml&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Apply environment-specific overrides</span>
+        <span class="n">env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;sarpyx_ENV&quot;</span><span class="p">,</span> <span class="s2">&quot;development&quot;</span><span class="p">)</span>
+        <span class="n">env_config</span> <span class="o">=</span> <span class="n">load_yaml</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;config/</span><span class="si">{</span><span class="n">env</span><span class="si">}</span><span class="s2">.yaml&quot;</span><span class="p">)</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">env_config</span><span class="p">)</span>
+
+        <span class="c1"># Apply user customizations</span>
+        <span class="n">user_config_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/.sarpyx/config.yaml&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">user_config_path</span><span class="p">):</span>
+            <span class="n">user_config</span> <span class="o">=</span> <span class="n">load_yaml</span><span class="p">(</span><span class="n">user_config_path</span><span class="p">)</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">user_config</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">config</span>
+</code></pre>
+<h2 id="testing-architecture">Testing Architecture</h2>
+<h3 id="1-test-structure">1. Test Structure</h3>
+<pre class="codehilite"><code><span class="c1"># Test categories</span>
+<span class="n">Unit</span> <span class="n">Tests</span><span class="p">:</span>     <span class="n">Individual</span> <span class="n">function</span><span class="o">/</span><span class="n">method</span> <span class="n">testing</span>
+<span class="n">Integration</span> <span class="n">Tests</span><span class="p">:</span> <span class="n">Module</span> <span class="n">interaction</span> <span class="n">testing</span>
+<span class="n">End</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">End</span> <span class="n">Tests</span><span class="p">:</span> <span class="n">Complete</span> <span class="n">workflow</span> <span class="n">testing</span>
+<span class="n">Performance</span> <span class="n">Tests</span><span class="p">:</span> <span class="n">Benchmarking</span> <span class="ow">and</span> <span class="n">profiling</span>
+<span class="n">Regression</span> <span class="n">Tests</span><span class="p">:</span> <span class="n">Preventing</span> <span class="n">feature</span> <span class="n">regressions</span>
+</code></pre>
+<h3 id="2-test-data-management">2. Test Data Management</h3>
+<pre class="codehilite"><code><span class="c1"># Test data fixtures</span>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="s2">&quot;session&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_sar_data</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create or load sample SAR data for testing.&quot;&quot;&quot;</span>
+    <span class="n">data_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;data&quot;</span> <span class="o">/</span> <span class="s2">&quot;sample.safe&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">data_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="c1"># Generate synthetic data</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">generate_synthetic_sar_data</span><span class="p">()</span>
+        <span class="n">save_sar_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">data_path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">load_sar_data</span><span class="p">(</span><span class="n">data_path</span><span class="p">)</span>
+
+<span class="c1"># Property-based testing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hypothesis</span><span class="w"> </span><span class="kn">import</span> <span class="n">given</span><span class="p">,</span> <span class="n">strategies</span> <span class="k">as</span> <span class="n">st</span>
+
+<span class="nd">@given</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">st</span><span class="o">.</span><span class="n">arrays</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">complex128</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">)),</span>
+    <span class="n">n_sublooks</span><span class="o">=</span><span class="n">st</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="n">min_value</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_sublook_decomposition_properties</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">n_sublooks</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test properties that should always hold.&quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">sublook_decomposition</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">n_sublooks</span><span class="p">)</span>
+
+    <span class="c1"># Property: number of sublooks should match input</span>
+    <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">sublooks</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">n_sublooks</span>
+
+    <span class="c1"># Property: coherence should be between 0 and 1</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">result</span><span class="o">.</span><span class="n">coherence</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">)</span>
+</code></pre>
+<h2 id="extensibility-architecture">Extensibility Architecture</h2>
+<h3 id="1-plugin-system">1. Plugin System</h3>
+<pre class="codehilite"><code><span class="c1"># Plugin interface</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProcessingPlugin</span><span class="p">:</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">SARData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProcessingResult</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+<span class="c1"># Plugin registry</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PluginRegistry</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_plugins</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugin</span><span class="p">:</span> <span class="n">ProcessingPlugin</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_plugins</span><span class="p">[</span><span class="n">plugin</span><span class="o">.</span><span class="n">name</span><span class="p">()]</span> <span class="o">=</span> <span class="n">plugin</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_plugin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProcessingPlugin</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_plugins</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+</code></pre>
+<h3 id="2-algorithm-registration">2. Algorithm Registration</h3>
+<pre class="codehilite"><code><span class="c1"># Algorithm registry for extensible processing</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AlgorithmRegistry</span><span class="p">:</span>
+    <span class="n">_algorithms</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">algorithm_class</span><span class="p">):</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_algorithms</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">algorithm_class</span>
+            <span class="k">return</span> <span class="n">algorithm_class</span>
+        <span class="k">return</span> <span class="n">decorator</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_algorithms</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown algorithm: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_algorithms</span><span class="p">[</span><span class="n">name</span><span class="p">](</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<span class="c1"># Usage</span>
+<span class="nd">@AlgorithmRegistry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;my_decomposition&quot;</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyDecompositionAlgorithm</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param1</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param1</span> <span class="o">=</span> <span class="n">param1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">decompose</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="c1"># Custom implementation</span>
+        <span class="k">pass</span>
+</code></pre>
+<p>This architecture provides a solid foundation for maintainable, extensible, and high-performance SAR processing capabilities while maintaining clean separation of concerns and easy testability.</p>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

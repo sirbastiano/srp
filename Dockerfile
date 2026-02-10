@@ -1,89 +1,60 @@
-FROM ubuntu:22.04 as base
+FROM ubuntu:22.04
 
-RUN apt-get update && apt-get install -y openjdk-8-jdk && rm -rf /var/lib/apt/lists/*
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-FROM base as build
+ARG SNAP_VERSION=12.0.0
+ENV JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"
+ENV SNAP_HOME="/usr/local/snap"
+ENV PATH="${PATH}:${SNAP_HOME}/bin"
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PIP_NO_CACHE_DIR=1
 
-LABEL authors="Roberto Del Prete"
-LABEL maintainer="roberto.delprete@esa.int"
-
-USER root
-
-RUN apt-get update && apt-get install -y \
+# Install only essential packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    python3.11 \
+    python3.11-venv \
+    python3.11-dev \
+    curl \
     wget \
-    unzip \
-    python3 \
-    python3-pip \
-    git \
-    vim \
-    fontconfig \
-    fonts-dejavu \
-    && rm -rf /var/lib/apt/lists/*
-
-ENV LC_ALL "en_US.UTF-8"
-ENV LD_LIBRARY_PATH ".:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server/:$LD_LIBRARY_PATH"
-ENV JAVA_HOME "/usr/lib/jvm/java-8-openjdk-amd64"
-
-# Download and install SNAP directly
-RUN wget -q https://download.esa.int/step/snap/12.0/installers/esa-snap_all_linux-12.0.0.sh -O /tmp/snap_installer.sh && \
-    chmod +x /tmp/snap_installer.sh && \
-    /tmp/snap_installer.sh -q -dir /usr/local/snap && \
-    rm /tmp/snap_installer.sh
-
-FROM base as jupyter-ready
-
-RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    python3-dev \
-    fonts-dejavu \
     git \
     build-essential \
-    pkg-config \
-    libzstd-dev \
-    gcc \
-    g++ \
-    clang \
-    make \
-    cmake \
-    libc6-dev \
-    curl \
+    openjdk-8-jdk \
     && rm -rf /var/lib/apt/lists/*
 
-ENV LD_LIBRARY_PATH ".:$LD_LIBRARY_PATH"
-ENV JAVA_HOME "/usr/lib/jvm/java-8-openjdk-amd64"
-ENV PATH="${PATH}:/usr/local/snap/bin"
+# Install SNAP
+COPY support/snap-install.sh /tmp/snap-install.sh
+COPY support/snap.varfile /tmp/snap.varfile
+RUN chmod +x /tmp/snap-install.sh && /tmp/snap-install.sh -v && rm -f /tmp/snap-install.sh /tmp/snap.varfile
 
-COPY --from=build /usr/local/snap /usr/local/snap
+# RUN wget -q "https://download.esa.int/step/snap/12.0/installers/esa-snap_all_linux-${SNAP_VERSION}.sh" -O /tmp/snap_installer.sh && \
+#     chmod +x /tmp/snap_installer.sh && \
+#     /tmp/snap_installer.sh -q -dir "${SNAP_HOME}" && \
+#     rm -f /tmp/snap_installer.sh
 
-# Create symlink for python command
-RUN ln -s /usr/bin/python3 /usr/bin/python
+# Install pip
+RUN curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && \
+    python3.11 /tmp/get-pip.py && \
+    rm -f /tmp/get-pip.py
 
-# Copy project files
-COPY Makefile /workspace/
-COPY pdm.lock /workspace/
-COPY pyproject.toml /workspace/
-COPY sarpyx /workspace/sarpyx/
+# Create symlinks
+RUN ln -sf /usr/bin/python3.11 /usr/bin/python3 && \
+    ln -sf /usr/bin/python3.11 /usr/bin/python
 
 WORKDIR /workspace
 
-# Install the package and Jupyter
-RUN pip install pdm jupyter jupyterlab ipykernel
-RUN cd sarpyx && pdm install && pdm add lxml
+# Copy only essential files
+COPY pyproject.toml ./
+COPY sarpyx ./sarpyx
 
-# Install sarpyx as a Jupyter kernel
-RUN python -m ipykernel install --user --name=sarpyx --display-name="SAR Python (sarpyx-12.0)"
+# Install sarpyx in development mode and verify import
+RUN python3.11 -m pip install -e . && \
+    python3.11 -c "import sarpyx; print('sarpyx installed successfully')"
 
-# Create a startup script
-RUN echo '#!/bin/bash\n\
-export JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"\n\
-export LD_LIBRARY_PATH=".:$LD_LIBRARY_PATH"\n\
-export PATH="${PATH}:/usr/local/snap/bin"\n\
-cd /workspace\n\
-jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token="" --NotebookApp.password=""' > /usr/local/bin/start-jupyter.sh
+# Make the grid
+RUN mkdir grid && cd grid && python3.11 -m sarpyx.utils.grid 
 
-RUN chmod +x /usr/local/bin/start-jupyter.sh
 
-EXPOSE 8888
-
-CMD ["/usr/local/bin/start-jupyter.sh"]
+CMD ["python3.11", "-c", "import sarpyx; print('sarpyx version:', getattr(sarpyx, '__version__', 'unknown'))"]

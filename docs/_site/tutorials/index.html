@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tutorials – sarpyx Docs</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../index.html"><img class="logo" src="../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../user_guide/index.html">Overview</a>
+<a href="../user_guide/installation.html">Installation</a>
+<a href="../user_guide/getting_started.html">Getting Started</a>
+<a href="../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../user_guide/data_formats.html">Data Formats</a>
+<a href="../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../user_guide/science_applications.html">Science Applications</a>
+<a href="../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../tutorials/index.html" class="active">Overview</a>
+<a href="../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../api/index.html">Overview</a>
+<a href="../api/snapflow/index.html">Snapflow</a>
+<a href="../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../api/science/index.html">Science</a>
+<a href="../api/sla/index.html">SLA</a>
+<a href="../api/processor/index.html">Processor</a>
+<a href="../api/utils/index.html">Utils</a>
+<a href="../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../developer_guide/architecture.html">Architecture</a>
+<a href="../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="tutorials">Tutorials</h1>
+<p>Step-by-step tutorials for learning sarpyx capabilities and SAR processing techniques.</p>
+<h2 id="getting-started-tutorials">Getting Started Tutorials</h2>
+<h3 id="tutorial-1-your-first-sub-look-analysis"><a href="01_first_sublook_analysis.html">Tutorial 1: Your First Sub-Look Analysis</a></h3>
+<p>Learn the basics of sub-look decomposition with a simple Sentinel-1 example.
+- <strong>Duration</strong>: 15 minutes
+- <strong>Prerequisites</strong>: Basic Python knowledge
+- <strong>Data</strong>: Sample Sentinel-1 SLC product</p>
+<h3 id="tutorial-2-snap-integration-basics"><a href="02_snap_integration_basics.html">Tutorial 2: SNAP Integration Basics</a></h3>
+<p>Use sarpyx to automate SNAP processing workflows.
+- <strong>Duration</strong>: 20 minutes<br>
+- <strong>Prerequisites</strong>: SNAP installation, Tutorial 1
+- <strong>Data</strong>: Sentinel-1 GRD product</p>
+<h3 id="tutorial-3-visualization-and-quality-assessment"><a href="03_visualization_quality.html">Tutorial 3: Visualization and Quality Assessment</a></h3>
+<p>Learn to visualize results and assess processing quality.
+- <strong>Duration</strong>: 25 minutes
+- <strong>Prerequisites</strong>: Tutorial 1
+- <strong>Data</strong>: Results from previous tutorials</p>
+<h2 id="intermediate-tutorials">Intermediate Tutorials</h2>
+<h3 id="tutorial-4-multi-temporal-analysis"><a href="04_multitemporal_analysis.html">Tutorial 4: Multi-temporal Analysis</a></h3>
+<p>Process time series of SAR data for change detection.
+- <strong>Duration</strong>: 30 minutes
+- <strong>Prerequisites</strong>: Tutorials 1-3
+- <strong>Data</strong>: Multi-temporal Sentinel-1 dataset</p>
+<h3 id="tutorial-5-polarimetric-analysis"><a href="05_polarimetric_analysis.html">Tutorial 5: Polarimetric Analysis</a></h3>
+<p>Work with dual-pol data for vegetation monitoring.
+- <strong>Duration</strong>: 35 minutes
+- <strong>Prerequisites</strong>: Tutorial 2
+- <strong>Data</strong>: Dual-pol Sentinel-1 data</p>
+<h3 id="tutorial-6-custom-processing-workflows"><a href="06_custom_workflows.html">Tutorial 6: Custom Processing Workflows</a></h3>
+<p>Build custom processing pipelines for specific applications.
+- <strong>Duration</strong>: 40 minutes
+- <strong>Prerequisites</strong>: Tutorials 1-5
+- <strong>Data</strong>: Various SAR products</p>
+<h2 id="advanced-tutorials">Advanced Tutorials</h2>
+<h3 id="tutorial-7-ship-detection-with-cfar"><a href="07_ship_detection_cfar.html">Tutorial 7: Ship Detection with CFAR</a></h3>
+<p>Implement ship detection using Constant False Alarm Rate algorithms.
+- <strong>Duration</strong>: 45 minutes
+- <strong>Prerequisites</strong>: Tutorial 2
+- <strong>Data</strong>: Maritime Sentinel-1 data</p>
+<h3 id="tutorial-8-interferometric-processing"><a href="08_interferometric_processing.html">Tutorial 8: Interferometric Processing</a></h3>
+<p>Create interferograms and analyze surface deformation.
+- <strong>Duration</strong>: 50 minutes
+- <strong>Prerequisites</strong>: Tutorials 4, 6
+- <strong>Data</strong>: Interferometric pair</p>
+<h3 id="tutorial-9-performance-optimization"><a href="09_performance_optimization.html">Tutorial 9: Performance Optimization</a></h3>
+<p>Optimize processing for large datasets and production workflows.
+- <strong>Duration</strong>: 30 minutes
+- <strong>Prerequisites</strong>: All previous tutorials
+- <strong>Data</strong>: Large-scale dataset</p>
+<h2 id="specialized-applications">Specialized Applications</h2>
+<h3 id="tutorial-10-forest-monitoring"><a href="10_forest_monitoring.html">Tutorial 10: Forest Monitoring</a></h3>
+<p>Use radar vegetation indices for forest change detection.
+- <strong>Duration</strong>: 35 minutes
+- <strong>Prerequisites</strong>: Tutorial 5
+- <strong>Data</strong>: Forest area time series</p>
+<h3 id="tutorial-11-urban-area-analysis"><a href="11_urban_analysis.html">Tutorial 11: Urban Area Analysis</a></h3>
+<p>Analyze urban environments using multi-look techniques.
+- <strong>Duration</strong>: 40 minutes
+- <strong>Prerequisites</strong>: Tutorials 1, 4
+- <strong>Data</strong>: Urban area SAR data</p>
+<h3 id="tutorial-12-coastal-monitoring"><a href="12_coastal_monitoring.html">Tutorial 12: Coastal Monitoring</a></h3>
+<p>Monitor coastal changes using sub-look analysis.
+- <strong>Duration</strong>: 45 minutes
+- <strong>Prerequisites</strong>: Tutorials 4, 7
+- <strong>Data</strong>: Coastal area time series</p>
+<h2 id="tutorial-structure">Tutorial Structure</h2>
+<p>Each tutorial follows a consistent structure:</p>
+<ol>
+<li><strong>Overview</strong>: What you&rsquo;ll learn and accomplish</li>
+<li><strong>Prerequisites</strong>: Required knowledge and previous tutorials</li>
+<li><strong>Setup</strong>: Data preparation and environment setup</li>
+<li><strong>Step-by-step Instructions</strong>: Detailed walkthrough with code</li>
+<li><strong>Results and Analysis</strong>: Interpretation of outputs</li>
+<li><strong>Exercises</strong>: Additional practice problems</li>
+<li><strong>Next Steps</strong>: Connections to related tutorials</li>
+</ol>
+<h2 id="required-data">Required Data</h2>
+<h3 id="sample-datasets">Sample Datasets</h3>
+<p>We provide sample datasets for all tutorials:</p>
+<ul>
+<li><strong>Sentinel-1 SLC</strong>: Single Look Complex data for sub-look analysis</li>
+<li><strong>Sentinel-1 GRD</strong>: Ground Range Detected data for SNAP workflows  </li>
+<li><strong>Multi-temporal</strong>: Time series for change detection</li>
+<li><strong>Dual-pol</strong>: VV+VH data for polarimetric analysis</li>
+<li><strong>Maritime</strong>: Ocean scenes for ship detection</li>
+<li><strong>Forest</strong>: Vegetation areas for monitoring</li>
+<li><strong>Urban</strong>: City areas for built-up analysis</li>
+<li><strong>Coastal</strong>: Shoreline areas for change detection</li>
+</ul>
+<h3 id="data-download">Data Download</h3>
+<pre class="codehilite"><code><span class="c1"># Download tutorial datasets (example)</span>
+wget<span class="w"> </span>https://github.com/ESA-PhiLab/sarpyx-tutorials/raw/main/data/tutorial_datasets.zip
+unzip<span class="w"> </span>tutorial_datasets.zip
+</code></pre>
+<h3 id="data-organization">Data Organization</h3>
+<pre><code>tutorials/
+├── data/
+│   ├── sentinel1_slc/
+│   ├── sentinel1_grd/
+│   ├── multitemporal/
+│   ├── dualpol/
+│   ├── maritime/
+│   ├── forest/
+│   ├── urban/
+│   └── coastal/
+├── notebooks/
+└── scripts/
+</code></pre>
+<h2 id="learning-path-recommendations">Learning Path Recommendations</h2>
+<h3 id="for-sar-beginners">For SAR Beginners</h3>
+<ol>
+<li>Tutorial 1: First Sub-Look Analysis</li>
+<li>Tutorial 3: Visualization and Quality Assessment</li>
+<li>Tutorial 2: SNAP Integration Basics</li>
+<li>Tutorial 5: Polarimetric Analysis</li>
+</ol>
+<h3 id="for-snap-users">For SNAP Users</h3>
+<ol>
+<li>Tutorial 2: SNAP Integration Basics</li>
+<li>Tutorial 7: Ship Detection with CFAR</li>
+<li>Tutorial 6: Custom Processing Workflows</li>
+<li>Tutorial 9: Performance Optimization</li>
+</ol>
+<h3 id="for-research-applications">For Research Applications</h3>
+<ol>
+<li>Tutorial 4: Multi-temporal Analysis</li>
+<li>Tutorial 5: Polarimetric Analysis</li>
+<li>Tutorial 10: Forest Monitoring</li>
+<li>Tutorial 8: Interferometric Processing</li>
+</ol>
+<h3 id="for-production-systems">For Production Systems</h3>
+<ol>
+<li>Tutorial 6: Custom Processing Workflows</li>
+<li>Tutorial 9: Performance Optimization</li>
+<li>Tutorial 7: Ship Detection with CFAR</li>
+<li>Tutorial 12: Coastal Monitoring</li>
+</ol>
+<h2 id="interactive-formats">Interactive Formats</h2>
+<h3 id="jupyter-notebooks">Jupyter Notebooks</h3>
+<p>All tutorials are available as Jupyter notebooks with:
+- Interactive code cells
+- Embedded visualizations
+- Progressive difficulty
+- Built-in exercises</p>
+<pre class="codehilite"><code><span class="c1"># Run tutorials interactively</span>
+<span class="n">jupyter</span> <span class="n">notebook</span> <span class="n">tutorials</span><span class="o">/</span><span class="mi">01</span><span class="n">_first_sublook_analysis</span><span class="o">.</span><span class="n">ipynb</span>
+</code></pre>
+<h3 id="python-scripts">Python Scripts</h3>
+<p>Standalone scripts for automation:</p>
+<pre class="codehilite"><code><span class="c1"># Run complete tutorial as script</span>
+<span class="n">python</span> <span class="n">tutorials</span><span class="o">/</span><span class="n">scripts</span><span class="o">/</span><span class="mi">01</span><span class="n">_first_sublook_analysis</span><span class="o">.</span><span class="n">py</span>
+</code></pre>
+<h3 id="google-colab">Google Colab</h3>
+<p>Cloud-based execution for users without local setup:
+- Pre-configured environment
+- Sample data included
+- GPU acceleration available</p>
+<h2 id="community-contributions">Community Contributions</h2>
+<h3 id="contributing-new-tutorials">Contributing New Tutorials</h3>
+<p>We welcome community contributions! Guidelines:</p>
+<ol>
+<li><strong>Topic Relevance</strong>: Should demonstrate sarpyx capabilities</li>
+<li><strong>Clear Structure</strong>: Follow established tutorial format</li>
+<li><strong>Tested Code</strong>: All code must run successfully</li>
+<li><strong>Documentation</strong>: Include clear explanations</li>
+<li><strong>Data</strong>: Provide or link to required datasets</li>
+</ol>
+<h3 id="tutorial-templates">Tutorial Templates</h3>
+<pre class="codehilite"><code><span class="c1"># Tutorial template structure</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Tutorial: [Title]</span>
+
+<span class="sd">Overview: [What users will learn]</span>
+<span class="sd">Prerequisites: [Required knowledge/tutorials]</span>
+<span class="sd">Duration: [Estimated time]</span>
+<span class="sd">Data: [Required datasets]</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># Setup section</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sarpyx</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="c1"># Main tutorial content</span>
+<span class="c1"># ... step-by-step instructions ...</span>
+
+<span class="c1"># Exercises section</span>
+<span class="c1"># ... practice problems ...</span>
+</code></pre>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<ol>
+<li><strong>Data Access</strong>: Ensure tutorial datasets are downloaded</li>
+<li><strong>Dependencies</strong>: Check all required packages are installed</li>
+<li><strong>Memory</strong>: Some tutorials require substantial RAM</li>
+<li><strong>SNAP</strong>: Verify SNAP installation for integration tutorials</li>
+</ol>
+<h3 id="getting-help">Getting Help</h3>
+<ul>
+<li><strong>Tutorial Issues</strong>: <a href="https://github.com/ESA-PhiLab/sarpyx/issues">GitHub Issues</a></li>
+<li><strong>General Questions</strong>: <a href="https://github.com/ESA-PhiLab/sarpyx/discussions">GitHub Discussions</a></li>
+<li><strong>Community Forum</strong>: <a href="https://community.sarpyx.org">sarpyx Community</a></li>
+</ul>
+<h2 id="additional-resources">Additional Resources</h2>
+<ul>
+<li><strong><a href="../examples/index.html">Examples</a></strong>: Ready-to-run code examples</li>
+<li><strong><a href="../api/index.html">API Reference</a></strong>: Detailed function documentation</li>
+<li><strong><a href="../user_guide/index.html">User Guide</a></strong>: Comprehensive usage guide</li>
+<li><strong><a href="../developer_guide/index.html">Developer Guide</a></strong>: Contributing information</li>
+</ul>
+<p>Start your learning journey with <a href="01_first_sublook_analysis.html">Tutorial 1: Your First Sub-Look Analysis</a>!</p>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

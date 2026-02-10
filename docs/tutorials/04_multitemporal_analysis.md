@@ -1,6 +1,6 @@
 # Tutorial 4: Multi-temporal Analysis
 
-Learn to process time series of SAR data for change detection and temporal pattern analysis using SARPyX.
+Learn to process time series of SAR data for change detection and temporal pattern analysis using sarpyx.
 
 ## Overview
 

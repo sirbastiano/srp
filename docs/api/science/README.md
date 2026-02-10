@@ -315,7 +315,7 @@ def process_large_dataset(vv_file, vh_file, chunk_size=1000):
 ### With SNAP Processing
 
 ```python
-from sarpyx.snap import GPT
+from sarpyx.snapflow.engine import GPT
 from sarpyx.science import indices
 
 # Process with SNAP

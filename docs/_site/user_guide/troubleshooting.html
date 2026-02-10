@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Troubleshooting – sarpyx Docs</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../index.html"><img class="logo" src="../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../user_guide/index.html">Overview</a>
+<a href="../user_guide/installation.html">Installation</a>
+<a href="../user_guide/getting_started.html">Getting Started</a>
+<a href="../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../user_guide/data_formats.html">Data Formats</a>
+<a href="../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../user_guide/science_applications.html">Science Applications</a>
+<a href="../user_guide/troubleshooting.html" class="active">Troubleshooting</a>
+<a href="../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../tutorials/index.html">Overview</a>
+<a href="../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../api/index.html">Overview</a>
+<a href="../api/snapflow/index.html">Snapflow</a>
+<a href="../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../api/science/index.html">Science</a>
+<a href="../api/sla/index.html">SLA</a>
+<a href="../api/processor/index.html">Processor</a>
+<a href="../api/utils/index.html">Utils</a>
+<a href="../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../developer_guide/architecture.html">Architecture</a>
+<a href="../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="troubleshooting">Troubleshooting</h1>
+<p>This guide helps you diagnose and resolve common issues when using sarpyx. Issues are organized by module and include practical solutions and prevention strategies.</p>
+<h2 id="general-troubleshooting">General Troubleshooting</h2>
+<h3 id="installation-issues">Installation Issues</h3>
+<h4 id="problem-package-import-errors">Problem: Package Import Errors</h4>
+<pre class="codehilite"><code><span class="c1"># Error: ModuleNotFoundError: No module named &#39;sarpyx&#39;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sarpyx</span>  <span class="c1"># Fails</span>
+</code></pre>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>
+<p><strong>Verify Installation</strong>:
+   <code>bash
+   pip show sarpyx
+   # or
+   pdm list | grep sarpyx</code></p>
+</li>
+<li>
+<p><strong>Check Python Environment</strong>:
+   <code>bash
+   which python
+   python -c "import sys; print(sys.path)"</code></p>
+</li>
+<li>
+<p><strong>Reinstall Package</strong>:
+   <code>bash
+   pip uninstall sarpyx
+   pip install sarpyx
+   # or for development
+   pip install -e .</code></p>
+</li>
+</ol>
+<h4 id="problem-dependency-conflicts">Problem: Dependency Conflicts</h4>
+<pre class="codehilite"><code><span class="c1"># Error: Package conflicts detected</span>
+ERROR:<span class="w"> </span>pip<span class="err">&#39;</span>s<span class="w"> </span>dependency<span class="w"> </span>resolver<span class="w"> </span>does<span class="w"> </span>not<span class="w"> </span>currently<span class="w"> </span>have<span class="w"> </span>a<span class="w"> </span>workaround<span class="w"> </span><span class="k">for</span><span class="w"> </span>this<span class="w"> </span>error.
+</code></pre>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>
+<p><strong>Use Virtual Environment</strong>:
+   <code>bash
+   python -m venv sarpyx_env
+   source sarpyx_env/bin/activate  # Linux/macOS
+   # sarpyx_env\Scripts\activate  # Windows
+   pip install sarpyx</code></p>
+</li>
+<li>
+<p><strong>Use PDM for Better Dependency Management</strong>:
+   <code>bash
+   pdm init
+   pdm add sarpyx
+   pdm install</code></p>
+</li>
+<li>
+<p><strong>Check Conflicting Packages</strong>:
+   <code>bash
+   pip check</code></p>
+</li>
+</ol>
+<h3 id="memory-issues">Memory Issues</h3>
+<h4 id="problem-out-of-memory-errors">Problem: Out of Memory Errors</h4>
+<pre class="codehilite"><code><span class="c1"># Error: MemoryError or system freezing during processing</span>
+</code></pre>
+<p><strong>Diagnosis:</strong></p>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">psutil</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">check_memory_usage</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check current memory usage.&quot;&quot;&quot;</span>
+    <span class="n">memory</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total memory: </span><span class="si">{</span><span class="n">memory</span><span class="o">.</span><span class="n">total</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1024</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> GB&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Available memory: </span><span class="si">{</span><span class="n">memory</span><span class="o">.</span><span class="n">available</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1024</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> GB&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Memory usage: </span><span class="si">{</span><span class="n">memory</span><span class="o">.</span><span class="n">percent</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">memory</span><span class="o">.</span><span class="n">percent</span> <span class="o">&gt;</span> <span class="mi">80</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning: High memory usage detected!&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">memory</span>
+
+<span class="n">check_memory_usage</span><span class="p">()</span>
+</code></pre>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>
+<p><strong>Process Smaller Chunks</strong>:
+   ```python
+   def process_large_dataset_chunked(large_array, chunk_size=1024):
+       &ldquo;&rdquo;&ldquo;Process large arrays in chunks.&rdquo;&ldquo;&rdquo;
+       result = np.zeros_like(large_array)</p>
+<p>for i in range(0, large_array.shape[0], chunk_size):
+       for j in range(0, large_array.shape[1], chunk_size):
+           chunk = large_array[i:i+chunk_size, j:j+chunk_size]
+           # Process chunk
+           result[i:i+chunk_size, j:j+chunk_size] = process_chunk(chunk)</p>
+<p>return result
+   ```</p>
+</li>
+<li>
+<p><strong>Use Memory Mapping</strong>:
+   ```python
+   import numpy as np</p>
+</li>
+</ol>
+<p># For large files, use memory mapping
+   large_array = np.memmap(&lsquo;large_file.dat&rsquo;, dtype=&rsquo;float32&rsquo;, mode=&rsquo;r&rsquo;, shape=(10000, 10000))
+   ```</p>
+<ol start="3">
+<li><strong>Clear Variables</strong>:
+   ```python
+   import gc</li>
+</ol>
+<p># Explicitly delete large variables
+   del large_array
+   gc.collect()  # Force garbage collection
+   ```</p>
+<h2 id="sub-look-analysis-sla-issues">Sub-Look Analysis (SLA) Issues</h2>
+<h3 id="common-sla-problems">Common SLA Problems</h3>
+<h4 id="problem-frequency-computation-fails">Problem: Frequency Computation Fails</h4>
+<pre class="codehilite"><code><span class="c1"># Error during sla.frequencyComputation()</span>
+</code></pre>
+<p><strong>Check Input Data:</strong></p>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">diagnose_sla_input</span><span class="p">(</span><span class="n">sla</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Diagnose SLA input data issues.&quot;&quot;&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Product path: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">filepath</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Choice (0=Range, 1=Azimuth): </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">choice</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of looks: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Centroid separations: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">centroidSeparations</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub-look bandwidth: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">subLookBandwidth</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Check if file exists</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">filepath</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error: Product file not found: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">filepath</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># Check parameters</span>
+    <span class="k">if</span> <span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: numberOfLooks must be positive&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="n">sla</span><span class="o">.</span><span class="n">centroidSeparations</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: centroidSeparations must be positive&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">return</span> <span class="kc">True</span>
+
+<span class="c1"># Usage</span>
+<span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="s2">&quot;product.zip&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">diagnose_sla_input</span><span class="p">(</span><span class="n">sla</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Input parameters look good&quot;</span><span class="p">)</span>
+</code></pre>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li><strong>Verify Product Format</strong>:
+   ```python
+   # Ensure product is in correct format
+   supported_formats = [&lsquo;.zip&rsquo;, &lsquo;.SAFE&rsquo;, &lsquo;.dim&rsquo;]
+   product_path = Path(&ldquo;your_product&rdquo;)</li>
+</ol>
+<p>if not any(str(product_path).endswith(fmt) for fmt in supported_formats):
+       print(f&rdquo;Warning: Unsupported format. Supported: {supported_formats}&rdquo;)
+   ```</p>
+<ol start="2">
+<li><strong>Adjust Processing Parameters</strong>:
+   <code>python
+   # Conservative parameters for problematic data
+   sla = SubLookAnalysis("product.zip")
+   sla.choice = 1  # Azimuth processing (more stable)
+   sla.numberOfLooks = 3  # Start with fewer looks
+   sla.centroidSeparations = 500  # Reduce separation
+   sla.subLookBandwidth = 500  # Reduce bandwidth</code></li>
+</ol>
+<h4 id="problem-spectrum-computation-issues">Problem: Spectrum Computation Issues</h4>
+<pre class="codehilite"><code><span class="c1"># Error: Invalid spectrum or NaN values</span>
+</code></pre>
+<p><strong>Diagnosis:</strong></p>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">check_spectrum_quality</span><span class="p">(</span><span class="n">sla</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check spectrum computation quality.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">sla</span><span class="p">,</span> <span class="s1">&#39;spectrum&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">sla</span><span class="o">.</span><span class="n">spectrum</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: No spectrum computed&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># Check for NaN values</span>
+    <span class="n">nan_count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">spectrum</span><span class="p">))</span>
+    <span class="n">total_count</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">spectrum</span><span class="o">.</span><span class="n">size</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Spectrum shape: </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">spectrum</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;NaN values: </span><span class="si">{</span><span class="n">nan_count</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">total_count</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="mi">100</span><span class="o">*</span><span class="n">nan_count</span><span class="o">/</span><span class="n">total_count</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%)&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">nan_count</span> <span class="o">&gt;</span> <span class="n">total_count</span> <span class="o">*</span> <span class="mf">0.1</span><span class="p">:</span>  <span class="c1"># More than 10% NaN</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning: High percentage of NaN values in spectrum&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">return</span> <span class="kc">True</span>
+</code></pre>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>
+<p><strong>Check Input Data Quality</strong>:
+   ```python
+   # Verify input SLC data
+   def check_slc_quality(product_path):
+       &ldquo;&rdquo;&ldquo;Basic SLC data quality check.&rdquo;&ldquo;&rdquo;
+       try:
+           # This would depend on your SLC reading implementation
+           # Example for GDAL-readable products
+           from osgeo import gdal
+           dataset = gdal.Open(str(product_path))</p>
+<pre><code>   if dataset is None:
+       print("Error: Cannot open product")
+       return False
+
+   print(f"Bands: {dataset.RasterCount}")
+   print(f"Size: {dataset.RasterXSize} x {dataset.RasterYSize}")
+
+   # Check first band
+   band = dataset.GetRasterBand(1)
+   data_sample = band.ReadAsArray(0, 0, 100, 100)
+
+   if np.all(data_sample == 0):
+       print("Warning: Data appears to be all zeros")
+       return False
+
+   return True
+</code></pre>
+<p>except Exception as e:
+       print(f&rdquo;Error checking SLC quality: {e}&rdquo;)
+       return False
+   ```</p>
+</li>
+<li>
+<p><strong>Use Alternative Processing Parameters</strong>:
+   <code>python
+   # Try different de-weighting options
+   sla.choiceDeWe = 1  # Use average spectrum instead of ancillary data</code></p>
+</li>
+</ol>
+<h3 id="performance-issues">Performance Issues</h3>
+<h4 id="problem-slow-sla-processing">Problem: Slow SLA Processing</h4>
+<p><strong>Optimization Strategies:</strong></p>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">optimize_sla_performance</span><span class="p">(</span><span class="n">sla</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Optimize SLA processing parameters for speed.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Reduce number of looks for faster processing</span>
+    <span class="k">if</span> <span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Reducing number of looks for faster processing&quot;</span><span class="p">)</span>
+        <span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">=</span> <span class="mi">3</span>
+
+    <span class="c1"># Use smaller bandwidth for initial tests</span>
+    <span class="k">if</span> <span class="n">sla</span><span class="o">.</span><span class="n">subLookBandwidth</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Reducing bandwidth for faster processing&quot;</span><span class="p">)</span>
+        <span class="n">sla</span><span class="o">.</span><span class="n">subLookBandwidth</span> <span class="o">=</span> <span class="mi">700</span>
+
+    <span class="c1"># Process smaller image sections first</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Consider processing subsets for testing&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">sla</span>
+
+<span class="c1"># Usage</span>
+<span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="s2">&quot;large_product.zip&quot;</span><span class="p">)</span>
+<span class="n">sla</span> <span class="o">=</span> <span class="n">optimize_sla_performance</span><span class="p">(</span><span class="n">sla</span><span class="p">)</span>
+</code></pre>
+<h2 id="snap-integration-issues">SNAP Integration Issues</h2>
+<h3 id="snap-installation-problems">SNAP Installation Problems</h3>
+<h4 id="problem-gpt-not-found">Problem: GPT Not Found</h4>
+<pre class="codehilite"><code><span class="c1"># Error: GPT command &#39;gpt&#39; not found</span>
+</code></pre>
+<p><strong>Diagnosis:</strong></p>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">diagnose_snap_installation</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Comprehensive SNAP installation diagnosis.&quot;&quot;&quot;</span>
+
+    <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+    <span class="c1"># Common SNAP installation paths</span>
+    <span class="n">snap_paths</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;macOS&#39;</span><span class="p">:</span> <span class="s1">&#39;/Applications/snap/bin/gpt&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;Linux&#39;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s1">&#39;/usr/local/snap/bin/gpt&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;/opt/snap/bin/gpt&#39;</span><span class="p">,</span> 
+            <span class="s1">&#39;/home/*/ESA-STEP/snap/bin/gpt&#39;</span>
+        <span class="p">],</span>
+        <span class="s1">&#39;Windows&#39;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s1">&#39;C:</span><span class="se">\\</span><span class="s1">Program Files</span><span class="se">\\</span><span class="s1">snap</span><span class="se">\\</span><span class="s1">bin</span><span class="se">\\</span><span class="s1">gpt.exe&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;C:</span><span class="se">\\</span><span class="s1">ESA</span><span class="se">\\</span><span class="s1">snap</span><span class="se">\\</span><span class="s1">bin</span><span class="se">\\</span><span class="s1">gpt.exe&#39;</span>
+        <span class="p">]</span>
+    <span class="p">}</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Checking SNAP installation...&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Check common paths</span>
+    <span class="n">found_paths</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">os_name</span><span class="p">,</span> <span class="n">paths</span> <span class="ow">in</span> <span class="n">snap_paths</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">paths</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;*&#39;</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
+                <span class="c1"># Handle wildcard paths</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">glob</span>
+                <span class="n">expanded_paths</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">exp_path</span> <span class="ow">in</span> <span class="n">expanded_paths</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">Path</span><span class="p">(</span><span class="n">exp_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                        <span class="n">found_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">exp_path</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                    <span class="n">found_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">found_paths</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found SNAP installations: </span><span class="si">{</span><span class="n">found_paths</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Test each installation</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">found_paths</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;--help&#39;</span><span class="p">],</span> 
+                                      <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✓ Working SNAP GPT found at: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">path</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✗ SNAP GPT not responding at: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✗ Error testing </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✗ No SNAP installation found&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Download SNAP from: https://step.esa.int/main/download/snap-download/&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="kc">None</span>
+
+<span class="n">snap_path</span> <span class="o">=</span> <span class="n">diagnose_snap_installation</span><span class="p">()</span>
+</code></pre>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>
+<p><strong>Install SNAP</strong>:
+   - Download from <a href="https://step.esa.int/main/download/snap-download/">ESA STEP</a>
+   - Follow installation instructions for your OS</p>
+</li>
+<li>
+<p><strong>Manual Path Configuration</strong>:
+   ```python
+   from sarpyx.snapflow.engine import GPT</p>
+</li>
+</ol>
+<p># Specify SNAP path manually
+   gpt = GPT(product=&rdquo;input.zip&rdquo;, outdir=&rdquo;output/&rdquo;)
+   gpt.gpt_executable = &ldquo;/path/to/your/snap/bin/gpt&rdquo;
+   ```</p>
+<ol start="3">
+<li><strong>Environment Variables</strong>:
+   <code>bash
+   # Add SNAP to PATH
+   export PATH="/Applications/snap/bin:$PATH"  # macOS
+   export PATH="/usr/local/snap/bin:$PATH"     # Linux</code></li>
+</ol>
+<h4 id="problem-snap-processing-failures">Problem: SNAP Processing Failures</h4>
+<pre class="codehilite"><code><span class="c1"># Error: GPT command execution failed</span>
+</code></pre>
+<p><strong>Debugging SNAP Commands:</strong></p>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">debug_snap_command</span><span class="p">(</span><span class="n">gpt</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Debug SNAP GPT command execution.&quot;&quot;&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=== SNAP Debug Information ===&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GPT Executable: </span><span class="si">{</span><span class="n">gpt</span><span class="o">.</span><span class="n">gpt_executable</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Product Path: </span><span class="si">{</span><span class="n">gpt</span><span class="o">.</span><span class="n">prod_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Output Directory: </span><span class="si">{</span><span class="n">gpt</span><span class="o">.</span><span class="n">outdir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Format: </span><span class="si">{</span><span class="n">gpt</span><span class="o">.</span><span class="n">format</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parallelism: </span><span class="si">{</span><span class="n">gpt</span><span class="o">.</span><span class="n">parallelism</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Check if input exists</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">gpt</span><span class="o">.</span><span class="n">prod_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ERROR: Input product not found: </span><span class="si">{</span><span class="n">gpt</span><span class="o">.</span><span class="n">prod_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># Check if output directory is writable</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">gpt</span><span class="o">.</span><span class="n">outdir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">test_file</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">outdir</span> <span class="o">/</span> <span class="s2">&quot;test_write.tmp&quot;</span>
+        <span class="n">test_file</span><span class="o">.</span><span class="n">touch</span><span class="p">()</span>
+        <span class="n">test_file</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✓ Output directory is writable&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ERROR: Cannot write to output directory: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># Test basic GPT command</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">gpt</span><span class="o">.</span><span class="n">gpt_executable</span><span class="p">,</span> <span class="s1">&#39;--help&#39;</span><span class="p">],</span> 
+                              <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✓ GPT executable is working&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ERROR: GPT executable failed: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">stderr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ERROR: Cannot execute GPT: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">return</span> <span class="kc">True</span>
+
+<span class="c1"># Usage</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="s2">&quot;input.zip&quot;</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s2">&quot;output/&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">debug_snap_command</span><span class="p">(</span><span class="n">gpt</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SNAP setup looks good&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="snap-memory-issues">SNAP Memory Issues</h3>
+<h4 id="problem-snap-out-of-memory">Problem: SNAP Out of Memory</h4>
+<pre class="codehilite"><code><span class="c1"># Error: Java heap space / OutOfMemoryError</span>
+</code></pre>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>
+<p><strong>Reduce Parallelism</strong>:
+   <code>python
+   gpt = GPT(product="input.zip", outdir="output/")
+   gpt.parallelism = 2  # Reduce from default</code></p>
+</li>
+<li>
+<p><strong>Process Smaller Subsets</strong>:
+   <code>python
+   # Process geographic subsets
+   subset_product = gpt.Subset(
+       loc=[lon, lat],
+       sourceBands=['Intensity_VV'],
+       idx="small",
+       winSize=2000,  # Smaller window
+       GeoCoords=True
+   )</code></p>
+</li>
+<li>
+<p><strong>Use Different Output Format</strong>:
+   <code>python
+   # GeoTIFF typically uses less memory than BEAM-DIMAP
+   gpt.format = "GeoTIFF"</code></p>
+</li>
+</ol>
+<h2 id="science-module-issues">Science Module Issues</h2>
+<h3 id="vegetation-index-problems">Vegetation Index Problems</h3>
+<h4 id="problem-nan-values-in-indices">Problem: NaN Values in Indices</h4>
+<pre class="codehilite"><code><span class="c1"># Error: calculate_rvi returns all NaN values</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science.indices</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_rvi</span>
+
+<span class="n">rvi</span> <span class="o">=</span> <span class="n">calculate_rvi</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;NaN percentage: </span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">rvi</span><span class="p">))</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">rvi</span><span class="o">.</span><span class="n">size</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+</code></pre>
+<p><strong>Diagnosis:</strong></p>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">diagnose_vegetation_index_inputs</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Diagnose vegetation index input data.&quot;&quot;&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=== Input Data Diagnosis ===&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;VV shape: </span><span class="si">{</span><span class="n">sigma_vv</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;VH shape: </span><span class="si">{</span><span class="n">sigma_vh</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Check data scale</span>
+    <span class="n">vv_range</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">))</span>
+    <span class="n">vh_range</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">sigma_vh</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">sigma_vh</span><span class="p">))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;VV range: </span><span class="si">{</span><span class="n">vv_range</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;VH range: </span><span class="si">{</span><span class="n">vh_range</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Check for common issues</span>
+    <span class="n">issues</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Issue 1: Wrong data scale (dB instead of linear)</span>
+    <span class="k">if</span> <span class="n">vv_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+        <span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Data might be in dB scale (should be linear)&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Issue 2: Zero or negative values</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">sigma_vv</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">sigma_vh</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Zero or negative values detected&quot;</span><span class="p">)</span>
+        <span class="n">zero_vv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">sigma_vv</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">zero_vh</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">sigma_vh</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Zero/negative VV pixels: </span><span class="si">{</span><span class="n">zero_vv</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Zero/negative VH pixels: </span><span class="si">{</span><span class="n">zero_vh</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Issue 3: Extreme values</span>
+    <span class="k">if</span> <span class="n">vv_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">10</span> <span class="ow">or</span> <span class="n">vh_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>
+        <span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Very high backscatter values detected&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Issue 4: Shape mismatch</span>
+    <span class="k">if</span> <span class="n">sigma_vv</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">sigma_vh</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+        <span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;VV and VH arrays have different shapes&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">issues</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ISSUES DETECTED:&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">issue</span> <span class="ow">in</span> <span class="n">issues</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- </span><span class="si">{</span><span class="n">issue</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✓ Input data looks good&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">issues</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+
+<span class="c1"># Usage</span>
+<span class="n">data_ok</span> <span class="o">=</span> <span class="n">diagnose_vegetation_index_inputs</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+</code></pre>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li><strong>Convert dB to Linear</strong>:
+   ```python
+   # If data is in dB, convert to linear
+   def db_to_linear(db_values):
+       &ldquo;&rdquo;&ldquo;Convert dB values to linear scale.&rdquo;&ldquo;&rdquo;
+       return 10**(db_values / 10.0)</li>
+</ol>
+<p># Check if conversion is needed
+   if np.max(sigma_vv) &lt; 1.0:
+       print(&ldquo;Converting from dB to linear scale&rdquo;)
+       sigma_vv = db_to_linear(sigma_vv)
+       sigma_vh = db_to_linear(sigma_vh)
+   ```</p>
+<ol start="2">
+<li>
+<p><strong>Handle Zero/Negative Values</strong>:
+   ```python
+   def clean_backscatter_data(sigma_vv, sigma_vh, min_value=1e-6):
+       &ldquo;&rdquo;&ldquo;Clean backscatter data for vegetation index calculation.&rdquo;&ldquo;&rdquo;</p>
+<p># Replace zeros and negatives with small positive value
+   sigma_vv_clean = np.where(sigma_vv &lt;= 0, min_value, sigma_vv)
+   sigma_vh_clean = np.where(sigma_vh &lt;= 0, min_value, sigma_vh)</p>
+<p># Log cleaning actions
+   zeros_vv = np.sum(sigma_vv &lt;= 0)
+   zeros_vh = np.sum(sigma_vh &lt;= 0)</p>
+<p>if zeros_vv &gt; 0 or zeros_vh &gt; 0:
+       print(f&rdquo;Cleaned {zeros_vv} zero/negative VV pixels&rdquo;)
+       print(f&rdquo;Cleaned {zeros_vh} zero/negative VH pixels&rdquo;)</p>
+<p>return sigma_vv_clean, sigma_vh_clean</p>
+</li>
+</ol>
+<p># Clean data before index calculation
+   sigma_vv_clean, sigma_vh_clean = clean_backscatter_data(sigma_vv, sigma_vh)
+   rvi = calculate_rvi(sigma_vv_clean, sigma_vh_clean)
+   ```</p>
+<ol start="3">
+<li>
+<p><strong>Quality Control Results</strong>:
+   ```python
+   def quality_control_rvi(rvi):
+       &ldquo;&rdquo;&ldquo;Apply quality control to RVI results.&rdquo;&ldquo;&rdquo;</p>
+<p># RVI should be between 0 and 1
+   valid_mask = (rvi &gt;= 0) &amp; (rvi &lt;= 1) &amp; np.isfinite(rvi)</p>
+<p>print(f&rdquo;Valid RVI pixels: {np.sum(valid_mask)}/{rvi.size}&rdquo;)
+   print(f&rdquo;RVI range: {np.nanmin(rvi):.3f} to {np.nanmax(rvi):.3f}&rdquo;)</p>
+<p># Flag outliers
+   if np.nanmax(rvi) &gt; 1.0:
+       print(&ldquo;Warning: RVI values &gt; 1.0 detected (check input data scale)&rdquo;)</p>
+<p>if np.nanmin(rvi) &lt; 0.0:
+       print(&ldquo;Warning: Negative RVI values detected&rdquo;)</p>
+<p># Apply mask
+   rvi_qc = np.where(valid_mask, rvi, np.nan)</p>
+<p>return rvi_qc, valid_mask</p>
+</li>
+</ol>
+<p>rvi_clean, valid_pixels = quality_control_rvi(rvi)
+   ```</p>
+<h2 id="data-io-issues">Data I/O Issues</h2>
+<h3 id="file-format-problems">File Format Problems</h3>
+<h4 id="problem-cannot-read-sar-products">Problem: Cannot Read SAR Products</h4>
+<pre class="codehilite"><code><span class="c1"># Error: Unable to load product data</span>
+</code></pre>
+<p><strong>Check File Integrity:</strong></p>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">check_sar_product_integrity</span><span class="p">(</span><span class="n">product_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check SAR product file integrity.&quot;&quot;&quot;</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">zipfile</span>
+
+    <span class="n">product_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Checking: </span><span class="si">{</span><span class="n">product_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Basic existence check</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">product_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ERROR: File does not exist&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># Size check</span>
+    <span class="n">file_size_mb</span> <span class="o">=</span> <span class="n">product_path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File size: </span><span class="si">{</span><span class="n">file_size_mb</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> MB&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">file_size_mb</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>  <span class="c1"># Typical SAR products are much larger</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;WARNING: File size seems small for SAR product&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Format-specific checks</span>
+    <span class="k">if</span> <span class="n">product_path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s1">&#39;.zip&#39;</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">product_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">zf</span><span class="p">:</span>
+                <span class="n">file_list</span> <span class="o">=</span> <span class="n">zf</span><span class="o">.</span><span class="n">namelist</span><span class="p">()</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Archive contains </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">file_list</span><span class="p">)</span><span class="si">}</span><span class="s2"> files&quot;</span><span class="p">)</span>
+
+                <span class="c1"># Check for essential files</span>
+                <span class="n">essential_patterns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;manifest.safe&#39;</span><span class="p">,</span> <span class="s1">&#39;.xml&#39;</span><span class="p">,</span> <span class="s1">&#39;.tiff&#39;</span><span class="p">]</span>
+                <span class="n">found_patterns</span> <span class="o">=</span> <span class="p">[]</span>
+
+                <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">essential_patterns</span><span class="p">:</span>
+                    <span class="n">matching_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">file_list</span> <span class="k">if</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
+                    <span class="k">if</span> <span class="n">matching_files</span><span class="p">:</span>
+                        <span class="n">found_patterns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✓ Found </span><span class="si">{</span><span class="n">pattern</span><span class="si">}</span><span class="s2"> files: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">matching_files</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✗ No </span><span class="si">{</span><span class="n">pattern</span><span class="si">}</span><span class="s2"> files found&quot;</span><span class="p">)</span>
+
+                <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">found_patterns</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+        <span class="k">except</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">BadZipFile</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ERROR: Corrupted ZIP file&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">elif</span> <span class="n">product_path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s1">&#39;.SAFE&#39;</span> <span class="ow">or</span> <span class="n">product_path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+        <span class="c1"># Check SAFE directory structure</span>
+        <span class="n">required_dirs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;annotation&#39;</span><span class="p">,</span> <span class="s1">&#39;measurement&#39;</span><span class="p">]</span>
+        <span class="n">found_dirs</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">req_dir</span> <span class="ow">in</span> <span class="n">required_dirs</span><span class="p">:</span>
+            <span class="n">dir_path</span> <span class="o">=</span> <span class="n">product_path</span> <span class="o">/</span> <span class="n">req_dir</span>
+            <span class="k">if</span> <span class="n">dir_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="n">found_dirs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">req_dir</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✓ Found </span><span class="si">{</span><span class="n">req_dir</span><span class="si">}</span><span class="s2"> directory&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✗ Missing </span><span class="si">{</span><span class="n">req_dir</span><span class="si">}</span><span class="s2"> directory&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">found_dirs</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">required_dirs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="kc">True</span>
+
+<span class="c1"># Usage</span>
+<span class="n">is_valid</span> <span class="o">=</span> <span class="n">check_sar_product_integrity</span><span class="p">(</span><span class="s2">&quot;S1A_product.zip&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="memory-mapping-issues">Memory Mapping Issues</h3>
+<h4 id="problem-large-files-cannot-be-loaded">Problem: Large Files Cannot Be Loaded</h4>
+<p><strong>Use Memory-Efficient Loading:</strong></p>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">memory_efficient_loading</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">chunk_size</span><span class="o">=</span><span class="mi">1024</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load large files using memory mapping or chunked reading.&quot;&quot;&quot;</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+    <span class="n">file_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+    <span class="n">file_size_gb</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File size: </span><span class="si">{</span><span class="n">file_size_gb</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> GB&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">file_size_gb</span> <span class="o">&gt;</span> <span class="mf">2.0</span><span class="p">:</span>  <span class="c1"># Large file</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Using memory mapping for large file&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Example for binary files</span>
+        <span class="k">if</span> <span class="n">file_path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s1">&#39;.dat&#39;</span><span class="p">:</span>
+            <span class="c1"># Assume float32 data, adjust as needed</span>
+            <span class="n">total_elements</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span> <span class="o">//</span> <span class="mi">4</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">total_elements</span><span class="p">))</span>  <span class="c1"># Assume square</span>
+
+            <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">memmap</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float32&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> 
+                           <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">shape</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">data</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Consider converting to memory-mappable format&quot;</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading normally&quot;</span><span class="p">)</span>
+        <span class="c1"># Normal loading for smaller files</span>
+        <span class="c1"># Implementation depends on file format</span>
+        <span class="k">pass</span>
+
+<span class="c1"># Usage</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">memory_efficient_loading</span><span class="p">(</span><span class="s2">&quot;large_sar_data.dat&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="performance-optimization">Performance Optimization</h2>
+<h3 id="general-performance-issues">General Performance Issues</h3>
+<h4 id="problem-slow-processing">Problem: Slow Processing</h4>
+<p><strong>Performance Profiling:</strong></p>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">psutil</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">profile_performance</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorator to profile function performance.&quot;&quot;&quot;</span>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># Initial measurements</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">start_memory</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span><span class="o">.</span><span class="n">used</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting </span><span class="si">{</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+            <span class="c1"># Final measurements</span>
+            <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">end_memory</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span><span class="o">.</span><span class="n">used</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+
+            <span class="n">duration</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
+            <span class="n">memory_delta</span> <span class="o">=</span> <span class="n">end_memory</span> <span class="o">-</span> <span class="n">start_memory</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✓ </span><span class="si">{</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> completed:&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Duration: </span><span class="si">{</span><span class="n">duration</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Memory change: </span><span class="si">{</span><span class="n">memory_delta</span><span class="si">:</span><span class="s2">+.2f</span><span class="si">}</span><span class="s2"> GB&quot;</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">result</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✗ </span><span class="si">{</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span>
+
+    <span class="k">return</span> <span class="n">wrapper</span>
+
+<span class="c1"># Usage</span>
+<span class="nd">@profile_performance</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_sar_data</span><span class="p">(</span><span class="n">product_path</span><span class="p">):</span>
+    <span class="c1"># Your processing function</span>
+    <span class="k">pass</span>
+</code></pre>
+<p><strong>Optimization Strategies:</strong></p>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">optimize_processing_environment</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Optimize system for SAR processing.&quot;&quot;&quot;</span>
+
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">multiprocessing</span>
+
+    <span class="c1"># Check system resources</span>
+    <span class="n">cpu_count</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
+    <span class="n">memory_gb</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span><span class="o">.</span><span class="n">total</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;System: </span><span class="si">{</span><span class="n">cpu_count</span><span class="si">}</span><span class="s2"> CPUs, </span><span class="si">{</span><span class="n">memory_gb</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> GB RAM&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Optimization recommendations</span>
+    <span class="n">recommendations</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="n">memory_gb</span> <span class="o">&lt;</span> <span class="mi">8</span><span class="p">:</span>
+        <span class="n">recommendations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Consider upgrading RAM (minimum 8GB recommended)&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">cpu_count</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="n">recommendations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Consider parallel processing optimization&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Set environment variables for optimization</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;OMP_NUM_THREADS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">cpu_count</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;NUMBA_NUM_THREADS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">cpu_count</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+
+    <span class="c1"># Disable GDAL warnings for performance</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;CPL_LOG&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;/dev/null&#39;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Applied performance optimizations&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">recommendations</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Recommendations:&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">recommendations</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- </span><span class="si">{</span><span class="n">rec</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">optimize_processing_environment</span><span class="p">()</span>
+</code></pre>
+<h2 id="error-recovery">Error Recovery</h2>
+<h3 id="robust-processing-patterns">Robust Processing Patterns</h3>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">robust_processing_with_recovery</span><span class="p">(</span><span class="n">processing_func</span><span class="p">,</span> <span class="n">input_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> 
+                                  <span class="n">max_retries</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">cleanup_on_failure</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Robust processing with automatic recovery.&quot;&quot;&quot;</span>
+
+    <span class="n">output_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_retries</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing attempt </span><span class="si">{</span><span class="n">attempt</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">max_retries</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Ensure clean output directory</span>
+            <span class="k">if</span> <span class="n">output_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="n">cleanup_on_failure</span><span class="p">:</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
+            <span class="n">output_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># Run processing</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">processing_func</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">)</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✓ Processing successful on attempt </span><span class="si">{</span><span class="n">attempt</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">result</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✗ Attempt </span><span class="si">{</span><span class="n">attempt</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">attempt</span> <span class="o">&lt;</span> <span class="n">max_retries</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Retrying in 5 seconds...&quot;</span><span class="p">)</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+
+                <span class="c1"># Cleanup for retry</span>
+                <span class="k">if</span> <span class="n">output_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="n">cleanup_on_failure</span><span class="p">:</span>
+                    <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;All attempts failed&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing failed after </span><span class="si">{</span><span class="n">max_retries</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> attempts&quot;</span><span class="p">)</span>
+
+<span class="c1"># Usage</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">my_processing_function</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+    <span class="c1"># Your processing logic here</span>
+    <span class="k">pass</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">robust_processing_with_recovery</span><span class="p">(</span>
+    <span class="n">my_processing_function</span><span class="p">,</span>
+    <span class="s2">&quot;input_product.zip&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;output/&quot;</span><span class="p">,</span>
+    <span class="n">max_retries</span><span class="o">=</span><span class="mi">2</span>
+<span class="p">)</span>
+</code></pre>
+<h3 id="partial-recovery">Partial Recovery</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">checkpoint_processing</span><span class="p">(</span><span class="n">processing_steps</span><span class="p">,</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> 
+                        <span class="n">resume_from</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Processing with checkpoints for partial recovery.&quot;&quot;&quot;</span>
+
+    <span class="n">checkpoint_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;checkpoints&quot;</span>
+    <span class="n">checkpoint_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># Find resume point</span>
+    <span class="n">start_step</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">resume_from</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">step_name</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">processing_steps</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">step_name</span> <span class="o">==</span> <span class="n">resume_from</span><span class="p">:</span>
+                <span class="n">start_step</span> <span class="o">=</span> <span class="n">i</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Resuming from step: </span><span class="si">{</span><span class="n">resume_from</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">break</span>
+
+    <span class="c1"># Process steps with checkpointing</span>
+    <span class="n">current_data</span> <span class="o">=</span> <span class="n">input_data</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">step_name</span><span class="p">,</span> <span class="n">step_func</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">processing_steps</span><span class="p">[</span><span class="n">start_step</span><span class="p">:],</span> <span class="n">start_step</span><span class="p">):</span>
+        <span class="n">checkpoint_file</span> <span class="o">=</span> <span class="n">checkpoint_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;checkpoint_</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">step_name</span><span class="si">}</span><span class="s2">.pkl&quot;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">checkpoint_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading checkpoint for </span><span class="si">{</span><span class="n">step_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">checkpoint_file</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">current_data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing step </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">step_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">current_data</span> <span class="o">=</span> <span class="n">step_func</span><span class="p">(</span><span class="n">current_data</span><span class="p">)</span>
+
+                <span class="c1"># Save checkpoint</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saving checkpoint for </span><span class="si">{</span><span class="n">step_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">checkpoint_file</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">current_data</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+
+            <span class="n">results</span><span class="p">[</span><span class="n">step_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_data</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Step </span><span class="si">{</span><span class="n">step_name</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Can resume from this point using resume_from=&#39;</span><span class="si">{</span><span class="n">step_name</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+            <span class="k">raise</span>
+
+    <span class="k">return</span> <span class="n">results</span>
+
+<span class="c1"># Usage</span>
+<span class="n">processing_steps</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s2">&quot;calibration&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">data</span><span class="p">:</span> <span class="n">calibrate_data</span><span class="p">(</span><span class="n">data</span><span class="p">)),</span>
+    <span class="p">(</span><span class="s2">&quot;multilook&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">data</span><span class="p">:</span> <span class="n">multilook_data</span><span class="p">(</span><span class="n">data</span><span class="p">)),</span>
+    <span class="p">(</span><span class="s2">&quot;subset&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">data</span><span class="p">:</span> <span class="n">subset_data</span><span class="p">(</span><span class="n">data</span><span class="p">)),</span>
+    <span class="p">(</span><span class="s2">&quot;vegetation_indices&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">data</span><span class="p">:</span> <span class="n">calculate_indices</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+<span class="p">]</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="n">checkpoint_processing</span><span class="p">(</span>
+    <span class="n">processing_steps</span><span class="p">,</span>
+    <span class="n">input_data</span><span class="p">,</span>
+    <span class="s2">&quot;processing_output/&quot;</span><span class="p">,</span>
+    <span class="n">resume_from</span><span class="o">=</span><span class="s2">&quot;multilook&quot;</span>  <span class="c1"># Resume from failed step</span>
+<span class="p">)</span>
+</code></pre>
+<h2 id="getting-help">Getting Help</h2>
+<h3 id="diagnostic-information-collection">Diagnostic Information Collection</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">collect_diagnostic_info</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collect comprehensive diagnostic information.&quot;&quot;&quot;</span>
+
+    <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=== sarpyx Diagnostic Information ===</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># System information</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;System Information:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- OS: </span><span class="si">{</span><span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">platform</span><span class="o">.</span><span class="n">release</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- Python: </span><span class="si">{</span><span class="n">sys</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- Architecture: </span><span class="si">{</span><span class="n">platform</span><span class="o">.</span><span class="n">machine</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Package versions</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Package Versions:&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">sarpyx</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- sarpyx: </span><span class="si">{</span><span class="n">sarpyx</span><span class="o">.</span><span class="n">__version__</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nb">hasattr</span><span class="p">(</span><span class="n">sarpyx</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;__version__&#39;</span><span class="p">)</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;unknown&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- sarpyx: NOT INSTALLED&quot;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- NumPy: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- NumPy: NOT INSTALLED&quot;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">osgeo</span><span class="w"> </span><span class="kn">import</span> <span class="n">gdal</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- GDAL: </span><span class="si">{</span><span class="n">gdal</span><span class="o">.</span><span class="n">VersionInfo</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- GDAL: NOT INSTALLED&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Memory information</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Memory Information:&quot;</span><span class="p">)</span>
+    <span class="n">memory</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- Total: </span><span class="si">{</span><span class="n">memory</span><span class="o">.</span><span class="n">total</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1024</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> GB&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- Available: </span><span class="si">{</span><span class="n">memory</span><span class="o">.</span><span class="n">available</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1024</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> GB&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- Used: </span><span class="si">{</span><span class="n">memory</span><span class="o">.</span><span class="n">percent</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+
+    <span class="c1"># SNAP information</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">SNAP Information:&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.snapflow.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPT</span>
+        <span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="s2">&quot;dummy&quot;</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s2">&quot;dummy&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- GPT Path: </span><span class="si">{</span><span class="n">gpt</span><span class="o">.</span><span class="n">gpt_executable</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- Parallelism: </span><span class="si">{</span><span class="n">gpt</span><span class="o">.</span><span class="n">parallelism</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- SNAP: Error - </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;=&quot;</span><span class="o">*</span><span class="mi">50</span><span class="p">)</span>
+
+<span class="c1"># Run diagnostics</span>
+<span class="n">collect_diagnostic_info</span><span class="p">()</span>
+</code></pre>
+<h3 id="community-support">Community Support</h3>
+<ol>
+<li>
+<p><strong>GitHub Issues</strong>: <a href="https://github.com/your-repo/sarpyx/issues">sarpyx Issues</a>
+   - Include diagnostic information
+   - Provide minimal reproducible examples
+   - Specify your use case clearly</p>
+</li>
+<li>
+<p><strong>Documentation</strong>: Check the complete documentation for detailed examples</p>
+</li>
+<li>
+<p><strong>Examples Repository</strong>: Look for similar use cases in the examples</p>
+</li>
+</ol>
+<h3 id="creating-minimal-reproducible-examples">Creating Minimal Reproducible Examples</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">create_minimal_example</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Template for creating minimal reproducible examples.&quot;&quot;&quot;</span>
+
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science.indices</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_rvi</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=== Minimal Reproducible Example ===&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Problem: RVI calculation returns unexpected results&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+
+    <span class="c1"># Create minimal test data</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Creating test data...&quot;</span><span class="p">)</span>
+    <span class="n">sigma_vv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">]])</span>
+    <span class="n">sigma_vh</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">]])</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;VV data: </span><span class="si">{</span><span class="n">sigma_vv</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;VH data: </span><span class="si">{</span><span class="n">sigma_vh</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Show the problem</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Calculating RVI...&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">rvi</span> <span class="o">=</span> <span class="n">calculate_rvi</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RVI result: </span><span class="si">{</span><span class="n">rvi</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected: values between 0 and 1&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Show what&#39;s wrong</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">rvi</span><span class="p">)):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;PROBLEM: NaN values in result&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">rvi</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;PROBLEM: RVI values &gt; 1&quot;</span><span class="p">)</span>
+
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ERROR: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">System info:&quot;</span><span class="p">)</span>
+    <span class="n">collect_diagnostic_info</span><span class="p">()</span>
+
+<span class="c1"># Use this template when reporting issues</span>
+<span class="n">create_minimal_example</span><span class="p">()</span>
+</code></pre>
+<p>This comprehensive troubleshooting guide should help users diagnose and resolve most common issues they encounter when using sarpyx, with practical solutions and prevention strategies for each problem area.</p>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

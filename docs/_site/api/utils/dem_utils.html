@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DEM Utilities API – sarpyx Docs</title>
+  <link rel="stylesheet" href="../../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../../index.html"><img class="logo" src="../../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../../user_guide/index.html">Overview</a>
+<a href="../../user_guide/installation.html">Installation</a>
+<a href="../../user_guide/getting_started.html">Getting Started</a>
+<a href="../../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../../user_guide/data_formats.html">Data Formats</a>
+<a href="../../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../../user_guide/science_applications.html">Science Applications</a>
+<a href="../../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../../tutorials/index.html">Overview</a>
+<a href="../../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../../api/index.html">Overview</a>
+<a href="../../api/snapflow/index.html">Snapflow</a>
+<a href="../../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../../api/science/index.html">Science</a>
+<a href="../../api/sla/index.html">SLA</a>
+<a href="../../api/processor/index.html">Processor</a>
+<a href="../../api/utils/index.html">Utils</a>
+<a href="../../api/utils/dem_utils.html" class="active">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../../developer_guide/architecture.html">Architecture</a>
+<a href="../../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="dem-utilities-api">DEM Utilities API</h1>
+<p>The <code>sarpyx.utils.dem_utils</code> module provides tools for downloading and managing Copernicus GLO-30 (30 m) and GLO-90 (90 m) Digital Elevation Model tiles from the public AWS S3 bucket, selecting only tiles that intersect a given WKT geometry.</p>
+<h2 id="overview">Overview</h2>
+<p>The Copernicus DEM is a global elevation model distributed as Cloud-Optimised GeoTIFF (COG) tiles on a 1×1 degree grid. This module automates:</p>
+<ul>
+<li><strong>Tile computation</strong> — determine which 1×1° cells intersect an arbitrary WKT geometry</li>
+<li><strong>Parallel download</strong> — fetch tiles from AWS S3 (no authentication required)</li>
+<li><strong>VRT mosaic</strong> — merge downloaded tiles into a single GDAL Virtual Raster</li>
+</ul>
+<h2 id="quick-start">Quick Start</h2>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.dem_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">download_tiles_for_wkt</span>
+
+<span class="n">wkt</span> <span class="o">=</span> <span class="s2">&quot;POLYGON ((-3.18 54.28, -3.78 55.89, 0.31 56.30, 0.75 54.69, -3.18 54.28))&quot;</span>
+
+<span class="n">tiles</span> <span class="o">=</span> <span class="n">download_tiles_for_wkt</span><span class="p">(</span>
+    <span class="n">wkt_string</span><span class="o">=</span><span class="n">wkt</span><span class="p">,</span>
+    <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;/path/to/dem_tiles&quot;</span><span class="p">,</span>
+    <span class="n">resolution_m</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+    <span class="n">max_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tiles</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">  (</span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e6</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> MB)&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="tile-naming-convention">Tile Naming Convention</h2>
+<p>Each tile covers a 1×1 degree cell. The canonical name encodes resolution, latitude, and longitude:</p>
+<pre><code>Copernicus_DSM_COG_10_N54_00_W004_00_DEM
+─────────────────── ── ────── ─────── ───
+       prefix       res  lat     lon  suffix
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>res</code></td>
+<td><code>10</code> = GLO-30 (30 m), <code>30</code> = GLO-90 (90 m)</td>
+<td><code>10</code>, <code>30</code></td>
+</tr>
+<tr>
+<td><code>lat</code></td>
+<td>South edge of the cell, <code>N</code>/<code>S</code> + 2-digit value</td>
+<td><code>N54_00</code>, <code>S01_00</code></td>
+</tr>
+<tr>
+<td><code>lon</code></td>
+<td>West edge of the cell, <code>E</code>/<code>W</code> + 3-digit value</td>
+<td><code>W004_00</code>, <code>E030_00</code></td>
+</tr>
+</tbody>
+</table>
+<p>Tiles are served from the public AWS S3 bucket with no authentication:</p>
+<pre><code>https://copernicus-dem-30m.s3.eu-central-1.amazonaws.com/&lt;tile_name&gt;/&lt;tile_name&gt;.tif
+</code></pre>
+<h2 id="functions">Functions</h2>
+<h3 id="tiles_from_wkt"><code>tiles_from_wkt()</code></h3>
+<pre class="codehilite"><code><span class="n">tiles_from_wkt</span><span class="p">(</span><span class="n">wkt_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resolution_m</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
+</code></pre>
+<p>Compute which DEM tiles intersect a WKT geometry.</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>wkt_string</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Any valid WKT geometry (<code>POLYGON</code>, <code>MULTIPOLYGON</code>, <code>POINT</code>, …)</td>
+</tr>
+<tr>
+<td><code>resolution_m</code></td>
+<td><code>int</code></td>
+<td><code>30</code></td>
+<td>DEM resolution: <code>30</code> (GLO-30) or <code>90</code> (GLO-90)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns:</strong> <code>list</code> of <code>(lat, lon, tile_name, tile_url)</code> tuples, one per intersecting 1×1° cell.</p>
+<p><strong>Example:</strong></p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.dem_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">tiles_from_wkt</span>
+
+<span class="n">wkt</span> <span class="o">=</span> <span class="s2">&quot;POLYGON ((10.0 44.0, 10.0 46.0, 12.0 46.0, 12.0 44.0, 10.0 44.0))&quot;</span>
+<span class="n">tiles</span> <span class="o">=</span> <span class="n">tiles_from_wkt</span><span class="p">(</span><span class="n">wkt</span><span class="p">,</span> <span class="n">resolution_m</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">tiles</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  (</span><span class="si">{</span><span class="n">lat</span><span class="si">:</span><span class="s2">+d</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">lon</span><span class="si">:</span><span class="s2">+d</span><span class="si">}</span><span class="s2">)  </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<hr>
+<h3 id="download_tiles_for_wkt"><code>download_tiles_for_wkt()</code></h3>
+<pre class="codehilite"><code><span class="n">download_tiles_for_wkt</span><span class="p">(</span>
+    <span class="n">wkt_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">resolution_m</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">max_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span>
+</code></pre>
+<p>Download all Copernicus DEM tiles intersecting a WKT geometry.</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>wkt_string</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Any valid WKT geometry string</td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td><code>str \| Path</code></td>
+<td>—</td>
+<td>Directory to save <code>.tif</code> files (flat layout)</td>
+</tr>
+<tr>
+<td><code>resolution_m</code></td>
+<td><code>int</code></td>
+<td><code>30</code></td>
+<td><code>30</code> (GLO-30) or <code>90</code> (GLO-90)</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+<td>Re-download tiles that already exist locally</td>
+</tr>
+<tr>
+<td><code>max_workers</code></td>
+<td><code>int</code></td>
+<td><code>4</code></td>
+<td>Number of parallel download threads</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns:</strong> <code>list[Path]</code> — paths to all downloaded (or already-existing) GeoTIFF files, sorted by name.</p>
+<p><strong>Notes:</strong>
+- Tiles over open ocean return HTTP 404 and are logged as warnings, not errors.
+- Existing files are skipped unless <code>overwrite=True</code>.
+- Partial downloads use a <code>.tif.part</code> suffix and are cleaned up on failure.</p>
+<p><strong>Example:</strong></p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.dem_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">download_tiles_for_wkt</span>
+
+<span class="n">wkt</span> <span class="o">=</span> <span class="s2">&quot;POLYGON ((-3.18 54.28, -3.78 55.89, 0.31 56.30, 0.75 54.69, -3.18 54.28))&quot;</span>
+
+<span class="n">tiles</span> <span class="o">=</span> <span class="n">download_tiles_for_wkt</span><span class="p">(</span>
+    <span class="n">wkt_string</span><span class="o">=</span><span class="n">wkt</span><span class="p">,</span>
+    <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;./AUX/copernicus-dem-30m&quot;</span><span class="p">,</span>
+    <span class="n">resolution_m</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+    <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">max_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="c1"># Output:</span>
+<span class="c1"># Will download 14 tile(s) ...</span>
+<span class="c1"># Saved Copernicus_DSM_COG_10_N54_00_W003_00_DEM.tif (29.8 MB)</span>
+<span class="c1"># Tile not available (404): ...N54_00_E000_00... — likely ocean</span>
+<span class="c1"># Download complete: 8 succeeded, 6 failed/skipped</span>
+</code></pre>
+<hr>
+<h3 id="tile_name"><code>tile_name()</code></h3>
+<pre class="codehilite"><code><span class="n">tile_name</span><span class="p">(</span><span class="n">lat</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">lon</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">resolution_m</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</code></pre>
+<p>Build the canonical tile name for a given 1×1° cell.</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lat</code></td>
+<td><code>int</code></td>
+<td>Latitude of the south edge</td>
+</tr>
+<tr>
+<td><code>lon</code></td>
+<td><code>int</code></td>
+<td>Longitude of the west edge</td>
+</tr>
+<tr>
+<td><code>resolution_m</code></td>
+<td><code>int</code></td>
+<td><code>30</code> or <code>90</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns:</strong> <code>str</code> — e.g. <code>'Copernicus_DSM_COG_10_N54_00_W004_00_DEM'</code></p>
+<hr>
+<h3 id="tile_url"><code>tile_url()</code></h3>
+<pre class="codehilite"><code><span class="n">tile_url</span><span class="p">(</span><span class="n">lat</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">lon</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">resolution_m</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</code></pre>
+<p>Full HTTPS download URL for a tile&rsquo;s GeoTIFF.</p>
+<p><strong>Returns:</strong> <code>str</code> — the public S3 URL for the tile.</p>
+<hr>
+<h3 id="build_vrt"><code>build_vrt()</code></h3>
+<pre class="codehilite"><code><span class="n">build_vrt</span><span class="p">(</span><span class="n">tile_paths</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">],</span> <span class="n">output_vrt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span>
+</code></pre>
+<p>Merge multiple DEM GeoTIFFs into a single GDAL VRT (Virtual Raster).</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tile_paths</code></td>
+<td><code>Sequence[Path]</code></td>
+<td>Paths to <code>.tif</code> DEM tiles</td>
+</tr>
+<tr>
+<td><code>output_vrt</code></td>
+<td><code>str \| Path</code></td>
+<td>Output <code>.vrt</code> file path</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns:</strong> <code>Path</code> — the output VRT path.</p>
+<p><strong>Requires:</strong> <code>gdalbuildvrt</code> command (available with GDAL/rasterio installation).</p>
+<p><strong>Example:</strong></p>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.dem_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">download_tiles_for_wkt</span><span class="p">,</span> <span class="n">build_vrt</span>
+
+<span class="n">tiles</span> <span class="o">=</span> <span class="n">download_tiles_for_wkt</span><span class="p">(</span><span class="n">wkt</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;./dem&quot;</span><span class="p">)</span>
+<span class="n">vrt</span> <span class="o">=</span> <span class="n">build_vrt</span><span class="p">(</span><span class="n">tiles</span><span class="p">,</span> <span class="s2">&quot;./dem/mosaic.vrt&quot;</span><span class="p">)</span>
+</code></pre>
+<hr>
+<h2 id="cli-usage">CLI Usage</h2>
+<p>The module can be run as a standalone script:</p>
+<pre class="codehilite"><code>python<span class="w"> </span>-m<span class="w"> </span>sarpyx.utils.dem_utils<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--wkt<span class="w"> </span><span class="s2">&quot;POLYGON ((-3.18 54.28, -3.78 55.89, 0.31 56.30, 0.75 54.69, -3.18 54.28))&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output-dir<span class="w"> </span>./AUX/copernicus-dem-30m<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--resolution<span class="w"> </span><span class="m">30</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--workers<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--build-vrt<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--verbose
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--wkt</code></td>
+<td>WKT geometry string (required)</td>
+</tr>
+<tr>
+<td><code>-o</code>, <code>--output-dir</code></td>
+<td>Output directory (required)</td>
+</tr>
+<tr>
+<td><code>-r</code>, <code>--resolution</code></td>
+<td><code>30</code> or <code>90</code> (default: <code>30</code>)</td>
+</tr>
+<tr>
+<td><code>--overwrite</code></td>
+<td>Re-download existing tiles</td>
+</tr>
+<tr>
+<td><code>-w</code>, <code>--workers</code></td>
+<td>Parallel threads (default: <code>4</code>)</td>
+</tr>
+<tr>
+<td><code>--build-vrt</code></td>
+<td>Create a merged VRT after downloading</td>
+</tr>
+<tr>
+<td><code>-v</code>, <code>--verbose</code></td>
+<td>Enable DEBUG-level logging</td>
+</tr>
+</tbody>
+</table>
+<h2 id="integration-examples">Integration Examples</h2>
+<h3 id="with-snap-terrain-correction-external-dem">With SNAP Terrain Correction (external DEM)</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.snapflow.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPT</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.dem_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">download_tiles_for_wkt</span><span class="p">,</span> <span class="n">build_vrt</span>
+
+<span class="c1"># 1. Download DEM tiles for your area</span>
+<span class="n">wkt</span> <span class="o">=</span> <span class="s2">&quot;POLYGON ((-3.18 54.28, -3.78 55.89, 0.31 56.30, 0.75 54.69, -3.18 54.28))&quot;</span>
+<span class="n">tiles</span> <span class="o">=</span> <span class="n">download_tiles_for_wkt</span><span class="p">(</span><span class="n">wkt</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;./dem&quot;</span><span class="p">,</span> <span class="n">resolution_m</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+<span class="n">vrt</span> <span class="o">=</span> <span class="n">build_vrt</span><span class="p">(</span><span class="n">tiles</span><span class="p">,</span> <span class="s2">&quot;./dem/copernicus_30m.vrt&quot;</span><span class="p">)</span>
+
+<span class="c1"># 2. Use as external DEM in SNAP processing</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="s2">&quot;S1A_IW_SLC.SAFE&quot;</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s2">&quot;./output&quot;</span><span class="p">)</span>
+<span class="n">gpt</span><span class="o">.</span><span class="n">terrain_correction</span><span class="p">(</span>
+    <span class="n">dem_name</span><span class="o">=</span><span class="s2">&quot;External DEM&quot;</span><span class="p">,</span>
+    <span class="n">external_dem_file</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">vrt</span><span class="p">),</span>
+    <span class="n">external_dem_no_data_value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre>
+<h3 id="with-worldsar-pipeline">With WorldSAR Pipeline</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.dem_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">download_tiles_for_wkt</span>
+
+<span class="c1"># Download DEM for the product footprint before processing</span>
+<span class="n">product_wkt</span> <span class="o">=</span> <span class="s2">&quot;POLYGON ((-3.18 54.28, ...))&quot;</span>
+<span class="n">download_tiles_for_wkt</span><span class="p">(</span>
+    <span class="n">wkt_string</span><span class="o">=</span><span class="n">product_wkt</span><span class="p">,</span>
+    <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;./AUX/copernicus-dem-30m&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre>
+<h2 id="see-also">See Also</h2>
+<ul>
+<li><a href="index.html">Utils API</a> — overview of all utility modules</li>
+<li><a href="../../user_guide/snap_integration.html">SNAP Integration</a> — using external DEMs with SNAP</li>
+<li><a href="index.html#geometry-utilities">Geometry Utilities</a> — WKT and geometry helpers</li>
+</ul>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

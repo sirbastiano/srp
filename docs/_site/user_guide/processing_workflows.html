@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Processing Workflows – sarpyx Docs</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../index.html"><img class="logo" src="../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../user_guide/index.html">Overview</a>
+<a href="../user_guide/installation.html">Installation</a>
+<a href="../user_guide/getting_started.html">Getting Started</a>
+<a href="../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../user_guide/data_formats.html">Data Formats</a>
+<a href="../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../user_guide/processing_workflows.html" class="active">Processing Workflows</a>
+<a href="../user_guide/science_applications.html">Science Applications</a>
+<a href="../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../tutorials/index.html">Overview</a>
+<a href="../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../api/index.html">Overview</a>
+<a href="../api/snapflow/index.html">Snapflow</a>
+<a href="../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../api/science/index.html">Science</a>
+<a href="../api/sla/index.html">SLA</a>
+<a href="../api/processor/index.html">Processor</a>
+<a href="../api/utils/index.html">Utils</a>
+<a href="../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../developer_guide/architecture.html">Architecture</a>
+<a href="../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="processing-workflows">Processing Workflows</h1>
+<p>This guide covers the various processing workflows available in sarpyx, from basic sub-look analysis to advanced SNAP-integrated processing chains for ship detection and scientific applications.</p>
+<h2 id="overview">Overview</h2>
+<p>sarpyx provides several processing pathways depending on your objectives:</p>
+<ol>
+<li><strong>Sub-Look Analysis (SLA)</strong>: Core functionality for azimuthal/range frequency decomposition</li>
+<li><strong>SNAP Integration</strong>: SAR preprocessing using SNAP GPT (Graph Processing Tool)</li>
+<li><strong>Scientific Applications</strong>: Vegetation indices, polarimetric analysis</li>
+<li><strong>Object Detection</strong>: CFAR-based ship detection workflows</li>
+</ol>
+<h2 id="sub-look-analysis-workflow">Sub-Look Analysis Workflow</h2>
+<p>The Sub-Look Analysis is sarpyx&rsquo;s core functionality for performing azimuthal sub-band partitioning.</p>
+<h3 id="basic-sla-pipeline">Basic SLA Pipeline</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.sla</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubLookAnalysis</span>
+
+<span class="c1"># Initialize with SAR product</span>
+<span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="s2">&quot;S1A_IW_SLC_product.zip&quot;</span><span class="p">)</span>
+
+<span class="c1"># Configure parameters</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">choice</span> <span class="o">=</span> <span class="mi">1</span>                    <span class="c1"># 0=Range, 1=Azimuth</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">=</span> <span class="mi">3</span>             <span class="c1"># Number of sub-looks</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">centroidSeparations</span> <span class="o">=</span> <span class="mi">700</span>     <span class="c1"># Frequency separation (Hz)</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">subLookBandwidth</span> <span class="o">=</span> <span class="mi">700</span>        <span class="c1"># Bandwidth per sub-look (Hz)</span>
+
+<span class="c1"># Execute processing chain</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>        <span class="c1"># Compute frequency bins</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">()</span>         <span class="c1"># Compute spectrum</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">AncillaryDeWe</span><span class="p">()</span>              <span class="c1"># Apply de-weighting</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">()</span>                  <span class="c1"># Generate sub-look images</span>
+
+<span class="c1"># Access results</span>
+<span class="n">sublook_images</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">Looks</span>        <span class="c1"># Complex sub-look images [n_looks, height, width]</span>
+<span class="n">frequencies</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">freqCentr</span>       <span class="c1"># Center frequencies for each look</span>
+</code></pre>
+<h3 id="step-by-step-sla-process">Step-by-Step SLA Process</h3>
+<h4 id="1-initialization-and-parameter-setup">1. Initialization and Parameter Setup</h4>
+<pre class="codehilite"><code><span class="c1"># Initialize SubLookAnalysis</span>
+<span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+
+<span class="c1"># Key parameters</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">choice</span> <span class="o">=</span> <span class="mi">1</span>                    <span class="c1"># Processing direction (azimuth recommended)</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">=</span> <span class="mi">3</span>             <span class="c1"># Typically 3-5 for good balance</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">centroidSeparations</span> <span class="o">=</span> <span class="mi">700</span>     <span class="c1"># Depends on platform and application</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">subLookBandwidth</span> <span class="o">=</span> <span class="mi">700</span>        <span class="c1"># Should match PRF characteristics</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">choiceDeWe</span> <span class="o">=</span> <span class="mi">0</span>               <span class="c1"># De-weighting method (0=ancillary, 1=average)</span>
+</code></pre>
+<h4 id="2-frequency-computation">2. Frequency Computation</h4>
+<pre class="codehilite"><code><span class="c1"># Compute frequency bins and validate parameters</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Generated </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">freqCentr</span><span class="p">)</span><span class="si">}</span><span class="s2"> frequency bins:&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">freq</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">freqCentr</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Look </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">freq</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    Range: [</span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">freqMin</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">sla</span><span class="o">.</span><span class="n">freqMax</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">] Hz&quot;</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">AssertionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Frequency computation failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Adjust parameters and retry</span>
+</code></pre>
+<h4 id="3-spectrum-computation">3. Spectrum Computation</h4>
+<pre class="codehilite"><code><span class="c1"># Compute the azimuth/range spectrum</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Access spectrum data</span>
+<span class="n">spectrum_2d</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">SpectrumOneDim</span>      <span class="c1"># 2D spectrum</span>
+<span class="n">spectrum_norm</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">SpectrumOneDimNorm</span> <span class="c1"># Normalized spectrum</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Spectrum shape: </span><span class="si">{</span><span class="n">spectrum_2d</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h4 id="4-de-weighting">4. De-weighting</h4>
+<pre class="codehilite"><code><span class="c1"># Apply de-weighting to compensate for antenna patterns</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">AncillaryDeWe</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># De-weighted spectrum available as</span>
+<span class="n">deweighted</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">SpectrumOneDimNormDeWe</span>
+</code></pre>
+<h4 id="5-sub-look-generation">5. Sub-look Generation</h4>
+<pre class="codehilite"><code><span class="c1"># Generate final sub-look images</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">(</span><span class="n">VERBOSE</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Results</span>
+<span class="n">looks</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">Looks</span>  <span class="c1"># Shape: [numberOfLooks, height, width]</span>
+
+<span class="c1"># Quality assessment</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span><span class="p">):</span>
+    <span class="n">amplitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">looks</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Look </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: mean=</span><span class="si">{</span><span class="n">amplitude</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, std=</span><span class="si">{</span><span class="n">amplitude</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="advanced-sla-configuration">Advanced SLA Configuration</h3>
+<h4 id="multi-temporal-processing">Multi-temporal Processing</h4>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">process_time_series</span><span class="p">(</span><span class="n">product_list</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process multiple products for temporal analysis.&quot;&quot;&quot;</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">product_path</span> <span class="ow">in</span> <span class="n">product_list</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing </span><span class="si">{</span><span class="n">product_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Extract date from filename</span>
+        <span class="n">date</span> <span class="o">=</span> <span class="n">extract_date</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+
+        <span class="c1"># Process sub-looks</span>
+        <span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+        <span class="n">configure_and_process</span><span class="p">(</span><span class="n">sla</span><span class="p">)</span>
+
+        <span class="c1"># Store results</span>
+        <span class="n">results</span><span class="p">[</span><span class="n">date</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;looks&#39;</span><span class="p">:</span> <span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+            <span class="s1">&#39;frequencies&#39;</span><span class="p">:</span> <span class="n">sla</span><span class="o">.</span><span class="n">freqCentr</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+            <span class="s1">&#39;metadata&#39;</span><span class="p">:</span> <span class="n">extract_metadata</span><span class="p">(</span><span class="n">sla</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Save individual results</span>
+        <span class="n">save_sublook_results</span><span class="p">(</span><span class="n">sla</span><span class="p">,</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="n">date</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">results</span>
+</code></pre>
+<h4 id="quality-control">Quality Control</h4>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">validate_sublook_quality</span><span class="p">(</span><span class="n">sla</span><span class="p">,</span> <span class="n">min_correlation</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">max_correlation</span><span class="o">=</span><span class="mf">0.8</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate sub-look quality metrics.&quot;&quot;&quot;</span>
+    <span class="n">correlations</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span><span class="p">):</span>
+            <span class="n">corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span>
+                <span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span>
+                <span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">correlations</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">corr</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">corr</span> <span class="o">&lt;</span> <span class="n">min_correlation</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warning: Low correlation between looks </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">corr</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">corr</span> <span class="o">&gt;</span> <span class="n">max_correlation</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warning: High correlation between looks </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">corr</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">correlations</span>
+</code></pre>
+<h2 id="snap-integration-workflows">SNAP Integration Workflows</h2>
+<p>sarpyx integrates with ESA&rsquo;s SNAP (Sentinel Application Platform) for comprehensive SAR preprocessing.</p>
+<h3 id="basic-snap-processing-chain">Basic SNAP Processing Chain</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.snapflow.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPT</span>
+
+<span class="c1"># Initialize GPT processor</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product_path</span><span class="o">=</span><span class="s2">&quot;input.zip&quot;</span><span class="p">,</span> 
+          <span class="n">outdir</span><span class="o">=</span><span class="s2">&quot;output/&quot;</span><span class="p">,</span> 
+          <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;MacOS&quot;</span><span class="p">)</span>  <span class="c1"># or &quot;Ubuntu&quot;, None</span>
+
+<span class="c1"># Basic preprocessing chain</span>
+<span class="n">cal_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">(</span><span class="n">Pols</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;VV&#39;</span><span class="p">,</span> <span class="s1">&#39;VH&#39;</span><span class="p">])</span>
+<span class="n">deb_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Deburst</span><span class="p">(</span><span class="n">Pols</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;VV&#39;</span><span class="p">,</span> <span class="s1">&#39;VH&#39;</span><span class="p">])</span>
+<span class="n">ml_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Multilook</span><span class="p">(</span><span class="n">nRgLooks</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nAzLooks</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Final product: </span><span class="si">{</span><span class="n">ml_product</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="sentinel-1-preprocessing-workflow">Sentinel-1 Preprocessing Workflow</h3>
+<h4 id="standard-preprocessing">Standard Preprocessing</h4>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">preprocess_sentinel1</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">polarizations</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;VV&#39;</span><span class="p">,</span> <span class="s1">&#39;VH&#39;</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Standard Sentinel-1 preprocessing workflow.&quot;&quot;&quot;</span>
+
+    <span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product_path</span><span class="o">=</span><span class="n">input_path</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">)</span>
+
+    <span class="c1"># Step 1: TOPSAR Deburst</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;1. Debursting...&quot;</span><span class="p">)</span>
+    <span class="n">deb_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Deburst</span><span class="p">(</span><span class="n">Pols</span><span class="o">=</span><span class="n">polarizations</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">deb_product</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Deburst failed&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Step 2: Radiometric Calibration</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;2. Calibrating...&quot;</span><span class="p">)</span>
+    <span class="n">cal_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">(</span><span class="n">Pols</span><span class="o">=</span><span class="n">polarizations</span><span class="p">,</span> <span class="n">output_complex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">cal_product</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Calibration failed&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Step 3: Multi-looking (optional)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;3. Multi-looking...&quot;</span><span class="p">)</span>
+    <span class="n">ml_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Multilook</span><span class="p">(</span><span class="n">nRgLooks</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nAzLooks</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ml_product</span>
+</code></pre>
+<h4 id="land-masking">Land Masking</h4>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">apply_land_mask</span><span class="p">(</span><span class="n">product_path</span><span class="p">,</span> <span class="n">shapefile_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply land masking using shapefile.&quot;&quot;&quot;</span>
+
+    <span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product_path</span><span class="o">=</span><span class="n">product_path</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">)</span>
+
+    <span class="c1"># Import vector mask</span>
+    <span class="n">vector_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">ImportVector</span><span class="p">(</span><span class="n">vector_data</span><span class="o">=</span><span class="n">shapefile_path</span><span class="p">)</span>
+
+    <span class="c1"># Apply land mask</span>
+    <span class="n">masked_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">LandMask</span><span class="p">(</span>
+        <span class="n">shoreline_extension</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
+        <span class="n">geometry_name</span><span class="o">=</span><span class="s2">&quot;Buff_750&quot;</span><span class="p">,</span>
+        <span class="n">use_srtm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">invert_geometry</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">land_mask</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">masked_product</span>
+</code></pre>
+<h3 id="cosmo-skymed-processing">COSMO-SkyMed Processing</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">preprocess_cosmo_skymed</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;COSMO-SkyMed specific preprocessing.&quot;&quot;&quot;</span>
+
+    <span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product_path</span><span class="o">=</span><span class="n">input_path</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">)</span>
+
+    <span class="c1"># Multi-looking first (CSK is already focused)</span>
+    <span class="n">ml_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Multilook</span><span class="p">(</span><span class="n">nRgLooks</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">nAzLooks</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># Calibration</span>
+    <span class="n">cal_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">(</span><span class="n">Pols</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;HH&#39;</span><span class="p">],</span> <span class="n">output_complex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">cal_product</span>
+</code></pre>
+<h2 id="ship-detection-workflow-cfar">Ship Detection Workflow (CFAR)</h2>
+<p>sarpyx provides automated ship detection using Constant False Alarm Rate (CFAR) algorithms.</p>
+<h3 id="single-product-cfar">Single Product CFAR</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.snapflow.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">CFAR</span>
+
+<span class="c1"># Basic ship detection</span>
+<span class="n">first_product</span><span class="p">,</span> <span class="n">excel_results</span> <span class="o">=</span> <span class="n">CFAR</span><span class="p">(</span>
+    <span class="n">prod</span><span class="o">=</span><span class="s2">&quot;S1A_IW_GRDH_product.zip&quot;</span><span class="p">,</span>
+    <span class="n">mask_shp_path</span><span class="o">=</span><span class="s2">&quot;land_mask.shp&quot;</span><span class="p">,</span>
+    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;MacOS&quot;</span><span class="p">,</span>
+    <span class="n">Thresh</span><span class="o">=</span><span class="mf">12.5</span><span class="p">,</span>  <span class="c1"># PFA threshold</span>
+    <span class="n">DELETE</span><span class="o">=</span><span class="kc">False</span>  <span class="c1"># Keep intermediate products</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processed product: </span><span class="si">{</span><span class="n">first_product</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Detection results: </span><span class="si">{</span><span class="n">excel_results</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="multi-threshold-cfar">Multi-threshold CFAR</h3>
+<pre class="codehilite"><code><span class="c1"># Test multiple PFA thresholds</span>
+<span class="n">pfa_thresholds</span> <span class="o">=</span> <span class="p">[</span><span class="mf">6.5</span><span class="p">,</span> <span class="mf">9.5</span><span class="p">,</span> <span class="mf">12.5</span><span class="p">,</span> <span class="mf">15.5</span><span class="p">]</span>
+
+<span class="n">first_product</span><span class="p">,</span> <span class="n">excel_results</span> <span class="o">=</span> <span class="n">CFAR</span><span class="p">(</span>
+    <span class="n">prod</span><span class="o">=</span><span class="s2">&quot;input_product.zip&quot;</span><span class="p">,</span>
+    <span class="n">mask_shp_path</span><span class="o">=</span><span class="s2">&quot;coastline.shp&quot;</span><span class="p">,</span>
+    <span class="n">Thresh</span><span class="o">=</span><span class="n">pfa_thresholds</span><span class="p">,</span>
+    <span class="n">DELETE</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Clean up intermediate files</span>
+<span class="p">)</span>
+
+<span class="c1"># Results will include detection files for each threshold</span>
+</code></pre>
+<h3 id="custom-cfar-workflow">Custom CFAR Workflow</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">advanced_ship_detection</span><span class="p">(</span><span class="n">product_path</span><span class="p">,</span> <span class="n">mask_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Advanced ship detection with custom parameters.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Initialize GPT</span>
+    <span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product_path</span><span class="o">=</span><span class="n">product_path</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">)</span>
+
+    <span class="c1"># Preprocessing based on product type</span>
+    <span class="n">prod_type</span> <span class="o">=</span> <span class="n">mode_identifier</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">prod_type</span> <span class="o">==</span> <span class="s2">&quot;SEN&quot;</span><span class="p">:</span>
+        <span class="c1"># Sentinel-1 preprocessing</span>
+        <span class="n">deb_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Deburst</span><span class="p">()</span>
+        <span class="n">cal_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">(</span><span class="n">Pols</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;VH&#39;</span><span class="p">])</span>
+
+        <span class="c1"># Import and apply mask</span>
+        <span class="n">vector_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">ImportVector</span><span class="p">(</span><span class="n">vector_data</span><span class="o">=</span><span class="n">mask_path</span><span class="p">)</span>
+        <span class="n">masked_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">LandMask</span><span class="p">()</span>
+
+        <span class="n">start_product</span> <span class="o">=</span> <span class="n">masked_product</span>
+
+    <span class="k">elif</span> <span class="n">prod_type</span> <span class="o">==</span> <span class="s2">&quot;CSK&quot;</span><span class="p">:</span>
+        <span class="c1"># COSMO-SkyMed preprocessing</span>
+        <span class="n">ml_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Multilook</span><span class="p">(</span><span class="n">nRgLooks</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">nAzLooks</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">cal_product</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">(</span><span class="n">Pols</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;HH&#39;</span><span class="p">])</span>
+        <span class="n">start_product</span> <span class="o">=</span> <span class="n">cal_product</span>
+
+    <span class="c1"># Adaptive thresholding</span>
+    <span class="n">detection_products</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">pfa_values</span> <span class="o">=</span> <span class="p">[</span><span class="mf">6.5</span><span class="p">,</span> <span class="mf">9.5</span><span class="p">,</span> <span class="mf">12.5</span><span class="p">,</span> <span class="mf">15.5</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">pfa</span> <span class="ow">in</span> <span class="n">pfa_values</span><span class="p">:</span>
+        <span class="n">gpt_det</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">start_product</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">)</span>
+
+        <span class="n">at_product</span> <span class="o">=</span> <span class="n">gpt_det</span><span class="o">.</span><span class="n">AdaptiveThresholding</span><span class="p">(</span>
+            <span class="n">background_window_m</span><span class="o">=</span><span class="mi">800</span><span class="p">,</span>
+            <span class="n">guard_window_m</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+            <span class="n">target_window_m</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+            <span class="n">pfa</span><span class="o">=</span><span class="n">pfa</span>
+        <span class="p">)</span>
+
+        <span class="n">od_product</span> <span class="o">=</span> <span class="n">gpt_det</span><span class="o">.</span><span class="n">ObjectDiscrimination</span><span class="p">(</span>
+            <span class="n">min_target_m</span><span class="o">=</span><span class="mi">35</span><span class="p">,</span>
+            <span class="n">max_target_m</span><span class="o">=</span><span class="mi">500</span>
+        <span class="p">)</span>
+
+        <span class="n">detection_products</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">od_product</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">detection_products</span>
+</code></pre>
+<h2 id="scientific-applications-workflow">Scientific Applications Workflow</h2>
+<h3 id="vegetation-index-calculation">Vegetation Index Calculation</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science.indices</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_rvi</span><span class="p">,</span> <span class="n">calculate_ndpoll</span><span class="p">,</span> <span class="n">calculate_dpdd</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_vegetation_indices</span><span class="p">(</span><span class="n">vv_path</span><span class="p">,</span> <span class="n">vh_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute vegetation indices from dual-pol SAR data.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Load backscatter data (linear scale)</span>
+    <span class="n">sigma_vv</span> <span class="o">=</span> <span class="n">load_backscatter</span><span class="p">(</span><span class="n">vv_path</span><span class="p">)</span>  <span class="c1"># Your loading function</span>
+    <span class="n">sigma_vh</span> <span class="o">=</span> <span class="n">load_backscatter</span><span class="p">(</span><span class="n">vh_path</span><span class="p">)</span>
+
+    <span class="c1"># Calculate indices</span>
+    <span class="n">rvi</span> <span class="o">=</span> <span class="n">calculate_rvi</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+    <span class="n">ndpoll</span> <span class="o">=</span> <span class="n">calculate_ndpoll</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+    <span class="n">dpdd</span> <span class="o">=</span> <span class="n">calculate_dpdd</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+
+    <span class="c1"># Save results</span>
+    <span class="n">save_geotiff</span><span class="p">(</span><span class="n">rvi</span><span class="p">,</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="s2">&quot;RVI.tif&quot;</span><span class="p">,</span> <span class="n">geotransform</span><span class="p">,</span> <span class="n">projection</span><span class="p">)</span>
+    <span class="n">save_geotiff</span><span class="p">(</span><span class="n">ndpoll</span><span class="p">,</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="s2">&quot;NDPOLL.tif&quot;</span><span class="p">,</span> <span class="n">geotransform</span><span class="p">,</span> <span class="n">projection</span><span class="p">)</span>
+    <span class="n">save_geotiff</span><span class="p">(</span><span class="n">dpdd</span><span class="p">,</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="s2">&quot;DPDD.tif&quot;</span><span class="p">,</span> <span class="n">geotransform</span><span class="p">,</span> <span class="n">projection</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;rvi&quot;</span><span class="p">:</span> <span class="n">rvi</span><span class="p">,</span> <span class="s2">&quot;ndpoll&quot;</span><span class="p">:</span> <span class="n">ndpoll</span><span class="p">,</span> <span class="s2">&quot;dpdd&quot;</span><span class="p">:</span> <span class="n">dpdd</span><span class="p">}</span>
+</code></pre>
+<h3 id="polarimetric-analysis">Polarimetric Analysis</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">polarimetric_analysis_workflow</span><span class="p">(</span><span class="n">slc_product</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Complete polarimetric analysis workflow.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Step 1: Sub-look decomposition</span>
+    <span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">slc_product</span><span class="p">)</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">choice</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># Azimuth processing</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">=</span> <span class="mi">3</span>
+
+    <span class="c1"># Process sub-looks</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">()</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">AncillaryDeWe</span><span class="p">()</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">()</span>
+
+    <span class="c1"># Step 2: Extract polarimetric features</span>
+    <span class="n">features</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">look</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">):</span>
+        <span class="c1"># Coherency matrix elements</span>
+        <span class="n">features</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;look_</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;amplitude&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">look</span><span class="p">),</span>
+            <span class="s1">&#39;phase&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">look</span><span class="p">),</span>
+            <span class="s1">&#39;intensity&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">look</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+        <span class="p">}</span>
+
+    <span class="c1"># Step 3: Multi-temporal coherence (if time series)</span>
+    <span class="k">if</span> <span class="n">has_time_series</span><span class="p">:</span>
+        <span class="n">coherence</span> <span class="o">=</span> <span class="n">calculate_temporal_coherence</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">)</span>
+        <span class="n">features</span><span class="p">[</span><span class="s1">&#39;temporal_coherence&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">coherence</span>
+
+    <span class="c1"># Step 4: Save results</span>
+    <span class="n">save_polarimetric_results</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">features</span>
+</code></pre>
+<h2 id="batch-processing-workflows">Batch Processing Workflows</h2>
+<h3 id="large-dataset-processing">Large Dataset Processing</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">batch_process_products</span><span class="p">(</span><span class="n">product_list</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">workflow_type</span><span class="o">=</span><span class="s2">&quot;sla&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process multiple products in batch mode.&quot;&quot;&quot;</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">failed_products</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">product_path</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">product_list</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">product_list</span><span class="p">)</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">product_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">workflow_type</span> <span class="o">==</span> <span class="s2">&quot;sla&quot;</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">process_single_sla</span><span class="p">(</span><span class="n">product_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">workflow_type</span> <span class="o">==</span> <span class="s2">&quot;cfar&quot;</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">process_single_cfar</span><span class="p">(</span><span class="n">product_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">workflow_type</span> <span class="o">==</span> <span class="s2">&quot;indices&quot;</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">process_single_indices</span><span class="p">(</span><span class="n">product_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">)</span>
+
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to process </span><span class="si">{</span><span class="n">product_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">failed_products</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+    <span class="c1"># Generate summary report</span>
+    <span class="n">generate_batch_report</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">failed_products</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">failed_products</span>
+</code></pre>
+<h3 id="parallel-processing">Parallel Processing</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">multiprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pool</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">parallel_sla_processing</span><span class="p">(</span><span class="n">product_list</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">n_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process products in parallel.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Create worker function</span>
+    <span class="n">worker_func</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">process_single_sla</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">)</span>
+
+    <span class="c1"># Process in parallel</span>
+    <span class="k">with</span> <span class="n">Pool</span><span class="p">(</span><span class="n">n_workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">pool</span><span class="p">:</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">worker_func</span><span class="p">,</span> <span class="n">product_list</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">results</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">process_single_sla</span><span class="p">(</span><span class="n">product_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Single product SLA processing (for parallel execution).&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+        <span class="n">configure_and_process</span><span class="p">(</span><span class="n">sla</span><span class="p">)</span>
+
+        <span class="c1"># Save results</span>
+        <span class="n">product_output</span> <span class="o">=</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="n">Path</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span>
+        <span class="n">save_sublook_results</span><span class="p">(</span><span class="n">sla</span><span class="p">,</span> <span class="n">product_output</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;success&quot;</span><span class="p">,</span> <span class="s2">&quot;product&quot;</span><span class="p">:</span> <span class="n">product_path</span><span class="p">}</span>
+
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;failed&quot;</span><span class="p">,</span> <span class="s2">&quot;product&quot;</span><span class="p">:</span> <span class="n">product_path</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)}</span>
+</code></pre>
+<h2 id="workflow-automation">Workflow Automation</h2>
+<h3 id="configuration-based-processing">Configuration-Based Processing</h3>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">load_processing_config</span><span class="p">(</span><span class="n">config_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load processing configuration from YAML file.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">config</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">automated_workflow</span><span class="p">(</span><span class="n">config_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute workflow based on configuration file.&quot;&quot;&quot;</span>
+
+    <span class="n">config</span> <span class="o">=</span> <span class="n">load_processing_config</span><span class="p">(</span><span class="n">config_path</span><span class="p">)</span>
+
+    <span class="c1"># Example config structure:</span>
+    <span class="c1"># workflow:</span>
+    <span class="c1">#   type: &quot;sla&quot;</span>
+    <span class="c1">#   parameters:</span>
+    <span class="c1">#     numberOfLooks: 3</span>
+    <span class="c1">#     choice: 1</span>
+    <span class="c1">#   inputs:</span>
+    <span class="c1">#     - &quot;product1.zip&quot;</span>
+    <span class="c1">#     - &quot;product2.zip&quot;</span>
+    <span class="c1">#   output_dir: &quot;results/&quot;</span>
+
+    <span class="n">workflow_type</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;workflow&#39;</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+    <span class="n">parameters</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;workflow&#39;</span><span class="p">][</span><span class="s1">&#39;parameters&#39;</span><span class="p">]</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;workflow&#39;</span><span class="p">][</span><span class="s1">&#39;inputs&#39;</span><span class="p">]</span>
+    <span class="n">output_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;workflow&#39;</span><span class="p">][</span><span class="s1">&#39;output_dir&#39;</span><span class="p">])</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">input_path</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">workflow_type</span> <span class="o">==</span> <span class="s2">&quot;sla&quot;</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">execute_sla_workflow</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">workflow_type</span> <span class="o">==</span> <span class="s2">&quot;cfar&quot;</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">execute_cfar_workflow</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+        <span class="c1"># Add more workflow types as needed</span>
+
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">results</span>
+</code></pre>
+<h3 id="example-configuration-file">Example Configuration File</h3>
+<pre class="codehilite"><code><span class="c1"># processing_config.yaml</span>
+<span class="nt">workflow</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;sla&quot;</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">numberOfLooks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">    </span><span class="nt">choice</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">centroidSeparations</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">700</span>
+<span class="w">    </span><span class="nt">subLookBandwidth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">700</span>
+
+<span class="w">  </span><span class="nt">inputs</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;data/S1A_IW_SLC_product1.zip&quot;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;data/S1A_IW_SLC_product2.zip&quot;</span>
+
+<span class="w">  </span><span class="nt">output_dir</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;results/&quot;</span>
+
+<span class="w">  </span><span class="nt">options</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">verbose</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">save_intermediate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">quality_check</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+
+<span class="nt">visualization</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">formats</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;png&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;pdf&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">dpi</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span>
+</code></pre>
+<h2 id="error-handling-and-recovery">Error Handling and Recovery</h2>
+<h3 id="robust-processing">Robust Processing</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">robust_processing_pipeline</span><span class="p">(</span><span class="n">product_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Robust processing with error recovery.&quot;&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_retries</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Main processing</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">main_processing_function</span><span class="p">(</span><span class="n">product_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">result</span>
+
+        <span class="k">except</span> <span class="ne">MemoryError</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Memory error on attempt </span><span class="si">{</span><span class="n">attempt</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">, reducing processing parameters&quot;</span><span class="p">)</span>
+            <span class="c1"># Reduce parameters and retry</span>
+            <span class="k">if</span> <span class="n">attempt</span> <span class="o">&lt;</span> <span class="n">max_retries</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">reduce_processing_parameters</span><span class="p">()</span>
+                <span class="k">continue</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span>
+
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File not found: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">check_alternative_paths</span><span class="p">(</span><span class="n">product_path</span><span class="p">):</span>
+                <span class="n">product_path</span> <span class="o">=</span> <span class="n">get_alternative_path</span><span class="p">(</span><span class="n">product_path</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected error on attempt </span><span class="si">{</span><span class="n">attempt</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">attempt</span> <span class="o">==</span> <span class="n">max_retries</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">attempt</span><span class="p">)</span>  <span class="c1"># Exponential backoff</span>
+</code></pre>
+<h2 id="performance-optimization">Performance Optimization</h2>
+<h3 id="memory-management">Memory Management</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">memory_efficient_processing</span><span class="p">(</span><span class="n">large_product_list</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process large datasets with memory constraints.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Process in chunks</span>
+    <span class="n">chunk_size</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1"># Adjust based on available memory</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">large_product_list</span><span class="p">),</span> <span class="n">chunk_size</span><span class="p">):</span>
+        <span class="n">chunk</span> <span class="o">=</span> <span class="n">large_product_list</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">chunk_size</span><span class="p">]</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing chunk </span><span class="si">{</span><span class="n">i</span><span class="o">//</span><span class="n">chunk_size</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Process chunk</span>
+        <span class="n">chunk_results</span> <span class="o">=</span> <span class="n">process_product_chunk</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">)</span>
+
+        <span class="c1"># Clear memory</span>
+        <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+
+        <span class="c1"># Save intermediate results</span>
+        <span class="n">save_chunk_results</span><span class="p">(</span><span class="n">chunk_results</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">i</span><span class="o">//</span><span class="n">chunk_size</span><span class="p">)</span>
+</code></pre>
+<p>For more detailed information on specific workflows, see the <a href="../tutorials/index.html">Tutorials</a> section or check the <a href="../api/index.html">API Reference</a> for detailed parameter descriptions.</p>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

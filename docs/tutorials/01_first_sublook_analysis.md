@@ -1,6 +1,6 @@
 # Tutorial 1: Your First Sub-Look Analysis
 
-Learn the fundamentals of sub-look decomposition using SARPyX with a real Sentinel-1 example.
+Learn the fundamentals of sub-look decomposition using sarpyx with a real Sentinel-1 example.
 
 ## Overview
 
@@ -32,7 +32,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-# SARPyX imports
+# sarpyx imports
 from sarpyx.sla import SubLookAnalysis
 from sarpyx.utils import show_image, show_histogram
 ```
@@ -487,4 +487,4 @@ Continue your learning journey:
 - **[Tutorial 3: Visualization and Quality](03_visualization_quality.md)**: Advanced visualization techniques
 - **[Tutorial 4: Multi-temporal Analysis](04_multitemporal_analysis.md)**: Time series processing
 
-You're now ready to explore more advanced SARPyX capabilities!
+You're now ready to explore more advanced sarpyx capabilities!

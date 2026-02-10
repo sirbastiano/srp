@@ -1,12 +1,12 @@
 # Data Formats and Compatibility
 
-This guide covers the data formats supported by SARPyX for input and output operations, along with format-specific considerations and best practices.
+This guide covers the data formats supported by sarpyx for input and output operations, along with format-specific considerations and best practices.
 
 ## Supported Input Formats
 
 ### SAR Product Formats
 
-SARPyX supports the following SAR mission data formats:
+sarpyx supports the following SAR mission data formats:
 
 #### Sentinel-1 (Copernicus)
 - **Format**: SAFE (Standard Archive Format for Europe)
@@ -34,7 +34,7 @@ sla = SubLookAnalysis("S1A_IW_SLC_1SDV_20230101T120000_20230101T120030_046123_05
 
 ```python
 # Example: COSMO-SkyMed processing
-from sarpyx.snap import GPT
+from sarpyx.snapflow.engine import GPT
 
 # Initialize with COSMO-SkyMed product
 gpt = GPT(product_path="CSK_product.h5", 
@@ -77,7 +77,7 @@ complex_data = real_band + 1j * imag_band
 
 ## SNAP Integration Formats
 
-SARPyX integrates with ESA's SNAP (Sentinel Application Platform) for advanced processing workflows.
+sarpyx integrates with ESA's SNAP (Sentinel Application Platform) for advanced processing workflows.
 
 ### SNAP Native Formats
 - **BEAM-DIMAP**: `.dim` + `.data` directory
@@ -87,7 +87,7 @@ SARPyX integrates with ESA's SNAP (Sentinel Application Platform) for advanced p
 
 ### Processing Chain Output
 ```python
-from sarpyx.snap import GPT
+from sarpyx.snapflow.engine import GPT
 
 # Example SNAP processing chain
 gpt = GPT(product_path="input.zip", outdir="output/")

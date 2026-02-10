@@ -1,0 +1,15 @@
+deleteAllSnapEngineDir$Boolean=false
+deleteOnlySnapDesktopDir$Boolean=false
+executeLauncherWithPythonAction$Boolean=false
+forcePython$Boolean=false
+pythonExecutable=/usr/bin/python
+sys.adminRights$Boolean=true
+sys.component.RSTB$Boolean=true
+sys.component.S1TBX$Boolean=true
+sys.component.S2TBX$Boolean=false
+sys.component.S3TBX$Boolean=false
+sys.component.SNAP$Boolean=true
+sys.installationDir=/usr/snap13
+sys.languageId=en
+sys.programGroupDisabled$Boolean=false
+sys.symlinkDir=/usr/local/bin

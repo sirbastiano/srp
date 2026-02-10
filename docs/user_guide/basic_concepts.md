@@ -1,6 +1,6 @@
 # Basic Concepts
 
-This section introduces the fundamental concepts underlying SAR processing and how they are implemented in SARPyX.
+This section introduces the fundamental concepts underlying SAR processing and how they are implemented in sarpyx.
 
 ## Synthetic Aperture Radar (SAR) Fundamentals
 
@@ -15,7 +15,7 @@ Synthetic Aperture Radar is a form of radar that creates high-resolution images 
 - **Azimuth**: The along-track direction of platform motion
 
 ```python
-# In SARPyX, these are often referenced as:
+# In sarpyx, these are often referenced as:
 sla.choice = 0  # Range processing
 sla.choice = 1  # Azimuth processing
 ```
@@ -53,7 +53,7 @@ Where:
 - `W(f)`: Weighting window
 - `f_center`: Sub-look center frequency
 
-### Implementation in SARPyX
+### Implementation in sarpyx
 
 ```python
 from sarpyx.sla import SubLookAnalysis
@@ -88,7 +88,7 @@ Sub-look analysis enables:
 2. **Single Look Complex (SLC)**: Focused, complex-valued SAR images
 3. **Ground Range Detected (GRD)**: Multi-looked, geocoded products
 
-### SARPyX Processing Stages
+### sarpyx Processing Stages
 
 #### 1. Data Loading and Preprocessing
 ```python
@@ -125,7 +125,7 @@ if focus_quality < threshold:
 
 ### Discrete Fourier Transform (DFT)
 
-SARPyX extensively uses frequency domain processing:
+sarpyx extensively uses frequency domain processing:
 
 ```python
 import numpy as np
@@ -143,10 +143,10 @@ filtered_image = np.fft.ifft2(np.fft.ifftshift(filtered_spectrum))
 
 ### Window Functions
 
-For spectral analysis, SARPyX supports various window functions:
+For spectral analysis, sarpyx supports various window functions:
 
 ```python
-# Available windows in SARPyX
+# Available windows in sarpyx
 window_types = ['HAMMING', 'HANNING', 'BLACKMAN', 'KAISER']
 
 # Applied in sub-look analysis
@@ -174,7 +174,7 @@ intensity = amplitude ** 2
 
 ### Multi-dimensional Arrays
 
-SARPyX works with multi-dimensional arrays:
+sarpyx works with multi-dimensional arrays:
 
 ```python
 # Typical data shapes
@@ -196,8 +196,8 @@ timeseries.shape      # (time, rows, cols) - Time series
 ### Coordinate Transformations
 
 ```python
-# SARPyX handles coordinate transformations through SNAP
-from sarpyx.snap import GPT
+# sarpyx handles coordinate transformations through SNAP
+from sarpyx.snapflow.engine import GPT
 
 gpt = GPT(product=product_path)
 # Terrain correction converts from sensor to geographic coordinates
@@ -242,7 +242,7 @@ print(f"Equivalent Number of Looks: {enl:.2f}")
 
 ### Parameter Validation
 
-SARPyX includes built-in parameter validation:
+sarpyx includes built-in parameter validation:
 
 ```python
 # Example validation in sub-look analysis
@@ -363,4 +363,4 @@ Now that you understand the basic concepts:
 - [SNAP Documentation](https://step.esa.int/main/doc/desktop/tutorials/)
 - [IEEE Transactions on Geoscience and Remote Sensing](https://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=36)
 
-Understanding these fundamentals will help you make the most of SARPyX's capabilities and choose the right processing approaches for your applications.
+Understanding these fundamentals will help you make the most of sarpyx's capabilities and choose the right processing approaches for your applications.

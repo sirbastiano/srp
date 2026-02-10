@@ -2,7 +2,7 @@
 
 ## Overview
 
-This tutorial covers advanced interferometric SAR (InSAR) analysis using SARPYX, including differential interferometry (DInSAR), persistent scatterer interferometry (PSI), and small baseline subset (SBAS) techniques for deformation monitoring and surface change detection.
+This tutorial covers advanced interferometric SAR (InSAR) analysis using sarpyx, including differential interferometry (DInSAR), persistent scatterer interferometry (PSI), and small baseline subset (SBAS) techniques for deformation monitoring and surface change detection.
 
 ## Learning Objectives
 
@@ -1023,4 +1023,4 @@ print(f"\nProcessing complete! Results saved to {export_dir}/")
 
 ---
 
-*This tutorial provides a comprehensive framework for advanced interferometric analysis using SARPYX. The techniques demonstrated here enable precise deformation monitoring and surface change detection for a wide range of applications including volcano monitoring, landslide analysis, subsidence studies, and infrastructure monitoring.*
+*This tutorial provides a comprehensive framework for advanced interferometric analysis using sarpyx. The techniques demonstrated here enable precise deformation monitoring and surface change detection for a wide range of applications including volcano monitoring, landslide analysis, subsidence studies, and infrastructure monitoring.*

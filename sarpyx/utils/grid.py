@@ -281,5 +281,5 @@ if __name__ == '__main__':
 
     lines = gpd.GeoDataFrame(geometry=gpd.GeoSeries([LineString(line) for line in lines])) 
 
-    lines.to_file(f'testlines_{dist}km.geojson',driver='GeoJSON')
-    grid.points.to_file(f'testgrid_{dist}km.geojson',driver='GeoJSON')
+    # lines.to_file(f'testlines_{dist}km.geojson',driver='GeoJSON')
+    grid.points.to_file(f'grid_{dist}km.geojson',driver='GeoJSON')

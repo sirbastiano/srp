@@ -6,4 +6,4 @@ for SAR data processing workflows.
 
 __all__ = []
 
-__version__ = '0.1.0'
+__version__ = '0.1.5'

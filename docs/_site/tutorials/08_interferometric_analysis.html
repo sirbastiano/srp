@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tutorial 8: Advanced Interferometric Analysis – sarpyx Docs</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../index.html"><img class="logo" src="../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../user_guide/index.html">Overview</a>
+<a href="../user_guide/installation.html">Installation</a>
+<a href="../user_guide/getting_started.html">Getting Started</a>
+<a href="../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../user_guide/data_formats.html">Data Formats</a>
+<a href="../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../user_guide/science_applications.html">Science Applications</a>
+<a href="../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../tutorials/index.html">Overview</a>
+<a href="../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../tutorials/08_interferometric_analysis.html" class="active">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../api/index.html">Overview</a>
+<a href="../api/snapflow/index.html">Snapflow</a>
+<a href="../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../api/science/index.html">Science</a>
+<a href="../api/sla/index.html">SLA</a>
+<a href="../api/processor/index.html">Processor</a>
+<a href="../api/utils/index.html">Utils</a>
+<a href="../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../developer_guide/architecture.html">Architecture</a>
+<a href="../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="tutorial-8-advanced-interferometric-analysis">Tutorial 8: Advanced Interferometric Analysis</h1>
+<h2 id="overview">Overview</h2>
+<p>This tutorial covers advanced interferometric SAR (InSAR) analysis using sarpyx, including differential interferometry (DInSAR), persistent scatterer interferometry (PSI), and small baseline subset (SBAS) techniques for deformation monitoring and surface change detection.</p>
+<h2 id="learning-objectives">Learning Objectives</h2>
+<p>By the end of this tutorial, you will be able to:
+- Generate interferograms from SAR image pairs
+- Apply differential interferometry for deformation analysis
+- Implement persistent scatterer identification algorithms
+- Perform time series analysis for long-term monitoring
+- Integrate atmospheric correction techniques</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Completion of Tutorials 1-4</li>
+<li>Understanding of SAR interferometry principles</li>
+<li>Knowledge of phase unwrapping concepts</li>
+<li>Basic understanding of atmospheric effects in SAR</li>
+</ul>
+<h2 id="dataset-requirements">Dataset Requirements</h2>
+<pre class="codehilite"><code><span class="c1"># Required data for this tutorial</span>
+<span class="n">data_requirements</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;sar_data&#39;</span><span class="p">:</span> <span class="s1">&#39;Sentinel-1 SLC data stack (&gt;10 images)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;temporal_baseline&#39;</span><span class="p">:</span> <span class="s1">&#39;&lt; 12 days for coherent pairs&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;perpendicular_baseline&#39;</span><span class="p">:</span> <span class="s1">&#39;&lt; 200m for good coherence&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;area&#39;</span><span class="p">:</span> <span class="s1">&#39;Stable and slowly deforming terrain&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;dem&#39;</span><span class="p">:</span> <span class="s1">&#39;High-resolution DEM (SRTM 30m or better)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;reference_point&#39;</span><span class="p">:</span> <span class="s1">&#39;Stable reference area identification&#39;</span>
+<span class="p">}</span>
+</code></pre>
+<h2 id="step-1-data-preparation-and-coregistration">Step 1: Data Preparation and Coregistration</h2>
+<h3 id="11-load-and-organize-sar-data-stack">1.1 Load and Organize SAR Data Stack</h3>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx</span><span class="w"> </span><span class="kn">import</span> <span class="n">SLA</span><span class="p">,</span> <span class="n">SNAPProcessor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.interferometry</span><span class="w"> </span><span class="kn">import</span> <span class="n">InSARProcessor</span><span class="p">,</span> <span class="n">PSAnalyzer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">visualization</span><span class="p">,</span> <span class="n">phase_unwrapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science</span><span class="w"> </span><span class="kn">import</span> <span class="n">atmospheric_correction</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+
+<span class="c1"># Initialize processors</span>
+<span class="n">snap_processor</span> <span class="o">=</span> <span class="n">SNAPProcessor</span><span class="p">()</span>
+<span class="n">insar_processor</span> <span class="o">=</span> <span class="n">InSARProcessor</span><span class="p">()</span>
+<span class="n">ps_analyzer</span> <span class="o">=</span> <span class="n">PSAnalyzer</span><span class="p">()</span>
+
+<span class="c1"># Define SAR data stack</span>
+<span class="n">sar_stack</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;master_image&#39;</span><span class="p">:</span> <span class="s1">&#39;path/to/master_S1_SLC.zip&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;slave_images&#39;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s1">&#39;path/to/slave1_S1_SLC.zip&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;path/to/slave2_S1_SLC.zip&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;path/to/slave3_S1_SLC.zip&#39;</span><span class="p">,</span>
+        <span class="c1"># Add more slave images...</span>
+    <span class="p">],</span>
+    <span class="s1">&#39;acquisition_dates&#39;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="n">datetime</span><span class="p">(</span><span class="mi">2023</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="n">datetime</span><span class="p">(</span><span class="mi">2023</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">13</span><span class="p">),</span>
+        <span class="n">datetime</span><span class="p">(</span><span class="mi">2023</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">25</span><span class="p">),</span>
+        <span class="n">datetime</span><span class="p">(</span><span class="mi">2023</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span>
+        <span class="c1"># Corresponding dates...</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SAR stack contains </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;slave_images&#39;</span><span class="p">])</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> images&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Time span: </span><span class="si">{</span><span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;acquisition_dates&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;acquisition_dates&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Coregistration configuration</span>
+<span class="n">coreg_config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;reference_band&#39;</span><span class="p">:</span> <span class="s1">&#39;VV&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;resampling_method&#39;</span><span class="p">:</span> <span class="s1">&#39;bilinear&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;interpolation&#39;</span><span class="p">:</span> <span class="s1">&#39;bilinear&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;dem_correction&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="s1">&#39;dem_file&#39;</span><span class="p">:</span> <span class="s1">&#39;path/to/dem.tif&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;output_coregistered&#39;</span><span class="p">:</span> <span class="kc">True</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="12-perform-stack-coregistration">1.2 Perform Stack Coregistration</h3>
+<pre class="codehilite"><code><span class="c1"># Coregister all images to master</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Performing coregistration of SAR stack...&quot;</span><span class="p">)</span>
+
+<span class="n">coregistered_stack</span> <span class="o">=</span> <span class="n">insar_processor</span><span class="o">.</span><span class="n">coregister_stack</span><span class="p">(</span>
+    <span class="n">master_image</span><span class="o">=</span><span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;master_image&#39;</span><span class="p">],</span>
+    <span class="n">slave_images</span><span class="o">=</span><span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;slave_images&#39;</span><span class="p">],</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">coreg_config</span>
+<span class="p">)</span>
+
+<span class="c1"># Load coregistered data</span>
+<span class="n">master_data</span> <span class="o">=</span> <span class="n">coregistered_stack</span><span class="p">[</span><span class="s1">&#39;master&#39;</span><span class="p">]</span>
+<span class="n">slave_data_list</span> <span class="o">=</span> <span class="n">coregistered_stack</span><span class="p">[</span><span class="s1">&#39;slaves&#39;</span><span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Master image shape: </span><span class="si">{</span><span class="n">master_data</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of coregistered slaves: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">slave_data_list</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Display coregistration quality</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+
+<span class="c1"># Master image</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">master_data</span><span class="p">),</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Master Image (Amplitude)&#39;</span><span class="p">)</span>
+
+<span class="c1"># First slave image</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">slave_data_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;First Slave Image (Amplitude)&#39;</span><span class="p">)</span>
+
+<span class="c1"># Coregistration offset map (if available)</span>
+<span class="k">if</span> <span class="s1">&#39;offset_map&#39;</span> <span class="ow">in</span> <span class="n">coregistered_stack</span><span class="p">:</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">coregistered_stack</span><span class="p">[</span><span class="s1">&#39;offset_map&#39;</span><span class="p">][</span><span class="s1">&#39;range&#39;</span><span class="p">])</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Range Offset Map&#39;</span><span class="p">)</span>
+
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">coregistered_stack</span><span class="p">[</span><span class="s1">&#39;offset_map&#39;</span><span class="p">][</span><span class="s1">&#39;azimuth&#39;</span><span class="p">])</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Azimuth Offset Map&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h2 id="step-2-interferogram-generation-and-analysis">Step 2: Interferogram Generation and Analysis</h2>
+<h3 id="21-generate-interferograms">2.1 Generate Interferograms</h3>
+<pre class="codehilite"><code><span class="c1"># Generate interferograms for all pairs</span>
+<span class="n">interferograms</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">coherence_maps</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Generating interferograms...&quot;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">slave_data</span><span class="p">,</span> <span class="n">acq_date</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">slave_data_list</span><span class="p">,</span> <span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;acquisition_dates&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">:])):</span>
+    <span class="n">pair_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;master_</span><span class="si">{</span><span class="n">acq_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y%m</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="c1"># Generate interferogram</span>
+    <span class="n">ifg_result</span> <span class="o">=</span> <span class="n">insar_processor</span><span class="o">.</span><span class="n">generate_interferogram</span><span class="p">(</span>
+        <span class="n">master</span><span class="o">=</span><span class="n">master_data</span><span class="p">,</span>
+        <span class="n">slave</span><span class="o">=</span><span class="n">slave_data</span><span class="p">,</span>
+        <span class="n">window_size</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>  <span class="c1"># Multilooking window</span>
+        <span class="n">compute_coherence</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+
+    <span class="n">interferograms</span><span class="p">[</span><span class="n">pair_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ifg_result</span><span class="p">[</span><span class="s1">&#39;interferogram&#39;</span><span class="p">]</span>
+    <span class="n">coherence_maps</span><span class="p">[</span><span class="n">pair_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ifg_result</span><span class="p">[</span><span class="s1">&#39;coherence&#39;</span><span class="p">]</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Generated interferogram </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">slave_data_list</span><span class="p">)</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">pair_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Display interferograms</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">pair_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">interferograms</span><span class="o">.</span><span class="n">keys</span><span class="p">())[:</span><span class="mi">6</span><span class="p">]</span>  <span class="c1"># Show first 6</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pair_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pair_names</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">6</span><span class="p">:</span>
+        <span class="n">row</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="n">i</span> <span class="o">//</span> <span class="mi">3</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">3</span>
+
+        <span class="c1"># Interferogram phase</span>
+        <span class="n">phase</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">interferograms</span><span class="p">[</span><span class="n">pair_name</span><span class="p">])</span>
+        <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">phase</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;hsv&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Interferogram: </span><span class="si">{</span><span class="n">pair_name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># Coherence analysis</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pair_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pair_names</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">6</span><span class="p">:</span>
+        <span class="n">row</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="n">i</span> <span class="o">//</span> <span class="mi">3</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">3</span>
+
+        <span class="n">coherence</span> <span class="o">=</span> <span class="n">coherence_maps</span><span class="p">[</span><span class="n">pair_name</span><span class="p">]</span>
+        <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">coherence</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Coherence: </span><span class="si">{</span><span class="n">pair_name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h3 id="22-phase-unwrapping">2.2 Phase Unwrapping</h3>
+<pre class="codehilite"><code><span class="c1"># Apply phase unwrapping to interferograms</span>
+<span class="n">unwrapped_phases</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Performing phase unwrapping...&quot;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">pair_name</span><span class="p">,</span> <span class="n">interferogram</span> <span class="ow">in</span> <span class="n">interferograms</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="c1"># Get corresponding coherence mask</span>
+    <span class="n">coherence</span> <span class="o">=</span> <span class="n">coherence_maps</span><span class="p">[</span><span class="n">pair_name</span><span class="p">]</span>
+    <span class="n">coherence_threshold</span> <span class="o">=</span> <span class="mf">0.3</span>
+
+    <span class="c1"># Create quality mask</span>
+    <span class="n">quality_mask</span> <span class="o">=</span> <span class="n">coherence</span> <span class="o">&gt;</span> <span class="n">coherence_threshold</span>
+
+    <span class="c1"># Apply phase unwrapping</span>
+    <span class="n">wrapped_phase</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">interferogram</span><span class="p">)</span>
+    <span class="n">unwrapped_phase</span> <span class="o">=</span> <span class="n">phase_unwrapping</span><span class="o">.</span><span class="n">unwrap_phase</span><span class="p">(</span>
+        <span class="n">wrapped_phase</span><span class="o">=</span><span class="n">wrapped_phase</span><span class="p">,</span>
+        <span class="n">quality_mask</span><span class="o">=</span><span class="n">quality_mask</span><span class="p">,</span>
+        <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;minimum_cost_flow&#39;</span>  <span class="c1"># or &#39;branch_cut&#39;, &#39;quality_guided&#39;</span>
+    <span class="p">)</span>
+
+    <span class="n">unwrapped_phases</span><span class="p">[</span><span class="n">pair_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">unwrapped_phase</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unwrapped phase for </span><span class="si">{</span><span class="n">pair_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Display wrapped vs unwrapped phases</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+
+<span class="n">example_pairs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">interferograms</span><span class="o">.</span><span class="n">keys</span><span class="p">())[:</span><span class="mi">4</span><span class="p">]</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pair_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">example_pairs</span><span class="p">):</span>
+    <span class="c1"># Wrapped phase</span>
+    <span class="n">wrapped</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">interferograms</span><span class="p">[</span><span class="n">pair_name</span><span class="p">])</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">wrapped</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;hsv&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Wrapped: </span><span class="si">{</span><span class="n">pair_name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Unwrapped phase</span>
+    <span class="n">unwrapped</span> <span class="o">=</span> <span class="n">unwrapped_phases</span><span class="p">[</span><span class="n">pair_name</span><span class="p">]</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">unwrapped</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;jet&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unwrapped: </span><span class="si">{</span><span class="n">pair_name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h2 id="step-3-persistent-scatterer-analysis">Step 3: Persistent Scatterer Analysis</h2>
+<h3 id="31-identify-persistent-scatterers">3.1 Identify Persistent Scatterers</h3>
+<pre class="codehilite"><code><span class="c1"># Persistent Scatterer identification</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Identifying Persistent Scatterers...&quot;</span><span class="p">)</span>
+
+<span class="c1"># Calculate amplitude dispersion index for all pixels</span>
+<span class="n">amplitude_stack</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">master_data</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">slave</span><span class="p">)</span> <span class="k">for</span> <span class="n">slave</span> <span class="ow">in</span> <span class="n">slave_data_list</span><span class="p">])</span>
+<span class="n">mean_amplitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">amplitude_stack</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">std_amplitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">amplitude_stack</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="c1"># Amplitude Dispersion Index (ADI)</span>
+<span class="n">adi</span> <span class="o">=</span> <span class="n">std_amplitude</span> <span class="o">/</span> <span class="p">(</span><span class="n">mean_amplitude</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+
+<span class="c1"># Coherence-based selection</span>
+<span class="n">mean_coherence</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">coherence_maps</span><span class="o">.</span><span class="n">values</span><span class="p">())),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="c1"># PS candidate selection criteria</span>
+<span class="n">ps_criteria</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;adi_threshold&#39;</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span>  <span class="c1"># Low amplitude variation</span>
+    <span class="s1">&#39;coherence_threshold&#39;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">,</span>  <span class="c1"># High coherence</span>
+    <span class="s1">&#39;min_neighbors&#39;</span><span class="p">:</span> <span class="mi">5</span>  <span class="c1"># Spatial density requirement</span>
+<span class="p">}</span>
+
+<span class="c1"># Apply PS selection</span>
+<span class="n">ps_candidates</span> <span class="o">=</span> <span class="n">ps_analyzer</span><span class="o">.</span><span class="n">select_ps_candidates</span><span class="p">(</span>
+    <span class="n">amplitude_dispersion</span><span class="o">=</span><span class="n">adi</span><span class="p">,</span>
+    <span class="n">coherence</span><span class="o">=</span><span class="n">mean_coherence</span><span class="p">,</span>
+    <span class="n">criteria</span><span class="o">=</span><span class="n">ps_criteria</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Selected </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ps_candidates</span><span class="p">)</span><span class="si">}</span><span class="s2"> PS candidates from </span><span class="si">{</span><span class="n">ps_candidates</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> pixels&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;PS density: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ps_candidates</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">ps_candidates</span><span class="o">.</span><span class="n">size</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+
+<span class="c1"># Visualize PS candidates</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+<span class="c1"># Amplitude Dispersion Index</span>
+<span class="n">im1</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">adi</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Amplitude Dispersion Index&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im1</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="c1"># Mean Coherence</span>
+<span class="n">im2</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">mean_coherence</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Mean Coherence&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+<span class="c1"># PS Candidates</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">master_data</span><span class="p">),</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">ps_overlay</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_where</span><span class="p">(</span><span class="o">~</span><span class="n">ps_candidates</span><span class="p">,</span> <span class="n">ps_candidates</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">ps_overlay</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Reds&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;PS Candidates Overlay&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h3 id="32-phase-analysis-on-ps-points">3.2 Phase Analysis on PS Points</h3>
+<pre class="codehilite"><code><span class="c1"># Extract phase time series for PS points</span>
+<span class="n">ps_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ps_candidates</span><span class="p">)</span>
+<span class="n">num_ps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ps_indices</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Extracting phase time series for </span><span class="si">{</span><span class="n">num_ps</span><span class="si">}</span><span class="s2"> PS points...&quot;</span><span class="p">)</span>
+
+<span class="c1"># Create phase matrix (PS points x time)</span>
+<span class="n">phase_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_ps</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">unwrapped_phases</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">phase_matrix</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Master image reference</span>
+
+<span class="c1"># Fill phase matrix with unwrapped phases</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">pair_name</span><span class="p">,</span> <span class="n">unwrapped_phase</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">unwrapped_phases</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+    <span class="n">phase_values</span> <span class="o">=</span> <span class="n">unwrapped_phase</span><span class="p">[</span><span class="n">ps_indices</span><span class="p">]</span>
+    <span class="n">phase_matrix</span><span class="p">[:,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">phase_values</span>
+
+<span class="c1"># Reference to first PS point (or average of stable area)</span>
+<span class="n">reference_ps_idx</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Choose a stable reference point</span>
+<span class="n">phase_matrix_ref</span> <span class="o">=</span> <span class="n">phase_matrix</span> <span class="o">-</span> <span class="n">phase_matrix</span><span class="p">[</span><span class="n">reference_ps_idx</span><span class="p">,</span> <span class="p">:]</span>
+
+<span class="c1"># Convert phase to displacement (assuming C-band, ~5.6 cm wavelength)</span>
+<span class="n">wavelength</span> <span class="o">=</span> <span class="mf">0.056</span>  <span class="c1"># meters</span>
+<span class="n">displacement_matrix</span> <span class="o">=</span> <span class="n">phase_matrix_ref</span> <span class="o">*</span> <span class="n">wavelength</span> <span class="o">/</span> <span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>  <span class="c1"># LOS displacement</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Phase matrix shape: </span><span class="si">{</span><span class="n">phase_matrix</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Displacement range: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">displacement_matrix</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">displacement_matrix</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> m&quot;</span><span class="p">)</span>
+
+<span class="c1"># Visualize time series for selected PS points</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+
+<span class="c1"># Plot time series for first few PS points</span>
+<span class="n">time_axis</span> <span class="o">=</span> <span class="p">[</span><span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;acquisition_dates&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span> <span class="o">+</span> <span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;acquisition_dates&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_ps</span><span class="p">)):</span>
+    <span class="n">row</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="n">i</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">2</span>
+    <span class="n">displacement_ts</span> <span class="o">=</span> <span class="n">displacement_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span>
+
+    <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time_axis</span><span class="p">,</span> <span class="n">displacement_ts</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">,</span> <span class="s1">&#39;o-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;LOS Displacement (mm)&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;PS Point </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h2 id="step-4-atmospheric-phase-screen-estimation">Step 4: Atmospheric Phase Screen Estimation</h2>
+<h3 id="41-estimate-atmospheric-contributions">4.1 Estimate Atmospheric Contributions</h3>
+<pre class="codehilite"><code><span class="c1"># Atmospheric phase screen estimation</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Estimating atmospheric phase screens...&quot;</span><span class="p">)</span>
+
+<span class="n">atmospheric_processor</span> <span class="o">=</span> <span class="n">atmospheric_correction</span><span class="o">.</span><span class="n">AtmosphericProcessor</span><span class="p">()</span>
+
+<span class="c1"># Configure atmospheric correction</span>
+<span class="n">atm_config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;method&#39;</span><span class="p">:</span> <span class="s1">&#39;linear_regression&#39;</span><span class="p">,</span>  <span class="c1"># &#39;linear_regression&#39;, &#39;kriging&#39;, &#39;polynomial&#39;</span>
+    <span class="s1">&#39;elevation_dependent&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="s1">&#39;dem_file&#39;</span><span class="p">:</span> <span class="s1">&#39;path/to/dem.tif&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;reference_height&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># Sea level reference</span>
+    <span class="s1">&#39;filter_size&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>  <span class="c1"># Spatial filtering</span>
+    <span class="s1">&#39;temporal_filtering&#39;</span><span class="p">:</span> <span class="kc">True</span>
+<span class="p">}</span>
+
+<span class="n">atmospheric_screens</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">corrected_phases</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="k">for</span> <span class="n">pair_name</span><span class="p">,</span> <span class="n">unwrapped_phase</span> <span class="ow">in</span> <span class="n">unwrapped_phases</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="c1"># Estimate atmospheric phase screen</span>
+    <span class="n">atm_screen</span> <span class="o">=</span> <span class="n">atmospheric_processor</span><span class="o">.</span><span class="n">estimate_atmosphere</span><span class="p">(</span>
+        <span class="n">unwrapped_phase</span><span class="o">=</span><span class="n">unwrapped_phase</span><span class="p">,</span>
+        <span class="n">ps_mask</span><span class="o">=</span><span class="n">ps_candidates</span><span class="p">,</span>
+        <span class="n">elevation_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># Load from DEM if needed</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">atm_config</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Apply atmospheric correction</span>
+    <span class="n">corrected_phase</span> <span class="o">=</span> <span class="n">unwrapped_phase</span> <span class="o">-</span> <span class="n">atm_screen</span>
+
+    <span class="n">atmospheric_screens</span><span class="p">[</span><span class="n">pair_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">atm_screen</span>
+    <span class="n">corrected_phases</span><span class="p">[</span><span class="n">pair_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">corrected_phase</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Atmospheric correction completed&quot;</span><span class="p">)</span>
+
+<span class="c1"># Visualize atmospheric correction</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">15</span><span class="p">))</span>
+
+<span class="n">example_pair</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">unwrapped_phases</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="c1"># Original unwrapped phase</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">unwrapped_phases</span><span class="p">[</span><span class="n">example_pair</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;jet&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Original Unwrapped Phase&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+
+<span class="c1"># Atmospheric screen</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">atmospheric_screens</span><span class="p">[</span><span class="n">example_pair</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;jet&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Atmospheric Phase Screen&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+
+<span class="c1"># Corrected phase</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">corrected_phases</span><span class="p">[</span><span class="n">example_pair</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;jet&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Atmospherically Corrected Phase&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+
+<span class="c1"># Phase histograms</span>
+<span class="n">phases_orig</span> <span class="o">=</span> <span class="n">unwrapped_phases</span><span class="p">[</span><span class="n">example_pair</span><span class="p">][</span><span class="n">ps_candidates</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+<span class="n">phases_atm</span> <span class="o">=</span> <span class="n">atmospheric_screens</span><span class="p">[</span><span class="n">example_pair</span><span class="p">][</span><span class="n">ps_candidates</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+<span class="n">phases_corr</span> <span class="o">=</span> <span class="n">corrected_phases</span><span class="p">[</span><span class="n">example_pair</span><span class="p">][</span><span class="n">ps_candidates</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">phases_orig</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Original Phase Distribution&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Phase (radians)&#39;</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">phases_atm</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;orange&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Atmospheric Phase Distribution&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Phase (radians)&#39;</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">phases_corr</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Corrected Phase Distribution&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Phase (radians)&#39;</span><span class="p">)</span>
+
+<span class="c1"># Phase standard deviation comparison</span>
+<span class="n">std_orig</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">phases_orig</span><span class="p">)</span>
+<span class="n">std_corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">phases_corr</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">([</span><span class="s1">&#39;Original&#39;</span><span class="p">,</span> <span class="s1">&#39;Corrected&#39;</span><span class="p">],</span> <span class="p">[</span><span class="n">std_orig</span><span class="p">,</span> <span class="n">std_corr</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="s1">&#39;green&#39;</span><span class="p">])</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Phase Standard Deviation&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Phase Noise Reduction&#39;</span><span class="p">)</span>
+
+<span class="c1"># Improvement factor</span>
+<span class="n">improvement</span> <span class="o">=</span> <span class="n">std_orig</span> <span class="o">/</span> <span class="n">std_corr</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Improvement Factor:</span><span class="se">\n</span><span class="si">{</span><span class="n">improvement</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">x&#39;</span><span class="p">,</span> 
+                <span class="n">horizontalalignment</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">verticalalignment</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span>
+                <span class="n">transform</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">transAxes</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span>
+                <span class="n">bbox</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">boxstyle</span><span class="o">=</span><span class="s1">&#39;round&#39;</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;lightgreen&#39;</span><span class="p">))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+
+<span class="c1"># Remove empty subplot</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h3 id="42-updated-time-series-analysis">4.2 Updated Time Series Analysis</h3>
+<pre class="codehilite"><code><span class="c1"># Recalculate displacement time series with atmospheric correction</span>
+<span class="n">corrected_displacement_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">displacement_matrix</span><span class="p">)</span>
+<span class="n">corrected_displacement_matrix</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Master reference</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">pair_name</span><span class="p">,</span> <span class="n">corrected_phase</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">corrected_phases</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+    <span class="n">corrected_phase_values</span> <span class="o">=</span> <span class="n">corrected_phase</span><span class="p">[</span><span class="n">ps_indices</span><span class="p">]</span>
+    <span class="c1"># Reference to first PS point</span>
+    <span class="n">corrected_phase_ref</span> <span class="o">=</span> <span class="n">corrected_phase_values</span> <span class="o">-</span> <span class="n">corrected_phase_values</span><span class="p">[</span><span class="n">reference_ps_idx</span><span class="p">]</span>
+    <span class="n">corrected_displacement_matrix</span><span class="p">[:,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">corrected_phase_ref</span> <span class="o">*</span> <span class="n">wavelength</span> <span class="o">/</span> <span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+<span class="c1"># Compare before and after atmospheric correction</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+
+<span class="c1"># Select representative PS points</span>
+<span class="n">selected_ps</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_ps</span><span class="o">//</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_ps</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">num_ps</span><span class="o">*</span><span class="mi">3</span><span class="o">//</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_ps</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_ps</span><span class="o">//</span><span class="mi">8</span><span class="p">]</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ps_idx</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">selected_ps</span><span class="p">[:</span><span class="mi">6</span><span class="p">]):</span>
+    <span class="n">row</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="n">i</span> <span class="o">//</span> <span class="mi">3</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">3</span>
+
+    <span class="c1"># Original displacement</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time_axis</span><span class="p">,</span> <span class="n">displacement_matrix</span><span class="p">[</span><span class="n">ps_idx</span><span class="p">,</span> <span class="p">:]</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">,</span> 
+                       <span class="s1">&#39;o-&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Original&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># Corrected displacement</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time_axis</span><span class="p">,</span> <span class="n">corrected_displacement_matrix</span><span class="p">[</span><span class="n">ps_idx</span><span class="p">,</span> <span class="p">:]</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">,</span> 
+                       <span class="s1">&#39;s-&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Atm. Corrected&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;LOS Displacement (mm)&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;PS Point </span><span class="si">{</span><span class="n">ps_idx</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h2 id="step-5-advanced-time-series-analysis">Step 5: Advanced Time Series Analysis</h2>
+<h3 id="51-linear-velocity-estimation">5.1 Linear Velocity Estimation</h3>
+<pre class="codehilite"><code><span class="c1"># Estimate linear velocity for each PS point</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Estimating linear velocities...&quot;</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">estimate_linear_velocity</span><span class="p">(</span><span class="n">displacement_ts</span><span class="p">,</span> <span class="n">time_axis</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Estimate linear velocity using least squares&quot;&quot;&quot;</span>
+    <span class="c1"># Convert time to days from first acquisition</span>
+    <span class="n">time_days</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">t</span> <span class="o">-</span> <span class="n">time_axis</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">days</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">time_axis</span><span class="p">])</span>
+
+    <span class="c1"># Remove NaN values</span>
+    <span class="n">valid_idx</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">displacement_ts</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">valid_idx</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="n">time_valid</span> <span class="o">=</span> <span class="n">time_days</span><span class="p">[</span><span class="n">valid_idx</span><span class="p">]</span>
+    <span class="n">disp_valid</span> <span class="o">=</span> <span class="n">displacement_ts</span><span class="p">[</span><span class="n">valid_idx</span><span class="p">]</span>
+
+    <span class="c1"># Linear regression</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">time_valid</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">time_valid</span><span class="p">))])</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">velocity</span><span class="p">,</span> <span class="n">intercept</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">lstsq</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">disp_valid</span><span class="p">,</span> <span class="n">rcond</span><span class="o">=</span><span class="kc">None</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># Calculate R-squared</span>
+    <span class="n">disp_pred</span> <span class="o">=</span> <span class="n">velocity</span> <span class="o">*</span> <span class="n">time_valid</span> <span class="o">+</span> <span class="n">intercept</span>
+    <span class="n">ss_res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">disp_valid</span> <span class="o">-</span> <span class="n">disp_pred</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">ss_tot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">disp_valid</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">disp_valid</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">r_squared</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">ss_res</span> <span class="o">/</span> <span class="n">ss_tot</span><span class="p">)</span> <span class="k">if</span> <span class="n">ss_tot</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+
+    <span class="k">return</span> <span class="n">velocity</span><span class="p">,</span> <span class="n">intercept</span><span class="p">,</span> <span class="n">r_squared</span>
+
+<span class="c1"># Calculate velocities for all PS points</span>
+<span class="n">velocities</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">r_squared_values</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_ps</span><span class="p">):</span>
+    <span class="n">velocity</span><span class="p">,</span> <span class="n">intercept</span><span class="p">,</span> <span class="n">r_squared</span> <span class="o">=</span> <span class="n">estimate_linear_velocity</span><span class="p">(</span>
+        <span class="n">corrected_displacement_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:],</span> <span class="n">time_axis</span>
+    <span class="p">)</span>
+    <span class="n">velocities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">velocity</span><span class="p">)</span>
+    <span class="n">r_squared_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r_squared</span><span class="p">)</span>
+
+<span class="n">velocities</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">velocities</span><span class="p">)</span>
+<span class="n">r_squared_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">r_squared_values</span><span class="p">)</span>
+
+<span class="c1"># Convert from m/day to mm/year</span>
+<span class="n">velocities_mm_year</span> <span class="o">=</span> <span class="n">velocities</span> <span class="o">*</span> <span class="mf">365.25</span> <span class="o">*</span> <span class="mi">1000</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Velocity statistics:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean velocity: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">velocities_mm_year</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> mm/year&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Std velocity: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">velocities_mm_year</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> mm/year&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Min velocity: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">velocities_mm_year</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> mm/year&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Max velocity: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">velocities_mm_year</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> mm/year&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="52-velocity-map-generation">5.2 Velocity Map Generation</h3>
+<pre class="codehilite"><code><span class="c1"># Create velocity map</span>
+<span class="n">velocity_map</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">master_data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+<span class="n">velocity_map</span><span class="p">[</span><span class="n">ps_indices</span><span class="p">]</span> <span class="o">=</span> <span class="n">velocities_mm_year</span>
+
+<span class="c1"># Create quality map</span>
+<span class="n">quality_map</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">master_data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+<span class="n">quality_map</span><span class="p">[</span><span class="n">ps_indices</span><span class="p">]</span> <span class="o">=</span> <span class="n">r_squared_values</span>
+
+<span class="c1"># Visualization</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+
+<span class="c1"># Velocity map</span>
+<span class="n">velocity_range</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanpercentile</span><span class="p">(</span><span class="n">velocities_mm_year</span><span class="p">,</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">95</span><span class="p">])</span>
+<span class="n">im1</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">velocity_map</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdBu_r&#39;</span><span class="p">,</span> 
+                       <span class="n">vmin</span><span class="o">=</span><span class="n">velocity_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">vmax</span><span class="o">=</span><span class="n">velocity_range</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Linear Velocity Map (mm/year)&#39;</span><span class="p">)</span>
+<span class="n">cbar1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im1</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+<span class="n">cbar1</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s1">&#39;LOS Velocity (mm/year)&#39;</span><span class="p">)</span>
+
+<span class="c1"># Quality map (R-squared)</span>
+<span class="n">im2</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">quality_map</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Velocity Estimation Quality (R²)&#39;</span><span class="p">)</span>
+<span class="n">cbar2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+<span class="c1"># Velocity histogram</span>
+<span class="n">valid_velocities</span> <span class="o">=</span> <span class="n">velocities_mm_year</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">velocities_mm_year</span><span class="p">)]</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">valid_velocities</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Velocity (mm/year)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Frequency&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Velocity Distribution&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+
+<span class="c1"># Velocity vs Quality scatter plot</span>
+<span class="n">valid_idx</span> <span class="o">=</span> <span class="o">~</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">velocities_mm_year</span><span class="p">)</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">r_squared_values</span><span class="p">))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">r_squared_values</span><span class="p">[</span><span class="n">valid_idx</span><span class="p">],</span> <span class="n">velocities_mm_year</span><span class="p">[</span><span class="n">valid_idx</span><span class="p">],</span> 
+                  <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;R-squared&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Velocity (mm/year)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Velocity vs Quality&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h2 id="step-6-small-baseline-subset-sbas-analysis">Step 6: Small Baseline Subset (SBAS) Analysis</h2>
+<h3 id="61-network-design-and-processing">6.1 Network Design and Processing</h3>
+<pre class="codehilite"><code><span class="c1"># SBAS network design</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SBASProcessor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Small Baseline Subset InSAR processor&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_temporal_baseline</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">max_spatial_baseline</span><span class="o">=</span><span class="mi">200</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_temp_baseline</span> <span class="o">=</span> <span class="n">max_temporal_baseline</span>  <span class="c1"># days</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_spat_baseline</span> <span class="o">=</span> <span class="n">max_spatial_baseline</span>   <span class="c1"># meters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interferogram_network</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">design_network</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acquisition_dates</span><span class="p">,</span> <span class="n">spatial_baselines</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Design SBAS interferogram network&quot;&quot;&quot;</span>
+        <span class="n">n_images</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">acquisition_dates</span><span class="p">)</span>
+
+        <span class="c1"># Generate all possible pairs</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_images</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_images</span><span class="p">):</span>
+                <span class="n">temp_baseline</span> <span class="o">=</span> <span class="p">(</span><span class="n">acquisition_dates</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">acquisition_dates</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">.</span><span class="n">days</span>
+
+                <span class="c1"># Check temporal baseline</span>
+                <span class="k">if</span> <span class="n">temp_baseline</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_temp_baseline</span><span class="p">:</span>
+                    <span class="c1"># Check spatial baseline if provided</span>
+                    <span class="k">if</span> <span class="n">spatial_baselines</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">spat_baseline</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">spatial_baselines</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">spatial_baselines</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                        <span class="k">if</span> <span class="n">spat_baseline</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_spat_baseline</span><span class="p">:</span>
+                            <span class="k">continue</span>
+
+                    <span class="bp">self</span><span class="o">.</span><span class="n">interferogram_network</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                        <span class="s1">&#39;master_idx&#39;</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span>
+                        <span class="s1">&#39;slave_idx&#39;</span><span class="p">:</span> <span class="n">j</span><span class="p">,</span>
+                        <span class="s1">&#39;temporal_baseline&#39;</span><span class="p">:</span> <span class="n">temp_baseline</span><span class="p">,</span>
+                        <span class="s1">&#39;spatial_baseline&#39;</span><span class="p">:</span> <span class="n">spat_baseline</span> <span class="k">if</span> <span class="n">spatial_baselines</span> <span class="k">else</span> <span class="kc">None</span>
+                    <span class="p">})</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SBAS network designed with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interferogram_network</span><span class="p">)</span><span class="si">}</span><span class="s2"> interferograms&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">interferogram_network</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve_displacement_timeseries</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interferogram_phases</span><span class="p">,</span> <span class="n">ps_indices</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Solve for displacement time series using SBAS approach&quot;&quot;&quot;</span>
+        <span class="n">n_ps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ps_indices</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">n_images</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">pair</span><span class="p">[</span><span class="s1">&#39;master_idx&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">interferogram_network</span><span class="p">]</span> <span class="o">+</span> 
+                          <span class="p">[</span><span class="n">pair</span><span class="p">[</span><span class="s1">&#39;slave_idx&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">interferogram_network</span><span class="p">]))</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">n_ifgs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interferogram_network</span><span class="p">)</span>
+
+        <span class="c1"># Build design matrix A</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_ifgs</span><span class="p">,</span> <span class="n">n_images</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pair</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interferogram_network</span><span class="p">):</span>
+            <span class="n">A</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">pair</span><span class="p">[</span><span class="s1">&#39;master_idx&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="n">A</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">pair</span><span class="p">[</span><span class="s1">&#39;slave_idx&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="c1"># Add temporal smoothness constraint</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n_images</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_images</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n_images</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_images</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.01</span>  <span class="c1"># Smoothing parameter</span>
+
+        <span class="c1"># Solve for each PS point</span>
+        <span class="n">displacement_timeseries</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_ps</span><span class="p">,</span> <span class="n">n_images</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">ps_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_ps</span><span class="p">):</span>
+            <span class="c1"># Extract interferogram phases for this PS point</span>
+            <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">ps_indices</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">ps_idx</span><span class="p">],</span> <span class="n">ps_indices</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">ps_idx</span><span class="p">]</span>
+
+            <span class="n">ifg_phases</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pair</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interferogram_network</span><span class="p">):</span>
+                <span class="n">pair_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;master_</span><span class="si">{</span><span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;acquisition_dates&#39;</span><span class="p">][</span><span class="n">pair</span><span class="p">[</span><span class="s1">&#39;slave_idx&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y%m</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="k">if</span> <span class="n">pair_key</span> <span class="ow">in</span> <span class="n">interferogram_phases</span><span class="p">:</span>
+                    <span class="n">ifg_phases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">interferogram_phases</span><span class="p">[</span><span class="n">pair_key</span><span class="p">][</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">])</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ifg_phases</span><span class="p">)</span> <span class="o">!=</span> <span class="n">n_ifgs</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">ifg_phases</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ifg_phases</span><span class="p">)</span>
+
+            <span class="c1"># Regularized least squares solution</span>
+            <span class="n">ATA</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">A</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="n">L</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">L</span><span class="p">)</span>
+            <span class="n">ATb</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">ifg_phases</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">displacement_ts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">ATA</span><span class="p">,</span> <span class="n">ATb</span><span class="p">)</span>
+                <span class="n">displacement_timeseries</span><span class="p">[</span><span class="n">ps_idx</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">displacement_ts</span>
+            <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span><span class="p">:</span>
+                <span class="n">displacement_timeseries</span><span class="p">[</span><span class="n">ps_idx</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="k">return</span> <span class="n">displacement_timeseries</span>
+
+<span class="c1"># Initialize SBAS processor</span>
+<span class="n">sbas_processor</span> <span class="o">=</span> <span class="n">SBASProcessor</span><span class="p">(</span><span class="n">max_temporal_baseline</span><span class="o">=</span><span class="mi">48</span><span class="p">,</span> <span class="n">max_spatial_baseline</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+
+<span class="c1"># Design network</span>
+<span class="n">sbas_network</span> <span class="o">=</span> <span class="n">sbas_processor</span><span class="o">.</span><span class="n">design_network</span><span class="p">(</span><span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;acquisition_dates&#39;</span><span class="p">])</span>
+
+<span class="c1"># Solve for displacement time series</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Solving SBAS displacement time series...&quot;</span><span class="p">)</span>
+<span class="n">sbas_displacement</span> <span class="o">=</span> <span class="n">sbas_processor</span><span class="o">.</span><span class="n">solve_displacement_timeseries</span><span class="p">(</span>
+    <span class="n">corrected_phases</span><span class="p">,</span> <span class="n">ps_indices</span>
+<span class="p">)</span>
+
+<span class="c1"># Convert phase to displacement</span>
+<span class="n">sbas_displacement_m</span> <span class="o">=</span> <span class="n">sbas_displacement</span> <span class="o">*</span> <span class="n">wavelength</span> <span class="o">/</span> <span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SBAS time series shape: </span><span class="si">{</span><span class="n">sbas_displacement_m</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="62-sbas-results-visualization">6.2 SBAS Results Visualization</h3>
+<pre class="codehilite"><code><span class="c1"># Compare PSI and SBAS results</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">18</span><span class="p">))</span>
+
+<span class="c1"># Time series comparison for selected PS points</span>
+<span class="n">selected_points</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_ps</span><span class="o">//</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_ps</span><span class="o">//</span><span class="mi">2</span><span class="p">]</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ps_idx</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">selected_points</span><span class="p">):</span>
+    <span class="c1"># PSI results</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time_axis</span><span class="p">,</span> <span class="n">corrected_displacement_matrix</span><span class="p">[</span><span class="n">ps_idx</span><span class="p">,</span> <span class="p">:]</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">,</span> 
+                   <span class="s1">&#39;o-&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;PSI&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+
+    <span class="c1"># SBAS results</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;acquisition_dates&#39;</span><span class="p">],</span> <span class="n">sbas_displacement_m</span><span class="p">[</span><span class="n">ps_idx</span><span class="p">,</span> <span class="p">:]</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">,</span> 
+                   <span class="s1">&#39;s-&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;SBAS&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+    <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;LOS Displacement (mm)&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;PS Point </span><span class="si">{</span><span class="n">ps_idx</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">: PSI vs SBAS&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">)</span>
+
+    <span class="c1"># Difference plot</span>
+    <span class="c1"># Interpolate SBAS to PSI time points for comparison</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">interp1d</span>
+
+    <span class="n">sbas_dates_num</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">t</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;acquisition_dates&#39;</span><span class="p">]])</span>
+    <span class="n">psi_dates_num</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">t</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">time_axis</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">sbas_displacement_m</span><span class="p">[</span><span class="n">ps_idx</span><span class="p">,</span> <span class="p">:])):</span>
+        <span class="n">f_interp</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span><span class="n">sbas_dates_num</span><span class="p">,</span> <span class="n">sbas_displacement_m</span><span class="p">[</span><span class="n">ps_idx</span><span class="p">,</span> <span class="p">:],</span> 
+                           <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="s1">&#39;extrapolate&#39;</span><span class="p">)</span>
+        <span class="n">sbas_interp</span> <span class="o">=</span> <span class="n">f_interp</span><span class="p">(</span><span class="n">psi_dates_num</span><span class="p">)</span>
+
+        <span class="n">difference</span> <span class="o">=</span> <span class="p">(</span><span class="n">corrected_displacement_matrix</span><span class="p">[</span><span class="n">ps_idx</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">sbas_interp</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+        <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time_axis</span><span class="p">,</span> <span class="n">difference</span><span class="p">,</span> <span class="s1">&#39;o-&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;PSI - SBAS (mm)&#39;</span><span class="p">)</span>
+        <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Difference: PS Point </span><span class="si">{</span><span class="n">ps_idx</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+        <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># Network visualization</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+<span class="c1"># Temporal-spatial baseline plot</span>
+<span class="n">temp_baselines</span> <span class="o">=</span> <span class="p">[</span><span class="n">pair</span><span class="p">[</span><span class="s1">&#39;temporal_baseline&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">sbas_network</span><span class="p">]</span>
+<span class="n">spat_baselines</span> <span class="o">=</span> <span class="p">[</span><span class="n">pair</span><span class="p">[</span><span class="s1">&#39;spatial_baseline&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">sbas_network</span> <span class="k">if</span> <span class="n">pair</span><span class="p">[</span><span class="s1">&#39;spatial_baseline&#39;</span><span class="p">]]</span>
+
+<span class="k">if</span> <span class="n">spat_baselines</span><span class="p">:</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">temp_baselines</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">spat_baselines</span><span class="p">)],</span> <span class="n">spat_baselines</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Temporal Baseline (days)&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Spatial Baseline (m)&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;SBAS Network: Baseline Distribution&#39;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="c1"># Time series connectivity</span>
+<span class="n">time_indices</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;acquisition_dates&#39;</span><span class="p">])))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">time_indices</span><span class="p">,</span> <span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;acquisition_dates&#39;</span><span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">sbas_network</span><span class="p">:</span>
+    <span class="n">x_coords</span> <span class="o">=</span> <span class="p">[</span><span class="n">pair</span><span class="p">[</span><span class="s1">&#39;master_idx&#39;</span><span class="p">],</span> <span class="n">pair</span><span class="p">[</span><span class="s1">&#39;slave_idx&#39;</span><span class="p">]]</span>
+    <span class="n">y_coords</span> <span class="o">=</span> <span class="p">[</span><span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;acquisition_dates&#39;</span><span class="p">][</span><span class="n">pair</span><span class="p">[</span><span class="s1">&#39;master_idx&#39;</span><span class="p">]],</span> 
+                <span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;acquisition_dates&#39;</span><span class="p">][</span><span class="n">pair</span><span class="p">[</span><span class="s1">&#39;slave_idx&#39;</span><span class="p">]]]</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x_coords</span><span class="p">,</span> <span class="n">y_coords</span><span class="p">,</span> <span class="s1">&#39;b-&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Image Index&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Acquisition Date&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;SBAS Network Connectivity&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h2 id="step-7-advanced-applications">Step 7: Advanced Applications</h2>
+<h3 id="71-nonlinear-deformation-detection">7.1 Nonlinear Deformation Detection</h3>
+<pre class="codehilite"><code><span class="c1"># Detect nonlinear deformation patterns</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">detect_nonlinear_deformation</span><span class="p">(</span><span class="n">displacement_ts</span><span class="p">,</span> <span class="n">time_axis</span><span class="p">,</span> <span class="n">significance_level</span><span class="o">=</span><span class="mf">0.05</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Detect significant nonlinear deformation patterns&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">stats</span>
+
+    <span class="c1"># Convert time to numerical format</span>
+    <span class="n">time_numeric</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">t</span> <span class="o">-</span> <span class="n">time_axis</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">days</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">time_axis</span><span class="p">])</span>
+
+    <span class="c1"># Remove NaN values</span>
+    <span class="n">valid_idx</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">displacement_ts</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">valid_idx</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="n">time_valid</span> <span class="o">=</span> <span class="n">time_numeric</span><span class="p">[</span><span class="n">valid_idx</span><span class="p">]</span>
+    <span class="n">disp_valid</span> <span class="o">=</span> <span class="n">displacement_ts</span><span class="p">[</span><span class="n">valid_idx</span><span class="p">]</span>
+
+    <span class="c1"># Linear fit</span>
+    <span class="n">linear_coef</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">time_valid</span><span class="p">,</span> <span class="n">disp_valid</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">linear_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">linear_coef</span><span class="p">,</span> <span class="n">time_valid</span><span class="p">)</span>
+    <span class="n">linear_residuals</span> <span class="o">=</span> <span class="n">disp_valid</span> <span class="o">-</span> <span class="n">linear_pred</span>
+
+    <span class="c1"># Quadratic fit</span>
+    <span class="n">quad_coef</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">time_valid</span><span class="p">,</span> <span class="n">disp_valid</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">quad_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">quad_coef</span><span class="p">,</span> <span class="n">time_valid</span><span class="p">)</span>
+    <span class="n">quad_residuals</span> <span class="o">=</span> <span class="n">disp_valid</span> <span class="o">-</span> <span class="n">quad_pred</span>
+
+    <span class="c1"># F-test for model comparison</span>
+    <span class="n">rss_linear</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">linear_residuals</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">rss_quad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">quad_residuals</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">time_valid</span><span class="p">)</span>
+    <span class="n">f_stat</span> <span class="o">=</span> <span class="p">((</span><span class="n">rss_linear</span> <span class="o">-</span> <span class="n">rss_quad</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">rss_quad</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">3</span><span class="p">))</span>
+    <span class="n">p_value</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">stats</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">f_stat</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span>
+
+    <span class="n">is_nonlinear</span> <span class="o">=</span> <span class="n">p_value</span> <span class="o">&lt;</span> <span class="n">significance_level</span>
+    <span class="n">acceleration</span> <span class="o">=</span> <span class="n">quad_coef</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="mf">365.25</span> <span class="o">*</span> <span class="mi">1000</span>  <span class="c1"># mm/year²</span>
+
+    <span class="k">return</span> <span class="n">is_nonlinear</span><span class="p">,</span> <span class="n">acceleration</span><span class="p">,</span> <span class="n">p_value</span>
+
+<span class="c1"># Apply nonlinear detection to all PS points</span>
+<span class="n">nonlinear_flags</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">accelerations</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">p_values</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Detecting nonlinear deformation patterns...&quot;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_ps</span><span class="p">):</span>
+    <span class="n">is_nonlinear</span><span class="p">,</span> <span class="n">acceleration</span><span class="p">,</span> <span class="n">p_value</span> <span class="o">=</span> <span class="n">detect_nonlinear_deformation</span><span class="p">(</span>
+        <span class="n">sbas_displacement_m</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:],</span> <span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;acquisition_dates&#39;</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">nonlinear_flags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">is_nonlinear</span><span class="p">)</span>
+    <span class="n">accelerations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acceleration</span><span class="p">)</span>
+    <span class="n">p_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p_value</span><span class="p">)</span>
+
+<span class="n">nonlinear_flags</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">nonlinear_flags</span><span class="p">)</span>
+<span class="n">accelerations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">accelerations</span><span class="p">)</span>
+<span class="n">p_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">p_values</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Nonlinear points detected: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">nonlinear_flags</span><span class="p">)</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">num_ps</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Percentage of nonlinear points: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">nonlinear_flags</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">num_ps</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+
+<span class="c1"># Visualize nonlinear deformation</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+
+<span class="c1"># Acceleration map</span>
+<span class="n">acceleration_map</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">master_data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+<span class="n">acceleration_map</span><span class="p">[</span><span class="n">ps_indices</span><span class="p">]</span> <span class="o">=</span> <span class="n">accelerations</span>
+
+<span class="n">acc_range</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanpercentile</span><span class="p">(</span><span class="n">accelerations</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">accelerations</span><span class="p">)],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">95</span><span class="p">])</span>
+<span class="n">im1</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">acceleration_map</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdBu_r&#39;</span><span class="p">,</span> 
+                       <span class="n">vmin</span><span class="o">=</span><span class="n">acc_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">vmax</span><span class="o">=</span><span class="n">acc_range</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Deformation Acceleration (mm/year²)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im1</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+
+<span class="c1"># Nonlinear points overlay</span>
+<span class="n">nonlinear_map</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">master_data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+<span class="n">nonlinear_map</span><span class="p">[</span><span class="n">ps_indices</span><span class="p">]</span> <span class="o">=</span> <span class="n">nonlinear_flags</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">master_data</span><span class="p">),</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">nonlinear_overlay</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">nonlinear_map</span><span class="p">),</span> <span class="n">nonlinear_map</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">nonlinear_overlay</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Reds&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Nonlinear Deformation Points&#39;</span><span class="p">)</span>
+
+<span class="c1"># P-value histogram</span>
+<span class="n">valid_p</span> <span class="o">=</span> <span class="n">p_values</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">p_values</span><span class="p">)]</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">valid_p</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;α = 0.05&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;P-value&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Frequency&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Nonlinearity Test P-values&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+<span class="c1"># Acceleration histogram</span>
+<span class="n">valid_acc</span> <span class="o">=</span> <span class="n">accelerations</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">accelerations</span><span class="p">)]</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">valid_acc</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Acceleration (mm/year²)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Frequency&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Acceleration Distribution&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h3 id="72-export-results-and-create-reports">7.2 Export Results and Create Reports</h3>
+<pre class="codehilite"><code><span class="c1"># Export results for further analysis</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">export_insar_results</span><span class="p">(</span><span class="n">output_dir</span><span class="o">=</span><span class="s1">&#39;insar_results&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Export InSAR analysis results&quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Export PS coordinates and results</span>
+    <span class="n">ps_results</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;metadata&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;processing_date&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+            <span class="s1">&#39;num_ps_points&#39;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_ps</span><span class="p">),</span>
+            <span class="s1">&#39;num_images&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;acquisition_dates&#39;</span><span class="p">]),</span>
+            <span class="s1">&#39;wavelength_m&#39;</span><span class="p">:</span> <span class="n">wavelength</span><span class="p">,</span>
+            <span class="s1">&#39;reference_ps_index&#39;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">reference_ps_idx</span><span class="p">)</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;ps_coordinates&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;row&#39;</span><span class="p">:</span> <span class="n">ps_indices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="s1">&#39;col&#39;</span><span class="p">:</span> <span class="n">ps_indices</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;velocities&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;values_mm_year&#39;</span><span class="p">:</span> <span class="n">velocities_mm_year</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="s1">&#39;quality_r_squared&#39;</span><span class="p">:</span> <span class="n">r_squared_values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;nonlinear_analysis&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;is_nonlinear&#39;</span><span class="p">:</span> <span class="n">nonlinear_flags</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="s1">&#39;acceleration_mm_year2&#39;</span><span class="p">:</span> <span class="n">accelerations</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="s1">&#39;p_values&#39;</span><span class="p">:</span> <span class="n">p_values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;acquisition_dates&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">date</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="k">for</span> <span class="n">date</span> <span class="ow">in</span> <span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;acquisition_dates&#39;</span><span class="p">]]</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Save as JSON</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/ps_analysis_results.json&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">ps_results</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># Save displacement time series</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/psi_displacement_timeseries.npy&#39;</span><span class="p">,</span> <span class="n">corrected_displacement_matrix</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/sbas_displacement_timeseries.npy&#39;</span><span class="p">,</span> <span class="n">sbas_displacement_m</span><span class="p">)</span>
+
+    <span class="c1"># Save velocity and quality maps</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/velocity_map_mm_year.npy&#39;</span><span class="p">,</span> <span class="n">velocity_map</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/quality_map_r_squared.npy&#39;</span><span class="p">,</span> <span class="n">quality_map</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/acceleration_map_mm_year2.npy&#39;</span><span class="p">,</span> <span class="n">acceleration_map</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Results exported to </span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">output_dir</span>
+
+<span class="c1"># Generate processing report</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_processing_report</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate a comprehensive processing report&quot;&quot;&quot;</span>
+
+    <span class="n">report</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2"># InSAR Processing Report</span>
+
+<span class="s2">## Processing Summary</span>
+<span class="s2">- **Processing Date**: </span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">)</span><span class="si">}</span>
+<span class="s2">- **Number of SAR Images**: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;acquisition_dates&#39;</span><span class="p">])</span><span class="si">}</span>
+<span class="s2">- **Time Span**: </span><span class="si">{</span><span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;acquisition_dates&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">sar_stack</span><span class="p">[</span><span class="s1">&#39;acquisition_dates&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span><span class="si">}</span>
+<span class="s2">- **Total Interferograms**: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">interferograms</span><span class="p">)</span><span class="si">}</span>
+<span class="s2">- **SBAS Network Pairs**: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sbas_network</span><span class="p">)</span><span class="si">}</span>
+
+<span class="s2">## Persistent Scatterer Analysis</span>
+<span class="s2">- **PS Candidates Identified**: </span><span class="si">{</span><span class="n">num_ps</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span>
+<span class="s2">- **PS Density**: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ps_candidates</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">ps_candidates</span><span class="o">.</span><span class="n">size</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%</span>
+<span class="s2">- **Selection Criteria**:</span>
+<span class="s2">  - ADI Threshold: </span><span class="si">{</span><span class="n">ps_criteria</span><span class="p">[</span><span class="s1">&#39;adi_threshold&#39;</span><span class="p">]</span><span class="si">}</span>
+<span class="s2">  - Coherence Threshold: </span><span class="si">{</span><span class="n">ps_criteria</span><span class="p">[</span><span class="s1">&#39;coherence_threshold&#39;</span><span class="p">]</span><span class="si">}</span>
+
+<span class="s2">## Velocity Analysis</span>
+<span class="s2">- **Mean LOS Velocity**: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">velocities_mm_year</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> ± </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">velocities_mm_year</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> mm/year</span>
+<span class="s2">- **Velocity Range**: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">velocities_mm_year</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">velocities_mm_year</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> mm/year</span>
+<span class="s2">- **Stable Points** (|v| &lt; 2 mm/year): </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">velocities_mm_year</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">num_ps</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">velocities_mm_year</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">num_ps</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%)</span>
+
+<span class="s2">## Nonlinear Deformation Analysis</span>
+<span class="s2">- **Nonlinear Points Detected**: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">nonlinear_flags</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">num_ps</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">nonlinear_flags</span><span class="p">)</span><span class="o">/</span><span class="n">num_ps</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%)</span>
+<span class="s2">- **Acceleration Range**: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">accelerations</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">accelerations</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> mm/year²</span>
+
+<span class="s2">## Quality Assessment</span>
+<span class="s2">- **Mean Coherence**: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">mean_coherence</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span>
+<span class="s2">- **Mean Velocity R²**: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">r_squared_values</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span>
+<span class="s2">- **Atmospheric Correction Applied**: Yes</span>
+
+<span class="s2">## Processing Configuration</span>
+<span class="s2">- **Wavelength**: </span><span class="si">{</span><span class="n">wavelength</span><span class="si">}</span><span class="s2"> m</span>
+<span class="s2">- **Reference PS Index**: </span><span class="si">{</span><span class="n">reference_ps_idx</span><span class="si">}</span>
+<span class="s2">- **Atmospheric Correction**: Linear regression with elevation dependence</span>
+<span class="s2">- **Phase Unwrapping**: Minimum cost flow algorithm</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">report</span>
+
+<span class="c1"># Export results and generate report</span>
+<span class="n">export_dir</span> <span class="o">=</span> <span class="n">export_insar_results</span><span class="p">()</span>
+<span class="n">processing_report</span> <span class="o">=</span> <span class="n">generate_processing_report</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">processing_report</span><span class="p">)</span>
+
+<span class="c1"># Save report</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">export_dir</span><span class="si">}</span><span class="s1">/processing_report.md&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">processing_report</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Processing complete! Results saved to </span><span class="si">{</span><span class="n">export_dir</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="key-takeaways">Key Takeaways</h2>
+<ol>
+<li>
+<p><strong>Comprehensive Workflow</strong>: This tutorial covers the complete InSAR processing chain from coregistration to advanced time series analysis</p>
+</li>
+<li>
+<p><strong>Multiple Techniques</strong>: Both PSI and SBAS approaches are demonstrated, showing their complementary strengths</p>
+</li>
+<li>
+<p><strong>Quality Control</strong>: Extensive quality assessment and validation procedures ensure reliable results</p>
+</li>
+<li>
+<p><strong>Advanced Analysis</strong>: Nonlinear deformation detection and atmospheric correction improve measurement accuracy</p>
+</li>
+<li>
+<p><strong>Operational Ready</strong>: The workflow is designed for operational use with batch processing and automated reporting</p>
+</li>
+</ol>
+<h2 id="next-steps">Next Steps</h2>
+<ol>
+<li><strong>Validate results</strong> with independent ground truth data (GPS, leveling)</li>
+<li><strong>Optimize parameters</strong> for your specific study area and application</li>
+<li><strong>Integrate with GIS systems</strong> for spatial analysis and interpretation</li>
+<li><strong>Develop automated monitoring systems</strong> for continuous deformation monitoring</li>
+</ol>
+<h2 id="additional-resources">Additional Resources</h2>
+<ul>
+<li>InSAR theory and processing principles</li>
+<li>Atmospheric correction techniques</li>
+<li>Phase unwrapping algorithms</li>
+<li>Time series analysis methods for Earth observation</li>
+</ul>
+<hr>
+<p><em>This tutorial provides a comprehensive framework for advanced interferometric analysis using sarpyx. The techniques demonstrated here enable precise deformation monitoring and surface change detection for a wide range of applications including volcano monitoring, landslide analysis, subsidence studies, and infrastructure monitoring.</em></p>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

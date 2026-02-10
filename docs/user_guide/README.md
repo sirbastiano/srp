@@ -1,6 +1,6 @@
 # User Guide
 
-This guide provides comprehensive information for users of SARPyX, from installation to advanced processing workflows.
+This guide provides comprehensive information for users of sarpyx, from installation to advanced processing workflows.
 
 ## Table of Contents
 
@@ -15,12 +15,12 @@ This guide provides comprehensive information for users of SARPyX, from installa
 
 ## Overview
 
-SARPyX is designed to provide researchers and developers with powerful tools for SAR data processing. The package is organized into several main modules:
+sarpyx is designed to provide researchers and developers with powerful tools for SAR data processing. The package is organized into several main modules:
 
 - **`sarpyx.processor`**: Core processing algorithms and utilities
 - **`sarpyx.science`**: Scientific analysis tools and indices
 - **`sarpyx.sla`**: Sub-Look Analysis for aperture decomposition
-- **`sarpyx.snap`**: Integration with ESA's SNAP platform
+- **`sarpyx.snapflow`**: Integration with ESA's SNAP platform
 - **`sarpyx.utils`**: General utilities and visualization tools
 
 ## Quick Navigation

@@ -1,10 +1,10 @@
 # Architecture Guide
 
-This document provides an overview of SARPYX's architecture, design patterns, and implementation details for developers.
+This document provides an overview of sarpyx's architecture, design patterns, and implementation details for developers.
 
 ## Overview
 
-SARPYX is designed as a modular SAR processing library with the following core principles:
+sarpyx is designed as a modular SAR processing library with the following core principles:
 
 - **Modularity**: Each component has a clear, well-defined responsibility
 - **Extensibility**: Easy to add new algorithms and processing methods
@@ -15,7 +15,7 @@ SARPYX is designed as a modular SAR processing library with the following core p
 ## Architecture Overview
 
 ```
-SARPYX Architecture
+sarpyx Architecture
 
 ┌─────────────────────────────────────────────────────────────┐
 │                    Public API Layer                        │
@@ -296,23 +296,23 @@ def very_expensive_computation(data):
 ### 1. Exception Hierarchy
 
 ```python
-class SARPYXError(Exception):
-    """Base exception for SARPYX."""
+class sarpyxError(Exception):
+    """Base exception for sarpyx."""
     pass
 
-class DataError(SARPYXError):
+class DataError(sarpyxError):
     """Data-related errors."""
     pass
 
-class ProcessingError(SARPYXError):
+class ProcessingError(sarpyxError):
     """Processing-related errors."""
     pass
 
-class ValidationError(SARPYXError):
+class ValidationError(sarpyxError):
     """Validation-related errors."""
     pass
 
-class SNAPError(SARPYXError):
+class SNAPError(sarpyxError):
     """SNAP integration errors."""
     pass
 ```
@@ -371,7 +371,7 @@ class ConfigManager:
         config = load_yaml("config/default.yaml")
         
         # Apply environment-specific overrides
-        env = os.getenv("SARPYX_ENV", "development")
+        env = os.getenv("sarpyx_ENV", "development")
         env_config = load_yaml(f"config/{env}.yaml")
         config.update(env_config)
         

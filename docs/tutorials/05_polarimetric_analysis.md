@@ -1,6 +1,6 @@
 # Tutorial 5: Polarimetric Analysis
 
-Learn to work with dual-pol SAR data for vegetation monitoring and polarimetric decomposition using SARPyX.
+Learn to work with dual-pol SAR data for vegetation monitoring and polarimetric decomposition using sarpyx.
 
 ## Overview
 
@@ -22,7 +22,7 @@ This tutorial covers:
 import numpy as np
 import matplotlib.pyplot as plt
 from sarpyx.sla import SubLookAnalysis
-from sarpyx.snap import GPT
+from sarpyx.snapflow.engine import GPT
 from sarpyx.science.indices import *
 from sarpyx.utils.viz import show_image, show_histogram
 from sarpyx.utils.io import save_matlab_mat
@@ -305,7 +305,7 @@ plt.show()
 ### 4.1 Radar Vegetation Index (RVI)
 
 ```python
-# Calculate Radar Vegetation Index using SARPyX science module
+# Calculate Radar Vegetation Index using sarpyx science module
 print("Calculating vegetation indices...")
 
 # Extract required data for vegetation indices

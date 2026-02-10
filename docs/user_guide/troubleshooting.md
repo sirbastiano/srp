@@ -1,6 +1,6 @@
 # Troubleshooting
 
-This guide helps you diagnose and resolve common issues when using SARPyX. Issues are organized by module and include practical solutions and prevention strategies.
+This guide helps you diagnose and resolve common issues when using sarpyx. Issues are organized by module and include practical solutions and prevention strategies.
 
 ## General Troubleshooting
 
@@ -380,7 +380,7 @@ snap_path = diagnose_snap_installation()
 
 2. **Manual Path Configuration**:
    ```python
-   from sarpyx.snap import GPT
+   from sarpyx.snapflow.engine import GPT
    
    # Specify SNAP path manually
    gpt = GPT(product="input.zip", outdir="output/")
@@ -973,7 +973,7 @@ def collect_diagnostic_info():
     import numpy as np
     from pathlib import Path
     
-    print("=== SARPyX Diagnostic Information ===\n")
+    print("=== sarpyx Diagnostic Information ===\n")
     
     # System information
     print("System Information:")
@@ -985,9 +985,9 @@ def collect_diagnostic_info():
     print("\nPackage Versions:")
     try:
         import sarpyx
-        print(f"- SARPyX: {sarpyx.__version__ if hasattr(sarpyx, '__version__') else 'unknown'}")
+        print(f"- sarpyx: {sarpyx.__version__ if hasattr(sarpyx, '__version__') else 'unknown'}")
     except ImportError:
-        print("- SARPyX: NOT INSTALLED")
+        print("- sarpyx: NOT INSTALLED")
     
     try:
         print(f"- NumPy: {np.__version__}")
@@ -1010,7 +1010,7 @@ def collect_diagnostic_info():
     # SNAP information
     print("\nSNAP Information:")
     try:
-        from sarpyx.snap import GPT
+        from sarpyx.snapflow.engine import GPT
         gpt = GPT(product="dummy", outdir="dummy")
         print(f"- GPT Path: {gpt.gpt_executable}")
         print(f"- Parallelism: {gpt.parallelism}")
@@ -1025,7 +1025,7 @@ collect_diagnostic_info()
 
 ### Community Support
 
-1. **GitHub Issues**: [SARPyX Issues](https://github.com/your-repo/sarpyx/issues)
+1. **GitHub Issues**: [sarpyx Issues](https://github.com/your-repo/sarpyx/issues)
    - Include diagnostic information
    - Provide minimal reproducible examples
    - Specify your use case clearly
@@ -1078,4 +1078,4 @@ def create_minimal_example():
 create_minimal_example()
 ```
 
-This comprehensive troubleshooting guide should help users diagnose and resolve most common issues they encounter when using SARPyX, with practical solutions and prevention strategies for each problem area.
+This comprehensive troubleshooting guide should help users diagnose and resolve most common issues they encounter when using sarpyx, with practical solutions and prevention strategies for each problem area.

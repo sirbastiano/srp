@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Snapflow Module API – sarpyx Docs</title>
+  <link rel="stylesheet" href="../../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../../index.html"><img class="logo" src="../../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../../user_guide/index.html">Overview</a>
+<a href="../../user_guide/installation.html">Installation</a>
+<a href="../../user_guide/getting_started.html">Getting Started</a>
+<a href="../../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../../user_guide/data_formats.html">Data Formats</a>
+<a href="../../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../../user_guide/science_applications.html">Science Applications</a>
+<a href="../../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../../tutorials/index.html">Overview</a>
+<a href="../../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../../api/index.html">Overview</a>
+<a href="../../api/snapflow/index.html" class="active">Snapflow</a>
+<a href="../../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../../api/science/index.html">Science</a>
+<a href="../../api/sla/index.html">SLA</a>
+<a href="../../api/processor/index.html">Processor</a>
+<a href="../../api/utils/index.html">Utils</a>
+<a href="../../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../../developer_guide/architecture.html">Architecture</a>
+<a href="../../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="snapflow-module-api">Snapflow Module API</h1>
+<p>The <code>sarpyx.snapflow</code> module provides seamless integration with ESA&rsquo;s SNAP (Sentinel Application Platform) Graph Processing Tool (GPT), enabling automated SAR preprocessing, calibration, coregistration, and advanced processing workflows.</p>
+<h2 id="overview">Overview</h2>
+<p>The SNAP module serves as a Python wrapper for SNAP&rsquo;s command-line GPT tool, allowing users to:
+- Execute SNAP processing graphs programmatically
+- Chain multiple processing operations
+- Handle different SAR missions (Sentinel-1, COSMO-SkyMed, etc.)
+- Automate batch processing workflows
+- Integrate SNAP preprocessing with sarpyx analysis</p>
+<h2 id="quick-start">Quick Start</h2>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.snapflow.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPT</span>
+
+<span class="c1"># Initialize GPT processor</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span>
+    <span class="n">product</span><span class="o">=</span><span class="s1">&#39;path/to/sentinel1.SAFE&#39;</span><span class="p">,</span>
+    <span class="n">outdir</span><span class="o">=</span><span class="s1">&#39;output/&#39;</span><span class="p">,</span>
+    <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;GEOTIFF&#39;</span>
+<span class="p">)</span>
+
+<span class="c1"># Chain processing operations</span>
+<span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">([</span><span class="s1">&#39;VV&#39;</span><span class="p">,</span> <span class="s1">&#39;VH&#39;</span><span class="p">])</span>
+             <span class="o">.</span><span class="n">ThermalNoiseRemoval</span><span class="p">()</span>
+             <span class="o">.</span><span class="n">Speckle_Filter</span><span class="p">()</span>
+             <span class="o">.</span><span class="n">TerrainCorrection</span><span class="p">())</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processed product: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="gpt-class">GPT Class</h2>
+<h3 id="constructor">Constructor</h3>
+<pre class="codehilite"><code><span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="p">,</span> <span class="n">outdir</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;BEAM-DIMAP&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre>
+<p><strong>Parameters:</strong>
+- <code>product</code> (str | Path): Path to input SAR product
+- <code>outdir</code> (str | Path): Output directory for processed products
+- <code>format</code> (str): Output format (&lsquo;BEAM-DIMAP&rsquo; or &lsquo;GEOTIFF&rsquo;)
+- <code>mode</code> (str, optional): Platform mode (&lsquo;Ubuntu&rsquo;, &lsquo;MacOS&rsquo;, &lsquo;Windows&rsquo;)</p>
+<p><strong>Example:</strong></p>
+<pre class="codehilite"><code><span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span>
+    <span class="n">product</span><span class="o">=</span><span class="s1">&#39;/data/S1A_IW_SLC__1SDV_20230101T120000.SAFE&#39;</span><span class="p">,</span>
+    <span class="n">outdir</span><span class="o">=</span><span class="s1">&#39;/output/&#39;</span><span class="p">,</span>
+    <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;GEOTIFF&#39;</span><span class="p">,</span>
+    <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;MacOS&#39;</span>
+<span class="p">)</span>
+</code></pre>
+<h3 id="core-processing-methods">Core Processing Methods</h3>
+<h4 id="calibration">Calibration</h4>
+<pre class="codehilite"><code><span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">(</span><span class="n">Pols</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;VH&#39;</span><span class="p">],</span> <span class="n">output_complex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre>
+<p>Applies radiometric calibration to convert digital numbers to backscatter coefficients.</p>
+<p><strong>Parameters:</strong>
+- <code>Pols</code> (list): Polarizations to process (e.g., [&lsquo;VV&rsquo;, &lsquo;VH&rsquo;])
+- <code>output_complex</code> (bool): Whether to output complex data</p>
+<p><strong>Example:</strong></p>
+<pre class="codehilite"><code><span class="c1"># Calibrate dual-pol data</span>
+<span class="n">calibrated</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">([</span><span class="s1">&#39;VV&#39;</span><span class="p">,</span> <span class="s1">&#39;VH&#39;</span><span class="p">],</span> <span class="n">output_complex</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># Calibrate maintaining complex format for interferometry</span>
+<span class="n">calibrated_complex</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">([</span><span class="s1">&#39;VV&#39;</span><span class="p">],</span> <span class="n">output_complex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre>
+<h4 id="thermal-noise-removal">Thermal Noise Removal</h4>
+<pre class="codehilite"><code><span class="n">gpt</span><span class="o">.</span><span class="n">ThermalNoiseRemoval</span><span class="p">()</span>
+</code></pre>
+<p>Removes thermal noise from Sentinel-1 data.</p>
+<h4 id="deburst-topsar">Deburst (TOPSAR)</h4>
+<pre class="codehilite"><code><span class="n">gpt</span><span class="o">.</span><span class="n">Deburst</span><span class="p">(</span><span class="n">Pols</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;VH&#39;</span><span class="p">])</span>
+</code></pre>
+<p>Removes burst boundaries from TOPSAR data.</p>
+<p><strong>Parameters:</strong>
+- <code>Pols</code> (list): Polarizations to deburst</p>
+<h4 id="speckle-filtering">Speckle Filtering</h4>
+<pre class="codehilite"><code><span class="n">gpt</span><span class="o">.</span><span class="n">Speckle_Filter</span><span class="p">(</span><span class="n">filterSizeX</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">filterSizeY</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">dampingFactor</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</code></pre>
+<p>Applies speckle noise reduction.</p>
+<p><strong>Parameters:</strong>
+- <code>filterSizeX</code> (int): Filter size in range direction
+- <code>filterSizeY</code> (int): Filter size in azimuth direction
+- <code>dampingFactor</code> (int): Damping factor for filter</p>
+<h4 id="terrain-correction">Terrain Correction</h4>
+<pre class="codehilite"><code><span class="n">gpt</span><span class="o">.</span><span class="n">TerrainCorrection</span><span class="p">(</span><span class="n">demName</span><span class="o">=</span><span class="s1">&#39;SRTM 3Sec&#39;</span><span class="p">,</span> 
+                     <span class="n">demResamplingMethod</span><span class="o">=</span><span class="s1">&#39;BILINEAR_INTERPOLATION&#39;</span><span class="p">,</span>
+                     <span class="n">imgResamplingMethod</span><span class="o">=</span><span class="s1">&#39;BILINEAR_INTERPOLATION&#39;</span><span class="p">,</span>
+                     <span class="n">pixelSpacingInMeter</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span>
+                     <span class="n">nodataValueAtSea</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</code></pre>
+<p>Applies geometric terrain correction and geocoding.</p>
+<p><strong>Parameters:</strong>
+- <code>demName</code> (str): DEM to use (&lsquo;SRTM 3Sec&rsquo;, &lsquo;SRTM 1Sec&rsquo;, &lsquo;ASTER 1sec GDEM&rsquo;)
+- <code>demResamplingMethod</code> (str): DEM resampling method
+- <code>imgResamplingMethod</code> (str): Image resampling method<br>
+- <code>pixelSpacingInMeter</code> (float): Output pixel spacing
+- <code>nodataValueAtSea</code> (bool): Set nodata values over sea</p>
+<h4 id="multilook">Multilook</h4>
+<pre class="codehilite"><code><span class="n">gpt</span><span class="o">.</span><span class="n">Multilook</span><span class="p">(</span><span class="n">nRgLooks</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nAzLooks</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre>
+<p>Applies spatial averaging to reduce speckle.</p>
+<p><strong>Parameters:</strong>
+- <code>nRgLooks</code> (int): Number of looks in range direction
+- <code>nAzLooks</code> (int): Number of looks in azimuth direction</p>
+<h3 id="advanced-processing-methods">Advanced Processing Methods</h3>
+<h4 id="land-sea-masking">Land-Sea Masking</h4>
+<pre class="codehilite"><code><span class="n">gpt</span><span class="o">.</span><span class="n">LandMask</span><span class="p">(</span><span class="n">shoreline_extension</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> 
+             <span class="n">geometry_name</span><span class="o">=</span><span class="s2">&quot;Buff_750&quot;</span><span class="p">,</span> 
+             <span class="n">use_srtm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+             <span class="n">invert_geometry</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+             <span class="n">land_mask</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</code></pre>
+<p>Applies land-sea masking using coastline data.</p>
+<p><strong>Parameters:</strong>
+- <code>shoreline_extension</code> (int): Shoreline buffer distance in meters
+- <code>geometry_name</code> (str): Geometry buffer name
+- <code>use_srtm</code> (bool): Use SRTM for elevation-based masking
+- <code>invert_geometry</code> (bool): Invert the geometry mask
+- <code>land_mask</code> (bool): Create land mask (True) or sea mask (False)</p>
+<h4 id="cfar-ship-detection">CFAR Ship Detection</h4>
+<pre class="codehilite"><code><span class="n">gpt</span><span class="o">.</span><span class="n">AdaptiveThresholding</span><span class="p">(</span><span class="n">background_window_m</span><span class="o">=</span><span class="mi">800</span><span class="p">,</span>
+                        <span class="n">guard_window_m</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> 
+                        <span class="n">target_window_m</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+                        <span class="n">pfa</span><span class="o">=</span><span class="mf">6.5</span><span class="p">)</span>
+</code></pre>
+<p>Applies Constant False Alarm Rate (CFAR) detection for ships.</p>
+<p><strong>Parameters:</strong>
+- <code>background_window_m</code> (float): Background window size in meters
+- <code>guard_window_m</code> (float): Guard window size in meters
+- <code>target_window_m</code> (float): Target window size in meters
+- <code>pfa</code> (float): Probability of false alarm</p>
+<h4 id="object-discrimination">Object Discrimination</h4>
+<pre class="codehilite"><code><span class="n">gpt</span><span class="o">.</span><span class="n">ObjectDiscrimination</span><span class="p">(</span><span class="n">min_target_m</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">max_target_m</span><span class="o">=</span><span class="mi">2000</span><span class="p">)</span>
+</code></pre>
+<p>Filters detected objects by size.</p>
+<p><strong>Parameters:</strong>
+- <code>min_target_m</code> (float): Minimum target size in meters
+- <code>max_target_m</code> (float): Maximum target size in meters</p>
+<h3 id="subsetting-and-roi">Subsetting and ROI</h3>
+<h4 id="subset">Subset</h4>
+<pre class="codehilite"><code><span class="n">gpt</span><span class="o">.</span><span class="n">Subset</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="p">[</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">],</span> 
+           <span class="n">sourceBands</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Intensity_VV&#39;</span><span class="p">,</span> <span class="s1">&#39;Intensity_VH&#39;</span><span class="p">],</span>
+           <span class="n">idx</span><span class="o">=</span><span class="s1">&#39;01&#39;</span><span class="p">,</span>
+           <span class="n">winSize</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> 
+           <span class="n">GeoCoords</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+           <span class="n">copy_metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre>
+<p>Creates spatial subsets of the data.</p>
+<p><strong>Parameters:</strong>
+- <code>loc</code> (list): Center location [x, y] or [lon, lat]
+- <code>sourceBands</code> (list): Bands to include in subset
+- <code>idx</code> (str): Subset identifier for output naming
+- <code>winSize</code> (int): Window size in pixels or degrees
+- <code>GeoCoords</code> (bool): Whether loc is in geographic coordinates
+- <code>copy_metadata</code> (bool): Whether to copy metadata</p>
+<h4 id="vector-import">Vector Import</h4>
+<pre class="codehilite"><code><span class="n">gpt</span><span class="o">.</span><span class="n">ImportVector</span><span class="p">(</span><span class="n">vector_data</span><span class="o">=</span><span class="s1">&#39;path/to/shapefile.shp&#39;</span><span class="p">)</span>
+</code></pre>
+<p>Imports vector data for masking or analysis.</p>
+<p><strong>Parameters:</strong>
+- <code>vector_data</code> (str | Path): Path to vector file (shapefile, KML, etc.)</p>
+<h2 id="usage-examples">Usage Examples</h2>
+<h3 id="basic-sentinel-1-processing">Basic Sentinel-1 Processing</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.snapflow.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPT</span>
+
+<span class="c1"># Standard Sentinel-1 preprocessing workflow</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="s1">&#39;S1A_IW_SLC__1SDV.SAFE&#39;</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s1">&#39;output/&#39;</span><span class="p">)</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">([</span><span class="s1">&#39;VV&#39;</span><span class="p">,</span> <span class="s1">&#39;VH&#39;</span><span class="p">],</span> <span class="n">output_complex</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+             <span class="o">.</span><span class="n">ThermalNoiseRemoval</span><span class="p">()</span>
+             <span class="o">.</span><span class="n">Deburst</span><span class="p">([</span><span class="s1">&#39;VV&#39;</span><span class="p">,</span> <span class="s1">&#39;VH&#39;</span><span class="p">])</span>
+             <span class="o">.</span><span class="n">Speckle_Filter</span><span class="p">(</span><span class="n">filterSizeX</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">filterSizeY</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+             <span class="o">.</span><span class="n">TerrainCorrection</span><span class="p">(</span><span class="n">pixelSpacingInMeter</span><span class="o">=</span><span class="mi">20</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processed GRD product: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="cosmo-skymed-processing">COSMO-SkyMed Processing</h3>
+<pre class="codehilite"><code><span class="c1"># COSMO-SkyMed spotlight mode processing</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="s1">&#39;CSKS4_SCS_B_S2_08_HH.h5&#39;</span><span class="p">,</span> 
+          <span class="n">outdir</span><span class="o">=</span><span class="s1">&#39;output/&#39;</span><span class="p">,</span> 
+          <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;Ubuntu&#39;</span><span class="p">)</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">([</span><span class="s1">&#39;HH&#39;</span><span class="p">],</span> <span class="n">output_complex</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+             <span class="o">.</span><span class="n">Speckle_Filter</span><span class="p">(</span><span class="n">filterSizeX</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">filterSizeY</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+             <span class="o">.</span><span class="n">TerrainCorrection</span><span class="p">(</span><span class="n">demName</span><span class="o">=</span><span class="s1">&#39;SRTM 1Sec&#39;</span><span class="p">,</span> 
+                              <span class="n">pixelSpacingInMeter</span><span class="o">=</span><span class="mi">5</span><span class="p">))</span>
+</code></pre>
+<h3 id="ship-detection-workflow">Ship Detection Workflow</h3>
+<pre class="codehilite"><code><span class="c1"># Complete ship detection pipeline</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="s1">&#39;sentinel1_product.SAFE&#39;</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s1">&#39;ship_detection/&#39;</span><span class="p">)</span>
+
+<span class="c1"># Preprocessing</span>
+<span class="n">preprocessed</span> <span class="o">=</span> <span class="p">(</span><span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">([</span><span class="s1">&#39;VV&#39;</span><span class="p">])</span>
+                   <span class="o">.</span><span class="n">ThermalNoiseRemoval</span><span class="p">()</span>
+                   <span class="o">.</span><span class="n">Deburst</span><span class="p">([</span><span class="s1">&#39;VV&#39;</span><span class="p">])</span>
+                   <span class="o">.</span><span class="n">Calibration</span><span class="p">([</span><span class="s1">&#39;VV&#39;</span><span class="p">]))</span>
+
+<span class="c1"># Apply land mask to focus on ocean areas</span>
+<span class="n">land_masked</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">LandMask</span><span class="p">(</span><span class="n">land_mask</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># Create sea mask</span>
+                          <span class="n">shoreline_extension</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+                          <span class="n">use_srtm</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># CFAR detection</span>
+<span class="n">cfar_detected</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">AdaptiveThresholding</span><span class="p">(</span><span class="n">background_window_m</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+                                        <span class="n">guard_window_m</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span>
+                                        <span class="n">target_window_m</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+                                        <span class="n">pfa</span><span class="o">=</span><span class="mf">6.5</span><span class="p">)</span>
+
+<span class="c1"># Filter by ship size</span>
+<span class="n">ships</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">ObjectDiscrimination</span><span class="p">(</span><span class="n">min_target_m</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">max_target_m</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Ship detection results: </span><span class="si">{</span><span class="n">ships</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="multi-temporal-processing">Multi-Temporal Processing</h3>
+<pre class="codehilite"><code><span class="c1"># Process time series of SAR data</span>
+<span class="n">product_dates</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;S1A_IW_SLC__20230101.SAFE&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;S1A_IW_SLC__20230113.SAFE&#39;</span><span class="p">,</span> 
+    <span class="s1">&#39;S1A_IW_SLC__20230125.SAFE&#39;</span>
+<span class="p">]</span>
+
+<span class="n">processed_products</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">product</span> <span class="ow">in</span> <span class="n">product_dates</span><span class="p">:</span>
+    <span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">product</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;output/</span><span class="si">{</span><span class="n">Path</span><span class="p">(</span><span class="n">product</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s1">/&#39;</span><span class="p">)</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">([</span><span class="s1">&#39;VV&#39;</span><span class="p">,</span> <span class="s1">&#39;VH&#39;</span><span class="p">])</span>
+                 <span class="o">.</span><span class="n">Deburst</span><span class="p">([</span><span class="s1">&#39;VV&#39;</span><span class="p">,</span> <span class="s1">&#39;VH&#39;</span><span class="p">])</span>
+                 <span class="o">.</span><span class="n">TerrainCorrection</span><span class="p">(</span><span class="n">pixelSpacingInMeter</span><span class="o">=</span><span class="mi">10</span><span class="p">))</span>
+
+    <span class="n">processed_products</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processed </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">processed_products</span><span class="p">)</span><span class="si">}</span><span class="s2"> products&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="region-of-interest-processing">Region of Interest Processing</h3>
+<pre class="codehilite"><code><span class="c1"># Process specific geographic regions</span>
+<span class="n">areas_of_interest</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;Area1&#39;</span><span class="p">,</span> <span class="s1">&#39;lon&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">74.0</span><span class="p">,</span> <span class="s1">&#39;lat&#39;</span><span class="p">:</span> <span class="mf">40.7</span><span class="p">,</span> <span class="s1">&#39;size&#39;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">},</span>  <span class="c1"># 1km window</span>
+    <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;Area2&#39;</span><span class="p">,</span> <span class="s1">&#39;lon&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">73.9</span><span class="p">,</span> <span class="s1">&#39;lat&#39;</span><span class="p">:</span> <span class="mf">40.8</span><span class="p">,</span> <span class="s1">&#39;size&#39;</span><span class="p">:</span> <span class="mi">2000</span><span class="p">},</span>  <span class="c1"># 2km window</span>
+<span class="p">]</span>
+
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="s1">&#39;large_scene.SAFE&#39;</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s1">&#39;roi_processing/&#39;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">roi</span> <span class="ow">in</span> <span class="n">areas_of_interest</span><span class="p">:</span>
+    <span class="c1"># Create subset for each ROI</span>
+    <span class="n">subset_result</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Subset</span><span class="p">(</span>
+        <span class="n">loc</span><span class="o">=</span><span class="p">[</span><span class="n">roi</span><span class="p">[</span><span class="s1">&#39;lon&#39;</span><span class="p">],</span> <span class="n">roi</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">]],</span> 
+        <span class="n">sourceBands</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Intensity_VV&#39;</span><span class="p">,</span> <span class="s1">&#39;Intensity_VH&#39;</span><span class="p">],</span>
+        <span class="n">idx</span><span class="o">=</span><span class="n">roi</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">],</span>
+        <span class="n">winSize</span><span class="o">=</span><span class="n">roi</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">],</span>
+        <span class="n">GeoCoords</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processed </span><span class="si">{</span><span class="n">roi</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">subset_result</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="batch-processing-functions">Batch Processing Functions</h2>
+<h3 id="cfar-batch-processing">CFAR Batch Processing</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.snapflow.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">CFAR</span>
+
+<span class="c1"># Process single product with multiple thresholds</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">CFAR</span><span class="p">(</span>
+    <span class="n">prod</span><span class="o">=</span><span class="s1">&#39;sentinel1_product.SAFE&#39;</span><span class="p">,</span>
+    <span class="n">mask_shp_path</span><span class="o">=</span><span class="s1">&#39;coastline.shp&#39;</span><span class="p">,</span> 
+    <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;MacOS&#39;</span><span class="p">,</span>
+    <span class="n">Thresh</span><span class="o">=</span><span class="p">[</span><span class="mf">6.5</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">],</span>  <span class="c1"># Multiple PFA thresholds</span>
+    <span class="n">DELETE</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Clean up intermediate files</span>
+<span class="p">)</span>
+</code></pre>
+<h3 id="batch-processing-multiple-products">Batch Processing Multiple Products</h3>
+<pre class="codehilite"><code><span class="c1"># Process multiple products automatically</span>
+<span class="n">products</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;product1.SAFE&#39;</span><span class="p">,</span> <span class="s1">&#39;product2.SAFE&#39;</span><span class="p">,</span> <span class="s1">&#39;product3.SAFE&#39;</span><span class="p">]</span>
+
+<span class="k">for</span> <span class="n">product</span> <span class="ow">in</span> <span class="n">products</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">product</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;batch_output/</span><span class="si">{</span><span class="n">Path</span><span class="p">(</span><span class="n">product</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s1">/&#39;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">([</span><span class="s1">&#39;VV&#39;</span><span class="p">,</span> <span class="s1">&#39;VH&#39;</span><span class="p">])</span>
+                     <span class="o">.</span><span class="n">ThermalNoiseRemoval</span><span class="p">()</span>
+                     <span class="o">.</span><span class="n">TerrainCorrection</span><span class="p">())</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✓ Processed: </span><span class="si">{</span><span class="n">product</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✗ Failed: </span><span class="si">{</span><span class="n">product</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="configuration-and-platform-support">Configuration and Platform Support</h2>
+<h3 id="platform-specific-configuration">Platform-Specific Configuration</h3>
+<pre class="codehilite"><code><span class="c1"># GPT executable paths for different platforms</span>
+<span class="n">GPT</span><span class="o">.</span><span class="n">GPT_PATHS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;Ubuntu&#39;</span><span class="p">:</span> <span class="s1">&#39;/home/user/ESA-STEP/snap/bin/gpt&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;MacOS&#39;</span><span class="p">:</span> <span class="s1">&#39;/Applications/snap/bin/gpt&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Windows&#39;</span><span class="p">:</span> <span class="s1">&#39;gpt.exe&#39;</span>
+<span class="p">}</span>
+
+<span class="c1"># Processing parallelism settings</span>
+<span class="n">GPT</span><span class="o">.</span><span class="n">DEFAULT_PARALLELISM</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;Ubuntu&#39;</span><span class="p">:</span> <span class="mi">24</span><span class="p">,</span>
+    <span class="s1">&#39;MacOS&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> 
+    <span class="s1">&#39;Windows&#39;</span><span class="p">:</span> <span class="mi">8</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="custom-gpt-configuration">Custom GPT Configuration</h3>
+<pre class="codehilite"><code><span class="c1"># Initialize with custom settings</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">product_path</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;custom&#39;</span><span class="p">)</span>
+
+<span class="c1"># Override executable path</span>
+<span class="n">gpt</span><span class="o">.</span><span class="n">gpt_executable</span> <span class="o">=</span> <span class="s1">&#39;/custom/path/to/gpt&#39;</span>
+
+<span class="c1"># Override parallelism</span>
+<span class="n">gpt</span><span class="o">.</span><span class="n">parallelism</span> <span class="o">=</span> <span class="mi">16</span>
+</code></pre>
+<h2 id="error-handling-and-debugging">Error Handling and Debugging</h2>
+<h3 id="command-execution-monitoring">Command Execution Monitoring</h3>
+<pre class="codehilite"><code><span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">product_path</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">)</span>
+
+<span class="c1"># GPT automatically prints executed commands</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">([</span><span class="s1">&#39;VV&#39;</span><span class="p">])</span>
+<span class="c1"># Output: Executing: /path/to/gpt -q 8 -x -e -Ssource=... Calibration ...</span>
+</code></pre>
+<h3 id="error-recovery">Error Recovery</h3>
+<pre class="codehilite"><code><span class="k">try</span><span class="p">:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">TerrainCorrection</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Terrain correction failed&quot;</span><span class="p">)</span>
+        <span class="c1"># Implement fallback processing</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Log error and continue with next product</span>
+</code></pre>
+<h3 id="debugging-processing-issues">Debugging Processing Issues</h3>
+<pre class="codehilite"><code><span class="c1"># Enable verbose output</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+
+<span class="c1"># Check SNAP installation</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s1">&#39;gpt&#39;</span><span class="p">,</span> <span class="s1">&#39;-h&#39;</span><span class="p">],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SNAP GPT is properly installed&quot;</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ERROR: SNAP GPT not found in PATH&quot;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SNAP GPT error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="integration-with-other-sarpyx-modules">Integration with Other sarpyx Modules</h2>
+<h3 id="with-sub-look-analysis">With Sub-Look Analysis</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.snapflow.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPT</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.sla</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubLookAnalysis</span>
+
+<span class="c1"># Preprocess with SNAP</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="s1">&#39;sentinel1.SAFE&#39;</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s1">&#39;preprocessed/&#39;</span><span class="p">)</span>
+<span class="n">calibrated</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">([</span><span class="s1">&#39;VV&#39;</span><span class="p">],</span> <span class="n">output_complex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Apply SLA to preprocessed data</span>
+<span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">calibrated</span><span class="p">)</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">choice</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># Azimuth processing</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">()</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">()</span>
+</code></pre>
+<h3 id="with-science-applications">With Science Applications</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.snapflow.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPT</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science</span><span class="w"> </span><span class="kn">import</span> <span class="n">indices</span>
+
+<span class="c1"># Preprocess dual-pol data</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="s1">&#39;sentinel1.SAFE&#39;</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s1">&#39;science_ready/&#39;</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">([</span><span class="s1">&#39;VV&#39;</span><span class="p">,</span> <span class="s1">&#39;VH&#39;</span><span class="p">])</span>
+             <span class="o">.</span><span class="n">TerrainCorrection</span><span class="p">(</span><span class="n">pixelSpacingInMeter</span><span class="o">=</span><span class="mi">10</span><span class="p">))</span>
+
+<span class="c1"># Load processed data and calculate vegetation indices</span>
+<span class="n">vv_data</span> <span class="o">=</span> <span class="n">load_geotiff</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.dim&#39;</span><span class="p">,</span> <span class="s1">&#39;_VV.tif&#39;</span><span class="p">))</span>
+<span class="n">vh_data</span> <span class="o">=</span> <span class="n">load_geotiff</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.dim&#39;</span><span class="p">,</span> <span class="s1">&#39;_VH.tif&#39;</span><span class="p">))</span>
+
+<span class="n">rvi</span> <span class="o">=</span> <span class="n">indices</span><span class="o">.</span><span class="n">calculate_rvi</span><span class="p">(</span><span class="n">vv_data</span><span class="p">,</span> <span class="n">vh_data</span><span class="p">)</span>
+</code></pre>
+<h2 id="performance-optimization">Performance Optimization</h2>
+<h3 id="parallel-processing">Parallel Processing</h3>
+<pre class="codehilite"><code><span class="c1"># Maximize parallelism for large products</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">large_product</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">)</span>
+<span class="n">gpt</span><span class="o">.</span><span class="n">parallelism</span> <span class="o">=</span> <span class="mi">32</span>  <span class="c1"># Use all available cores</span>
+
+<span class="c1"># Process in memory-efficient chunks</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">TerrainCorrection</span><span class="p">(</span><span class="n">pixelSpacingInMeter</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>  <span class="c1"># Lower resolution for speed</span>
+</code></pre>
+<h3 id="intermediate-file-management">Intermediate File Management</h3>
+<pre class="codehilite"><code><span class="c1"># Clean up intermediate files automatically</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">product_path</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">temp_dir</span><span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">([</span><span class="s1">&#39;VV&#39;</span><span class="p">])</span>
+                 <span class="o">.</span><span class="n">TerrainCorrection</span><span class="p">())</span>
+
+    <span class="c1"># Copy final result to permanent location</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">final_output_dir</span><span class="p">)</span>
+
+<span class="k">finally</span><span class="p">:</span>
+    <span class="c1"># Clean up temporary directory</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">)</span>
+</code></pre>
+<h2 id="see-also">See Also</h2>
+<ul>
+<li><a href="../../user_guide/snap_integration.html">User Guide: SNAP Integration</a>: Detailed SNAP setup and workflows</li>
+<li><a href="../../user_guide/processing_workflows.html">User Guide: Processing Workflows</a>: Complete processing examples</li>
+<li><a href="../processor/index.html">Processor Module</a>: Core SAR processing algorithms</li>
+<li><a href="../sla/index.html">SLA Module</a>: Sub-aperture analysis capabilities</li>
+</ul>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

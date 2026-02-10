@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>sarpyx Examples – sarpyx Docs</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../index.html"><img class="logo" src="../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../user_guide/index.html">Overview</a>
+<a href="../user_guide/installation.html">Installation</a>
+<a href="../user_guide/getting_started.html">Getting Started</a>
+<a href="../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../user_guide/data_formats.html">Data Formats</a>
+<a href="../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../user_guide/science_applications.html">Science Applications</a>
+<a href="../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../tutorials/index.html">Overview</a>
+<a href="../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../tutorials/05_polarimetric_analysis.html">05 – Polarimetry</a>
+<a href="../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../api/index.html">Overview</a>
+<a href="../api/snapflow/index.html">Snapflow</a>
+<a href="../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../api/science/index.html">Science</a>
+<a href="../api/sla/index.html">SLA</a>
+<a href="../api/processor/index.html">Processor</a>
+<a href="../api/utils/index.html">Utils</a>
+<a href="../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../examples/index.html" class="active">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../developer_guide/architecture.html">Architecture</a>
+<a href="../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="sarpyx-examples">sarpyx Examples</h1>
+<p>This directory contains ready-to-run code examples demonstrating sarpyx features and real-world applications. Examples are organized by complexity and application domain.</p>
+<h2 id="directory-structure">📁 Directory Structure</h2>
+<pre><code>examples/
+├── README.md                          # This file
+├── basic/                            # Basic usage examples
+│   ├── basic_sublook_analysis.py     # Simple SLA workflow
+│   ├── snap_integration.py           # SNAP automation
+│   ├── visualization_gallery.py      # Plotting and display
+│   └── data_io_examples.py           # Input/output operations
+├── intermediate/                     # Intermediate applications
+│   ├── vegetation_monitoring.py      # Multi-temporal vegetation analysis
+│   ├── polarimetric_analysis.py      # Dual-pol decomposition
+│   ├── ship_detection_cfar.py        # Maritime target detection
+│   └── quality_assessment.py         # Processing validation
+├── advanced/                        # Advanced workflows
+│   ├── insar_time_series.py          # Interferometric analysis
+│   ├── custom_processing_chains.py   # Pipeline development
+│   ├── batch_processing.py           # Large-scale automation
+│   └── performance_optimization.py   # Computational efficiency
+├── notebooks/                       # Jupyter notebooks
+│   ├── tutorial_01_getting_started.ipynb
+│   ├── tutorial_02_snap_workflows.ipynb
+│   ├── tutorial_03_vegetation_indices.ipynb
+│   └── tutorial_04_ship_detection.ipynb
+└── data/                            # Sample datasets
+    ├── README.md                    # Data descriptions
+    ├── sample_s1_slc/               # Sample Sentinel-1 SLC
+    ├── sample_s1_grd/               # Sample Sentinel-1 GRD
+    └── reference_outputs/            # Expected results
+</code></pre>
+<h2 id="quick-start-examples">🚀 Quick Start Examples</h2>
+<h3 id="basic-sub-look-analysis">Basic Sub-Look Analysis</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.sla</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubLookAnalysis</span>
+
+<span class="c1"># Simple sub-look decomposition</span>
+<span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="s2">&quot;data/sample_s1_slc/S1A_IW_SLC__1SDV.zip&quot;</span><span class="p">)</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">SpectrumComputation</span><span class="p">()</span>
+<span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">()</span>
+</code></pre>
+<h3 id="snap-workflow-automation">SNAP Workflow Automation</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.snapflow.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPT</span>
+
+<span class="c1"># Automated SNAP processing</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="s2">&quot;data/sample_s1_grd/S1A_IW_GRDH_1SDV.zip&quot;</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s2">&quot;output&quot;</span><span class="p">)</span>
+<span class="n">calibrated</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">(</span><span class="n">outputSigmaBand</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">terrain_corrected</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">TerrainCorrection</span><span class="p">()</span>
+</code></pre>
+<h3 id="vegetation-monitoring">Vegetation Monitoring</h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science</span><span class="w"> </span><span class="kn">import</span> <span class="n">vegetation_indices</span>
+
+<span class="c1"># Calculate RVI time series</span>
+<span class="n">rvi_values</span> <span class="o">=</span> <span class="n">vegetation_indices</span><span class="o">.</span><span class="n">calculate_rvi_timeseries</span><span class="p">(</span>
+    <span class="n">vh_data</span><span class="o">=</span><span class="n">vh_stack</span><span class="p">,</span> 
+    <span class="n">vv_data</span><span class="o">=</span><span class="n">vv_stack</span><span class="p">,</span> 
+    <span class="n">dates</span><span class="o">=</span><span class="n">acquisition_dates</span>
+<span class="p">)</span>
+
+<span class="c1"># Enhanced SAR visualization</span>
+<span class="n">show_image</span><span class="p">(</span><span class="n">sar_data</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;SAR Amplitude&quot;</span><span class="p">,</span> 
+          <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">enhance</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">show_histogram</span><span class="p">(</span><span class="n">sar_data</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+</code></pre>
+<h2 id="processing-examples">Processing Examples</h2>
+<h3 id="sentinel-1-processing-chain"><a href="processing/sentinel1_chain.py">Sentinel-1 Processing Chain</a></h3>
+<p>Complete processing workflow for Sentinel-1 data including calibration, filtering, and analysis.</p>
+<h3 id="multi-temporal-analysis"><a href="processing/multitemporal.py">Multi-temporal Analysis</a></h3>
+<p>Time series analysis for change detection and monitoring applications.</p>
+<h3 id="polarimetric-analysis"><a href="processing/polarimetric.py">Polarimetric Analysis</a></h3>
+<p>Dual-pol data processing for vegetation and land cover classification.</p>
+<h3 id="ship-detection"><a href="processing/ship_detection.py">Ship Detection</a></h3>
+<p>CFAR-based ship detection in maritime SAR imagery.</p>
+<h2 id="scientific-applications">Scientific Applications</h2>
+<h3 id="vegetation-indices"><a href="science/vegetation_indices.py">Vegetation Indices</a></h3>
+<pre class="codehilite"><code><span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science.indices</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_rvi</span><span class="p">,</span> <span class="n">calculate_ndpoll</span>
+
+<span class="c1"># Calculate radar vegetation indices</span>
+<span class="n">rvi</span> <span class="o">=</span> <span class="n">calculate_rvi</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+<span class="n">ndpoll</span> <span class="o">=</span> <span class="n">calculate_ndpoll</span><span class="p">(</span><span class="n">sigma_vv</span><span class="p">,</span> <span class="n">sigma_vh</span><span class="p">)</span>
+</code></pre>
+<h3 id="forest-monitoring"><a href="science/forest_monitoring.py">Forest Monitoring</a></h3>
+<p>Forest change detection using multi-temporal SAR data and vegetation indices.</p>
+<h3 id="coastal-change-detection"><a href="science/coastal_monitoring.py">Coastal Change Detection</a></h3>
+<p>Shoreline change analysis using sub-look coherence techniques.</p>
+<h3 id="urban-area-analysis"><a href="science/urban_analysis.py">Urban Area Analysis</a></h3>
+<p>Built-up area mapping and urban growth monitoring.</p>
+<h2 id="advanced-examples">Advanced Examples</h2>
+<h3 id="custom-processing-pipeline"><a href="advanced/custom_pipeline.py">Custom Processing Pipeline</a></h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">custom_sar_pipeline</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Custom SAR processing pipeline.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Step 1: SNAP preprocessing</span>
+    <span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">input_path</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">)</span>
+    <span class="n">calibrated</span> <span class="o">=</span> <span class="n">gpt</span><span class="o">.</span><span class="n">Calibration</span><span class="p">()</span>
+
+    <span class="c1"># Step 2: Sub-look analysis</span>
+    <span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">(</span><span class="n">calibrated</span><span class="p">)</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">numberOfLooks</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">frequencyComputation</span><span class="p">()</span>
+    <span class="n">sla</span><span class="o">.</span><span class="n">Generation</span><span class="p">()</span>
+
+    <span class="c1"># Step 3: Quality assessment</span>
+    <span class="n">quality</span> <span class="o">=</span> <span class="n">assess_quality</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">sla</span><span class="o">.</span><span class="n">Looks</span><span class="p">,</span> <span class="n">quality</span>
+</code></pre>
+<h3 id="batch-processing"><a href="advanced/batch_processing.py">Batch Processing</a></h3>
+<p>Process multiple SAR products automatically with error handling and quality control.</p>
+<h3 id="performance-optimization"><a href="advanced/optimization.py">Performance Optimization</a></h3>
+<p>Memory-efficient processing for large datasets and production workflows.</p>
+<h3 id="integration-examples"><a href="advanced/integration.py">Integration Examples</a></h3>
+<p>Integrating sarpyx with other geospatial libraries like GDAL, rasterio, and geopandas.</p>
+<h2 id="utility-examples">Utility Examples</h2>
+<h3 id="data-format-conversion"><a href="utils/format_conversion.py">Data Format Conversion</a></h3>
+<p>Convert between different SAR data formats and coordinate systems.</p>
+<h3 id="quality-assessment"><a href="utils/quality_assessment.py">Quality Assessment</a></h3>
+<p>Comprehensive quality metrics for SAR processing results.</p>
+<h3 id="visualization-techniques"><a href="utils/visualization.py">Visualization Techniques</a></h3>
+<p>Advanced plotting and visualization techniques for SAR data.</p>
+<h3 id="file-management"><a href="utils/file_management.py">File Management</a></h3>
+<p>Utilities for organizing and managing SAR datasets.</p>
+<h2 id="jupyter-notebooks">Jupyter Notebooks</h2>
+<p>Interactive notebooks for learning and experimentation:</p>
+<h3 id="interactive-sub-look-analysis"><a href="notebooks/sublook_analysis.ipynb">Interactive Sub-Look Analysis</a></h3>
+<p>Step-by-step notebook with interactive widgets and real-time visualization.</p>
+<h3 id="snap-integration-playground"><a href="notebooks/snap_playground.ipynb">SNAP Integration Playground</a></h3>
+<p>Experiment with different SNAP processing parameters and workflows.</p>
+<h3 id="scientific-analysis-workshop"><a href="notebooks/science_workshop.ipynb">Scientific Analysis Workshop</a></h3>
+<p>Comprehensive notebook covering various scientific applications.</p>
+<h3 id="performance-benchmarking"><a href="notebooks/performance_benchmark.ipynb">Performance Benchmarking</a></h3>
+<p>Compare processing times and memory usage across different approaches.</p>
+<h2 id="real-world-case-studies">Real-World Case Studies</h2>
+<h3 id="case-study-1-agricultural-monitoring"><a href="case_studies/agriculture.py">Case Study 1: Agricultural Monitoring</a></h3>
+<p>Monitor crop growth and harvest timing using multi-temporal Sentinel-1 data.</p>
+<h3 id="case-study-2-flood-mapping"><a href="case_studies/flood_mapping.py">Case Study 2: Flood Mapping</a></h3>
+<p>Rapid flood extent mapping using emergency SAR acquisitions.</p>
+<h3 id="case-study-3-ice-monitoring"><a href="case_studies/ice_monitoring.py">Case Study 3: Ice Monitoring</a></h3>
+<p>Sea ice classification and monitoring in polar regions.</p>
+<h3 id="case-study-4-infrastructure-monitoring"><a href="case_studies/infrastructure.py">Case Study 4: Infrastructure Monitoring</a></h3>
+<p>Monitor large infrastructure projects using interferometric techniques.</p>
+<h2 id="example-data">Example Data</h2>
+<h3 id="sample-datasets">Sample Datasets</h3>
+<p>We provide sample datasets for all examples:</p>
+<pre class="codehilite"><code><span class="c1"># Download example datasets</span>
+wget<span class="w"> </span>https://github.com/ESA-PhiLab/sarpyx-examples/raw/main/data/samples.zip
+unzip<span class="w"> </span>samples.zip<span class="w"> </span>-d<span class="w"> </span>examples/data/
+</code></pre>
+<h3 id="data-structure">Data Structure</h3>
+<pre><code>examples/
+├── data/
+│   ├── sentinel1/
+│   │   ├── S1A_IW_SLC_sample.zip
+│   │   └── S1A_IW_GRD_sample.zip
+│   ├── cosmo/
+│   │   └── CSK_sample.h5
+│   ├── multitemporal/
+│   │   ├── t1_S1A_*.zip
+│   │   └── t2_S1A_*.zip
+│   └── auxiliary/
+│       ├── landmask.shp
+│       └── dem.tif
+├── scripts/
+└── notebooks/
+</code></pre>
+<h2 id="running-examples">Running Examples</h2>
+<h3 id="python-scripts">Python Scripts</h3>
+<pre class="codehilite"><code><span class="c1"># Run individual examples</span>
+<span class="nb">cd</span><span class="w"> </span>examples
+python<span class="w"> </span>basic_sublook_analysis.py
+
+<span class="c1"># Run with custom data</span>
+python<span class="w"> </span>basic_sublook_analysis.py<span class="w"> </span>--input<span class="w"> </span>your_data.zip<span class="w"> </span>--output<span class="w"> </span>results/
+</code></pre>
+<h3 id="jupyter-notebooks_1">Jupyter Notebooks</h3>
+<pre class="codehilite"><code><span class="c1"># Start Jupyter server</span>
+jupyter<span class="w"> </span>notebook<span class="w"> </span>examples/notebooks/
+
+<span class="c1"># Or use JupyterLab</span>
+jupyter<span class="w"> </span>lab<span class="w"> </span>examples/notebooks/
+</code></pre>
+<h3 id="google-colab">Google Colab</h3>
+<p>Many examples are available as Google Colab notebooks:
+- No local installation required
+- Pre-configured environment
+- Free GPU access for computationally intensive examples</p>
+<h2 id="example-categories">📋 Example Categories</h2>
+<h3 id="basic-examples-basic">Basic Examples (<code>basic/</code>)</h3>
+<p>Perfect for getting started with sarpyx:
+- <strong>basic_sublook_analysis.py</strong>: Core SLA functionality demonstration
+- <strong>snap_integration.py</strong>: SNAP GPT automation basics<br>
+- <strong>visualization_gallery.py</strong>: Plotting and display utilities
+- <strong>data_io_examples.py</strong>: Reading and writing SAR data</p>
+<h3 id="intermediate-examples-intermediate">Intermediate Examples (<code>intermediate/</code>)</h3>
+<p>Real-world applications and workflows:
+- <strong>vegetation_monitoring.py</strong>: Multi-temporal vegetation analysis
+- <strong>polarimetric_analysis.py</strong>: Dual-polarization decomposition
+- <strong>ship_detection_cfar.py</strong>: CFAR-based target detection
+- <strong>quality_assessment.py</strong>: Processing validation and metrics</p>
+<h3 id="advanced-examples-advanced">Advanced Examples (<code>advanced/</code>)</h3>
+<p>Complex processing chains and optimization:
+- <strong>insar_time_series.py</strong>: Interferometric deformation analysis
+- <strong>custom_processing_chains.py</strong>: Building custom workflows
+- <strong>batch_processing.py</strong>: Large-scale data processing
+- <strong>performance_optimization.py</strong>: Computational efficiency techniques</p>
+<h3 id="interactive-notebooks-notebooks">Interactive Notebooks (<code>notebooks/</code>)</h3>
+<p>Jupyter notebooks with step-by-step explanations:
+- Complete tutorials with explanations and visualizations
+- Interactive parameter exploration
+- Educational content for learning SAR processing concepts</p>
+<h2 id="running-examples_1">🔧 Running Examples</h2>
+<h3 id="prerequisites">Prerequisites</h3>
+<pre class="codehilite"><code><span class="c1"># Install sarpyx with all dependencies</span>
+pip<span class="w"> </span>install<span class="w"> </span>sarpyx<span class="o">[</span>full<span class="o">]</span>
+
+<span class="c1"># Or for development</span>
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>dev<span class="o">]</span>
+</code></pre>
+<h3 id="basic-usage">Basic Usage</h3>
+<pre class="codehilite"><code><span class="c1"># Navigate to examples directory</span>
+<span class="nb">cd</span><span class="w"> </span>docs/examples
+
+<span class="c1"># Run a basic example</span>
+python<span class="w"> </span>basic/basic_sublook_analysis.py
+
+<span class="c1"># Run with custom data</span>
+python<span class="w"> </span>basic/basic_sublook_analysis.py<span class="w"> </span>--input<span class="w"> </span>/path/to/your/S1_SLC.zip
+</code></pre>
+<h3 id="with-sample-data">With Sample Data</h3>
+<pre class="codehilite"><code><span class="c1"># Download sample data (if available)</span>
+python<span class="w"> </span>download_sample_data.py
+
+<span class="c1"># Run examples with sample data</span>
+python<span class="w"> </span>basic/basic_sublook_analysis.py<span class="w"> </span>--input<span class="w"> </span>data/sample_s1_slc/
+</code></pre>
+<h3 id="jupyter-notebooks_2">Jupyter Notebooks</h3>
+<pre class="codehilite"><code><span class="c1"># Start Jupyter Lab</span>
+jupyter<span class="w"> </span>lab
+
+<span class="c1"># Open any notebook in notebooks/ directory</span>
+<span class="c1"># Follow step-by-step instructions</span>
+</code></pre>
+<h2 id="expected-outputs">📊 Expected Outputs</h2>
+<p>Each example produces specific outputs:</p>
+<h3 id="basic-examples">Basic Examples</h3>
+<ul>
+<li><strong>Sub-look images</strong>: Forward, backward, and center look decomposition</li>
+<li><strong>Processed SAR data</strong>: Calibrated and terrain-corrected products</li>
+<li><strong>Visualization plots</strong>: RGB composites, histograms, and statistics</li>
+</ul>
+<h3 id="intermediate-examples">Intermediate Examples</h3>
+<ul>
+<li><strong>Vegetation indices</strong>: Time series of RVI, NDPoll, DPDD</li>
+<li><strong>Polarimetric parameters</strong>: Alpha angle, entropy, anisotropy</li>
+<li><strong>Detection results</strong>: Ship detection maps with performance metrics</li>
+</ul>
+<h3 id="advanced-examples_1">Advanced Examples</h3>
+<ul>
+<li><strong>Displacement maps</strong>: Interferometric deformation measurements</li>
+<li><strong>Processing reports</strong>: Comprehensive analysis summaries</li>
+<li><strong>Optimized workflows</strong>: Performance-tuned processing chains</li>
+</ul>
+<h2 id="application-domains">🎯 Application Domains</h2>
+<h3 id="agriculture-forestry">Agriculture &amp; Forestry</h3>
+<pre class="codehilite"><code><span class="c1"># Crop monitoring workflow</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.applications</span><span class="w"> </span><span class="kn">import</span> <span class="n">agriculture</span>
+<span class="n">monitor</span> <span class="o">=</span> <span class="n">agriculture</span><span class="o">.</span><span class="n">CropMonitor</span><span class="p">()</span>
+<span class="n">growth_metrics</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">analyze_growth_cycle</span><span class="p">(</span><span class="n">data_stack</span><span class="p">)</span>
+</code></pre>
+<h3 id="maritime-surveillance">Maritime Surveillance</h3>
+<pre class="codehilite"><code><span class="c1"># Ship detection pipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.applications</span><span class="w"> </span><span class="kn">import</span> <span class="n">maritime</span>
+<span class="n">detector</span> <span class="o">=</span> <span class="n">maritime</span><span class="o">.</span><span class="n">ShipDetector</span><span class="p">()</span>
+<span class="n">detections</span> <span class="o">=</span> <span class="n">detector</span><span class="o">.</span><span class="n">process_scene</span><span class="p">(</span><span class="n">sar_image</span><span class="p">)</span>
+</code></pre>
+<h3 id="disaster-monitoring">Disaster Monitoring</h3>
+<pre class="codehilite"><code><span class="c1"># Flood mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.applications</span><span class="w"> </span><span class="kn">import</span> <span class="n">disaster</span>
+<span class="n">flood_map</span> <span class="o">=</span> <span class="n">disaster</span><span class="o">.</span><span class="n">map_flooding</span><span class="p">(</span><span class="n">before_image</span><span class="p">,</span> <span class="n">after_image</span><span class="p">)</span>
+</code></pre>
+<h3 id="infrastructure-monitoring">Infrastructure Monitoring</h3>
+<pre class="codehilite"><code><span class="c1"># Deformation analysis</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.applications</span><span class="w"> </span><span class="kn">import</span> <span class="n">infrastructure</span>
+<span class="n">deformation</span> <span class="o">=</span> <span class="n">infrastructure</span><span class="o">.</span><span class="n">monitor_subsidence</span><span class="p">(</span><span class="n">interferogram_stack</span><span class="p">)</span>
+</code></pre>
+<h2 id="code-structure">🔍 Code Structure</h2>
+<p>All examples follow consistent patterns:</p>
+<pre class="codehilite"><code><span class="ch">#!/usr/bin/env python3</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Example: [Description]</span>
+<span class="sd">Application: [Domain]</span>
+<span class="sd">Complexity: [Basic|Intermediate|Advanced]</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx</span><span class="w"> </span><span class="kn">import</span> <span class="n">SLA</span><span class="p">,</span> <span class="n">SNAPProcessor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">visualization</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Main processing function&quot;&quot;&quot;</span>
+    <span class="c1"># 1. Configuration</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="p">{</span><span class="o">...</span><span class="p">}</span>
+
+    <span class="c1"># 2. Data loading</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">load_data</span><span class="p">(</span><span class="n">input_file</span><span class="p">)</span>
+
+    <span class="c1"># 3. Processing</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">process_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+    <span class="c1"># 4. Visualization</span>
+    <span class="n">visualization</span><span class="o">.</span><span class="n">display_results</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+
+    <span class="c1"># 5. Output</span>
+    <span class="n">save_results</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</code></pre>
+<h2 id="performance-benchmarks">📈 Performance Benchmarks</h2>
+<p>Example processing times on reference hardware:</p>
+<table>
+<thead>
+<tr>
+<th>Example</th>
+<th>Input Size</th>
+<th>Processing Time</th>
+<th>Memory Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Basic SLA</td>
+<td>100MB SLC</td>
+<td>2-5 minutes</td>
+<td>2-4 GB</td>
+</tr>
+<tr>
+<td>Vegetation Monitoring</td>
+<td>10x 50MB GRD</td>
+<td>10-15 minutes</td>
+<td>4-8 GB</td>
+</tr>
+<tr>
+<td>Ship Detection</td>
+<td>200MB GRD</td>
+<td>5-10 minutes</td>
+<td>2-4 GB</td>
+</tr>
+<tr>
+<td>InSAR Time Series</td>
+<td>20x 100MB SLC</td>
+<td>1-2 hours</td>
+<td>8-16 GB</td>
+</tr>
+</tbody>
+</table>
+<p><em>Times measured on Intel i7-8700K with 32GB RAM</em></p>
+<h2 id="customization">🛠 Customization</h2>
+<h3 id="adapting-examples">Adapting Examples</h3>
+<p>Each example can be customized for your specific needs:</p>
+<pre class="codehilite"><code><span class="c1"># Modify processing parameters</span>
+<span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;number_of_looks&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>  <span class="c1"># Instead of default 3</span>
+    <span class="s1">&#39;window_size&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>  <span class="c1"># Custom filtering</span>
+    <span class="s1">&#39;output_format&#39;</span><span class="p">:</span> <span class="s1">&#39;GeoTIFF&#39;</span>  <span class="c1"># Specify output</span>
+<span class="p">}</span>
+
+<span class="c1"># Add custom processing steps</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">custom_preprocessing</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="c1"># Your custom logic here</span>
+    <span class="k">return</span> <span class="n">processed_data</span>
+
+<span class="c1"># Integration with external tools</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">external_tool</span><span class="w"> </span><span class="kn">import</span> <span class="n">CustomProcessor</span>
+<span class="n">processor</span> <span class="o">=</span> <span class="n">CustomProcessor</span><span class="p">()</span>
+<span class="n">enhanced_results</span> <span class="o">=</span> <span class="n">processor</span><span class="o">.</span><span class="n">enhance</span><span class="p">(</span><span class="n">sarpyx_results</span><span class="p">)</span>
+</code></pre>
+<h3 id="creating-new-examples">Creating New Examples</h3>
+<p>Template for new examples:</p>
+<pre class="codehilite"><code><span class="c1"># Use the template in templates/example_template.py</span>
+<span class="c1"># 1. Copy template</span>
+<span class="c1"># 2. Modify for your application</span>
+<span class="c1"># 3. Add documentation</span>
+<span class="c1"># 4. Include in appropriate category</span>
+</code></pre>
+<h2 id="learning-path">📚 Learning Path</h2>
+<h3 id="beginner-start-here">Beginner (Start Here)</h3>
+<ol>
+<li><code>basic/basic_sublook_analysis.py</code> - Learn core concepts</li>
+<li><code>basic/visualization_gallery.py</code> - Understand data visualization</li>
+<li><code>notebooks/tutorial_01_getting_started.ipynb</code> - Interactive learning</li>
+</ol>
+<h3 id="intermediate">Intermediate</h3>
+<ol>
+<li><code>intermediate/vegetation_monitoring.py</code> - Real application</li>
+<li><code>intermediate/polarimetric_analysis.py</code> - Advanced SAR concepts</li>
+<li><code>notebooks/tutorial_03_vegetation_indices.ipynb</code> - Detailed analysis</li>
+</ol>
+<h3 id="advanced">Advanced</h3>
+<ol>
+<li><code>advanced/insar_time_series.py</code> - Complex workflows</li>
+<li><code>advanced/custom_processing_chains.py</code> - Pipeline development</li>
+<li><code>advanced/performance_optimization.py</code> - Production systems</li>
+</ol>
+<h2 id="contributing-examples">🤝 Contributing Examples</h2>
+<p>We welcome contributions! To add a new example:</p>
+<ol>
+<li><strong>Fork the repository</strong></li>
+<li><strong>Create your example</strong> following the template</li>
+<li><strong>Add documentation</strong> and expected outputs</li>
+<li><strong>Test thoroughly</strong> with sample data</li>
+<li><strong>Submit a pull request</strong></li>
+</ol>
+<h3 id="example-contribution-checklist">Example Contribution Checklist</h3>
+<ul>
+<li>[ ] Code follows sarpyx style guidelines</li>
+<li>[ ] Includes comprehensive docstrings</li>
+<li>[ ] Has corresponding test data</li>
+<li>[ ] Generates expected outputs</li>
+<li>[ ] Includes performance benchmarks</li>
+<li>[ ] Documentation is complete</li>
+</ul>
+<h2 id="troubleshooting">🐛 Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<p><strong>Import Errors</strong></p>
+<pre class="codehilite"><code><span class="c1"># Install missing dependencies</span>
+pip<span class="w"> </span>install<span class="w"> </span>sarpyx<span class="o">[</span>full<span class="o">]</span>
+</code></pre>
+<p><strong>Memory Issues</strong></p>
+<pre class="codehilite"><code><span class="c1"># Process data in chunks</span>
+<span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">data_chunks</span><span class="p">:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">process_chunk</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+</code></pre>
+<p><strong>SNAP Integration Problems</strong></p>
+<pre class="codehilite"><code><span class="c1"># Verify SNAP installation</span>
+snap<span class="w"> </span>--version
+</code></pre>
+<p><strong>Path Issues</strong></p>
+<pre class="codehilite"><code><span class="c1"># Use absolute paths</span>
+<span class="n">input_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s2">&quot;data/sample.zip&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="getting-help">Getting Help</h3>
+<ul>
+<li>Check the <a href="../user_guide/troubleshooting.html">troubleshooting guide</a></li>
+<li>Review <a href="../api/">API documentation</a></li>
+<li>Post issues on <a href="https://github.com/your-repo/sarpyx/issues">GitHub</a></li>
+</ul>
+<h2 id="license">📄 License</h2>
+<p>All examples are provided under the same license as sarpyx. See LICENSE file for details.</p>
+<hr>
+<p><em>Start with the basic examples and gradually progress to more complex applications. Each example builds upon previous concepts and introduces new sarpyx capabilities.</em></p>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

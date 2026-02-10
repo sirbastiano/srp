@@ -4,13 +4,13 @@
 **Prerequisites**: SNAP installation, Tutorial 1 completed  
 **Data**: Sentinel-1 GRD product
 
-This tutorial introduces you to SARPyX's SNAP integration capabilities, showing how to automate common preprocessing workflows using the Graph Processing Tool (GPT).
+This tutorial introduces you to sarpyx's SNAP integration capabilities, showing how to automate common preprocessing workflows using the Graph Processing Tool (GPT).
 
 ## Learning Objectives
 
 By the end of this tutorial, you will:
-- Understand SARPyX's SNAP integration architecture
-- Configure SNAP GPT for use with SARPyX
+- Understand sarpyx's SNAP integration architecture
+- Configure SNAP GPT for use with sarpyx
 - Execute basic preprocessing workflows
 - Chain multiple processing operations
 - Handle different output formats
@@ -33,12 +33,12 @@ except FileNotFoundError:
     print("✗ SNAP GPT not found. Please install SNAP and add to PATH")
     # See installation guide: docs/user_guide/snap_integration.md
 
-# Check SARPyX SNAP module
+# Check sarpyx SNAP module
 try:
-    from sarpyx.snap import GPT
-    print("✓ SARPyX SNAP module imported successfully")
+    from sarpyx.snapflow.engine import GPT
+    print("✓ sarpyx SNAP module imported successfully")
 except ImportError as e:
-    print(f"✗ SARPyX import error: {e}")
+    print(f"✗ sarpyx import error: {e}")
 ```
 
 ## Step 1: Setting Up Your Data
@@ -51,7 +51,7 @@ For this tutorial, we'll use a Sentinel-1 GRD (Ground Range Detected) product. I
 
 ```python
 from pathlib import Path
-from sarpyx.snap import GPT
+from sarpyx.snapflow.engine import GPT
 
 # Define data paths
 data_dir = Path('./data')
@@ -161,7 +161,7 @@ print(f"Terrain corrected product saved: {terrain_corrected_path}")
 
 ## Step 4: Chained Processing Operations
 
-The real power of SARPyX SNAP integration comes from chaining operations:
+The real power of sarpyx SNAP integration comes from chaining operations:
 
 ```python
 # Create new GPT instance for chained processing
@@ -379,9 +379,9 @@ robust_result = robust_snap_processing(
 )
 ```
 
-## Step 9: Integration with SARPyX Analysis
+## Step 9: Integration with sarpyx Analysis
 
-Now let's integrate SNAP preprocessing with SARPyX analysis:
+Now let's integrate SNAP preprocessing with sarpyx analysis:
 
 ```python
 from sarpyx.science import indices
@@ -489,7 +489,7 @@ In this tutorial, you learned:
 
 ✅ **Data Integration**
 - Loading and visualizing SNAP outputs
-- Integrating with SARPyX science modules
+- Integrating with sarpyx science modules
 - Quality assessment techniques
 
 ✅ **Advanced Features**

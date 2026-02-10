@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tutorial 5: Polarimetric Analysis – sarpyx Docs</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/sarpyx_logo.png" type="image/png">
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <a href="../index.html"><img class="logo" src="../assets/sarpyx_logo.png" alt="sarpyx"></a>
+    <h3>Home</h3>
+<a href="../index.html">Introduction</a>
+<h3>User Guide</h3>
+<a href="../user_guide/index.html">Overview</a>
+<a href="../user_guide/installation.html">Installation</a>
+<a href="../user_guide/getting_started.html">Getting Started</a>
+<a href="../user_guide/basic_concepts.html">Basic Concepts</a>
+<a href="../user_guide/data_formats.html">Data Formats</a>
+<a href="../user_guide/snap_integration.html">SNAP Integration</a>
+<a href="../user_guide/processing_workflows.html">Processing Workflows</a>
+<a href="../user_guide/science_applications.html">Science Applications</a>
+<a href="../user_guide/troubleshooting.html">Troubleshooting</a>
+<a href="../user_guide/INSTALL_S1ISP.html">Install S1-ISP</a>
+<h3>Tutorials</h3>
+<a href="../tutorials/index.html">Overview</a>
+<a href="../tutorials/01_first_sublook_analysis.html">01 – Sub-Look Analysis</a>
+<a href="../tutorials/02_snap_integration_basics.html">02 – SNAP Basics</a>
+<a href="../tutorials/03_visualization_quality.html">03 – Visualisation</a>
+<a href="../tutorials/04_multitemporal_analysis.html">04 – Multi-temporal</a>
+<a href="../tutorials/05_polarimetric_analysis.html" class="active">05 – Polarimetry</a>
+<a href="../tutorials/06_custom_workflows.html">06 – Custom Workflows</a>
+<a href="../tutorials/07_ship_detection.html">07 – Ship Detection</a>
+<a href="../tutorials/08_interferometric_analysis.html">08 – InSAR</a>
+<h3>API Reference</h3>
+<a href="../api/index.html">Overview</a>
+<a href="../api/snapflow/index.html">Snapflow</a>
+<a href="../api/snapflow/Snapflow_usage_example.html">Snapflow Examples</a>
+<a href="../api/science/index.html">Science</a>
+<a href="../api/sla/index.html">SLA</a>
+<a href="../api/processor/index.html">Processor</a>
+<a href="../api/utils/index.html">Utils</a>
+<a href="../api/utils/dem_utils.html">DEM Utilities</a>
+<h3>Examples</h3>
+<a href="../examples/index.html">Overview</a>
+<h3>Developer Guide</h3>
+<a href="../developer_guide/architecture.html">Architecture</a>
+<a href="../developer_guide/contributing.html">Contributing</a>
+<h3>Reference</h3>
+<a href="../metaParams.html">MetaParams</a>
+  </nav>
+  <main class="main">
+    <h1 id="tutorial-5-polarimetric-analysis">Tutorial 5: Polarimetric Analysis</h1>
+<p>Learn to work with dual-pol SAR data for vegetation monitoring and polarimetric decomposition using sarpyx.</p>
+<h2 id="overview">Overview</h2>
+<p>This tutorial covers:
+- Loading and processing dual-pol SAR data
+- Polarimetric parameter extraction
+- Vegetation index calculation using polarimetric ratios
+- Co-pol and cross-pol analysis
+- Advanced polarimetric decomposition techniques
+- Multi-temporal polarimetric monitoring</p>
+<p><strong>Duration</strong>: 35 minutes<br>
+<strong>Prerequisites</strong>: Tutorial 2 (SNAP integration)<br>
+<strong>Data</strong>: Dual-pol Sentinel-1 data (VV/VH or HH/HV)</p>
+<h2 id="1-dual-pol-data-setup-and-loading">1. Dual-pol Data Setup and Loading</h2>
+<pre class="codehilite"><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.sla</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubLookAnalysis</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.snapflow.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPT</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.science.indices</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.viz</span><span class="w"> </span><span class="kn">import</span> <span class="n">show_image</span><span class="p">,</span> <span class="n">show_histogram</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sarpyx.utils.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_matlab_mat</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="c1"># Set up directories</span>
+<span class="n">data_dir</span> <span class="o">=</span> <span class="s2">&quot;path/to/dualpol/data&quot;</span>
+<span class="n">output_dir</span> <span class="o">=</span> <span class="s2">&quot;tutorial5_outputs&quot;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Configuration for dual-pol processing</span>
+<span class="n">dualpol_config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;input_file&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_dir</span><span class="si">}</span><span class="s2">/S1A_dualpol_*.zip&quot;</span><span class="p">,</span>  <span class="c1"># Sentinel-1 dual-pol product</span>
+    <span class="s1">&#39;polarizations&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;VV&#39;</span><span class="p">,</span> <span class="s1">&#39;VH&#39;</span><span class="p">],</span>  <span class="c1"># or [&#39;HH&#39;, &#39;HV&#39;] for some acquisitions</span>
+    <span class="s1">&#39;processing_level&#39;</span><span class="p">:</span> <span class="s1">&#39;SLC&#39;</span><span class="p">,</span>  <span class="c1"># Single Look Complex</span>
+    <span class="s1">&#39;output_format&#39;</span><span class="p">:</span> <span class="s1">&#39;BEAM-DIMAP&#39;</span>
+<span class="p">}</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Dual-pol processing configuration:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Polarizations: </span><span class="si">{</span><span class="n">dualpol_config</span><span class="p">[</span><span class="s1">&#39;polarizations&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Processing level: </span><span class="si">{</span><span class="n">dualpol_config</span><span class="p">[</span><span class="s1">&#39;processing_level&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="2-snap-based-dual-pol-preprocessing">2. SNAP-based Dual-pol Preprocessing</h2>
+<h3 id="21-calibration-and-multi-looking">2.1 Calibration and Multi-looking</h3>
+<pre class="codehilite"><code><span class="c1"># Initialize SNAP GPT processor</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">GPT</span><span class="p">()</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">preprocess_dualpol_data</span><span class="p">(</span><span class="n">input_file</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">polarizations</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;VV&#39;</span><span class="p">,</span> <span class="s1">&#39;VH&#39;</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Preprocess dual-pol data using SNAP&quot;&quot;&quot;</span>
+
+    <span class="n">preprocessing_steps</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Step 1: Calibration</span>
+    <span class="n">calibration_params</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;outputSigmaBand&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s1">&#39;outputBetaBand&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s1">&#39;outputGammaBand&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s1">&#39;outputDNBand&#39;</span><span class="p">:</span> <span class="kc">False</span>
+    <span class="p">}</span>
+
+    <span class="n">calibration_file</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/calibrated.dim&quot;</span>
+    <span class="n">gpt</span><span class="o">.</span><span class="n">calibration</span><span class="p">(</span><span class="n">input_file</span><span class="p">,</span> <span class="n">calibration_file</span><span class="p">,</span> <span class="o">**</span><span class="n">calibration_params</span><span class="p">)</span>
+    <span class="n">preprocessing_steps</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">&#39;Calibration&#39;</span><span class="p">,</span> <span class="n">calibration_file</span><span class="p">))</span>
+
+    <span class="c1"># Step 2: Multi-looking (optional, for speckle reduction)</span>
+    <span class="n">multilook_params</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;nRgLooks&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s1">&#39;nAzLooks&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s1">&#39;outputIntensity&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s1">&#39;grSquarePixel&#39;</span><span class="p">:</span> <span class="kc">True</span>
+    <span class="p">}</span>
+
+    <span class="n">multilook_file</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/multilooked.dim&quot;</span>
+    <span class="n">gpt</span><span class="o">.</span><span class="n">multilook</span><span class="p">(</span><span class="n">calibration_file</span><span class="p">,</span> <span class="n">multilook_file</span><span class="p">,</span> <span class="o">**</span><span class="n">multilook_params</span><span class="p">)</span>
+    <span class="n">preprocessing_steps</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">&#39;Multilooking&#39;</span><span class="p">,</span> <span class="n">multilook_file</span><span class="p">))</span>
+
+    <span class="c1"># Step 3: Terrain Correction</span>
+    <span class="n">terrain_params</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;demName&#39;</span><span class="p">:</span> <span class="s1">&#39;SRTM 3Sec&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;pixelSpacingInMeter&#39;</span><span class="p">:</span> <span class="mf">20.0</span><span class="p">,</span>
+        <span class="s1">&#39;nodataValueAtSea&#39;</span><span class="p">:</span> <span class="kc">False</span>
+    <span class="p">}</span>
+
+    <span class="n">terrain_file</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/terrain_corrected.dim&quot;</span>
+    <span class="n">gpt</span><span class="o">.</span><span class="n">terrain_correction</span><span class="p">(</span><span class="n">multilook_file</span><span class="p">,</span> <span class="n">terrain_file</span><span class="p">,</span> <span class="o">**</span><span class="n">terrain_params</span><span class="p">)</span>
+    <span class="n">preprocessing_steps</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">&#39;Terrain Correction&#39;</span><span class="p">,</span> <span class="n">terrain_file</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">terrain_file</span><span class="p">,</span> <span class="n">preprocessing_steps</span>
+
+<span class="c1"># Preprocess dual-pol data</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Preprocessing dual-pol data with SNAP...&quot;</span><span class="p">)</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">processed_file</span><span class="p">,</span> <span class="n">processing_steps</span> <span class="o">=</span> <span class="n">preprocess_dualpol_data</span><span class="p">(</span>
+        <span class="n">dualpol_config</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">],</span> 
+        <span class="n">output_dir</span><span class="p">,</span> 
+        <span class="n">dualpol_config</span><span class="p">[</span><span class="s1">&#39;polarizations&#39;</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Preprocessing completed successfully:&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">step_name</span><span class="p">,</span> <span class="n">file_path</span> <span class="ow">in</span> <span class="n">processing_steps</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">step_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Preprocessing error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Fallback: use existing processed file</span>
+    <span class="n">processed_file</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/terrain_corrected.dim&quot;</span>
+</code></pre>
+<h3 id="22-load-dual-pol-bands">2.2 Load Dual-pol Bands</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">load_dualpol_bands</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">polarizations</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;VV&#39;</span><span class="p">,</span> <span class="s1">&#39;VH&#39;</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load dual-pol bands for analysis&quot;&quot;&quot;</span>
+
+    <span class="n">pol_data</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">pol</span> <span class="ow">in</span> <span class="n">polarizations</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Initialize SLA for each polarization</span>
+            <span class="n">sla</span> <span class="o">=</span> <span class="n">SubLookAnalysis</span><span class="p">()</span>
+
+            <span class="c1"># Load specific polarization band</span>
+            <span class="n">band_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Sigma0_</span><span class="si">{</span><span class="n">pol</span><span class="si">}</span><span class="s1">_slc&#39;</span> <span class="k">if</span> <span class="s1">&#39;SLC&#39;</span> <span class="ow">in</span> <span class="n">file_path</span> <span class="k">else</span> <span class="sa">f</span><span class="s1">&#39;Sigma0_</span><span class="si">{</span><span class="n">pol</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="n">sla</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">band_name</span><span class="o">=</span><span class="n">band_name</span><span class="p">)</span>
+
+            <span class="c1"># Get data without decomposition for direct access</span>
+            <span class="n">pol_data</span><span class="p">[</span><span class="n">pol</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;sla_processor&#39;</span><span class="p">:</span> <span class="n">sla</span><span class="p">,</span>
+                <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="n">sla</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+                <span class="s1">&#39;metadata&#39;</span><span class="p">:</span> <span class="n">sla</span><span class="o">.</span><span class="n">metadata</span>
+            <span class="p">}</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded </span><span class="si">{</span><span class="n">pol</span><span class="si">}</span><span class="s2"> polarization: </span><span class="si">{</span><span class="n">pol_data</span><span class="p">[</span><span class="n">pol</span><span class="p">][</span><span class="s1">&#39;data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error loading </span><span class="si">{</span><span class="n">pol</span><span class="si">}</span><span class="s2"> polarization: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+    <span class="k">return</span> <span class="n">pol_data</span>
+
+<span class="c1"># Load dual-pol data</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading dual-pol bands...&quot;</span><span class="p">)</span>
+<span class="n">pol_data</span> <span class="o">=</span> <span class="n">load_dualpol_bands</span><span class="p">(</span><span class="n">processed_file</span><span class="p">,</span> <span class="n">dualpol_config</span><span class="p">[</span><span class="s1">&#39;polarizations&#39;</span><span class="p">])</span>
+
+<span class="c1"># Verify data loading</span>
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pol_data</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+    <span class="n">pol_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pol_data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Successfully loaded polarizations: </span><span class="si">{</span><span class="n">pol_names</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Get common dimensions</span>
+    <span class="n">shapes</span> <span class="o">=</span> <span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">pol_data</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data shapes: </span><span class="si">{</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">pol_names</span><span class="p">,</span><span class="w"> </span><span class="n">shapes</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: Need at least 2 polarizations for dual-pol analysis&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="3-basic-polarimetric-parameter-extraction">3. Basic Polarimetric Parameter Extraction</h2>
+<h3 id="31-co-pol-and-cross-pol-separation">3.1 Co-pol and Cross-pol Separation</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_polarimetric_parameters</span><span class="p">(</span><span class="n">pol_data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract basic polarimetric parameters&quot;&quot;&quot;</span>
+
+    <span class="n">pol_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pol_data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="c1"># Determine co-pol and cross-pol channels</span>
+    <span class="k">if</span> <span class="s1">&#39;VV&#39;</span> <span class="ow">in</span> <span class="n">pol_names</span> <span class="ow">and</span> <span class="s1">&#39;VH&#39;</span> <span class="ow">in</span> <span class="n">pol_names</span><span class="p">:</span>
+        <span class="n">copol_name</span> <span class="o">=</span> <span class="s1">&#39;VV&#39;</span>
+        <span class="n">crosspol_name</span> <span class="o">=</span> <span class="s1">&#39;VH&#39;</span>
+    <span class="k">elif</span> <span class="s1">&#39;HH&#39;</span> <span class="ow">in</span> <span class="n">pol_names</span> <span class="ow">and</span> <span class="s1">&#39;HV&#39;</span> <span class="ow">in</span> <span class="n">pol_names</span><span class="p">:</span>
+        <span class="n">copol_name</span> <span class="o">=</span> <span class="s1">&#39;HH&#39;</span>
+        <span class="n">crosspol_name</span> <span class="o">=</span> <span class="s1">&#39;HV&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported polarization combination: </span><span class="si">{</span><span class="n">pol_names</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Extract data</span>
+    <span class="n">copol_data</span> <span class="o">=</span> <span class="n">pol_data</span><span class="p">[</span><span class="n">copol_name</span><span class="p">][</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+    <span class="n">crosspol_data</span> <span class="o">=</span> <span class="n">pol_data</span><span class="p">[</span><span class="n">crosspol_name</span><span class="p">][</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Co-pol channel: </span><span class="si">{</span><span class="n">copol_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cross-pol channel: </span><span class="si">{</span><span class="n">crosspol_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Calculate basic parameters</span>
+    <span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;copol_intensity&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">copol_data</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span>
+        <span class="s1">&#39;crosspol_intensity&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">crosspol_data</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span>
+        <span class="s1">&#39;total_power&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">copol_data</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">crosspol_data</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span>
+        <span class="s1">&#39;copol_data&#39;</span><span class="p">:</span> <span class="n">copol_data</span><span class="p">,</span>
+        <span class="s1">&#39;crosspol_data&#39;</span><span class="p">:</span> <span class="n">crosspol_data</span><span class="p">,</span>
+        <span class="s1">&#39;pol_names&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">copol_name</span><span class="p">,</span> <span class="n">crosspol_name</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Polarimetric ratios</span>
+    <span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;copol_crosspol_ratio&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;copol_intensity&#39;</span><span class="p">]</span> <span class="o">/</span> 
+                                        <span class="p">(</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;crosspol_intensity&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">))</span>
+
+    <span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;crosspol_fraction&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;crosspol_intensity&#39;</span><span class="p">]</span> <span class="o">/</span> 
+                                     <span class="p">(</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;total_power&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">))</span>
+
+    <span class="c1"># Convert to dB scale</span>
+    <span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;copol_db&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;copol_intensity&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+    <span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;crosspol_db&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;crosspol_intensity&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+    <span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;ratio_db&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;copol_crosspol_ratio&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">parameters</span>
+
+<span class="c1"># Extract polarimetric parameters</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Extracting polarimetric parameters...&quot;</span><span class="p">)</span>
+<span class="n">pol_params</span> <span class="o">=</span> <span class="n">extract_polarimetric_parameters</span><span class="p">(</span><span class="n">pol_data</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Polarimetric parameters extracted:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Co-pol/Cross-pol channels: </span><span class="si">{</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;pol_names&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Co-pol intensity range: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;copol_db&#39;</span><span class="p">])</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;copol_db&#39;</span><span class="p">])</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Cross-pol intensity range: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;crosspol_db&#39;</span><span class="p">])</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;crosspol_db&#39;</span><span class="p">])</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Ratio range: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;ratio_db&#39;</span><span class="p">])</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;ratio_db&#39;</span><span class="p">])</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="32-visualize-basic-polarimetric-components">3.2 Visualize Basic Polarimetric Components</h3>
+<pre class="codehilite"><code><span class="c1"># Visualize polarimetric components</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+
+<span class="c1"># Co-pol intensity</span>
+<span class="n">im1</span> <span class="o">=</span> <span class="n">show_image</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;copol_db&#39;</span><span class="p">],</span>
+                <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">pol_params</span><span class="p">[</span><span class="s2">&quot;pol_names&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1"> Intensity (dB)&#39;</span><span class="p">,</span>
+                <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span>
+                <span class="n">vmin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;copol_db&#39;</span><span class="p">],</span> <span class="mi">5</span><span class="p">),</span>
+                <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;copol_db&#39;</span><span class="p">],</span> <span class="mi">95</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im1</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+<span class="c1"># Cross-pol intensity</span>
+<span class="n">im2</span> <span class="o">=</span> <span class="n">show_image</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;crosspol_db&#39;</span><span class="p">],</span>
+                <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">pol_params</span><span class="p">[</span><span class="s2">&quot;pol_names&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1"> Intensity (dB)&#39;</span><span class="p">,</span>
+                <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span>
+                <span class="n">vmin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;crosspol_db&#39;</span><span class="p">],</span> <span class="mi">5</span><span class="p">),</span>
+                <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;crosspol_db&#39;</span><span class="p">],</span> <span class="mi">95</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+<span class="c1"># Co-pol/Cross-pol ratio</span>
+<span class="n">im3</span> <span class="o">=</span> <span class="n">show_image</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;ratio_db&#39;</span><span class="p">],</span>
+                <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Co-pol/Cross-pol Ratio (dB)&#39;</span><span class="p">,</span>
+                <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+                <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdYlBu_r&#39;</span><span class="p">,</span>
+                <span class="n">vmin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;ratio_db&#39;</span><span class="p">],</span> <span class="mi">5</span><span class="p">),</span>
+                <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;ratio_db&#39;</span><span class="p">],</span> <span class="mi">95</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im3</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+<span class="c1"># Cross-pol fraction</span>
+<span class="n">im4</span> <span class="o">=</span> <span class="n">show_image</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;crosspol_fraction&#39;</span><span class="p">],</span>
+                <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Cross-pol Fraction&#39;</span><span class="p">,</span>
+                <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;plasma&#39;</span><span class="p">,</span>
+                <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im4</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+<span class="c1"># Total power</span>
+<span class="n">total_power_db</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;total_power&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+<span class="n">im5</span> <span class="o">=</span> <span class="n">show_image</span><span class="p">(</span><span class="n">total_power_db</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Total Power (dB)&#39;</span><span class="p">,</span>
+                <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;hot&#39;</span><span class="p">,</span>
+                <span class="n">vmin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">total_power_db</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">total_power_db</span><span class="p">,</span> <span class="mi">95</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im5</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+<span class="c1"># RGB composite (R=VV, G=VH, B=VV/VH ratio)</span>
+<span class="n">rgb_composite</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="o">*</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;copol_db&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+
+<span class="c1"># Normalize channels for RGB display</span>
+<span class="n">copol_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;copol_db&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;copol_db&#39;</span><span class="p">],</span> <span class="mi">2</span><span class="p">))</span> <span class="o">/</span> \
+             <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;copol_db&#39;</span><span class="p">],</span> <span class="mi">98</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;copol_db&#39;</span><span class="p">],</span> <span class="mi">2</span><span class="p">))</span>
+<span class="n">crosspol_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;crosspol_db&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;crosspol_db&#39;</span><span class="p">],</span> <span class="mi">2</span><span class="p">))</span> <span class="o">/</span> \
+                <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;crosspol_db&#39;</span><span class="p">],</span> <span class="mi">98</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;crosspol_db&#39;</span><span class="p">],</span> <span class="mi">2</span><span class="p">))</span>
+<span class="n">ratio_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;ratio_db&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;ratio_db&#39;</span><span class="p">],</span> <span class="mi">2</span><span class="p">))</span> <span class="o">/</span> \
+             <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;ratio_db&#39;</span><span class="p">],</span> <span class="mi">98</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;ratio_db&#39;</span><span class="p">],</span> <span class="mi">2</span><span class="p">))</span>
+
+<span class="n">rgb_composite</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">copol_norm</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>       <span class="c1"># Red: Co-pol</span>
+<span class="n">rgb_composite</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">crosspol_norm</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>    <span class="c1"># Green: Cross-pol</span>
+<span class="n">rgb_composite</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">ratio_norm</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>       <span class="c1"># Blue: Ratio</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">rgb_composite</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;RGB Composite</span><span class="se">\n</span><span class="s1">(R=Co-pol, G=Cross-pol, B=Ratio)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/polarimetric_components.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h2 id="4-vegetation-index-calculation">4. Vegetation Index Calculation</h2>
+<h3 id="41-radar-vegetation-index-rvi">4.1 Radar Vegetation Index (RVI)</h3>
+<pre class="codehilite"><code><span class="c1"># Calculate Radar Vegetation Index using sarpyx science module</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Calculating vegetation indices...&quot;</span><span class="p">)</span>
+
+<span class="c1"># Extract required data for vegetation indices</span>
+<span class="n">vv_intensity</span> <span class="o">=</span> <span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;copol_intensity&#39;</span><span class="p">]</span>
+<span class="n">vh_intensity</span> <span class="o">=</span> <span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;crosspol_intensity&#39;</span><span class="p">]</span>
+
+<span class="c1"># Calculate RVI</span>
+<span class="n">rvi_values</span> <span class="o">=</span> <span class="n">RVI</span><span class="p">(</span><span class="n">vh_intensity</span><span class="p">,</span> <span class="n">vv_intensity</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RVI calculated:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Range: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">rvi_values</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">rvi_values</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Mean: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">rvi_values</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="42-normalized-difference-polarization-index-ndpoll">4.2 Normalized Difference Polarization Index (NDPoll)</h3>
+<pre class="codehilite"><code><span class="c1"># Calculate NDPoll index</span>
+<span class="n">ndpoll_values</span> <span class="o">=</span> <span class="n">NDPoll</span><span class="p">(</span><span class="n">vh_intensity</span><span class="p">,</span> <span class="n">vv_intensity</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;NDPoll calculated:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Range: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">ndpoll_values</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">ndpoll_values</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Mean: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">ndpoll_values</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="43-dual-polarization-difference-dpdd">4.3 Dual Polarization Difference (DPDD)</h3>
+<pre class="codehilite"><code><span class="c1"># Calculate DPDD index</span>
+<span class="n">dpdd_values</span> <span class="o">=</span> <span class="n">DPDD</span><span class="p">(</span><span class="n">vh_intensity</span><span class="p">,</span> <span class="n">vv_intensity</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DPDD calculated:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Range: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dpdd_values</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dpdd_values</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Mean: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dpdd_values</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="44-visualize-vegetation-indices">4.4 Visualize Vegetation Indices</h3>
+<pre class="codehilite"><code><span class="c1"># Visualize vegetation indices</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+
+<span class="c1"># RVI</span>
+<span class="n">im1</span> <span class="o">=</span> <span class="n">show_image</span><span class="p">(</span><span class="n">rvi_values</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Radar Vegetation Index (RVI)&#39;</span><span class="p">,</span>
+                <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdYlGn&#39;</span><span class="p">,</span>
+                <span class="n">vmin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">rvi_values</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">rvi_values</span><span class="p">,</span> <span class="mi">95</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im1</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+<span class="c1"># NDPoll</span>
+<span class="n">im2</span> <span class="o">=</span> <span class="n">show_image</span><span class="p">(</span><span class="n">ndpoll_values</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Normalized Difference Polarization Index&#39;</span><span class="p">,</span>
+                <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdYlGn&#39;</span><span class="p">,</span>
+                <span class="n">vmin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">ndpoll_values</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">ndpoll_values</span><span class="p">,</span> <span class="mi">95</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+<span class="c1"># DPDD</span>
+<span class="n">im3</span> <span class="o">=</span> <span class="n">show_image</span><span class="p">(</span><span class="n">dpdd_values</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Dual Polarization Difference (DPDD)&#39;</span><span class="p">,</span>
+                <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdYlGn&#39;</span><span class="p">,</span>
+                <span class="n">vmin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">dpdd_values</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">dpdd_values</span><span class="p">,</span> <span class="mi">95</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im3</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+<span class="c1"># Vegetation index comparison</span>
+<span class="c1"># Sample points for comparison</span>
+<span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">rvi_values</span><span class="o">.</span><span class="n">shape</span>
+<span class="n">sample_points</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="n">height</span><span class="o">//</span><span class="mi">4</span><span class="p">,</span> <span class="n">width</span><span class="o">//</span><span class="mi">4</span><span class="p">),</span>      <span class="c1"># Point 1</span>
+    <span class="p">(</span><span class="n">height</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">width</span><span class="o">//</span><span class="mi">2</span><span class="p">),</span>      <span class="c1"># Point 2  </span>
+    <span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">height</span><span class="o">//</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="o">*</span><span class="n">width</span><span class="o">//</span><span class="mi">4</span><span class="p">)</span>   <span class="c1"># Point 3</span>
+<span class="p">]</span>
+
+<span class="n">indices_comparison</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;RVI&#39;</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="s1">&#39;NDPoll&#39;</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="s1">&#39;DPDD&#39;</span><span class="p">:</span> <span class="p">[]</span>
+<span class="p">}</span>
+
+<span class="k">for</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">sample_points</span><span class="p">:</span>
+    <span class="n">indices_comparison</span><span class="p">[</span><span class="s1">&#39;RVI&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rvi_values</span><span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">])</span>
+    <span class="n">indices_comparison</span><span class="p">[</span><span class="s1">&#39;NDPoll&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ndpoll_values</span><span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">])</span>
+    <span class="n">indices_comparison</span><span class="p">[</span><span class="s1">&#39;DPDD&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dpdd_values</span><span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">])</span>
+
+<span class="c1"># Plot comparison</span>
+<span class="n">x_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sample_points</span><span class="p">))</span>
+<span class="n">width_bar</span> <span class="o">=</span> <span class="mf">0.25</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">x_pos</span> <span class="o">-</span> <span class="n">width_bar</span><span class="p">,</span> <span class="n">indices_comparison</span><span class="p">[</span><span class="s1">&#39;RVI&#39;</span><span class="p">],</span> <span class="n">width_bar</span><span class="p">,</span> 
+              <span class="n">label</span><span class="o">=</span><span class="s1">&#39;RVI&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">x_pos</span><span class="p">,</span> <span class="n">indices_comparison</span><span class="p">[</span><span class="s1">&#39;NDPoll&#39;</span><span class="p">],</span> <span class="n">width_bar</span><span class="p">,</span> 
+              <span class="n">label</span><span class="o">=</span><span class="s1">&#39;NDPoll&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">x_pos</span> <span class="o">+</span> <span class="n">width_bar</span><span class="p">,</span> <span class="n">indices_comparison</span><span class="p">[</span><span class="s1">&#39;DPDD&#39;</span><span class="p">],</span> <span class="n">width_bar</span><span class="p">,</span> 
+              <span class="n">label</span><span class="o">=</span><span class="s1">&#39;DPDD&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Sample Points&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Index Value&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Vegetation Indices Comparison&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">x_pos</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;Point </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sample_points</span><span class="p">))])</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/vegetation_indices.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h2 id="5-advanced-polarimetric-analysis">5. Advanced Polarimetric Analysis</h2>
+<h3 id="51-polarimetric-decomposition">5.1 Polarimetric Decomposition</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">freeman_durden_decomposition</span><span class="p">(</span><span class="n">copol_intensity</span><span class="p">,</span> <span class="n">crosspol_intensity</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simplified Freeman-Durden decomposition for dual-pol data</span>
+<span class="sd">    Returns volume, double-bounce, and surface scattering components</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Volume scattering (related to cross-pol)</span>
+    <span class="n">volume_scatter</span> <span class="o">=</span> <span class="mi">8</span> <span class="o">*</span> <span class="n">crosspol_intensity</span> <span class="o">/</span> <span class="mi">3</span>
+
+    <span class="c1"># Remaining power after volume scattering</span>
+    <span class="n">remaining_copol</span> <span class="o">=</span> <span class="n">copol_intensity</span> <span class="o">-</span> <span class="n">volume_scatter</span><span class="o">/</span><span class="mi">4</span>
+    <span class="n">remaining_copol</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">remaining_copol</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># Ensure non-negative</span>
+
+    <span class="c1"># Simple separation of surface and double-bounce</span>
+    <span class="c1"># (This is a simplified approach for dual-pol data)</span>
+    <span class="n">surface_scatter</span> <span class="o">=</span> <span class="n">remaining_copol</span> <span class="o">*</span> <span class="mf">0.7</span>  <span class="c1"># Assume 70% surface scattering</span>
+    <span class="n">double_bounce</span> <span class="o">=</span> <span class="n">remaining_copol</span> <span class="o">*</span> <span class="mf">0.3</span>    <span class="c1"># Assume 30% double-bounce</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;volume&#39;</span><span class="p">:</span> <span class="n">volume_scatter</span><span class="p">,</span>
+        <span class="s1">&#39;surface&#39;</span><span class="p">:</span> <span class="n">surface_scatter</span><span class="p">,</span>
+        <span class="s1">&#39;double_bounce&#39;</span><span class="p">:</span> <span class="n">double_bounce</span><span class="p">,</span>
+        <span class="s1">&#39;total_power&#39;</span><span class="p">:</span> <span class="n">volume_scatter</span> <span class="o">+</span> <span class="n">surface_scatter</span> <span class="o">+</span> <span class="n">double_bounce</span>
+    <span class="p">}</span>
+
+<span class="c1"># Perform polarimetric decomposition</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Performing polarimetric decomposition...&quot;</span><span class="p">)</span>
+<span class="n">decomp_results</span> <span class="o">=</span> <span class="n">freeman_durden_decomposition</span><span class="p">(</span>
+    <span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;copol_intensity&#39;</span><span class="p">],</span>
+    <span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;crosspol_intensity&#39;</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># Calculate decomposition percentages</span>
+<span class="n">total_power</span> <span class="o">=</span> <span class="n">decomp_results</span><span class="p">[</span><span class="s1">&#39;total_power&#39;</span><span class="p">]</span>
+<span class="n">volume_fraction</span> <span class="o">=</span> <span class="n">decomp_results</span><span class="p">[</span><span class="s1">&#39;volume&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">total_power</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+<span class="n">surface_fraction</span> <span class="o">=</span> <span class="n">decomp_results</span><span class="p">[</span><span class="s1">&#39;surface&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">total_power</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+<span class="n">double_bounce_fraction</span> <span class="o">=</span> <span class="n">decomp_results</span><span class="p">[</span><span class="s1">&#39;double_bounce&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">total_power</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Decomposition statistics:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Mean volume scattering: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">volume_fraction</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Mean surface scattering: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">surface_fraction</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Mean double-bounce: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">double_bounce_fraction</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="52-visualize-polarimetric-decomposition">5.2 Visualize Polarimetric Decomposition</h3>
+<pre class="codehilite"><code><span class="c1"># Visualize decomposition results</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+
+<span class="c1"># Volume scattering</span>
+<span class="n">im1</span> <span class="o">=</span> <span class="n">show_image</span><span class="p">(</span><span class="n">volume_fraction</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Volume Scattering Fraction&#39;</span><span class="p">,</span>
+                <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Greens&#39;</span><span class="p">,</span>
+                <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im1</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+<span class="c1"># Surface scattering</span>
+<span class="n">im2</span> <span class="o">=</span> <span class="n">show_image</span><span class="p">(</span><span class="n">surface_fraction</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Surface Scattering Fraction&#39;</span><span class="p">,</span>
+                <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Blues&#39;</span><span class="p">,</span>
+                <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+<span class="c1"># Double-bounce scattering</span>
+<span class="n">im3</span> <span class="o">=</span> <span class="n">show_image</span><span class="p">(</span><span class="n">double_bounce_fraction</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Double-bounce Scattering Fraction&#39;</span><span class="p">,</span>
+                <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Reds&#39;</span><span class="p">,</span>
+                <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im3</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+<span class="c1"># RGB decomposition composite</span>
+<span class="n">decomp_rgb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="o">*</span><span class="n">volume_fraction</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">decomp_rgb</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">double_bounce_fraction</span>  <span class="c1"># Red: Double-bounce</span>
+<span class="n">decomp_rgb</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">volume_fraction</span>         <span class="c1"># Green: Volume</span>
+<span class="n">decomp_rgb</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">surface_fraction</span>        <span class="c1"># Blue: Surface</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">decomp_rgb</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;RGB Decomposition</span><span class="se">\n</span><span class="s1">(R=Double-bounce, G=Volume, B=Surface)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/polarimetric_decomposition.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h3 id="53-scattering-mechanism-analysis">5.3 Scattering Mechanism Analysis</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">analyze_scattering_mechanisms</span><span class="p">(</span><span class="n">decomp_results</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analyze dominant scattering mechanisms&quot;&quot;&quot;</span>
+
+    <span class="n">volume_frac</span> <span class="o">=</span> <span class="n">decomp_results</span><span class="p">[</span><span class="s1">&#39;volume&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">decomp_results</span><span class="p">[</span><span class="s1">&#39;total_power&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+    <span class="n">surface_frac</span> <span class="o">=</span> <span class="n">decomp_results</span><span class="p">[</span><span class="s1">&#39;surface&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">decomp_results</span><span class="p">[</span><span class="s1">&#39;total_power&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+    <span class="n">double_bounce_frac</span> <span class="o">=</span> <span class="n">decomp_results</span><span class="p">[</span><span class="s1">&#39;double_bounce&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">decomp_results</span><span class="p">[</span><span class="s1">&#39;total_power&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+
+    <span class="c1"># Determine dominant scattering mechanism</span>
+    <span class="n">scattering_map</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">volume_frac</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="c1"># 0: Mixed, 1: Volume dominant, 2: Surface dominant, 3: Double-bounce dominant</span>
+    <span class="n">volume_dominant</span> <span class="o">=</span> <span class="n">volume_frac</span> <span class="o">&gt;</span> <span class="n">threshold</span>
+    <span class="n">surface_dominant</span> <span class="o">=</span> <span class="n">surface_frac</span> <span class="o">&gt;</span> <span class="n">threshold</span>
+    <span class="n">double_bounce_dominant</span> <span class="o">=</span> <span class="n">double_bounce_frac</span> <span class="o">&gt;</span> <span class="n">threshold</span>
+
+    <span class="n">scattering_map</span><span class="p">[</span><span class="n">volume_dominant</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">scattering_map</span><span class="p">[</span><span class="n">surface_dominant</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">scattering_map</span><span class="p">[</span><span class="n">double_bounce_dominant</span><span class="p">]</span> <span class="o">=</span> <span class="mi">3</span>
+
+    <span class="c1"># Calculate statistics</span>
+    <span class="n">total_pixels</span> <span class="o">=</span> <span class="n">scattering_map</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">mixed_pixels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">scattering_map</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">volume_pixels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">scattering_map</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">surface_pixels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">scattering_map</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">double_bounce_pixels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">scattering_map</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span>
+
+    <span class="n">stats</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;mixed_percentage&#39;</span><span class="p">:</span> <span class="n">mixed_pixels</span> <span class="o">/</span> <span class="n">total_pixels</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="s1">&#39;volume_percentage&#39;</span><span class="p">:</span> <span class="n">volume_pixels</span> <span class="o">/</span> <span class="n">total_pixels</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="s1">&#39;surface_percentage&#39;</span><span class="p">:</span> <span class="n">surface_pixels</span> <span class="o">/</span> <span class="n">total_pixels</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="s1">&#39;double_bounce_percentage&#39;</span><span class="p">:</span> <span class="n">double_bounce_pixels</span> <span class="o">/</span> <span class="n">total_pixels</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="s1">&#39;scattering_map&#39;</span><span class="p">:</span> <span class="n">scattering_map</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">stats</span>
+
+<span class="c1"># Analyze scattering mechanisms</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Analyzing scattering mechanisms...&quot;</span><span class="p">)</span>
+<span class="n">scattering_stats</span> <span class="o">=</span> <span class="n">analyze_scattering_mechanisms</span><span class="p">(</span><span class="n">decomp_results</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Scattering mechanism statistics:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Mixed scattering: </span><span class="si">{</span><span class="n">scattering_stats</span><span class="p">[</span><span class="s1">&#39;mixed_percentage&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Volume scattering dominant: </span><span class="si">{</span><span class="n">scattering_stats</span><span class="p">[</span><span class="s1">&#39;volume_percentage&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Surface scattering dominant: </span><span class="si">{</span><span class="n">scattering_stats</span><span class="p">[</span><span class="s1">&#39;surface_percentage&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Double-bounce dominant: </span><span class="si">{</span><span class="n">scattering_stats</span><span class="p">[</span><span class="s1">&#39;double_bounce_percentage&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+
+<span class="c1"># Visualize scattering mechanism map</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+
+<span class="c1"># Create custom colormap for scattering mechanisms</span>
+<span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="s1">&#39;red&#39;</span><span class="p">]</span>  <span class="c1"># Mixed, Volume, Surface, Double-bounce</span>
+<span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Mixed&#39;</span><span class="p">,</span> <span class="s1">&#39;Volume Dominant&#39;</span><span class="p">,</span> <span class="s1">&#39;Surface Dominant&#39;</span><span class="p">,</span> <span class="s1">&#39;Double-bounce Dominant&#39;</span><span class="p">]</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">scattering_stats</span><span class="p">[</span><span class="s1">&#39;scattering_map&#39;</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Dominant Scattering Mechanisms&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;Scattering Type&#39;</span><span class="p">,</span> <span class="n">ticks</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> 
+            <span class="nb">format</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">FuncFormatter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">labels</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)]</span> <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/scattering_mechanisms.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<h2 id="6-sla-integration-with-polarimetric-data">6. SLA Integration with Polarimetric Data</h2>
+<h3 id="61-polarimetric-sub-look-analysis">6.1 Polarimetric Sub-look Analysis</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">polarimetric_sla_analysis</span><span class="p">(</span><span class="n">pol_data</span><span class="p">,</span> <span class="n">num_looks</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">overlap_factor</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Perform SLA on both polarizations and analyze differences&quot;&quot;&quot;</span>
+
+    <span class="n">pol_sla_results</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">pol_name</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">pol_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Performing SLA on </span><span class="si">{</span><span class="n">pol_name</span><span class="si">}</span><span class="s2"> polarization...&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Configure SLA parameters</span>
+        <span class="n">sla</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;sla_processor&#39;</span><span class="p">]</span>
+        <span class="n">sla</span><span class="o">.</span><span class="n">set_sublook_parameters</span><span class="p">(</span><span class="n">num_looks</span><span class="o">=</span><span class="n">num_looks</span><span class="p">,</span> <span class="n">overlap_factor</span><span class="o">=</span><span class="n">overlap_factor</span><span class="p">)</span>
+
+        <span class="c1"># Perform decomposition</span>
+        <span class="n">sla</span><span class="o">.</span><span class="n">decompose</span><span class="p">()</span>
+
+        <span class="c1"># Store results</span>
+        <span class="n">pol_sla_results</span><span class="p">[</span><span class="n">pol_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;sublooks&#39;</span><span class="p">:</span> <span class="n">sla</span><span class="o">.</span><span class="n">get_sublooks</span><span class="p">(),</span>
+            <span class="s1">&#39;master_image&#39;</span><span class="p">:</span> <span class="n">sla</span><span class="o">.</span><span class="n">get_master_image</span><span class="p">(),</span>
+            <span class="s1">&#39;coherence&#39;</span><span class="p">:</span> <span class="n">sla</span><span class="o">.</span><span class="n">get_coherence_matrix</span><span class="p">(),</span>
+            <span class="s1">&#39;num_looks&#39;</span><span class="p">:</span> <span class="n">num_looks</span>
+        <span class="p">}</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">pol_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pol_sla_results</span><span class="p">[</span><span class="n">pol_name</span><span class="p">][</span><span class="s1">&#39;sublooks&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> sub-looks generated&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">pol_sla_results</span>
+
+<span class="c1"># Perform polarimetric SLA</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Performing polarimetric sub-look analysis...&quot;</span><span class="p">)</span>
+<span class="n">pol_sla_results</span> <span class="o">=</span> <span class="n">polarimetric_sla_analysis</span><span class="p">(</span><span class="n">pol_data</span><span class="p">,</span> <span class="n">num_looks</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">overlap_factor</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+</code></pre>
+<h3 id="62-inter-polarization-coherence-analysis">6.2 Inter-polarization Coherence Analysis</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">analyze_inter_polarization_coherence</span><span class="p">(</span><span class="n">pol_sla_results</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analyze coherence between polarizations&quot;&quot;&quot;</span>
+
+    <span class="n">pol_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pol_sla_results</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pol_names</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: Need at least 2 polarizations for inter-pol coherence&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">pol1_name</span><span class="p">,</span> <span class="n">pol2_name</span> <span class="o">=</span> <span class="n">pol_names</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pol_names</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">pol1_sublooks</span> <span class="o">=</span> <span class="n">pol_sla_results</span><span class="p">[</span><span class="n">pol1_name</span><span class="p">][</span><span class="s1">&#39;sublooks&#39;</span><span class="p">]</span>
+    <span class="n">pol2_sublooks</span> <span class="o">=</span> <span class="n">pol_sla_results</span><span class="p">[</span><span class="n">pol2_name</span><span class="p">][</span><span class="s1">&#39;sublooks&#39;</span><span class="p">]</span>
+
+    <span class="c1"># Calculate inter-polarization coherence for each sub-look pair</span>
+    <span class="n">inter_pol_coherence</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">sl1</span><span class="p">,</span> <span class="n">sl2</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">pol1_sublooks</span><span class="p">,</span> <span class="n">pol2_sublooks</span><span class="p">)):</span>
+        <span class="c1"># Normalize by power</span>
+        <span class="n">numerator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">sl1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">sl2</span><span class="p">))</span>
+        <span class="n">denominator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sl1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sl2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">coherence</span> <span class="o">=</span> <span class="n">numerator</span> <span class="o">/</span> <span class="p">(</span><span class="n">denominator</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+
+        <span class="n">inter_pol_coherence</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">coherence</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Sub-look </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2"> inter-pol coherence: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">coherence</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">mean_inter_pol_coherence</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">inter_pol_coherence</span><span class="p">])</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;pol_pair&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">pol1_name</span><span class="p">,</span> <span class="n">pol2_name</span><span class="p">),</span>
+        <span class="s1">&#39;coherence_values&#39;</span><span class="p">:</span> <span class="n">inter_pol_coherence</span><span class="p">,</span>
+        <span class="s1">&#39;mean_coherence&#39;</span><span class="p">:</span> <span class="n">mean_inter_pol_coherence</span><span class="p">,</span>
+        <span class="s1">&#39;coherence_magnitudes&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">inter_pol_coherence</span><span class="p">],</span>
+        <span class="s1">&#39;coherence_phases&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">inter_pol_coherence</span><span class="p">]</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">results</span>
+
+<span class="c1"># Analyze inter-polarization coherence</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Analyzing inter-polarization coherence...&quot;</span><span class="p">)</span>
+<span class="n">inter_pol_results</span> <span class="o">=</span> <span class="n">analyze_inter_polarization_coherence</span><span class="p">(</span><span class="n">pol_sla_results</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">inter_pol_results</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Inter-polarization coherence analysis:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Polarization pair: </span><span class="si">{</span><span class="n">inter_pol_results</span><span class="p">[</span><span class="s1">&#39;pol_pair&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Mean coherence magnitude: </span><span class="si">{</span><span class="n">inter_pol_results</span><span class="p">[</span><span class="s1">&#39;mean_coherence&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Coherence range: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">inter_pol_results</span><span class="p">[</span><span class="s1">&#39;coherence_magnitudes&#39;</span><span class="p">])</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">inter_pol_results</span><span class="p">[</span><span class="s1">&#39;coherence_magnitudes&#39;</span><span class="p">])</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="63-polarimetric-quality-assessment">6.3 Polarimetric Quality Assessment</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">assess_polarimetric_quality</span><span class="p">(</span><span class="n">pol_sla_results</span><span class="p">,</span> <span class="n">inter_pol_results</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Assess quality of polarimetric processing&quot;&quot;&quot;</span>
+
+    <span class="n">quality_metrics</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">pol_name</span><span class="p">,</span> <span class="n">results</span> <span class="ow">in</span> <span class="n">pol_sla_results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="c1"># Calculate SNR for each sub-look</span>
+        <span class="n">sublooks</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;sublooks&#39;</span><span class="p">]</span>
+        <span class="n">snr_values</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">sublook</span> <span class="ow">in</span> <span class="n">sublooks</span><span class="p">:</span>
+            <span class="n">signal_power</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sublook</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">noise_floor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sublook</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+            <span class="n">snr_db</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">signal_power</span> <span class="o">/</span> <span class="n">noise_floor</span><span class="p">)</span>
+            <span class="n">snr_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">snr_db</span><span class="p">)</span>
+
+        <span class="c1"># Calculate speckle reduction</span>
+        <span class="n">master</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;master_image&#39;</span><span class="p">]</span>
+        <span class="n">master_speckle</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">master</span><span class="p">))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">master</span><span class="p">))</span>
+
+        <span class="n">sublook_speckles</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sl</span><span class="p">))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sl</span><span class="p">))</span> <span class="k">for</span> <span class="n">sl</span> <span class="ow">in</span> <span class="n">sublooks</span><span class="p">]</span>
+        <span class="n">mean_sublook_speckle</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">sublook_speckles</span><span class="p">)</span>
+        <span class="n">speckle_reduction</span> <span class="o">=</span> <span class="n">master_speckle</span> <span class="o">/</span> <span class="n">mean_sublook_speckle</span>
+
+        <span class="n">quality_metrics</span><span class="p">[</span><span class="n">pol_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;mean_snr_db&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">snr_values</span><span class="p">),</span>
+            <span class="s1">&#39;snr_std_db&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">snr_values</span><span class="p">),</span>
+            <span class="s1">&#39;speckle_reduction_factor&#39;</span><span class="p">:</span> <span class="n">speckle_reduction</span><span class="p">,</span>
+            <span class="s1">&#39;master_speckle_index&#39;</span><span class="p">:</span> <span class="n">master_speckle</span><span class="p">,</span>
+            <span class="s1">&#39;mean_sublook_speckle&#39;</span><span class="p">:</span> <span class="n">mean_sublook_speckle</span>
+        <span class="p">}</span>
+
+    <span class="c1"># Overall quality assessment</span>
+    <span class="k">if</span> <span class="n">inter_pol_results</span><span class="p">:</span>
+        <span class="n">quality_metrics</span><span class="p">[</span><span class="s1">&#39;inter_polarization&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;mean_coherence&#39;</span><span class="p">:</span> <span class="n">inter_pol_results</span><span class="p">[</span><span class="s1">&#39;mean_coherence&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;coherence_stability&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">inter_pol_results</span><span class="p">[</span><span class="s1">&#39;coherence_magnitudes&#39;</span><span class="p">])</span>
+        <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">quality_metrics</span>
+
+<span class="c1"># Assess polarimetric quality</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Assessing polarimetric processing quality...&quot;</span><span class="p">)</span>
+<span class="n">quality_metrics</span> <span class="o">=</span> <span class="n">assess_polarimetric_quality</span><span class="p">(</span><span class="n">pol_sla_results</span><span class="p">,</span> <span class="n">inter_pol_results</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Quality Assessment Results:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">pol_name</span><span class="p">,</span> <span class="n">metrics</span> <span class="ow">in</span> <span class="n">quality_metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">pol_name</span> <span class="o">!=</span> <span class="s1">&#39;inter_polarization&#39;</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">pol_name</span><span class="si">}</span><span class="s2"> polarization:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    Mean SNR: </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;mean_snr_db&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    Speckle reduction factor: </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;speckle_reduction_factor&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    Master speckle index: </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;master_speckle_index&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="s1">&#39;inter_polarization&#39;</span> <span class="ow">in</span> <span class="n">quality_metrics</span><span class="p">:</span>
+    <span class="n">inter_metrics</span> <span class="o">=</span> <span class="n">quality_metrics</span><span class="p">[</span><span class="s1">&#39;inter_polarization&#39;</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Inter-polarization:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    Mean coherence: </span><span class="si">{</span><span class="n">inter_metrics</span><span class="p">[</span><span class="s1">&#39;mean_coherence&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    Coherence stability: </span><span class="si">{</span><span class="n">inter_metrics</span><span class="p">[</span><span class="s1">&#39;coherence_stability&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="7-multi-temporal-polarimetric-monitoring">7. Multi-temporal Polarimetric Monitoring</h2>
+<h3 id="71-temporal-vegetation-index-analysis">7.1 Temporal Vegetation Index Analysis</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">temporal_vegetation_monitoring</span><span class="p">(</span><span class="n">vegetation_indices</span><span class="p">,</span> <span class="n">dates</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Monitor vegetation changes over time using polarimetric indices&quot;&quot;&quot;</span>
+
+    <span class="c1"># Simulate temporal data (in practice, load from multiple acquisitions)</span>
+    <span class="n">temporal_indices</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;RVI&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">vegetation_indices</span><span class="p">[</span><span class="s1">&#39;RVI&#39;</span><span class="p">]],</span>  <span class="c1"># Add more time points</span>
+        <span class="s1">&#39;NDPoll&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">vegetation_indices</span><span class="p">[</span><span class="s1">&#39;NDPoll&#39;</span><span class="p">]],</span>
+        <span class="s1">&#39;DPDD&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">vegetation_indices</span><span class="p">[</span><span class="s1">&#39;DPDD&#39;</span><span class="p">]],</span>
+        <span class="s1">&#39;dates&#39;</span><span class="p">:</span> <span class="n">dates</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Sample points for temporal analysis</span>
+    <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">vegetation_indices</span><span class="p">[</span><span class="s1">&#39;RVI&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">sample_points</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;forest&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">height</span><span class="o">//</span><span class="mi">4</span><span class="p">,</span> <span class="n">width</span><span class="o">//</span><span class="mi">4</span><span class="p">),</span>
+        <span class="s1">&#39;agriculture&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">height</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">width</span><span class="o">//</span><span class="mi">2</span><span class="p">),</span>
+        <span class="s1">&#39;urban&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">height</span><span class="o">//</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="o">*</span><span class="n">width</span><span class="o">//</span><span class="mi">4</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="n">temporal_analysis</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">point_name</span><span class="p">,</span> <span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="ow">in</span> <span class="n">sample_points</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">temporal_analysis</span><span class="p">[</span><span class="n">point_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;coordinates&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span>
+            <span class="s1">&#39;RVI_series&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">temporal_indices</span><span class="p">[</span><span class="s1">&#39;RVI&#39;</span><span class="p">]],</span>
+            <span class="s1">&#39;NDPoll_series&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">temporal_indices</span><span class="p">[</span><span class="s1">&#39;NDPoll&#39;</span><span class="p">]],</span>
+            <span class="s1">&#39;DPDD_series&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">temporal_indices</span><span class="p">[</span><span class="s1">&#39;DPDD&#39;</span><span class="p">]]</span>
+        <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">temporal_analysis</span>
+
+<span class="c1"># Demonstrate temporal monitoring concept</span>
+<span class="n">vegetation_indices</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;RVI&#39;</span><span class="p">:</span> <span class="n">rvi_values</span><span class="p">,</span>
+    <span class="s1">&#39;NDPoll&#39;</span><span class="p">:</span> <span class="n">ndpoll_values</span><span class="p">,</span>
+    <span class="s1">&#39;DPDD&#39;</span><span class="p">:</span> <span class="n">dpdd_values</span>
+<span class="p">}</span>
+
+<span class="n">dates</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;2023-06-01&#39;</span><span class="p">]</span>  <span class="c1"># Single date for this demo</span>
+<span class="n">temporal_analysis</span> <span class="o">=</span> <span class="n">temporal_vegetation_monitoring</span><span class="p">(</span><span class="n">vegetation_indices</span><span class="p">,</span> <span class="n">dates</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Temporal vegetation monitoring setup:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">point_name</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">temporal_analysis</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">point_name</span><span class="si">}</span><span class="s2">: RVI=</span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;RVI_series&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, NDPoll=</span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;NDPoll_series&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, DPDD=</span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;DPDD_series&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="8-export-results-and-summary-report">8. Export Results and Summary Report</h2>
+<h3 id="81-save-all-results">8.1 Save All Results</h3>
+<pre class="codehilite"><code><span class="c1"># Save all polarimetric analysis results</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving polarimetric analysis results...&quot;</span><span class="p">)</span>
+
+<span class="c1"># Save basic polarimetric parameters</span>
+<span class="n">save_matlab_mat</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/polarimetric_parameters.mat&quot;</span><span class="p">,</span> <span class="p">{</span>
+    <span class="s1">&#39;copol_intensity&#39;</span><span class="p">:</span> <span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;copol_intensity&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;crosspol_intensity&#39;</span><span class="p">:</span> <span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;crosspol_intensity&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;copol_crosspol_ratio&#39;</span><span class="p">:</span> <span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;copol_crosspol_ratio&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;crosspol_fraction&#39;</span><span class="p">:</span> <span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;crosspol_fraction&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;polarization_names&#39;</span><span class="p">:</span> <span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;pol_names&#39;</span><span class="p">]</span>
+<span class="p">})</span>
+
+<span class="c1"># Save vegetation indices</span>
+<span class="n">save_matlab_mat</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/vegetation_indices.mat&quot;</span><span class="p">,</span> <span class="p">{</span>
+    <span class="s1">&#39;RVI&#39;</span><span class="p">:</span> <span class="n">rvi_values</span><span class="p">,</span>
+    <span class="s1">&#39;NDPoll&#39;</span><span class="p">:</span> <span class="n">ndpoll_values</span><span class="p">,</span>
+    <span class="s1">&#39;DPDD&#39;</span><span class="p">:</span> <span class="n">dpdd_values</span>
+<span class="p">})</span>
+
+<span class="c1"># Save decomposition results</span>
+<span class="n">save_matlab_mat</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/polarimetric_decomposition.mat&quot;</span><span class="p">,</span> <span class="p">{</span>
+    <span class="s1">&#39;volume_scattering&#39;</span><span class="p">:</span> <span class="n">decomp_results</span><span class="p">[</span><span class="s1">&#39;volume&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;surface_scattering&#39;</span><span class="p">:</span> <span class="n">decomp_results</span><span class="p">[</span><span class="s1">&#39;surface&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;double_bounce&#39;</span><span class="p">:</span> <span class="n">decomp_results</span><span class="p">[</span><span class="s1">&#39;double_bounce&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;scattering_map&#39;</span><span class="p">:</span> <span class="n">scattering_stats</span><span class="p">[</span><span class="s1">&#39;scattering_map&#39;</span><span class="p">]</span>
+<span class="p">})</span>
+
+<span class="c1"># Save SLA results for each polarization</span>
+<span class="k">for</span> <span class="n">pol_name</span><span class="p">,</span> <span class="n">sla_data</span> <span class="ow">in</span> <span class="n">pol_sla_results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/sublooks_</span><span class="si">{</span><span class="n">pol_name</span><span class="si">}</span><span class="s2">.npy&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sla_data</span><span class="p">[</span><span class="s1">&#39;sublooks&#39;</span><span class="p">]))</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/master_</span><span class="si">{</span><span class="n">pol_name</span><span class="si">}</span><span class="s2">.npy&quot;</span><span class="p">,</span> <span class="n">sla_data</span><span class="p">[</span><span class="s1">&#39;master_image&#39;</span><span class="p">])</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/coherence_</span><span class="si">{</span><span class="n">pol_name</span><span class="si">}</span><span class="s2">.npy&quot;</span><span class="p">,</span> <span class="n">sla_data</span><span class="p">[</span><span class="s1">&#39;coherence&#39;</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Results saved successfully!&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="82-generate-comprehensive-report">8.2 Generate Comprehensive Report</h3>
+<pre class="codehilite"><code><span class="k">def</span><span class="w"> </span><span class="nf">generate_polarimetric_report</span><span class="p">(</span><span class="n">pol_params</span><span class="p">,</span> <span class="n">vegetation_indices</span><span class="p">,</span> <span class="n">decomp_results</span><span class="p">,</span> 
+                               <span class="n">scattering_stats</span><span class="p">,</span> <span class="n">quality_metrics</span><span class="p">,</span> <span class="n">output_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate comprehensive polarimetric analysis report&quot;&quot;&quot;</span>
+
+    <span class="n">report</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;processing_info&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;polarizations&#39;</span><span class="p">:</span> <span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;pol_names&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;image_dimensions&#39;</span><span class="p">:</span> <span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;copol_intensity&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+            <span class="s1">&#39;processing_date&#39;</span><span class="p">:</span> <span class="s1">&#39;2023-06-01&#39;</span>  <span class="c1"># Update with actual date</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;polarimetric_statistics&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;copol_mean_db&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;copol_db&#39;</span><span class="p">])),</span>
+            <span class="s1">&#39;crosspol_mean_db&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;crosspol_db&#39;</span><span class="p">])),</span>
+            <span class="s1">&#39;ratio_mean_db&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;ratio_db&#39;</span><span class="p">])),</span>
+            <span class="s1">&#39;crosspol_fraction_mean&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;crosspol_fraction&#39;</span><span class="p">]))</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;vegetation_indices&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;RVI_mean&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">vegetation_indices</span><span class="p">[</span><span class="s1">&#39;RVI&#39;</span><span class="p">])),</span>
+            <span class="s1">&#39;RVI_std&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">vegetation_indices</span><span class="p">[</span><span class="s1">&#39;RVI&#39;</span><span class="p">])),</span>
+            <span class="s1">&#39;NDPoll_mean&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">vegetation_indices</span><span class="p">[</span><span class="s1">&#39;NDPoll&#39;</span><span class="p">])),</span>
+            <span class="s1">&#39;NDPoll_std&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">vegetation_indices</span><span class="p">[</span><span class="s1">&#39;NDPoll&#39;</span><span class="p">])),</span>
+            <span class="s1">&#39;DPDD_mean&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">vegetation_indices</span><span class="p">[</span><span class="s1">&#39;DPDD&#39;</span><span class="p">])),</span>
+            <span class="s1">&#39;DPDD_std&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">vegetation_indices</span><span class="p">[</span><span class="s1">&#39;DPDD&#39;</span><span class="p">]))</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;scattering_mechanisms&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;volume_percentage&#39;</span><span class="p">:</span> <span class="n">scattering_stats</span><span class="p">[</span><span class="s1">&#39;volume_percentage&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;surface_percentage&#39;</span><span class="p">:</span> <span class="n">scattering_stats</span><span class="p">[</span><span class="s1">&#39;surface_percentage&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;double_bounce_percentage&#39;</span><span class="p">:</span> <span class="n">scattering_stats</span><span class="p">[</span><span class="s1">&#39;double_bounce_percentage&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;mixed_percentage&#39;</span><span class="p">:</span> <span class="n">scattering_stats</span><span class="p">[</span><span class="s1">&#39;mixed_percentage&#39;</span><span class="p">]</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;quality_assessment&#39;</span><span class="p">:</span> <span class="n">quality_metrics</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Save report</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_path</span><span class="si">}</span><span class="s2">/polarimetric_report.json&quot;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">report</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">report</span>
+
+<span class="c1"># Generate comprehensive report</span>
+<span class="n">report</span> <span class="o">=</span> <span class="n">generate_polarimetric_report</span><span class="p">(</span>
+    <span class="n">pol_params</span><span class="p">,</span> 
+    <span class="p">{</span><span class="s1">&#39;RVI&#39;</span><span class="p">:</span> <span class="n">rvi_values</span><span class="p">,</span> <span class="s1">&#39;NDPoll&#39;</span><span class="p">:</span> <span class="n">ndpoll_values</span><span class="p">,</span> <span class="s1">&#39;DPDD&#39;</span><span class="p">:</span> <span class="n">dpdd_values</span><span class="p">},</span>
+    <span class="n">decomp_results</span><span class="p">,</span>
+    <span class="n">scattering_stats</span><span class="p">,</span>
+    <span class="n">quality_metrics</span><span class="p">,</span>
+    <span class="n">output_dir</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=== POLARIMETRIC ANALYSIS REPORT ===&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Polarizations processed: </span><span class="si">{</span><span class="n">report</span><span class="p">[</span><span class="s1">&#39;processing_info&#39;</span><span class="p">][</span><span class="s1">&#39;polarizations&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Image dimensions: </span><span class="si">{</span><span class="n">report</span><span class="p">[</span><span class="s1">&#39;processing_info&#39;</span><span class="p">][</span><span class="s1">&#39;image_dimensions&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Polarimetric Statistics:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Co-pol mean: </span><span class="si">{</span><span class="n">report</span><span class="p">[</span><span class="s1">&#39;polarimetric_statistics&#39;</span><span class="p">][</span><span class="s1">&#39;copol_mean_db&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Cross-pol mean: </span><span class="si">{</span><span class="n">report</span><span class="p">[</span><span class="s1">&#39;polarimetric_statistics&#39;</span><span class="p">][</span><span class="s1">&#39;crosspol_mean_db&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Co-pol/Cross-pol ratio: </span><span class="si">{</span><span class="n">report</span><span class="p">[</span><span class="s1">&#39;polarimetric_statistics&#39;</span><span class="p">][</span><span class="s1">&#39;ratio_mean_db&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Vegetation Indices:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  RVI mean: </span><span class="si">{</span><span class="n">report</span><span class="p">[</span><span class="s1">&#39;vegetation_indices&#39;</span><span class="p">][</span><span class="s1">&#39;RVI_mean&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  NDPoll mean: </span><span class="si">{</span><span class="n">report</span><span class="p">[</span><span class="s1">&#39;vegetation_indices&#39;</span><span class="p">][</span><span class="s1">&#39;NDPoll_mean&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  DPDD mean: </span><span class="si">{</span><span class="n">report</span><span class="p">[</span><span class="s1">&#39;vegetation_indices&#39;</span><span class="p">][</span><span class="s1">&#39;DPDD_mean&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Scattering Mechanisms:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Volume scattering: </span><span class="si">{</span><span class="n">report</span><span class="p">[</span><span class="s1">&#39;scattering_mechanisms&#39;</span><span class="p">][</span><span class="s1">&#39;volume_percentage&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Surface scattering: </span><span class="si">{</span><span class="n">report</span><span class="p">[</span><span class="s1">&#39;scattering_mechanisms&#39;</span><span class="p">][</span><span class="s1">&#39;surface_percentage&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Double-bounce: </span><span class="si">{</span><span class="n">report</span><span class="p">[</span><span class="s1">&#39;scattering_mechanisms&#39;</span><span class="p">][</span><span class="s1">&#39;double_bounce_percentage&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+</code></pre>
+<h3 id="83-final-visualization-summary">8.3 Final Visualization Summary</h3>
+<pre class="codehilite"><code><span class="c1"># Create comprehensive summary figure</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">18</span><span class="p">))</span>
+
+<span class="c1"># Row 1: Basic polarimetric components</span>
+<span class="n">im1</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;copol_db&#39;</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span>
+                       <span class="n">vmin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;copol_db&#39;</span><span class="p">],</span> <span class="mi">5</span><span class="p">),</span>
+                       <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;copol_db&#39;</span><span class="p">],</span> <span class="mi">95</span><span class="p">))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">pol_params</span><span class="p">[</span><span class="s2">&quot;pol_names&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1"> Intensity (dB)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im1</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+
+<span class="n">im2</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;crosspol_db&#39;</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span>
+                       <span class="n">vmin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;crosspol_db&#39;</span><span class="p">],</span> <span class="mi">5</span><span class="p">),</span>
+                       <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;crosspol_db&#39;</span><span class="p">],</span> <span class="mi">95</span><span class="p">))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">pol_params</span><span class="p">[</span><span class="s2">&quot;pol_names&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1"> Intensity (dB)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+<span class="n">im3</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;ratio_db&#39;</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdYlBu_r&#39;</span><span class="p">,</span>
+                       <span class="n">vmin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;ratio_db&#39;</span><span class="p">],</span> <span class="mi">5</span><span class="p">),</span>
+                       <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pol_params</span><span class="p">[</span><span class="s1">&#39;ratio_db&#39;</span><span class="p">],</span> <span class="mi">95</span><span class="p">))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Co-pol/Cross-pol Ratio (dB)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im3</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+
+<span class="c1"># Row 2: Vegetation indices</span>
+<span class="n">im4</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">rvi_values</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdYlGn&#39;</span><span class="p">,</span>
+                       <span class="n">vmin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">rvi_values</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                       <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">rvi_values</span><span class="p">,</span> <span class="mi">95</span><span class="p">))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Radar Vegetation Index (RVI)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im4</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+
+<span class="n">im5</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">ndpoll_values</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdYlGn&#39;</span><span class="p">,</span>
+                       <span class="n">vmin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">ndpoll_values</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                       <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">ndpoll_values</span><span class="p">,</span> <span class="mi">95</span><span class="p">))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;NDPoll Index&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im5</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+<span class="n">im6</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">dpdd_values</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdYlGn&#39;</span><span class="p">,</span>
+                       <span class="n">vmin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">dpdd_values</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                       <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">dpdd_values</span><span class="p">,</span> <span class="mi">95</span><span class="p">))</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;DPDD Index&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im6</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+
+<span class="c1"># Row 3: Decomposition and analysis</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">decomp_rgb</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Polarimetric Decomposition</span><span class="se">\n</span><span class="s1">(R=Double-bounce, G=Volume, B=Surface)&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+
+<span class="c1"># Scattering mechanism distribution</span>
+<span class="n">mechanisms</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Mixed&#39;</span><span class="p">,</span> <span class="s1">&#39;Volume&#39;</span><span class="p">,</span> <span class="s1">&#39;Surface&#39;</span><span class="p">,</span> <span class="s1">&#39;Double-bounce&#39;</span><span class="p">]</span>
+<span class="n">percentages</span> <span class="o">=</span> <span class="p">[</span><span class="n">scattering_stats</span><span class="p">[</span><span class="s1">&#39;mixed_percentage&#39;</span><span class="p">],</span>
+              <span class="n">scattering_stats</span><span class="p">[</span><span class="s1">&#39;volume_percentage&#39;</span><span class="p">],</span>
+              <span class="n">scattering_stats</span><span class="p">[</span><span class="s1">&#39;surface_percentage&#39;</span><span class="p">],</span>
+              <span class="n">scattering_stats</span><span class="p">[</span><span class="s1">&#39;double_bounce_percentage&#39;</span><span class="p">]]</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pie</span><span class="p">(</span><span class="n">percentages</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">mechanisms</span><span class="p">,</span> <span class="n">autopct</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%1.1f%%</span><span class="s1">&#39;</span><span class="p">,</span>
+              <span class="n">colors</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="s1">&#39;red&#39;</span><span class="p">])</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Scattering Mechanism Distribution&#39;</span><span class="p">)</span>
+
+<span class="c1"># Quality metrics summary</span>
+<span class="n">pol_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">quality_metrics</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s1">&#39;inter_polarization&#39;</span><span class="p">]</span>
+<span class="n">snr_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">quality_metrics</span><span class="p">[</span><span class="n">pol</span><span class="p">][</span><span class="s1">&#39;mean_snr_db&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">pol</span> <span class="ow">in</span> <span class="n">pol_names</span><span class="p">]</span>
+<span class="n">speckle_reduction</span> <span class="o">=</span> <span class="p">[</span><span class="n">quality_metrics</span><span class="p">[</span><span class="n">pol</span><span class="p">][</span><span class="s1">&#39;speckle_reduction_factor&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">pol</span> <span class="ow">in</span> <span class="n">pol_names</span><span class="p">]</span>
+
+<span class="n">x_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pol_names</span><span class="p">))</span>
+<span class="n">width</span> <span class="o">=</span> <span class="mf">0.35</span>
+
+<span class="n">bars1</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">x_pos</span> <span class="o">-</span> <span class="n">width</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">snr_values</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;SNR (dB)&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">bars2</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">x_pos</span> <span class="o">+</span> <span class="n">width</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">speckle_reduction</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Speckle Reduction&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Polarization&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Value&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Quality Metrics Summary&#39;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">x_pos</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">pol_names</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/polarimetric_analysis_summary.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Polarimetric analysis complete!&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Output files saved to: </span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Generated files:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- polarimetric_components.png&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- vegetation_indices.png&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- polarimetric_decomposition.png&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- scattering_mechanisms.png&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- polarimetric_analysis_summary.png&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- polarimetric_parameters.mat&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- vegetation_indices.mat&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- polarimetric_decomposition.mat&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- polarimetric_report.json&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- sublooks_*.npy, master_*.npy, coherence_*.npy&quot;</span><span class="p">)</span>
+</code></pre>
+<h2 id="summary">Summary</h2>
+<p>In this tutorial, you learned:</p>
+<ol>
+<li><strong>Dual-pol data processing</strong> with SNAP integration</li>
+<li><strong>Basic polarimetric parameter extraction</strong> (co-pol, cross-pol, ratios)</li>
+<li><strong>Vegetation index calculation</strong> (RVI, NDPoll, DPDD)</li>
+<li><strong>Polarimetric decomposition</strong> (Freeman-Durden approach)</li>
+<li><strong>Scattering mechanism analysis</strong> and classification</li>
+<li><strong>SLA integration</strong> with polarimetric data</li>
+<li><strong>Quality assessment</strong> for polarimetric processing</li>
+<li><strong>Multi-temporal monitoring</strong> concepts for vegetation analysis</li>
+</ol>
+<h2 id="next-steps">Next Steps</h2>
+<ul>
+<li><strong>Tutorial 6</strong>: Custom processing workflows for specific applications</li>
+<li><strong>Tutorial 7</strong>: Ship detection with CFAR algorithms</li>
+<li>Experiment with full polarimetric data (quad-pol)</li>
+<li>Apply to different land cover types</li>
+<li>Integrate with optical data for enhanced analysis</li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<p><strong>Common Issues:</strong></p>
+<ol>
+<li><strong>Polarization mismatch</strong>: Ensure consistent polarization naming conventions</li>
+<li><strong>SNAP processing errors</strong>: Check SNAP installation and GPT configuration</li>
+<li><strong>Memory limitations</strong>: Process smaller spatial subsets for large datasets</li>
+<li><strong>Low inter-pol coherence</strong>: Check data quality and temporal baseline</li>
+<li><strong>Unrealistic vegetation indices</strong>: Verify calibration and preprocessing steps</li>
+</ol>
+<p>For more help, see the <a href="../user_guide/troubleshooting.html">Troubleshooting Guide</a> and <a href="../user_guide/snap_integration.html">SNAP Integration Guide</a>.</p>
+    <div class="footer">
+      sarpyx Documentation &nbsp;·&nbsp; built with <code>build_site.py</code>
+    </div>
+  </main>
+</body>
+</html>

@@ -4,7 +4,7 @@ This module contains various algorithms for Synthetic Aperture Radar (SAR)
 data processing and analysis.
 """
 
-__version__ = '0.1.0'
+__version__ = '0.1.5'
 __author__ = 'SAR Processing Team'
 
 # Import main algorithm modules here when they are created
