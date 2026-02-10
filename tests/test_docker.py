@@ -7,7 +7,7 @@ Run locally:
     make docker-test
 
 Run in CI:
-    docker run --rm <image> python3.11 -m pytest /workspace/tests/test_docker.py -v
+    Pytest is installed at runtime before running the tests.
 """
 
 import importlib
