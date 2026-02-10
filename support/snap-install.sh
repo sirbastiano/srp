@@ -23,6 +23,20 @@ BASE_DIR="$(dirname "$(dirname "$CURRENT_FILE_PATH")")"
 
 SNAP_DIR="${BASE_DIR}/snap${VERSION}"
 
+SKIP_SNAP_UPDATES="${SNAP_SKIP_UPDATES:-}"
+if [ -n "${CI:-}" ] && [ -z "$SKIP_SNAP_UPDATES" ]; then
+    SKIP_SNAP_UPDATES=1
+fi
+
+maybe_update_snap_modules() {
+    if [ -n "$SKIP_SNAP_UPDATES" ]; then
+        echo "Skipping SNAP module refresh/update (SNAP_SKIP_UPDATES or CI set)."
+        return 0
+    fi
+    "${SNAP_DIR}/bin/snap" --nosplash --nogui --modules --list --refresh
+    "${SNAP_DIR}/bin/snap" --nosplash --nogui --modules --update-all
+}
+
 echo "Installing SNAP version $VERSION..."
 # Install required packages
 echo 'Installing packages for S1 data processing...'
@@ -40,8 +54,7 @@ if [ "$VERSION" = "12" ]; then
     echo 'Configuring SNAP memory settings...'
     echo "-Xmx8G" > "${SNAP_DIR}/bin/gpt.vmoptions"
     echo 'SNAP 12 installation complete.'
-    ${SNAP_DIR}/bin/snap --nosplash --nogui --modules --list --refresh
-    ${SNAP_DIR}/bin/snap --nosplash --nogui --modules --update-all
+    maybe_update_snap_modules
 
 elif [ "$VERSION" = "13" ]; then
     # VERSION 13 installation
@@ -54,8 +67,7 @@ elif [ "$VERSION" = "13" ]; then
     echo 'Configuring SNAP memory settings...'
     echo "-Xmx8G" > "${SNAP_DIR}/bin/gpt.vmoptions"
     echo 'SNAP 13 installation complete.'
-    ${SNAP_DIR}/bin/snap --nosplash --nogui --modules --list --refresh
-    ${SNAP_DIR}/bin/snap --nosplash --nogui --modules --update-all
+    maybe_update_snap_modules
 
 else
     echo "Error: Invalid VERSION. Please set VERSION to either 12 or 13."
