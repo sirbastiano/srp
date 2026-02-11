@@ -77,3 +77,6 @@ up_recreate:
 
 up:
 	docker compose up
+
+push:
+	sudo docker push sirbastiano94/sarpyx:latest
