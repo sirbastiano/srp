@@ -86,7 +86,8 @@ jobs:
   # ────────────────────  Publish  ─────────────────────────────
   publish:
     needs: build-and-test
-    runs-on: ubuntu-latest
+    runs-on:
+      labels: ubuntu-24.04-16core
     if: >-
       github.event_name == 'release' ||
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
