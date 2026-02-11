@@ -22,6 +22,7 @@ mkdir -p /workspace/grid
 cd /workspace/grid
 if python3.11 -m sarpyx.utils.grid; then
     echo "Grid generation completed."
+    cd /workspace
 else
     echo "Error: Grid generation failed"
     exit 1
