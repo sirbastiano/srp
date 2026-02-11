@@ -57,6 +57,8 @@ ENV JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"
 ENV SNAP_HOME="/usr/local/snap"
 ENV SNAP_SKIP_UPDATES="${SNAP_SKIP_UPDATES}"
 ENV PATH="${PATH}:${SNAP_HOME}/bin"
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PIP_NO_CACHE_DIR=1
 
 # Install only runtime dependencies (no build-essential, python3.11-dev, etc.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
