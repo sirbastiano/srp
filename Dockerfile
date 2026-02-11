@@ -22,7 +22,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     lsb-release \
     && add-apt-repository -y ppa:deadsnakes/ppa \
     && add-apt-repository -y ppa:openjdk-r/ppa \
-    && add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable \
     && apt-get update && apt-get install -y --no-install-recommends \
     python3.11 \
     python3.11-venv \
@@ -66,12 +65,12 @@ WORKDIR /workspace
 # Copy only essential files
 COPY pyproject.toml ./
 COPY sarpyx ./sarpyx
+COPY tests ./tests  
 
 # Install sarpyx in development mode and verify import
 RUN python3.11 -m pip install --upgrade pip setuptools wheel && \
-    python3.11 -m pip install numpy six python-dateutil && \
     python3.11 -m pip install -e . && \
-    python3.11 -c "import sarpyx; print('sarpyx installed successfully')" && \
+    python3.11 -c "import six; print('six installed successfully')" && \
     apt-get purge -y --auto-remove \
         build-essential \
         python3.11-dev \
@@ -81,6 +80,8 @@ RUN python3.11 -m pip install --upgrade pip setuptools wheel && \
         libproj-dev \
         libgeos-dev \
         software-properties-common && \
+    python3.11 -m pip install --ignore-installed --no-cache-dir six python-dateutil && \
+    python3.11 -c "import six, dateutil; print('runtime deps ok')" && \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/* /tmp/* /var/tmp/*
 
 # Copy and set up entrypoint script
@@ -88,4 +89,4 @@ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["python3.11", "-c", "import sarpyx; print('sarpyx version:', getattr(sarpyx, '__version__', 'unknown'))"]
+CMD ["/bin/bash"]

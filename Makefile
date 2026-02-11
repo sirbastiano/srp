@@ -7,30 +7,29 @@ DOCKER_TAG     ?= latest
 DOCKER_FULL    := $(DOCKER_IMAGE):$(DOCKER_TAG)
 PLATFORM       ?= linux/amd64
 
-.PHONY: clean_venv install_pdm pdm_install_deps install_phidown install_snap \
+.PHONY: clean_venv venv install_deps install_phidown install_snap \
         setup prune_docker up_recreate up \
         docker-build docker-test docker-push docker-all
 
-# ──────────────────────────  Python / PDM  ──────────────────────────
+# ──────────────────────────  Python / uv  ──────────────────────────
 
 clean_venv:
 	@echo 'Removing virtual environment...'
 	@if [ -d '.venv' ]; then rm -rf .venv; fi
 
-install_pdm:
-	@echo 'Installing pdm...'
-	python3 -m pip install --upgrade pip
-	python3 -m pip install --user pdm
+venv:
+	@echo 'Creating virtual environment with uv...'
+	uv venv .venv
 
-pdm_install_deps:
-	@echo 'Installing toml package using pdm...'
-	pdm install
+install_deps:
+	@echo 'Installing dependencies with uv...'
+	uv sync
 
 install_phidown:
 	@echo 'Installing phi-down...'
-	pdm add phidown
+	uv add phidown
 
-setup: clean_venv install_pdm pdm_install_deps
+setup: clean_venv venv install_deps
 	@echo 'Setup complete.'
 
 # ──────────────────────────  SNAP  ──────────────────────────────────
@@ -79,7 +78,7 @@ up_recreate:
 	sudo docker compose up --build --force-recreate
 
 up:
-	docker compose up
+	sudo docker compose up
 
 push:
 	sudo docker push sirbastiano94/sarpyx:latest

@@ -6,9 +6,12 @@ echo "=== Container Startup Script ==="
 # Update SNAP
 echo "Updating SNAP..."
 if [ -d "${SNAP_HOME}/bin" ]; then
-    ${SNAP_HOME}/bin/snap --nosplash --nogui --modules --list --refresh || echo "Warning: SNAP refresh failed"
-    ${SNAP_HOME}/bin/snap --nosplash --nogui --modules --update-all || echo "Warning: SNAP update failed"
-    echo "SNAP update completed."
+    if [ "${SNAP_SKIP_UPDATES:-1}" = "1" ]; then
+        echo "SNAP updates skipped (SNAP_SKIP_UPDATES=1)."
+    else
+        ${SNAP_HOME}/bin/snap --nosplash --nogui --modules --update-all || echo "Warning: SNAP update failed"
+        echo "SNAP update completed."
+    fi
 else
     echo "Warning: SNAP_HOME not found at ${SNAP_HOME}"
 fi
