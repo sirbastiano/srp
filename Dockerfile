@@ -42,7 +42,7 @@ WORKDIR /workspace
 # Copy and build sarpyx package
 COPY pyproject.toml ./
 COPY sarpyx ./sarpyx
-RUN python3.11 -m pip install --no-cache-dir -e . && \
+RUN python3.11 -m pip install --no-cache-dir . && \
     python3.11 -c "import sarpyx; print('sarpyx installed successfully')"
 
 # ===== Runtime Stage =====
@@ -80,9 +80,6 @@ COPY --from=builder /usr/local/snap /usr/local/snap
 
 # Copy Python site-packages from builder
 COPY --from=builder /usr/local/lib/python3.11/dist-packages /usr/local/lib/python3.11/dist-packages
-
-# Copy sarpyx source code
-COPY --from=builder /workspace/sarpyx /workspace/sarpyx
 
 # Copy entrypoint script
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
