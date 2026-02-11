@@ -42,7 +42,10 @@ ENV GDAL_CONFIG=/usr/bin/gdal-config
 # Install SNAP
 COPY support/snap-install.sh /tmp/snap-install.sh
 COPY support/snap.varfile /tmp/snap.varfile
-RUN chmod +x /tmp/snap-install.sh && /tmp/snap-install.sh -v && rm -f /tmp/snap-install.sh /tmp/snap.varfile
+RUN chmod +x /tmp/snap-install.sh \
+    && /tmp/snap-install.sh -v \
+    && rm -f /tmp/snap-install.sh /tmp/snap.varfile \
+    && rm -rf /var/lib/apt/lists/*
 
 # RUN wget -q "https://download.esa.int/step/snap/12.0/installers/esa-snap_all_linux-${SNAP_VERSION}.sh" -O /tmp/snap_installer.sh && \
 #     chmod +x /tmp/snap_installer.sh && \
@@ -63,7 +66,6 @@ WORKDIR /workspace
 # Copy only essential files
 COPY pyproject.toml ./
 COPY sarpyx ./sarpyx
-COPY tests ./tests
 
 # Install sarpyx in development mode and verify import
 RUN python3.11 -m pip install --upgrade pip setuptools wheel && \
@@ -71,7 +73,21 @@ RUN python3.11 -m pip install --upgrade pip setuptools wheel && \
     GDAL_VERSION=$(gdal-config --version) && \
     python3.11 -m pip install GDAL==${GDAL_VERSION} && \
     python3.11 -m pip install -e . && \
-    python3.11 -c "import sarpyx; print('sarpyx installed successfully')"
+    python3.11 -c "import sarpyx; print('sarpyx installed successfully')" && \
+    apt-get purge -y --auto-remove \
+        build-essential \
+        python3.11-dev \
+        libgdal-dev \
+        libhdf5-dev \
+        libxml2-dev \
+        libxslt1-dev \
+        libproj-dev \
+        libgeos-dev \
+        libfftw3-dev \
+        libtiff5-dev \
+        gfortran \
+        software-properties-common && \
+    rm -rf /var/lib/apt/lists/* /var/cache/apt/* /tmp/* /var/tmp/*
 
 # Copy and set up entrypoint script
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh

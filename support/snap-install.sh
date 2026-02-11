@@ -40,8 +40,18 @@ maybe_update_snap_modules() {
 echo "Installing SNAP version $VERSION..."
 # Install required packages
 echo 'Installing packages for S1 data processing...'
-sudo apt update
-sudo apt-get install -y libfftw3-dev libtiff5-dev gdal-bin gfortran libgfortran5 jblas git curl --fix-missing 
+sudo apt-get update
+sudo apt-get install -y --no-install-recommends \
+    libfftw3-dev \
+    libtiff5-dev \
+    gdal-bin \
+    gfortran \
+    libgfortran5 \
+    jblas \
+    git \
+    curl \
+    --fix-missing
+sudo rm -rf /var/lib/apt/lists/*
 
 if [ "$VERSION" = "12" ]; then
     # VERSION 12 installation

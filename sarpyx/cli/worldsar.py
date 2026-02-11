@@ -14,9 +14,11 @@ import re
 import subprocess
 import sys
 from concurrent.futures import ProcessPoolExecutor
+from datetime import datetime
 from functools import partial
 from pathlib import Path
 from urllib import request
+from xml.sax.saxutils import escape
 
 import pandas as pd
 from dotenv import load_dotenv
@@ -410,8 +412,13 @@ def to_geotiff(
         gpt_parallelism=gpt_parallelism,
         gpt_timeout=gpt_timeout,
     )
-    op.Write()
-    return op.prod_path
+    write_path = op.Write()
+    if write_path is None:
+        raise RuntimeError(f'GPT Write failed: {op.last_error_summary()}')
+    output_path = Path(write_path)
+    if not output_path.exists():
+        raise RuntimeError(f'GPT Write reported {output_path} but output file is missing.')
+    return output_path
 
 
 def subset(
@@ -432,12 +439,17 @@ def subset(
         gpt_parallelism=gpt_parallelism,
         gpt_timeout=gpt_timeout,
     )
-    op.Subset(
+    subset_path = op.Subset(
         copy_metadata=True,
         output_name=output_name,
         geo_region=geo_region,
     )
-    return op.prod_path
+    if subset_path is None:
+        raise RuntimeError(f'GPT Subset failed: {op.last_error_summary()}')
+    output_path = Path(subset_path)
+    if not output_path.exists():
+        raise RuntimeError(f'GPT Subset reported {output_path} but output file is missing.')
+    return output_path
 
 
 def _cut_rect_worker(
@@ -452,24 +464,147 @@ def _cut_rect_worker(
 ):
     geo_region = rectangle_to_wkt(rect)
     tile_name = rect['BL']['properties']['name']
+    expected_path = Path(cuts_outdir_str) / name / f'{tile_name}.h5'
     if product_mode != 'NISAR':
-        final_product = subset(
-            Path(product_path_str),
-            Path(cuts_outdir_str) / name,
-            output_name=tile_name,
-            geo_region=geo_region,
-            gpt_memory=gpt_memory,
-            gpt_parallelism=gpt_parallelism,
-            gpt_timeout=gpt_timeout,
-        )
-        return ('product', str(final_product))
+        try:
+            final_product = subset(
+                Path(product_path_str),
+                Path(cuts_outdir_str) / name,
+                output_name=tile_name,
+                geo_region=geo_region,
+                gpt_memory=gpt_memory,
+                gpt_parallelism=gpt_parallelism,
+                gpt_timeout=gpt_timeout,
+            )
+            output_path = Path(final_product)
+            if not output_path.exists():
+                return {
+                    'tile': tile_name,
+                    'status': 'failed',
+                    'reason': 'output missing after GPT Subset',
+                    'output_path': str(output_path),
+                }
+            size_bytes = output_path.stat().st_size
+            if size_bytes == 0:
+                return {
+                    'tile': tile_name,
+                    'status': 'failed',
+                    'reason': 'output file is empty after GPT Subset',
+                    'output_path': str(output_path),
+                }
+            return {
+                'tile': tile_name,
+                'status': 'success',
+                'output_path': str(output_path),
+                'size_bytes': size_bytes,
+            }
+        except Exception as exc:
+            return {
+                'tile': tile_name,
+                'status': 'failed',
+                'reason': f'{type(exc).__name__}: {exc}',
+                'output_path': str(expected_path),
+            }
 
-    reader = NISARReader(product_path_str)
-    cutter = NISARCutter(reader)
-    subset_data = cutter.cut_by_wkt(geo_region, 'HH', apply_mask=False)
-    nisar_tile_path = Path(cuts_outdir_str) / name / f'{tile_name}.h5'
-    cutter.save_subset(subset_data, nisar_tile_path, driver='H5')
-    return ('nisar', str(nisar_tile_path))
+    try:
+        reader = NISARReader(product_path_str)
+        cutter = NISARCutter(reader)
+        subset_data = cutter.cut_by_wkt(geo_region, 'HH', apply_mask=False)
+        nisar_tile_path = Path(cuts_outdir_str) / name / f'{tile_name}.h5'
+        cutter.save_subset(subset_data, nisar_tile_path, driver='H5')
+        if not nisar_tile_path.exists():
+            return {
+                'tile': tile_name,
+                'status': 'failed',
+                'reason': 'output missing after NISAR cut',
+                'output_path': str(nisar_tile_path),
+            }
+        size_bytes = nisar_tile_path.stat().st_size
+        if size_bytes == 0:
+            return {
+                'tile': tile_name,
+                'status': 'failed',
+                'reason': 'output file is empty after NISAR cut',
+                'output_path': str(nisar_tile_path),
+            }
+        return {
+            'tile': tile_name,
+            'status': 'success',
+            'output_path': str(nisar_tile_path),
+            'size_bytes': size_bytes,
+        }
+    except Exception as exc:
+        return {
+            'tile': tile_name,
+            'status': 'failed',
+            'reason': f'{type(exc).__name__}: {exc}',
+            'output_path': str(expected_path),
+        }
+
+
+def _write_cut_report(
+    report_dir: Path,
+    product_name: str,
+    product_path: Path,
+    intermediate_product: Path,
+    product_wkt: str,
+    expected_tiles: list[str],
+    actual_tiles: list[str],
+    results: list[dict],
+    missing_tiles: list[str],
+    extra_tiles: list[str],
+    batch_error: str | None,
+    graph_path: Path | None = None,
+) -> Path:
+    report_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+    failed_results = [res for res in results if res.get('status') != 'success']
+    success_results = [res for res in results if res.get('status') == 'success']
+    status = 'SUCCESS' if not failed_results and not missing_tiles and not batch_error else 'FAILURE'
+    report_path = report_dir / f'{product_name}_cuts_report_{status}.txt'
+
+    lines: list[str] = [
+        'WorldSAR tile cutting report',
+        f'Timestamp (UTC): {timestamp}',
+        f'Product name: {product_name}',
+        f'Product path: {product_path}',
+        f'Intermediate product: {intermediate_product}',
+        f'Cuts output dir: {report_dir}',
+        f'Graph file: {graph_path}' if graph_path else 'Graph file: (not used)',
+        f'Product WKT: {product_wkt}',
+        '',
+        f'Expected tiles: {len(expected_tiles)}',
+        f'Actual tiles on disk: {len(actual_tiles)}',
+        f'Successful tiles (this run): {len(success_results)}',
+        f'Failed tiles (this run): {len(failed_results)}',
+        f'Missing tiles: {len(missing_tiles)}',
+        f'Unexpected tiles: {len(extra_tiles)}',
+    ]
+
+    if batch_error:
+        lines.extend(['', f'Batch error: {batch_error}'])
+
+    if failed_results:
+        lines.append('')
+        lines.append('Failed tiles:')
+        for res in sorted(failed_results, key=lambda r: r.get('tile', '')):
+            tile = res.get('tile', 'UNKNOWN')
+            reason = res.get('reason', 'unknown failure')
+            output_path = res.get('output_path', '')
+            lines.append(f'- {tile}: {reason} | {output_path}')
+
+    if missing_tiles:
+        lines.append('')
+        lines.append('Missing tiles (expected but not found on disk):')
+        lines.extend([f'- {tile}' for tile in missing_tiles])
+
+    if extra_tiles:
+        lines.append('')
+        lines.append('Unexpected tiles (found on disk but not expected):')
+        lines.extend([f'- {tile}' for tile in extra_tiles])
+
+    report_path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+    return report_path
 
 
 async def _cut_rectangles_async(
@@ -615,6 +750,151 @@ def _write_text_if_changed(path: Path, content: str) -> None:
         path.write_text(content, encoding='utf-8')
 
 
+def _build_cut_graph_signature(product_path: Path, tile_specs: list[dict]) -> str:
+    hasher = hashlib.sha1()
+    hasher.update(product_path.as_posix().encode('utf-8'))
+    for spec in tile_specs:
+        hasher.update(spec['tile'].encode('utf-8'))
+        hasher.update(spec['geo_region'].encode('utf-8'))
+    return hasher.hexdigest()[:12]
+
+
+def _build_cut_graph_xml(product_path: Path, tile_specs: list[dict]) -> str:
+    lines: list[str] = [
+        '<graph id="Graph">',
+        '  <version>1.0</version>',
+        '  <node id="Read">',
+        '    <operator>Read</operator>',
+        '    <sources/>',
+        '    <parameters class="com.bc.ceres.binding.dom.XppDomElement">',
+        f'      <file>{escape(product_path.as_posix())}</file>',
+        '    </parameters>',
+        '  </node>',
+    ]
+
+    for idx, spec in enumerate(tile_specs, start=1):
+        subset_id = f'Subset_{idx}'
+        write_id = f'Write_{idx}'
+        geo_region = escape(spec['geo_region'])
+        output_path = escape(spec['output_path'])
+        lines.extend(
+            [
+                f'  <node id="{subset_id}">',
+                '    <operator>Subset</operator>',
+                '    <sources>',
+                '      <sourceProduct refid="Read"/>',
+                '    </sources>',
+                '    <parameters class="com.bc.ceres.binding.dom.XppDomElement">',
+                '      <sourceBands/>',
+                '      <tiePointGrids/>',
+                '      <region/>',
+                '      <referenceBand/>',
+                f'      <geoRegion>{geo_region}</geoRegion>',
+                '      <subSamplingX>1</subSamplingX>',
+                '      <subSamplingY>1</subSamplingY>',
+                '      <fullSwath>false</fullSwath>',
+                '      <copyMetadata>true</copyMetadata>',
+                '    </parameters>',
+                '  </node>',
+                f'  <node id="{write_id}">',
+                '    <operator>Write</operator>',
+                '    <sources>',
+                f'      <sourceProduct refid="{subset_id}"/>',
+                '    </sources>',
+                '    <parameters class="com.bc.ceres.binding.dom.XppDomElement">',
+                f'      <file>{output_path}</file>',
+                '      <formatName>HDF5</formatName>',
+                '    </parameters>',
+                '  </node>',
+            ]
+        )
+
+    lines.append('</graph>')
+    return '\n'.join(lines) + '\n'
+
+
+def _cut_rectangles_graph(
+    rectangles: list,
+    product_path: Path,
+    cuts_outdir: Path,
+    name: str,
+    gpt_memory: str | None,
+    gpt_parallelism: int | None,
+    gpt_timeout: int | None,
+):
+    cuts_dir = cuts_outdir / name
+    cuts_dir.mkdir(parents=True, exist_ok=True)
+
+    tile_specs: list[dict] = []
+    for rect in rectangles:
+        tile_name = rect['BL']['properties']['name']
+        tile_specs.append(
+            {
+                'tile': tile_name,
+                'geo_region': rectangle_to_wkt(rect),
+                'output_path': (cuts_dir / f'{tile_name}.h5').as_posix(),
+            }
+        )
+
+    graph_dir = cuts_dir / 'graphs'
+    graph_dir.mkdir(parents=True, exist_ok=True)
+    signature = _build_cut_graph_signature(product_path, tile_specs)
+    graph_path = graph_dir / f'{name}_cuts_{signature}.xml'
+    graph_xml = _build_cut_graph_xml(product_path, tile_specs)
+    _write_text_if_changed(graph_path, graph_xml)
+
+    op = _create_gpt_operator(
+        product_path=product_path,
+        output_dir=cuts_dir,
+        output_format='HDF5',
+        gpt_memory=gpt_memory,
+        gpt_parallelism=gpt_parallelism,
+        gpt_timeout=gpt_timeout,
+    )
+    graph_output = cuts_dir / f'{name}_cuts_graph.dim'
+    result = op.run_graph(graph_path=graph_path, output_path=graph_output)
+    batch_error = None if result is not None else op.last_error_summary()
+
+    results: list[dict] = []
+    for spec in tile_specs:
+        tile = spec['tile']
+        output_path = Path(spec['output_path'])
+        if output_path.exists():
+            size_bytes = output_path.stat().st_size
+            if size_bytes == 0:
+                results.append(
+                    {
+                        'tile': tile,
+                        'status': 'failed',
+                        'reason': 'output file is empty after GPT graph run',
+                        'output_path': str(output_path),
+                    }
+                )
+            else:
+                results.append(
+                    {
+                        'tile': tile,
+                        'status': 'success',
+                        'output_path': str(output_path),
+                        'size_bytes': size_bytes,
+                    }
+                )
+        else:
+            reason = 'output missing after GPT graph run'
+            if batch_error:
+                reason = f'{reason}; graph error: {batch_error}'
+            results.append(
+                {
+                    'tile': tile,
+                    'status': 'failed',
+                    'reason': reason,
+                    'output_path': str(output_path),
+                }
+            )
+
+    return results, batch_error, graph_path
+
+
 # ======================================================================================================================== PIPELINES
 def pipeline_sentinel(
     product_path: Path,
@@ -673,15 +953,30 @@ def pipeline_sentinel(
     if calib_path is None:
         raise RuntimeError('Calibration failed.')
 
-    deburst_path = op.Deburst()
-    if deburst_path is None:
-        raise RuntimeError('TOPSAR Deburst failed.')
 
-    # TODO: Add subaperture.
-    if is_TOPS and subaperture:
+    if is_TOPS:
+        # A) Debursting. For TOPS, this is required before deramping/demod, for Stripmap it can be done after calibration as a final step before terrain correction.
+        deburst_path = op.Deburst()
+        if deburst_path is None:
+            raise RuntimeError('TOPSAR Deburst failed.')
+        # B) Deramping
         deramp_path = op.TopsarDerampDemod()
         if deramp_path is None:
             raise RuntimeError('TOPSAR Deramp/Demod failed.')
+
+
+    # TODO: to be removed later.
+    fp_subset = op.subset(geo_region="POLYGON ((5.969696 51.118179, 6.256714 51.118179, 6.256714 51.270508, 5.969696 51.270508, 5.969696 51.118179))")
+
+    # Applycation of the subaperture operator. For TOPS it requires deramp/demod as input, for Stripmap it takes the deburst output.
+    op.do_subaps(
+        safe_path=product_path,
+        dim_path=op.prod_path,
+        n_decompositions=[2],
+        byte_order=1,
+        VERBOSE=False
+    )
+
 
     tc_path = op.TerrainCorrection(map_projection='AUTO:42001', pixel_spacing_in_meter=10.0)
     if tc_path is None:
@@ -926,6 +1221,7 @@ def _run_preprocessing(
 def _run_tiling(
     product_wkt: str,
     grid_geoj_path: Path | None,
+    source_product: Path,
     intermediate_product: Path,
     cuts_outdir: Path,
     product_mode: str,
@@ -950,30 +1246,72 @@ def _run_tiling(
     if name is None:
         raise ValueError(f'Could not extract product id from: {intermediate_product}')
 
-    max_workers = _compute_cut_workers(rectangles, gpt_memory)
-    results = asyncio.run(
-        _cut_rectangles_async(
+    batch_error: str | None = None
+    graph_path: Path | None = None
+    if product_mode == 'NISAR':
+        max_workers = _compute_cut_workers(rectangles, gpt_memory)
+        try:
+            results = asyncio.run(
+                _cut_rectangles_async(
+                    rectangles=rectangles,
+                    product_path=intermediate_product,
+                    cuts_outdir=cuts_outdir,
+                    name=name,
+                    product_mode=product_mode,
+                    gpt_memory=gpt_memory,
+                    gpt_parallelism=gpt_parallelism,
+                    gpt_timeout=gpt_timeout,
+                    max_workers=max_workers,
+                )
+            )
+        except Exception as exc:
+            results = []
+            batch_error = f'{type(exc).__name__}: {exc}'
+    else:
+        results, batch_error, graph_path = _cut_rectangles_graph(
             rectangles=rectangles,
             product_path=intermediate_product,
             cuts_outdir=cuts_outdir,
             name=name,
-            product_mode=product_mode,
             gpt_memory=gpt_memory,
             gpt_parallelism=gpt_parallelism,
             gpt_timeout=gpt_timeout,
-            max_workers=max_workers,
         )
+
+    expected_tiles = sorted({rect['BL']['properties']['name'] for rect in rectangles})
+    cuts_dir = cuts_outdir / name
+    actual_tiles = sorted({path.stem for path in cuts_dir.glob('*.h5')})
+
+    missing_tiles = sorted(set(expected_tiles) - set(actual_tiles))
+    extra_tiles = sorted(set(actual_tiles) - set(expected_tiles))
+
+    report_path = _write_cut_report(
+        report_dir=cuts_dir,
+        product_name=name,
+        product_path=source_product,
+        intermediate_product=intermediate_product,
+        product_wkt=product_wkt,
+        expected_tiles=expected_tiles,
+        actual_tiles=actual_tiles,
+        results=results,
+        missing_tiles=missing_tiles,
+        extra_tiles=extra_tiles,
+        batch_error=batch_error,
+        graph_path=graph_path,
     )
 
-    for kind, path in results:
-        if kind == 'nisar':
-            print(f'Final processed NISAR tile saved at: {path}')
+    for res in results:
+        tile = res.get('tile', 'UNKNOWN')
+        status = res.get('status', 'unknown')
+        output_path = res.get('output_path', '')
+        if status == 'success':
+            print(f'Final processed tile saved at: {output_path}')
         else:
-            print(f'Final processed product located at: {path}')
+            reason = res.get('reason', 'unknown failure')
+            print(f'Failed tile {tile}: {reason} ({output_path})')
 
-    total_tiles = len(rectangles)
-    num_cuts = list((cuts_outdir / name).rglob('*.h5'))
-    assert total_tiles == len(num_cuts), f'Expected {total_tiles} tiles, but found {len(num_cuts)}.'
+    if batch_error or missing_tiles or any(res.get('status') != 'success' for res in results):
+        raise RuntimeError(f'Tile cutting failed; report saved at: {report_path}')
     return name
 
 
@@ -1047,6 +1385,7 @@ def main():
         name = _run_tiling(
             product_wkt=product_wkt,
             grid_geoj_path=grid_geoj_path,
+            source_product=product_path,
             intermediate_product=intermediate_product,
             cuts_outdir=cuts_outdir,
             product_mode=product_mode,
