@@ -66,7 +66,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.11 \
     openjdk-8-jdk \
     gdal-bin \
-    libgdal32 \
+    libgdal30 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
