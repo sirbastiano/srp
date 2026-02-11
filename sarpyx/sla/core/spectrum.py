@@ -30,7 +30,7 @@ warnings.filterwarnings("ignore")
 
 #######################################|  SETUP |###################################################
 # In command prompt:
-# cmd = "conda create -n py39 python=3.9 scipy pandas numpy=1.20 gdal matplotlib lxml openpyxl h5py numba jupyter -c conda-forge"
+# cmd = "conda create -n py39 python=3.9 scipy pandas numpy=1.20 rasterio matplotlib lxml openpyxl h5py numba jupyter -c conda-forge"
 ####################################################################################################
 
 def center_frequency(array, freq_c, printout=False):
@@ -480,7 +480,6 @@ class SubLookAnalysis:
                plt.show()
                
                print(f"SubLook Generation successfully ended.")
-
 
 
 

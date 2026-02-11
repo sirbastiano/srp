@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
@@ -27,17 +27,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     build-essential \
     openjdk-8-jdk \
-    gdal-bin \
-    libgdal-dev \
     libhdf5-dev \
     libxml2-dev \
     libxslt1-dev \
     libproj-dev \
     libgeos-dev \
     && rm -rf /var/lib/apt/lists/*
-
-# Set GDAL environment variables
-ENV GDAL_CONFIG=/usr/bin/gdal-config
 
 # Install SNAP
 COPY support/snap-install.sh /tmp/snap-install.sh
@@ -69,23 +64,17 @@ COPY sarpyx ./sarpyx
 
 # Install sarpyx in development mode and verify import
 RUN python3.11 -m pip install --upgrade pip setuptools wheel && \
-    python3.11 -m pip install numpy && \
-    GDAL_VERSION=$(gdal-config --version) && \
-    python3.11 -m pip install GDAL==${GDAL_VERSION} && \
+    python3.11 -m pip install numpy six python-dateutil && \
     python3.11 -m pip install -e . && \
     python3.11 -c "import sarpyx; print('sarpyx installed successfully')" && \
     apt-get purge -y --auto-remove \
         build-essential \
         python3.11-dev \
-        libgdal-dev \
         libhdf5-dev \
         libxml2-dev \
         libxslt1-dev \
         libproj-dev \
         libgeos-dev \
-        libfftw3-dev \
-        libtiff5-dev \
-        gfortran \
         software-properties-common && \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/* /tmp/* /var/tmp/*
 

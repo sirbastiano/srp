@@ -308,9 +308,10 @@ def build_vrt(
     tile_paths: Sequence[Path | str],
     output_vrt: str | Path,
 ) -> Path:
-    """Merge multiple DEM GeoTIFFs into a single GDAL VRT (virtual mosaic).
+    """Merge multiple DEM GeoTIFFs into a single raster mosaic.
 
-    Requires ``rasterio`` (already a project dependency).
+    Uses ``rasterio`` only (no external GDAL CLI requirement). If ``output_vrt``
+    ends with ``.vrt``, an adjacent GeoTIFF (same stem) is written instead.
 
     Parameters
     ----------
@@ -322,27 +323,49 @@ def build_vrt(
     Returns
     -------
     Path
-        The output VRT path.
+        The output mosaic path.
     """
     try:
-        from rasterio.merge import merge
         import rasterio
+        from rasterio.merge import merge
     except ImportError as exc:
-        raise ImportError("rasterio is required for VRT building: pip install rasterio") from exc
+        raise ImportError("rasterio is required for DEM mosaic building: pip install rasterio") from exc
 
     output_vrt = Path(output_vrt)
     output_vrt.parent.mkdir(parents=True, exist_ok=True)
+    tile_paths = [Path(p) for p in tile_paths]
+    if not tile_paths:
+        raise ValueError("tile_paths is empty; at least one DEM tile is required")
 
-    # Build VRT via GDAL command line (more efficient than rasterio merge for VRT)
-    import subprocess
-    tile_strs = [str(p) for p in tile_paths]
-    cmd = ["gdalbuildvrt", str(output_vrt)] + tile_strs
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        raise RuntimeError(f"gdalbuildvrt failed: {result.stderr}")
+    with rasterio.open(tile_paths[0]) as first:
+        profile = first.profile.copy()
 
-    logger.info("Created VRT: %s (%d tiles)", output_vrt, len(tile_paths))
-    return output_vrt
+    srcs = [rasterio.open(path) for path in tile_paths]
+    try:
+        mosaic, out_transform = merge(srcs)
+    finally:
+        for src in srcs:
+            src.close()
+
+    # VRT is not a portable writable target across environments in rasterio.
+    # Use a GeoTIFF mosaic when caller asks for .vrt.
+    output_path = output_vrt
+    if output_path.suffix.lower() == ".vrt":
+        output_path = output_path.with_suffix(".tif")
+
+    profile.update(
+        driver="GTiff",
+        height=mosaic.shape[1],
+        width=mosaic.shape[2],
+        transform=out_transform,
+        count=mosaic.shape[0],
+    )
+
+    with rasterio.open(output_path, "w", **profile) as dst:
+        dst.write(mosaic)
+
+    logger.info("Created DEM mosaic: %s (%d tiles)", output_path, len(tile_paths))
+    return output_path
 
 
 # ──────────────────────────────────────────────────────────────────────

@@ -38,7 +38,7 @@ setup: clean_venv install_pdm pdm_install_deps
 install_snap:
 	@echo 'Installing packages for S1 data processing...'
 	sudo apt update
-	sudo apt-get install -y libfftw3-dev libtiff5-dev gdal-bin gfortran libgfortran5 jblas git --fix-missing
+	sudo apt-get install -y libfftw3-dev libtiff5-dev gfortran libgfortran5 jblas git --fix-missing
 	@echo 'Downloading SNAP installer...'
 	wget https://download.esa.int/step/snap/12.0/installers/esa-snap_all_linux-12.0.0.sh
 	@echo 'Configuring SNAP installation...'
@@ -59,8 +59,8 @@ docker-build:
 docker-test: docker-build
 	@echo "Running Docker build tests …"
 	docker run --rm $(DOCKER_FULL) sh -c "\
-		python3.11 -m pip install pytest && \
-		python3.11 -m pytest /workspace/tests/test_docker.py -v --tb=short"
+		python3 -m pip install pytest && \
+		python3 -m pytest /workspace/tests/test_docker.py -v --tb=short"
 
 docker-push: docker-build
 	@echo "Pushing $(DOCKER_FULL) …"
