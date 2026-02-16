@@ -1,15 +1,9 @@
 import matplotlib.pyplot as plt
-from osgeo import gdal
 import numpy as np
 import warnings
 from meta import Handler
 import utilis as ut
 
-
-# Stop GDAL printing both warnings and errors to STDERR
-gdal.PushErrorHandler('CPLQuietErrorHandler')
-# Make GDAL raise python exceptions for errors (warnings won't raise an exception)
-gdal.UseExceptions()
 warnings.filterwarnings("ignore")
 
 

@@ -3,7 +3,6 @@ import os
 import shutil
 from zipfile import ZipFile
 import subprocess
-from osgeo import gdal
 import random
 import numpy as np
 import rasterio
@@ -159,16 +158,14 @@ def create_complex_image_from_file(i_path, q_path):
     """
     Create a complex image array from the in-phase and quadrature components files in a beam-dimap file.
     """
-    # Read the in-phase and quadrature components
-    img_i = gdal.Open(i_path).ReadAsArray()
-    img_q = gdal.Open(q_path).ReadAsArray()
+    # Read the in-phase and quadrature components using rasterio.
+    with rasterio.open(i_path) as src_i:
+        img_i = src_i.read(1)
+    with rasterio.open(q_path) as src_q:
+        img_q = src_q.read(1)
 
     # Create a complex image array
     img_complex = img_i + 1j * img_q
-    
-    #Make sure gdal variables are cleared
-    img_i = None
-    img_q = None
 
     return img_complex
 
@@ -236,6 +233,5 @@ def check_file(file_path, max_retries=5, retry_delay=0.5):
                 raise e
     
     raise FileNotFoundError(f"Could not access file after {max_retries} attempts: {file_path}")
-
 
 

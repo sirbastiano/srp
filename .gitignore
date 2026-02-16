@@ -87,3 +87,4 @@ S1*
 *.ckpt
 **/.ipynb_checkpoints/
 worldsar.sh
+support/esa-snap_sentinel_linux-13.0.0.sh

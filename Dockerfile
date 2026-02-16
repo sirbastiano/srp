@@ -8,13 +8,22 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG SNAP_VERSION=12.0.0
 ARG SNAP_SKIP_UPDATES=1
 ENV JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"
-ENV SNAP_HOME="/usr/local/snap"
+ENV SNAP_HOME="/snap12"
+ENV SNAP_SKIP_UPDATES="${SNAP_SKIP_UPDATES}"
+ENV PATH="${PATH}:${SNAP_HOME}/bin"
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 ENV PIP_NO_CACHE_DIR=1
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
+    software-properties-common \
+    gnupg \
+    gpg-agent \
+    lsb-release \
+    && add-apt-repository -y ppa:deadsnakes/ppa \
+    && add-apt-repository -y ppa:openjdk-r/ppa \
+    && apt-get update && apt-get install -y --no-install-recommends \
     python3.11 \
     python3.11-venv \
     python3.11-dev \
@@ -23,14 +32,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     build-essential \
     openjdk-8-jdk \
-    gdal-bin \
-    libgdal-dev \
+    libhdf5-dev \
+    libxml2-dev \
+    libxslt1-dev \
+    libproj-dev \
+    libgeos-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install SNAP
 COPY support/snap-install.sh /tmp/snap-install.sh
 COPY support/snap.varfile /tmp/snap.varfile
-RUN chmod +x /tmp/snap-install.sh && /tmp/snap-install.sh -v && rm -f /tmp/snap-install.sh /tmp/snap.varfile
+RUN chmod +x /tmp/snap-install.sh \
+    && /tmp/snap-install.sh -v \
+    && rm -f /tmp/snap-install.sh /tmp/snap.varfile \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install pip
 RUN curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && \
@@ -77,15 +92,31 @@ RUN ln -sf /usr/bin/python3.11 /usr/bin/python3 && \
 
 WORKDIR /workspace
 
-# Copy SNAP installation from builder
-COPY --from=builder /usr/local/snap /usr/local/snap
+# Copy only essential files
+COPY pyproject.toml ./
+COPY sarpyx ./sarpyx
+COPY tests ./tests  
 
-# Copy Python site-packages from builder
-COPY --from=builder /usr/local/lib/python3.11/dist-packages /usr/local/lib/python3.11/dist-packages
+# Install sarpyx in development mode and verify import
+RUN python3.11 -m pip install --upgrade pip setuptools wheel && \
+    python3.11 -m pip install -e . && \
+    python3.11 -c "import six; print('six installed successfully')" && \
+    apt-get purge -y --auto-remove \
+        build-essential \
+        python3.11-dev \
+        libhdf5-dev \
+        libxml2-dev \
+        libxslt1-dev \
+        libproj-dev \
+        libgeos-dev \
+        software-properties-common && \
+    python3.11 -m pip install --ignore-installed --no-cache-dir six python-dateutil && \
+    python3.11 -c "import six, dateutil; print('runtime deps ok')" && \
+    rm -rf /var/lib/apt/lists/* /var/cache/apt/* /tmp/* /var/tmp/*
 
 # Copy entrypoint script
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["python3.11", "-c", "import sarpyx; print('sarpyx version:', getattr(sarpyx, '__version__', 'unknown'))"]
+CMD ["/bin/bash"]

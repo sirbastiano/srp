@@ -18,7 +18,7 @@ services:
       - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
       - LD_LIBRARY_PATH=.:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server/
       - LC_ALL=en_US.UTF-8
-      - PATH=/usr/local/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      - PATH=/snap12/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       - JUPYTER_ENABLE_LAB=yes
       - JUPYTER_TOKEN=
       - JUPYTER_ALLOW_INSECURE_WRITES=1

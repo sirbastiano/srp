@@ -171,6 +171,10 @@ class GPT:
         
         self.gpt_executable = self._get_gpt_executable(gpt_path)
         self.current_cmd: List[str] = []
+        self.last_cmd: Optional[str] = None
+        self.last_stdout: Optional[str] = None
+        self.last_stderr: Optional[str] = None
+        self.last_returncode: Optional[int] = None
 
     def _base_cmd(self) -> List[str]:
         """Build the base GPT command with shared options."""
@@ -265,6 +269,10 @@ class GPT:
         self._print_operator_banner(operator_label)
         cmd_str = ' '.join(self.current_cmd)
         print(f'Executing GPT command: {cmd_str}')
+        self.last_cmd = cmd_str
+        self.last_stdout = None
+        self.last_stderr = None
+        self.last_returncode = None
         
         try:
             run_kwargs = {
@@ -276,6 +284,9 @@ class GPT:
             if self.timeout is not None:
                 run_kwargs["timeout"] = self.timeout
             process = subprocess.run(cmd_str, **run_kwargs)
+            self.last_returncode = process.returncode
+            self.last_stdout = process.stdout or ''
+            self.last_stderr = process.stderr or ''
             
             if process.stdout:
                 print(f'GPT Output: {process.stdout}')
@@ -285,10 +296,15 @@ class GPT:
             print('Command executed successfully!')
             return True
             
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as e:
+            self.last_stdout = (e.stdout or '') if hasattr(e, 'stdout') else ''
+            self.last_stderr = f'GPT command timed out after {self.timeout}s'
             print('Error: GPT command timed out after 1 hour')
             return False
         except subprocess.CalledProcessError as e:
+            self.last_returncode = e.returncode
+            self.last_stdout = e.stdout or ''
+            self.last_stderr = e.stderr or ''
             print(f'Error executing GPT command: {cmd_str}')
             print(f'Return code: {e.returncode}')
             if e.stdout:
@@ -301,8 +317,21 @@ class GPT:
             print('Ensure SNAP is installed and configured correctly.')
             return False
         except Exception as e:
+            self.last_stderr = f'Unexpected error during GPT execution: {type(e).__name__}: {e}'
             print(f'Unexpected error during GPT execution: {type(e).__name__}: {e}')
             return False
+
+    def last_error_summary(self, max_chars: int = 800) -> str:
+        """Return a concise summary of the last GPT error."""
+        parts: list[str] = []
+        if self.last_returncode is not None:
+            parts.append(f'returncode={self.last_returncode}')
+        if self.last_stderr:
+            parts.append(f'stderr={self.last_stderr.strip()}')
+        if not parts and self.last_stdout:
+            parts.append(f'stdout={self.last_stdout.strip()}')
+        summary = '; '.join(parts) if parts else 'unknown error'
+        return summary[:max_chars]
 
     def _get_operator_label(self) -> str:
         """Infer a readable operator label from the current command."""

@@ -7,30 +7,29 @@ DOCKER_TAG     ?= latest
 DOCKER_FULL    := $(DOCKER_IMAGE):$(DOCKER_TAG)
 PLATFORM       ?= linux/amd64
 
-.PHONY: clean_venv install_pdm pdm_install_deps install_phidown install_snap \
+.PHONY: clean_venv venv install_deps install_phidown install_snap \
         setup prune_docker up_recreate up \
         docker-build docker-test docker-push docker-all
 
-# ──────────────────────────  Python / PDM  ──────────────────────────
+# ──────────────────────────  Python / uv  ──────────────────────────
 
 clean_venv:
 	@echo 'Removing virtual environment...'
 	@if [ -d '.venv' ]; then rm -rf .venv; fi
 
-install_pdm:
-	@echo 'Installing pdm...'
-	python3 -m pip install --upgrade pip
-	python3 -m pip install --user pdm
+venv:
+	@echo 'Creating virtual environment with uv...'
+	uv venv .venv
 
-pdm_install_deps:
-	@echo 'Installing toml package using pdm...'
-	pdm install
+install_deps:
+	@echo 'Installing dependencies with uv...'
+	uv sync
 
 install_phidown:
 	@echo 'Installing phi-down...'
-	pdm add phidown
+	uv add phidown
 
-setup: clean_venv install_pdm pdm_install_deps
+setup: clean_venv venv install_deps
 	@echo 'Setup complete.'
 
 # ──────────────────────────  SNAP  ──────────────────────────────────
@@ -38,7 +37,7 @@ setup: clean_venv install_pdm pdm_install_deps
 install_snap:
 	@echo 'Installing packages for S1 data processing...'
 	sudo apt update
-	sudo apt-get install -y libfftw3-dev libtiff5-dev gdal-bin gfortran libgfortran5 jblas git --fix-missing
+	sudo apt-get install -y libfftw3-dev libtiff5-dev gfortran libgfortran5 jblas git --fix-missing
 	@echo 'Downloading SNAP installer...'
 	wget https://download.esa.int/step/snap/12.0/installers/esa-snap_all_linux-12.0.0.sh
 	@echo 'Configuring SNAP installation...'
@@ -59,8 +58,8 @@ docker-build:
 docker-test: docker-build
 	@echo "Running Docker build tests …"
 	docker run --rm $(DOCKER_FULL) sh -c "\
-		python3.11 -m pip install pytest && \
-		python3.11 -m pytest /workspace/tests/test_docker.py -v --tb=short"
+		python3 -m pip install pytest && \
+		python3 -m pytest /workspace/tests/test_docker.py -v --tb=short"
 
 docker-push: docker-build
 	@echo "Pushing $(DOCKER_FULL) …"
@@ -72,8 +71,14 @@ prune_docker:
 	@echo 'Pruning Docker system...'
 	docker system prune -a
 
+recreate:
+	sudo docker compose up --build --force-recreate --remove-orphans
+
 up_recreate:
-	docker compose up --build --force-recreate
+	sudo docker compose up --build --force-recreate
 
 up:
-	docker compose up
+	sudo docker compose up
+
+push:
+	sudo docker push sirbastiano94/sarpyx:latest
