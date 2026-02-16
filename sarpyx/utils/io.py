@@ -4,7 +4,6 @@ import h5py
 from pathlib import Path
 from typing import Any, Union
 from zipfile import ZipFile
-from scipy import io
 import gc
 from typing import Optional, Tuple, Union, Dict, Any, List, Callable
 import numpy as np
@@ -391,7 +390,12 @@ def save_matlab_mat(data_object: Any, filename: str, filepath: Union[str, Path])
     try:
         filepath = Path(filepath)
         savename = filepath / f"{filename}.mat"
-        io.savemat(savename, {filename: data_object})
+        try:
+            import scipy.io as sio
+        except Exception as import_error:
+            print(f"scipy.io is required to save MATLAB files: {import_error}")
+            return False
+        sio.savemat(savename, {filename: data_object})
         print(f"Saved MATLAB file to: {savename}")
         return True
     except Exception as e:

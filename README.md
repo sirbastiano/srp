@@ -41,6 +41,14 @@ For development installation with extras:
 ```bash
 uv sync --extra copernicus --extra dev --extra test --extra docs
 ```
+
+If you need the GDAL Python bindings or CLI tools (e.g., `gdalbuildvrt`), install
+system GDAL first and then install the bindings explicitly:
+
+```bash
+sudo apt-get install gdal-bin libgdal-dev
+uv pip install gdal
+```
 </details>
 
 <details>

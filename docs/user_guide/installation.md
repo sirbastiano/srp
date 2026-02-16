@@ -115,16 +115,18 @@ pip install matplotlib seaborn plotly
 #### GDAL Installation Problems
 On some systems, GDAL can be challenging to install:
 
+The GDAL Python bindings are optional and only required for GDAL-specific utilities.
+
 **Ubuntu/Debian:**
 ```bash
 sudo apt-get install gdal-bin libgdal-dev
-pip install gdal
+uv pip install gdal
 ```
 
 **macOS (using Homebrew):**
 ```bash
 brew install gdal
-pip install gdal
+uv pip install gdal
 ```
 
 **Windows:**

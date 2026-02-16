@@ -23,8 +23,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     build-essential \
     openjdk-8-jdk \
-    gdal-bin \
-    libgdal-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install SNAP
@@ -65,8 +63,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     python3.11 \
     openjdk-8-jdk \
-    gdal-bin \
-    libgdal30 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*

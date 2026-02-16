@@ -10,7 +10,7 @@ authors = [
     { name = "Roberto Del Prete", email = "roberto.delprete@esa.int" }
 ]
 license = { text = "Apache-2.0" }
-requires-python = ">=3.11, <3.13"
+requires-python = ">=3.11, <4"
 dependencies = [
     "matplotlib",
     "scipy",
@@ -28,7 +28,6 @@ dependencies = [
     "lxml>=5.4.0",
     "huggingface-hub>=0.34.1",
     "tifffile>=2025.6.11",
-    "GDAL==3.4.3",
     "folium>=0.20.0",
     "plotly>=6.2.0",
     "lightning>=2.5.3",

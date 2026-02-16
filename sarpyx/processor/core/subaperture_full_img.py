@@ -5,14 +5,11 @@ from typing import List, Optional, Union
 import warnings
 import numpy as np
 import matplotlib.pyplot as plt
-from osgeo import gdal
 
 from .meta import Handler
 from . import utilis as ut
 from .dim_updater import update_dim_add_bands_from_data_dir
 
-gdal.PushErrorHandler('CPLQuietErrorHandler')
-gdal.UseExceptions()
 warnings.filterwarnings("ignore")
 
 
