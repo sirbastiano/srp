@@ -79,6 +79,7 @@ ENV PIP_NO_CACHE_DIR=1
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     python3.11 \
+    curl \
     openjdk-8-jdk \
     gdal-bin \
     libgdal30 \
@@ -89,6 +90,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Create symlinks
 RUN ln -sf /usr/bin/python3.11 /usr/bin/python3 && \
     ln -sf /usr/bin/python3.11 /usr/bin/python
+
+# Install pip for Python 3.11 in runtime image
+RUN curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && \
+    python3.11 /tmp/get-pip.py && \
+    rm -f /tmp/get-pip.py
 
 WORKDIR /workspace
 
@@ -101,15 +107,6 @@ COPY tests ./tests
 RUN python3.11 -m pip install --upgrade pip setuptools wheel && \
     python3.11 -m pip install -e . && \
     python3.11 -c "import six; print('six installed successfully')" && \
-    apt-get purge -y --auto-remove \
-        build-essential \
-        python3.11-dev \
-        libhdf5-dev \
-        libxml2-dev \
-        libxslt1-dev \
-        libproj-dev \
-        libgeos-dev \
-        software-properties-common && \
     python3.11 -m pip install --ignore-installed --no-cache-dir six python-dateutil && \
     python3.11 -c "import six, dateutil; print('runtime deps ok')" && \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/* /tmp/* /var/tmp/*

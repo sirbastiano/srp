@@ -29,6 +29,13 @@
 
 ## Install
 
+For container workflows, use the Docker Compose CLI plugin (`docker compose`) with full commands:
+
+```bash
+docker compose version
+make recreate
+```
+
 <details open>
 <summary><strong>Using uv (recommended)</strong></summary>
 
