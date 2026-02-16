@@ -1,4 +1,5 @@
-FROM ubuntu:22.04
+# ===== Builder Stage =====
+FROM ubuntu:22.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
@@ -13,7 +14,7 @@ ENV PATH="${PATH}:${SNAP_HOME}/bin"
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 ENV PIP_NO_CACHE_DIR=1
 
-# Install only essential packages
+# Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     software-properties-common \
@@ -46,15 +47,44 @@ RUN chmod +x /tmp/snap-install.sh \
     && rm -f /tmp/snap-install.sh /tmp/snap.varfile \
     && rm -rf /var/lib/apt/lists/*
 
-# RUN wget -q "https://download.esa.int/step/snap/12.0/installers/esa-snap_all_linux-${SNAP_VERSION}.sh" -O /tmp/snap_installer.sh && \
-#     chmod +x /tmp/snap_installer.sh && \
-#     /tmp/snap_installer.sh -q -dir "${SNAP_HOME}" && \
-#     rm -f /tmp/snap_installer.sh
-
 # Install pip
 RUN curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && \
     python3.11 /tmp/get-pip.py && \
     rm -f /tmp/get-pip.py
+
+WORKDIR /workspace
+
+# Copy and build sarpyx package
+COPY pyproject.toml ./
+COPY sarpyx ./sarpyx
+RUN python3.11 -m pip install --no-cache-dir . && \
+    python3.11 -c "import sarpyx; print('sarpyx installed successfully')"
+
+# ===== Runtime Stage =====
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+ARG SNAP_SKIP_UPDATES=1
+ENV JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"
+ENV SNAP_HOME="/usr/local/snap"
+ENV SNAP_SKIP_UPDATES="${SNAP_SKIP_UPDATES}"
+ENV PATH="${PATH}:${SNAP_HOME}/bin"
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PIP_NO_CACHE_DIR=1
+
+# Install only runtime dependencies (no build-essential, python3.11-dev, etc.)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    python3.11 \
+    openjdk-8-jdk \
+    gdal-bin \
+    libgdal30 \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Create symlinks
 RUN ln -sf /usr/bin/python3.11 /usr/bin/python3 && \
@@ -84,7 +114,7 @@ RUN python3.11 -m pip install --upgrade pip setuptools wheel && \
     python3.11 -c "import six, dateutil; print('runtime deps ok')" && \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/* /tmp/* /var/tmp/*
 
-# Copy and set up entrypoint script
+# Copy entrypoint script
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
