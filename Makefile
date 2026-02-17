@@ -24,7 +24,7 @@ SNAP_INSTALLER ?= esa-snap_all_linux-$(SNAP_VERSION).sh
 SNAP_INSTALL_URL ?= https://download.esa.int/step/snap/$(SNAP_VERSION)/installers/$(SNAP_INSTALLER)
 SNAP_VARFILE ?= $(CURDIR)/snap.varfile
 SNAP_VMOPTIONS ?= $(CURDIR)/snap/bin/gpt.vmoptions
-SNAP_INSTALL_PARENT ?= $(CURDIR)/..
+SNAP_INSTALL_PARENT ?= $(CURDIR)
 
 # ---------- Meta ----------
 .PHONY: help \
