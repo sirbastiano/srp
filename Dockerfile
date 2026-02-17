@@ -42,7 +42,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install SNAP
 COPY support/snap-install.sh /tmp/snap-install.sh
 COPY support/snap.varfile /tmp/snap.varfile
-RUN chmod +x /tmp/snap-install.sh \
+RUN sed -i "s|^sys.installationDir=.*|sys.installationDir=${SNAP_HOME}|" /tmp/snap.varfile \
+    && chmod +x /tmp/snap-install.sh \
     && /tmp/snap-install.sh -v \
     && rm -f /tmp/snap-install.sh /tmp/snap.varfile \
     && rm -rf /var/lib/apt/lists/*
@@ -65,11 +66,14 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ARG SNAP_SKIP_UPDATES=1
 ENV JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"
-ENV SNAP_HOME="/usr/local/snap"
+ENV SNAP_HOME="/workspace/snap12"
 ENV SNAP_SKIP_UPDATES="${SNAP_SKIP_UPDATES}"
 ENV PATH="${PATH}:${SNAP_HOME}/bin"
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -80,9 +84,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     python3.11 \
     curl \
+    locales \
     openjdk-8-jdk \
     gdal-bin \
     libgdal30 \
+    && locale-gen en_US.UTF-8 \
+    && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
@@ -97,6 +104,11 @@ RUN curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && \
     rm -f /tmp/get-pip.py
 
 WORKDIR /workspace
+
+# Bring SNAP installation from builder stage into final image.
+COPY --from=builder /snap12 /workspace/snap12
+RUN ln -sf /workspace/snap12/bin/snap /usr/local/bin/snap && \
+    ln -sf /workspace/snap12/bin/gpt /usr/local/bin/gpt
 
 # Copy only essential files
 COPY pyproject.toml ./
@@ -113,7 +125,7 @@ RUN python3.11 -m pip install --upgrade pip setuptools wheel && \
 
 # Copy entrypoint script
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
+COPY start-jupyter.sh /usr/local/bin/start-jupyter.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/start-jupyter.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["/bin/bash"]

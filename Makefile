@@ -127,7 +127,7 @@ sif-push: check-hf ## Upload SIF to Hugging Face (uses HF_REPO)
 	@echo "Uploading $(SIF) to $(HF_REPO) ($(HF_REPO_TYPE))..."
 	hf upload "$(HF_REPO)" "$(SIF)" --repo-type "$(HF_REPO_TYPE)"
 
-sif-all: up-recreate sif-build sif-push ## Build + upload SIF
+sif-all: recreate push sif-build sif-push ## Build + upload SIF
 
 sifbuid: sif-build
 sifpush: sif-push
