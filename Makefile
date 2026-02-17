@@ -15,6 +15,10 @@ DOCKER_TAG ?= latest
 DOCKER_FULL := $(DOCKER_IMAGE):$(DOCKER_TAG)
 PLATFORM ?= linux/amd64
 
+SIF ?= sarpyx.sif
+HF_REPO ?= WORLDSAR/support
+HF_REPO_TYPE ?= dataset
+
 SNAP_VERSION ?= 12.0.0
 SNAP_INSTALLER ?= esa-snap_all_linux-$(SNAP_VERSION).sh
 SNAP_INSTALL_URL ?= https://download.esa.int/step/snap/$(SNAP_VERSION)/installers/$(SNAP_INSTALLER)
@@ -24,11 +28,12 @@ SNAP_INSTALL_PARENT ?= $(CURDIR)/..
 
 # ---------- Meta ----------
 .PHONY: help \
-	check-docker check-compose check-uv check-wget \
+	check-docker check-compose check-uv check-wget check-singularity check-hf \
 	clean-venv venv install-deps install-phidown setup \
 	install-snap \
 	docker-build docker-test docker-push docker-all prune-docker \
 	recreate up-recreate up down logs ps pull push \
+	sif-build sif-push sif-all sifbuid sifpush sifup \
 	clean_venv install_deps install_phidown prune_docker up_recreate
 
 help: ## Show available targets
@@ -46,6 +51,13 @@ check-uv: ## Verify uv is available
 
 check-wget: ## Verify wget is available
 	@command -v wget >/dev/null 2>&1 || { echo "Error: wget not found in PATH."; exit 1; }
+
+check-singularity: ## Verify singularity/apptainer is available
+	@command -v singularity >/dev/null 2>&1 || command -v apptainer >/dev/null 2>&1 || { \
+		echo "Error: singularity or apptainer not found in PATH."; exit 1; }
+
+check-hf: ## Verify Hugging Face CLI is available
+	@command -v hf >/dev/null 2>&1 || { echo "Error: hf (Hugging Face CLI) not found in PATH."; exit 1; }
 
 # ---------- Python / uv ----------
 clean-venv: ## Remove local virtual environment (.venv)
@@ -101,6 +113,26 @@ install-snap: check-wget ## Install SNAP and configure default memory
 	rm -f "$(SNAP_INSTALLER)" "$(SNAP_VARFILE)"
 	@echo "SNAP installation complete."
 
+# ---------- SIF / Singularity ----------
+sif-build: check-singularity ## Build SIF from Docker image (uses DOCKER_FULL)
+	@echo "Building $(SIF) from docker://$(DOCKER_FULL)..."
+	@if command -v apptainer >/dev/null 2>&1; then \
+		apptainer build --disable-cache "$(SIF)" "docker://$(DOCKER_FULL)"; \
+	else \
+		singularity build --disable-cache "$(SIF)" "docker://$(DOCKER_FULL)"; \
+	fi
+
+sif-push: check-hf ## Upload SIF to Hugging Face (uses HF_REPO)
+	@test -f "$(SIF)" || { echo "Error: $(SIF) not found. Run 'make sif-build' first."; exit 1; }
+	@echo "Uploading $(SIF) to $(HF_REPO) ($(HF_REPO_TYPE))..."
+	hf upload "$(HF_REPO)" "$(SIF)" --repo-type "$(HF_REPO_TYPE)"
+
+sif-all: sif-build sif-push ## Build + upload SIF
+
+sifbuid: sif-build
+sifpush: sif-push
+sifup: sif-all
+
 # ---------- Docker ----------
 docker-build: check-docker ## Build Docker image
 	@echo "Building Docker image $(DOCKER_FULL)..."
@@ -146,6 +178,7 @@ pull: check-compose ## Pull compose service images
 
 push: check-docker ## Push image configured by DOCKER_IMAGE/DOCKER_TAG
 	$(DOCKER) push "$(DOCKER_FULL)"
+
 
 # ---------- Backward-compatible aliases ----------
 clean_venv: clean-venv
