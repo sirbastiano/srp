@@ -960,13 +960,10 @@ def pipeline_sentinel(
         if deburst_path is None:
             raise RuntimeError('TOPSAR Deburst failed.')
         # B) Deramping
-        deramp_path = op.TopsarDerampDemod()
-        if deramp_path is None:
-            raise RuntimeError('TOPSAR Deramp/Demod failed.')
+        # deramp_path = op.TopsarDerampDemod()
+        # if deramp_path is None:
+        #     raise RuntimeError('TOPSAR Deramp/Demod failed.')
 
-
-    # TODO: to be removed later.
-    fp_subset = op.subset(geo_region="POLYGON ((5.969696 51.118179, 6.256714 51.118179, 6.256714 51.270508, 5.969696 51.270508, 5.969696 51.118179))")
 
     # Applycation of the subaperture operator. For TOPS it requires deramp/demod as input, for Stripmap it takes the deburst output.
     op.do_subaps(
