@@ -180,7 +180,7 @@ ps: check-compose ## List compose services
 pull: check-compose ## Pull compose service images
 	$(COMPOSE) pull
 
-push: check-docker ## Push image configured by DOCKER_IMAGE/DOCKER_TAG
+push: check-docker recreate ## Push image configured by DOCKER_IMAGE/DOCKER_TAG
 	$(DOCKER) push "$(DOCKER_FULL)"
 
 
