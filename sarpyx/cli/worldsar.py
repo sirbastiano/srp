@@ -45,7 +45,7 @@ ORBIT_BASE_URL = os.getenv('orbit_base_url') or os.getenv('ORBIT_BASE_URL') or '
 
 # Processing settings
 prepro = True
-tiling = True
+tiling = False
 db_indexing = False
 MAX_CUT_WORKERS = 5
 
