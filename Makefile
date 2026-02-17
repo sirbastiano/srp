@@ -131,7 +131,7 @@ sif-run:
 	apptainer run --writable-tmpfs sarpyx.sif /bin/bash
 
 
-sif-all: recreate push sif-build sif-push ## Build + upload SIF
+sif-all: sif-build sif-push ## Build + upload SIF
 
 sifbuid: sif-build
 sifpush: sif-push
