@@ -5,6 +5,7 @@
 env/
 venv/
 ENV/
+.snap/
 env.bak/
 venv.bak/
 *.log
