@@ -157,17 +157,28 @@ def read_annotation(annotations):
 def create_complex_image_from_file(i_path, q_path):
     """
     Create a complex image array from the in-phase and quadrature components files in a beam-dimap file.
+    Returns complex64 (not complex128) to conserve memory.
     """
     # Read the in-phase and quadrature components using rasterio.
     with rasterio.open(i_path) as src_i:
-        img_i = src_i.read(1)
+        img_i = src_i.read(1).astype(np.float32, copy=False)
     with rasterio.open(q_path) as src_q:
-        img_q = src_q.read(1)
+        img_q = src_q.read(1).astype(np.float32, copy=False)
 
-    # Create a complex image array
-    img_complex = img_i + 1j * img_q
+    # Create a complex64 image array (avoids implicit promotion to complex128)
+    img_complex = np.empty(img_i.shape, dtype=np.complex64)
+    img_complex.real = img_i
+    img_complex.imag = img_q
 
     return img_complex
+
+
+def get_image_shape_from_file(img_path):
+    """
+    Return (nRows, nCols) of an ENVI/rasterio image without loading data.
+    """
+    with rasterio.open(img_path) as src:
+        return src.height, src.width
 
 
 def randomize_subset_origins(file_path, subset_count = 500, sub_dims = 1024):
@@ -201,13 +212,13 @@ def find_measurement_image(asset_path):
 
 def create_complex_image_from_array(i_image, q_image):
     """
-    Create a complex image array from the in-phase and quadrature components already loaded into a numpy array.
-    
+    Create a complex64 image array from in-phase and quadrature numpy arrays.
     """
-    img_complex = np.zeros((i_image.shape[0], i_image.shape[1]), dtype=np.complex128)
-    # Create a complex image array
-    img_complex = i_image + 1j * q_image
-    
+    i = np.asarray(i_image, dtype=np.float32)
+    q = np.asarray(q_image, dtype=np.float32)
+    img_complex = np.empty(i.shape, dtype=np.complex64)
+    img_complex.real = i
+    img_complex.imag = q
     return img_complex
 
 
