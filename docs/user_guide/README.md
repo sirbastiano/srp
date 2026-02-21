@@ -12,6 +12,7 @@ This guide provides comprehensive information for users of sarpyx, from installa
 6. [Science Applications](science_applications.md)
 7. [SNAP Integration](snap_integration.md)
 8. [Troubleshooting](troubleshooting.md)
+9. [SNAP2StaMPS Guide](snap2stamps_guide.md)
 
 ## Overview
 
