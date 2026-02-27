@@ -10,7 +10,7 @@ from typing import Dict, List, Tuple, Optional
 #   L2_i_VV_SA1.hdr
 #   L3_q_VH_SA2.hdr
 HDR_RE = re.compile(
-    r"^(?:(L\d+)_)?(i|q)_([A-Z]{2})(?:_(SA\d+))?$",
+    r"^(?:(.+)_)?(i|q)_([A-Z]{2})(?:_(SA\d+))?$",
     re.IGNORECASE
 )
 
@@ -40,7 +40,6 @@ def _scan_data_dir_for_groups(data_dir: str) -> List[Tuple[Optional[str], str, O
         pol = m.group(3).upper()
         sa = m.group(4)
         sa = sa.upper() if sa else None
-        Lpref = Lpref.upper() if Lpref else None
 
         key = (Lpref, pol, sa)
         if iq == "i":
@@ -62,10 +61,17 @@ def _sort_groups(groups: List[Tuple[Optional[str], str, Optional[str]]]) -> List
     """
     def sort_key(t):
         Lpref, pol, sa = t
-        Lnum = int(Lpref[1:]) if Lpref else -1
+        if not Lpref:
+            lpref_group = (0, -1, "")
+        else:
+            m = re.fullmatch(r"L(\d+)", Lpref, re.IGNORECASE)
+            if m:
+                lpref_group = (1, int(m.group(1)), "")
+            else:
+                lpref_group = (2, 0, Lpref.upper())
         has_sa = 1 if sa else 0
         sanum = int(sa[2:]) if sa else -1
-        return (Lnum, has_sa, sanum, pol)
+        return (lpref_group[0], lpref_group[1], lpref_group[2], has_sa, sanum, pol)
 
     return sorted(groups, key=sort_key)
 
@@ -235,19 +241,22 @@ def update_dim_add_bands_from_data_dir(dim_in: str, dim_out: str = None, verbose
     template_sbi_int = next((x for x in sbis if (x.findtext("BAND_NAME") or "").lower().startswith("intensity")), sbis[2])
 
     band_mds = [md for md in abstract_md.findall("MDElem") if (md.get("name") or "").startswith("Band_")]
-    if not band_mds:
-        raise RuntimeError("Do not found Band_* inside of Abstracted_Metadata.")
-    m0 = re.match(r"Band_(S\d+)_", band_mds[0].get("name") or "")
-    if not m0:
-        raise RuntimeError(f"Not possible to determine swath from {band_mds[0].get('name')}")
-    swath = m0.group(1)
+    swath = None
+    if band_mds:
+        for md in band_mds:
+            name = md.get("name") or ""
+            m0 = re.match(r"Band_(.+)_([A-Z]{2}(?:_SA\d+)?)$", name, re.IGNORECASE)
+            if m0:
+                swath = m0.group(1)
+                break
 
     template_band_by_pol = {}
-    for md in band_mds:
-        name = md.get("name") or ""
-        m = re.match(rf"Band_{swath}_([A-Z]{{2}})$", name)
-        if m:
-            template_band_by_pol[m.group(1)] = md
+    if swath:
+        for md in band_mds:
+            name = md.get("name") or ""
+            m = re.match(rf"Band_{re.escape(swath)}_([A-Z]{{2}})$", name)
+            if m:
+                template_band_by_pol[m.group(1)] = md
 
     name_to_idx, max_idx = _build_existing_band_maps(root)
 
@@ -305,7 +314,7 @@ def update_dim_add_bands_from_data_dir(dim_in: str, dim_out: str = None, verbose
                 existing_geo_indices.add(bi)
 
         tmpl = template_band_by_pol.get(pol)
-        if tmpl is not None:
+        if tmpl is not None and swath:
             _ensure_band_mdelem(
                 abstract_md,
                 tmpl,

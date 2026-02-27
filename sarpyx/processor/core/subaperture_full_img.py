@@ -19,6 +19,63 @@ from .dim_updater import update_dim_add_bands_from_data_dir
 warnings.filterwarnings("ignore")
 logger = logging.getLogger(__name__)
 
+_IQ_POL_ANY_RE = re.compile(r"(^|_)([iq])_([A-Z]{2})(?:$|_)", re.IGNORECASE)
+_SA_TOKEN_RE = re.compile(r"(^|_)SA\d+($|_)", re.IGNORECASE)
+
+
+def _stem_contains_sa_token(stem: str) -> bool:
+    """Return True when *stem* looks like a generated subaperture band."""
+    return _SA_TOKEN_RE.search(stem) is not None
+
+
+def _extract_iq_pol_from_stem(stem: str):
+    """Extract ``(iq, pol)`` from stems that contain ``..._i_<POL>...`` or ``..._q_<POL>...``."""
+    m = _IQ_POL_ANY_RE.search(stem)
+    if not m:
+        return None
+    return m.group(2).lower(), m.group(3).upper()
+
+
+def _candidate_priority(stem: str, iq: str, pol: str):
+    """Lower tuples are preferred when several i/q files exist for one polarization."""
+    stem_u = stem.upper()
+    canonical = f"{iq.upper()}_{pol}"
+    if stem_u == canonical:
+        return (0, len(stem_u), stem_u)
+    if stem_u.startswith(canonical + "_"):
+        return (1, len(stem_u), stem_u)
+    return (2, len(stem_u), stem_u)
+
+
+def find_base_iq_pairs_in_dim_data(data_dir: str):
+    """
+    Detect base complex i/q pairs per polarization from a DIM ``.data`` folder.
+
+    The detection accepts non-canonical prefixes/suffixes (for example
+    ``CAL_i_VH.img``), and ignores generated subaperture files containing
+    ``SA<k>`` in the stem.
+    """
+    candidates = {}
+    for fp in glob.glob(os.path.join(data_dir, "*.img")):
+        stem = os.path.splitext(os.path.basename(fp))[0]
+        if _stem_contains_sa_token(stem):
+            continue
+
+        parsed = _extract_iq_pol_from_stem(stem)
+        if parsed is None:
+            continue
+        iq, pol = parsed
+        candidates.setdefault(pol, {}).setdefault(iq, []).append((stem, fp))
+
+    pairs = {}
+    for pol, by_iq in candidates.items():
+        if "i" not in by_iq or "q" not in by_iq:
+            continue
+        best_i = min(by_iq["i"], key=lambda t: _candidate_priority(t[0], "i", pol))
+        best_q = min(by_iq["q"], key=lambda t: _candidate_priority(t[0], "q", pol))
+        pairs[pol] = (best_i[1], best_q[1])
+    return pairs
+
 # ---------------------------------------------------------------------------
 # Memory threshold helpers
 # ---------------------------------------------------------------------------
@@ -606,8 +663,7 @@ class CombinedSublooking:
             look = np.fft.ifft(padded, axis=fft_axis).astype(np.complex64)
             del padded
 
-            # Recentre along the FFT axis
-            look = np.roll(look, look.shape[fft_axis] // 2, axis=fft_axis)
+            # Keep native pixel alignment with the full-aperture grid.
             self.Looks.append(look)
 
         # Free de-weighted spectrum
@@ -639,8 +695,6 @@ class CombinedSublooking:
         nPixLook = int(np.min(indexLooks[:, 1] - indexLooks[:, 0] + 1))
         self.Looks = []
         fft_axis = 1 if self.choice == 0 else 0
-        global_shift = (self.nCols // 2) if fft_axis == 1 else (self.nRows // 2)
-
         for it in range(self.numberOfLooks):
             si = int(indexLooks[it, 0])
             ei = int(indexLooks[it, 1])
@@ -652,8 +706,6 @@ class CombinedSublooking:
                 nRows=self.nRows,
                 dtype=np.complex64,
             )
-            # Apply recentering once on the assembled look to avoid per-chunk phase seams.
-            look = da.roll(look, shift=global_shift, axis=fft_axis)
             self.Looks.append(look)
 
         del self.SpectrumOneDimNormDeWe
@@ -728,33 +780,15 @@ class CombinedSublooking:
 
 def find_pols_in_dim_data(data_dir: str):
     """
-    Search for base polarization pairs i_<POL>.img and q_<POL>.img in the product .data folder.
+    Search for base polarization i/q pairs in the product .data folder.
 
     Notes
     -----
-    - Ignores previously generated subaperture outputs that contain "_SA".
+    - Ignores previously generated subaperture outputs that contain ``SA<k>``.
+    - Accepts non-canonical prefixes/suffixes (e.g. ``CAL_i_VH.img``).
     - Returns a sorted list of detected polarizations (e.g. ['VV', 'VH']).
     """
-
-    # Match: i_VV.img, i_VH.img, etc. (without _SA)
-    pat = re.compile(r"^i_([A-Z]{2})\.img$", re.IGNORECASE)
-
-    pols = []
-    for fp in glob.glob(os.path.join(data_dir, "i_*.img")):
-        base = os.path.basename(fp)
-        if "_SA" in base.upper():
-            continue
-        m = pat.match(base)
-        if not m:
-            continue
-        pol = m.group(1).upper()
-
-        q_fp = os.path.join(data_dir, f"q_{pol}.img")
-        if os.path.exists(q_fp):
-            pols.append(pol)
-
-    pols = sorted(set(pols))
-    return pols
+    return sorted(find_base_iq_pairs_in_dim_data(data_dir).keys())
 
 def do_subaps(
     dim_path: str,
@@ -823,32 +857,20 @@ def do_subaps(
         raise ValueError(f"Invalid n_decompositions: {decomps}. Use values >= 2.")
 
     # -------------------------
-    # Detect base polarizations from i_<POL>.img / q_<POL>.img
-    # (ignore any previously generated *_SA* files)
+    # Detect base polarizations from complex i/q pairs.
+    # This detection is robust to prefixes/suffixes and ignores generated *_SA* files.
     # -------------------------
-    pat = re.compile(r"^i_([A-Z]{2})\.img$", re.IGNORECASE)
-    pols = []
-    for fp in glob.glob(os.path.join(data_dir, "i_*.img")):
-        fname = os.path.basename(fp)
-        if "_SA" in fname.upper():
-            continue
-
-        m = pat.match(fname)
-        if not m:
-            continue
-
-        pol = m.group(1).upper()
-        q_fp = os.path.join(data_dir, f"q_{pol}.img")
-        if os.path.exists(q_fp):
-            pols.append(pol)
-
-    pols = sorted(set(pols))
+    base_pairs = find_base_iq_pairs_in_dim_data(data_dir)
+    pols = sorted(base_pairs.keys())
 
     if not pols:
         raise RuntimeError(f"No i_<POL>.img / q_<POL>.img pairs found in: {data_dir}")
 
     if VERBOSE:
         print(f"Base polarizations detected in {data_dir}: {pols}")
+        for pol in pols:
+            i_fp, q_fp = base_pairs.get(pol, (None, None))
+            print(f"  {pol}: i={i_fp}, q={q_fp}")
         print(f"Metadata source SAFE: {safe_path}")
         print(f"Decompositions to run: {decomps}")
 
@@ -863,10 +885,9 @@ def do_subaps(
             print(f"\n=== Running decomposition N={nlooks} (prefix='{prefix_n}') ===")
 
         for pol in pols:
-            i_fp = os.path.join(data_dir, f"i_{pol}.img")
-            q_fp = os.path.join(data_dir, f"q_{pol}.img")
+            i_fp, q_fp = base_pairs.get(pol, (None, None))
 
-            if not (os.path.exists(i_fp) and os.path.exists(q_fp)):
+            if not i_fp or not q_fp or not (os.path.exists(i_fp) and os.path.exists(q_fp)):
                 if VERBOSE:
                     print(f"Skipping POL={pol} (missing i/q): i={i_fp}, q={q_fp}")
                 continue

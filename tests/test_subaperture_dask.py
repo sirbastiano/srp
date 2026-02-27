@@ -312,3 +312,121 @@ class TestVectorizedDeHammWin:
                 result_2d[:, col], expected_col, rtol=1e-5,
                 err_msg=f"Column {col} mismatch",
             )
+
+
+class TestPolDetectionRobustNaming:
+    """Detection should support prefixed names and ignore existing subap outputs."""
+
+    def test_detects_prefixed_base_pairs_and_ignores_sa(self, tmp_path):
+        from sarpyx.processor.core.subaperture_full_img import (
+            find_base_iq_pairs_in_dim_data,
+            find_pols_in_dim_data,
+        )
+
+        tmpdir = str(tmp_path)
+        arr = np.ones((16, 8), dtype=np.float32)
+
+        # Canonical VV pair
+        _write_envi_float32(
+            os.path.join(tmpdir, "i_VV.img"),
+            os.path.join(tmpdir, "i_VV.hdr"),
+            arr,
+            "i_VV",
+        )
+        _write_envi_float32(
+            os.path.join(tmpdir, "q_VV.img"),
+            os.path.join(tmpdir, "q_VV.hdr"),
+            arr,
+            "q_VV",
+        )
+
+        # Prefixed VH pair (should be detected as base pair)
+        _write_envi_float32(
+            os.path.join(tmpdir, "CAL_i_VH.img"),
+            os.path.join(tmpdir, "CAL_i_VH.hdr"),
+            arr,
+            "CAL_i_VH",
+        )
+        _write_envi_float32(
+            os.path.join(tmpdir, "CAL_q_VH.img"),
+            os.path.join(tmpdir, "CAL_q_VH.hdr"),
+            arr,
+            "CAL_q_VH",
+        )
+
+        # Existing subap files must not be used as base pairs
+        _write_envi_float32(
+            os.path.join(tmpdir, "i_VH_SA1.img"),
+            os.path.join(tmpdir, "i_VH_SA1.hdr"),
+            arr,
+            "i_VH_SA1",
+        )
+        _write_envi_float32(
+            os.path.join(tmpdir, "q_VH_SA1.img"),
+            os.path.join(tmpdir, "q_VH_SA1.hdr"),
+            arr,
+            "q_VH_SA1",
+        )
+
+        pairs = find_base_iq_pairs_in_dim_data(tmpdir)
+        assert sorted(pairs.keys()) == ["VH", "VV"]
+        assert os.path.basename(pairs["VH"][0]) == "CAL_i_VH.img"
+        assert os.path.basename(pairs["VH"][1]) == "CAL_q_VH.img"
+
+        pols = find_pols_in_dim_data(tmpdir)
+        assert pols == ["VH", "VV"]
+
+    def test_dim_group_scan_accepts_non_lprefix(self, tmp_path):
+        from sarpyx.processor.core.dim_updater import _scan_data_dir_for_groups
+
+        for name in (
+            "CAL_i_VH.hdr",
+            "CAL_q_VH.hdr",
+            "L2_i_VV_SA1.hdr",
+            "L2_q_VV_SA1.hdr",
+        ):
+            open(os.path.join(tmp_path, name), "w").close()
+
+        groups = sorted(_scan_data_dir_for_groups(str(tmp_path)))
+        assert ("CAL", "VH", None) in groups
+        assert ("L2", "VV", "SA1") in groups
+
+
+class TestSpatialAlignment:
+    """Sublooks should preserve the full-aperture pixel grid (no half-image shift)."""
+
+    @pytest.mark.parametrize("use_dask", [False, True], ids=["numpy", "dask"])
+    def test_impulse_peak_stays_at_same_pixel(self, tmp_path, use_dask):
+        from sarpyx.processor.core.subaperture_full_img import CombinedSublooking
+
+        nrows, ncols = 256, 128
+        row, col = 80, 50
+        i_img = np.zeros((nrows, ncols), dtype=np.float32)
+        q_img = np.zeros((nrows, ncols), dtype=np.float32)
+        i_img[row, col] = 1.0
+
+        i_path = os.path.join(tmp_path, "i_VV.img")
+        q_path = os.path.join(tmp_path, "q_VV.img")
+        _write_envi_float32(i_path, os.path.join(tmp_path, "i_VV.hdr"), i_img, "i_VV")
+        _write_envi_float32(q_path, os.path.join(tmp_path, "q_VV.hdr"), q_img, "q_VV")
+
+        sub = CombinedSublooking(
+            metadata_pointer_safe="unused",
+            numberofLooks=2,
+            i_image=i_path,
+            q_image=q_path,
+            assetMetadata=_FAKE_META,
+            force_dask=use_dask,
+            chunk_cols=32,
+        )
+        looks = sub.chain()
+
+        combined_amp = np.zeros((nrows, ncols), dtype=np.float32)
+        for lk in looks:
+            import dask.array as da
+            if isinstance(lk, da.Array):
+                lk = lk.compute()
+            combined_amp += np.abs(lk).astype(np.float32)
+
+        peak = np.unravel_index(np.argmax(combined_amp), combined_amp.shape)
+        assert peak == (row, col), f"Unexpected shift detected: peak={peak}, expected={(row, col)}"
