@@ -19,7 +19,10 @@ from .dim_updater import update_dim_add_bands_from_data_dir
 warnings.filterwarnings("ignore")
 logger = logging.getLogger(__name__)
 
-_IQ_POL_ANY_RE = re.compile(r"(^|_)([iq])_([A-Z]{2})(?:$|_)", re.IGNORECASE)
+_IQ_SWATH_POL_RE = re.compile(
+    r"(^|_)(?P<iq>[iq])_(?:(?P<swath>[A-Z]{2}\d)_)?(?P<pol>[A-Z]{2})(?:$|_)",
+    re.IGNORECASE,
+)
 _SA_TOKEN_RE = re.compile(r"(^|_)SA\d+($|_)", re.IGNORECASE)
 
 
@@ -28,52 +31,119 @@ def _stem_contains_sa_token(stem: str) -> bool:
     return _SA_TOKEN_RE.search(stem) is not None
 
 
-def _extract_iq_pol_from_stem(stem: str):
-    """Extract ``(iq, pol)`` from stems that contain ``..._i_<POL>...`` or ``..._q_<POL>...``."""
-    m = _IQ_POL_ANY_RE.search(stem)
+def _extract_iq_swath_pol_from_stem(stem: str):
+    """
+    Extract (iq, swath, pol) from stems that contain:
+      - i_<POL> / q_<POL>
+      - i_<SWATH>_<POL> / q_<SWATH>_<POL>   (e.g. i_IW1_VV)
+    Accepts extra prefixes/suffixes (e.g. CAL_i_IW1_VH or foo_i_VV_bar).
+    """
+    m = _IQ_SWATH_POL_RE.search(stem)
     if not m:
         return None
-    return m.group(2).lower(), m.group(3).upper()
+    iq = m.group("iq").lower()
+    swath = m.group("swath")
+    pol = m.group("pol")
+    swath = swath.upper() if swath else None
+    pol = pol.upper()
+    return iq, swath, pol
 
 
-def _candidate_priority(stem: str, iq: str, pol: str):
-    """Lower tuples are preferred when several i/q files exist for one polarization."""
+def _candidate_priority(stem: str, iq: str, tag: str):
+    """Lower tuples are preferred when several i/q files exist for one tag."""
     stem_u = stem.upper()
-    canonical = f"{iq.upper()}_{pol}"
+    canonical = f"{iq.upper()}_{tag.upper()}"
     if stem_u == canonical:
         return (0, len(stem_u), stem_u)
-    if stem_u.startswith(canonical + "_"):
+    if stem_u.endswith("_" + canonical):
         return (1, len(stem_u), stem_u)
-    return (2, len(stem_u), stem_u)
+    if ("_" + canonical + "_") in ("_" + stem_u + "_"):
+        return (2, len(stem_u), stem_u)
+    return (3, len(stem_u), stem_u)
 
+
+
+def estimate_central_freq_from_spectrum(
+    spectrum_az_fft: Union[np.ndarray, "da.Array"],
+    freq_vect: np.ndarray,
+    valid_frac: float = 0.8,
+    smooth_win: int = 9,
+) -> float:
+    """Estimate azimuth central frequency (Hz) from the spectrum peak.
+
+    The estimate is the argmax of the mean power spectrum over range,
+    optionally smoothed and restricted to the central portion of the band.
+
+    Notes
+    -----
+    * Works with both numpy and dask arrays. For dask, the 1D profile is
+      computed explicitly (small) to keep memory bounded.
+    * `freq_vect` is expected to match the frequency axis of `spectrum_az_fft`.
+    """
+    # Mean power per frequency bin (average over range dimension).
+    if "dask.array" in str(type(spectrum_az_fft)):
+        E = da.mean(da.absolute(spectrum_az_fft) ** 2, axis=1).astype(np.float64).compute()
+    else:
+        E = np.mean(np.abs(spectrum_az_fft) ** 2, axis=1).astype(np.float64)
+
+    # Smooth via moving average (odd window).
+    w = int(smooth_win) if smooth_win else 0
+    if w > 1:
+        if w % 2 == 0:
+            w += 1
+        kernel = np.ones(w, dtype=np.float64) / w
+        E = np.convolve(E, kernel, mode="same")
+
+    n = int(E.size)
+    if n == 0:
+        raise ValueError("Empty spectrum profile for central frequency estimation.")
+
+    valid_frac = float(valid_frac)
+    valid_frac = min(max(valid_frac, 0.2), 1.0)
+    half = int((1.0 - valid_frac) * n / 2.0)
+    lo, hi = half, n - half
+    if hi <= lo + 1:
+        lo, hi = 0, n
+
+    idx = int(np.argmax(E[lo:hi])) + lo
+    return float(freq_vect[idx])
 
 def find_base_iq_pairs_in_dim_data(data_dir: str):
     """
-    Detect base complex i/q pairs per polarization from a DIM ``.data`` folder.
+    Detect base complex i/q pairs from a DIM ``.data`` folder.
 
-    The detection accepts non-canonical prefixes/suffixes (for example
-    ``CAL_i_VH.img``), and ignores generated subaperture files containing
-    ``SA<k>`` in the stem.
+    - Supports SM-like: i_VV.img / q_VV.img
+    - Supports IW/EW swaths: i_IW1_VV.img / q_IW1_VV.img, etc.
+    - Accepts non-canonical prefixes/suffixes (e.g. CAL_i_IW1_VH.img).
+    - Ignores generated subaperture outputs containing ``SA<k>`` in the stem.
+
+    Returns
+    -------
+    dict
+        key: tag (e.g. 'VV' or 'IW1_VV')
+        value: (i_path, q_path)
     """
-    candidates = {}
+    candidates = {}  # tag -> iq -> [(stem, fp), ...]
     for fp in glob.glob(os.path.join(data_dir, "*.img")):
         stem = os.path.splitext(os.path.basename(fp))[0]
         if _stem_contains_sa_token(stem):
             continue
 
-        parsed = _extract_iq_pol_from_stem(stem)
+        parsed = _extract_iq_swath_pol_from_stem(stem)
         if parsed is None:
             continue
-        iq, pol = parsed
-        candidates.setdefault(pol, {}).setdefault(iq, []).append((stem, fp))
+        iq, swath, pol = parsed
+        tag = pol if swath is None else f"{swath}_{pol}"
+
+        candidates.setdefault(tag, {}).setdefault(iq, []).append((stem, fp))
 
     pairs = {}
-    for pol, by_iq in candidates.items():
+    for tag, by_iq in candidates.items():
         if "i" not in by_iq or "q" not in by_iq:
             continue
-        best_i = min(by_iq["i"], key=lambda t: _candidate_priority(t[0], "i", pol))
-        best_q = min(by_iq["q"], key=lambda t: _candidate_priority(t[0], "q", pol))
-        pairs[pol] = (best_i[1], best_q[1])
+        best_i = min(by_iq["i"], key=lambda t: _candidate_priority(t[0], "i", tag))
+        best_q = min(by_iq["q"], key=lambda t: _candidate_priority(t[0], "q", tag))
+        pairs[tag] = (best_i[1], best_q[1])
     return pairs
 
 # ---------------------------------------------------------------------------
@@ -288,10 +358,18 @@ class CombinedSublooking:
         assetMetadata=None,
         force_dask: Optional[bool] = None,
         chunk_cols: Optional[int] = None,
+        estimate_center_from_spectrum: bool = True,
+        center_valid_frac: float = 0.8,
+        center_smooth_win: int = 9,
     ):
         # ---- tunable knobs ----
         self.choice = 1  # Range == 0 | Azimuth == 1
         self.numberOfLooks = numberofLooks
+
+        # ---- optional: estimate azimuth central frequency from spectrum ----
+        self.estimate_center_from_spectrum = bool(estimate_center_from_spectrum)
+        self.center_valid_frac = float(center_valid_frac)
+        self.center_smooth_win = int(center_smooth_win)
         self.CentralFreqRange = 0
         self.CentralFreqAzim = 0
         self.AzimRes = 5
@@ -492,6 +570,26 @@ class CombinedSublooking:
                 dim_average_int[dim_average_int == 0] = np.float32(1e-6)
                 med = np.float32(np.median(dim_average_int))
             self.SpectrumOneDimNorm = ((S / dim_average_int[:, None]) * med).astype(np.complex64)
+
+        # Optionally re-center using a spectrum-based estimate (useful for IW/TOPS variability)
+        if self.choice != 0 and getattr(self, "estimate_center_from_spectrum", False):
+            try:
+                _meta = float(self.centralFreq)
+                _est = estimate_central_freq_from_spectrum(
+                    spectrum_az_fft=S,
+                    freq_vect=self.freqVect,
+                    valid_frac=getattr(self, "center_valid_frac", 0.8),
+                    smooth_win=getattr(self, "center_smooth_win", 9),
+                )
+                self.centralFreq = _est
+                logger.info(
+                    "CentralFreqAzim adjusted from spectrum: est=%.6f Hz",
+                    _meta,
+                    _est,
+                    _est - _meta,
+                )
+            except Exception as exc:
+                logger.warning("Spectrum-based central frequency estimation skipped: %s", exc)
 
         # Free raw spectrum
         del self.SpectrumOneDim

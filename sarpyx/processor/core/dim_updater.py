@@ -4,13 +4,19 @@ import copy
 import xml.etree.ElementTree as ET
 from typing import Dict, List, Tuple, Optional
 
-# Accepts:
+# Supports:
 #   i_VV.hdr
 #   q_VV.hdr
-#   L2_i_VV_SA1.hdr
+#   i_IW1_VV.hdr
+#   q_IW1_VV.hdr
+#   L2_i_IW1_VV_SA1.hdr
 #   L3_q_VH_SA2.hdr
+#
+# Where:
+#   - optional L-prefix is restricted to "L<digits>_" (used to namespace multiple decompositions)
+#   - optional swath token is "<2 letters><digit>" (IW1/EW3/SM?); if absent -> "SM-like"
 HDR_RE = re.compile(
-    r"^(?:(.+)_)?(i|q)_([A-Z]{2})(?:_(SA\d+))?$",
+    r"^(?:(L\d+)_)?(i|q)_(?:(?P<swath>[A-Z]{2}\d)_)?(?P<pol>[A-Z]{2})(?:_(?P<sa>SA\d+))?$",
     re.IGNORECASE
 )
 
@@ -18,12 +24,26 @@ def _rel_href(dim_path: str, filename: str) -> str:
     data_dir_name = os.path.basename(dim_path[:-4] + ".data")
     return f"./{data_dir_name}/{filename}"
 
-def _scan_data_dir_for_groups(data_dir: str) -> List[Tuple[Optional[str], str, Optional[str]]]:
+def _safe_int(text: Optional[str]) -> Optional[int]:
+    if text is None:
+        return None
+    s = str(text).strip()
+    if not s:
+        return None
+    try:
+        return int(s)
+    except Exception:
+        return None
+
+def _scan_data_dir_for_groups(data_dir: str) -> List[Tuple[Optional[str], Optional[str], str, Optional[str]]]:
     """
-    Retrieves tuples (Lprefix, POL, SA):
-      (None, 'VV', None)          -> i_VV/q_VV
-      ('L2','VV','SA1')           -> L2_i_VV_SA1 / L2_q_VV_SA1
-    Requires i, q pairs.
+    Return tuples: (Lpref, swath, pol, sa) for which i/q .hdr pairs exist.
+
+    Examples
+    --------
+      (None, None, 'VV', None)            -> i_VV.hdr / q_VV.hdr
+      (None, 'IW1', 'VV', None)           -> i_IW1_VV.hdr / q_IW1_VV.hdr
+      ('L2', 'IW1', 'VV', 'SA1')          -> L2_i_IW1_VV_SA1.hdr / L2_q_IW1_VV_SA1.hdr
     """
     hdrs = [f for f in os.listdir(data_dir) if f.lower().endswith(".hdr")]
     found_i = set()
@@ -35,43 +55,48 @@ def _scan_data_dir_for_groups(data_dir: str) -> List[Tuple[Optional[str], str, O
         if not m:
             continue
 
-        Lpref = m.group(1)
-        iq = m.group(2).lower()
-        pol = m.group(3).upper()
-        sa = m.group(4)
+        Lpref = (m.group(1) or None)
+        iq = (m.group(2) or "").lower()
+        swath = m.group("swath")
+        pol = m.group("pol")
+        sa = m.group("sa")
+
+        Lpref = Lpref.upper() if Lpref else None
+        swath = swath.upper() if swath else None
+        pol = pol.upper() if pol else None
         sa = sa.upper() if sa else None
 
-        key = (Lpref, pol, sa)
+        if not pol:
+            continue
+
+        key = (Lpref, swath, pol, sa)
         if iq == "i":
             found_i.add(key)
         else:
             found_q.add(key)
 
-    groups = list(found_i.intersection(found_q))
-    return groups
+    return list(found_i.intersection(found_q))
 
-def _sort_groups(groups: List[Tuple[Optional[str], str, Optional[str]]]) -> List[Tuple[Optional[str], str, Optional[str]]]:
-    """
-    Order:
-      - base without Lpref first (None)
-      - then L2, L3, ...
-    Inside:
-      - without SA first, then SA1..SAn
-      - and per pol.
-    """
+def _sort_groups(groups: List[Tuple[Optional[str], Optional[str], str, Optional[str]]]) -> List[Tuple[Optional[str], Optional[str], str, Optional[str]]]:
+    def parse_swath(sw: Optional[str]):
+        if not sw:
+            return ("", -1)
+        m = re.match(r"^([A-Z]+)(\d+)$", sw.upper())
+        if not m:
+            return (sw.upper(), 9999)
+        return (m.group(1), int(m.group(2)))
+
     def sort_key(t):
-        Lpref, pol, sa = t
-        if not Lpref:
-            lpref_group = (0, -1, "")
-        else:
-            m = re.fullmatch(r"L(\d+)", Lpref, re.IGNORECASE)
-            if m:
-                lpref_group = (1, int(m.group(1)), "")
-            else:
-                lpref_group = (2, 0, Lpref.upper())
+        Lpref, swath, pol, sa = t
+        Lnum = int(Lpref[1:]) if Lpref else -1
+
+        sw_alpha, sw_num = parse_swath(swath)
+        sw_missing = 0 if swath is None else 1  # None first
+
         has_sa = 1 if sa else 0
         sanum = int(sa[2:]) if sa else -1
-        return (lpref_group[0], lpref_group[1], lpref_group[2], has_sa, sanum, pol)
+
+        return (Lnum, sw_missing, sw_alpha, sw_num, has_sa, sanum, pol)
 
     return sorted(groups, key=sort_key)
 
@@ -81,20 +106,38 @@ def _find_single(root: ET.Element, path: str) -> ET.Element:
         raise RuntimeError(f"No encontré el nodo requerido: {path}")
     return el
 
+def _find_parent(root: ET.Element, child: ET.Element) -> Optional[ET.Element]:
+    for parent in root.iter():
+        for c in list(parent):
+            if c is child:
+                return parent
+    return None
+
 def _build_existing_band_maps(root: ET.Element) -> Tuple[Dict[str, int], int]:
+    """Map BAND_NAME -> BAND_INDEX for existing SBI entries (skip broken ones)."""
     name_to_idx: Dict[str, int] = {}
     max_idx = -1
     for sbi in root.findall(".//Image_Interpretation/Spectral_Band_Info"):
         name = (sbi.findtext("BAND_NAME") or "").strip()
-        idx = int(sbi.findtext("BAND_INDEX"))
+        idx = _safe_int(sbi.findtext("BAND_INDEX"))
+        if not name or idx is None:
+            continue
         name_to_idx[name] = idx
         max_idx = max(max_idx, idx)
     return name_to_idx, max_idx
 
 def _ensure_sbi(template_sbi: ET.Element, band_name: str, band_desc: str, unit: str, idx: int) -> ET.Element:
     sbi = copy.deepcopy(template_sbi)
-    sbi.find("BAND_INDEX").text = str(idx)
-    sbi.find("BAND_NAME").text = band_name
+
+    bi = sbi.find("BAND_INDEX")
+    if bi is None:
+        bi = ET.SubElement(sbi, "BAND_INDEX")
+    bi.text = str(idx)
+
+    bn = sbi.find("BAND_NAME")
+    if bn is None:
+        bn = ET.SubElement(sbi, "BAND_NAME")
+    bn.text = band_name
 
     bd = sbi.find("BAND_DESCRIPTION")
     if bd is not None:
@@ -106,13 +149,6 @@ def _ensure_sbi(template_sbi: ET.Element, band_name: str, band_desc: str, unit: 
 
     return sbi
 
-def _find_parent(root: ET.Element, child: ET.Element) -> ET.Element:
-    for parent in root.iter():
-        for c in list(parent):
-            if c is child:
-                return parent
-    return None
-
 def _insert_data_file_in_order(data_access_el: ET.Element, df_el: ET.Element):
     children = list(data_access_el)
     first_tpg = next((i for i, ch in enumerate(children) if ch.tag == "Tie_Point_Grid_File"), None)
@@ -123,11 +159,17 @@ def _insert_data_file_in_order(data_access_el: ET.Element, df_el: ET.Element):
 
 def _ensure_data_file(data_access_el: ET.Element, template_df: ET.Element, band_index: int, hdr_filename: str, dim_path: str):
     df = copy.deepcopy(template_df)
-    df.find("BAND_INDEX").text = str(band_index)
+
+    bi = df.find("BAND_INDEX")
+    if bi is None:
+        bi = ET.SubElement(df, "BAND_INDEX")
+    bi.text = str(band_index)
+
     df_path = df.find("DATA_FILE_PATH")
     if df_path is None:
-        raise RuntimeError("DATA_FILE_PATH doesnt exist in the template of Data_File")
+        df_path = ET.SubElement(df, "DATA_FILE_PATH")
     df_path.set("href", _rel_href(dim_path, hdr_filename))
+
     _insert_data_file_in_order(data_access_el, df)
 
 def _get_georef_templates(root: ET.Element):
@@ -158,25 +200,26 @@ def _get_georef_templates(root: ET.Element):
 def _insert_georef_pair_before_rasterdims(parent: ET.Element, crs_el: ET.Element, geo_el: ET.Element):
     children = list(parent)
     raster_idx = next((i for i, ch in enumerate(children) if ch.tag == "Raster_Dimensions"), None)
-
     if raster_idx is None:
         parent.append(crs_el)
         parent.append(geo_el)
         return
-
     parent.insert(raster_idx, crs_el)
     parent.insert(raster_idx + 1, geo_el)
 
 def _append_georef_pair(parent: ET.Element, template_crs: ET.Element, template_geo: ET.Element, band_index: int):
     crs = copy.deepcopy(template_crs)
     geo = copy.deepcopy(template_geo)
+
     bi = geo.find("BAND_INDEX")
     if bi is None:
-        raise RuntimeError("The template of <Geoposition> does not have <BAND_INDEX>.")
+        bi = ET.SubElement(geo, "BAND_INDEX")
     bi.text = str(band_index)
+
     _insert_georef_pair_before_rasterdims(parent, crs, geo)
 
 def _ensure_band_mdelem(abstract_md: ET.Element, template_band_md: ET.Element, swath: str, token: str, band_i_name: str, band_q_name: str):
+    """Best-effort: keep Abstracted_Metadata coherent (SNAP is usually ok without this)."""
     new_name = f"Band_{swath}_{token}"
     for ch in abstract_md.findall("MDElem"):
         if ch.get("name") == new_name:
@@ -197,8 +240,20 @@ def _ensure_band_mdelem(abstract_md: ET.Element, template_band_md: ET.Element, s
 
 def update_dim_add_bands_from_data_dir(dim_in: str, dim_out: str = None, verbose: bool = True) -> str:
     """
-    Adds to .dim file all the bands (i/q/intensity) founded in .data
-    accepting prefixes like L2_ (e.g. L2_i_VV_SA1.hdr).
+    Add to a DIMAP .dim all (i/q/intensity) bands found in its .data folder.
+
+    Supports IW/EW swath token in the band stems, and optional decomposition prefix L<k>_.
+
+    Notes
+    -----
+    - The function expects ENVI .hdr files for i/q (and may add intensity SBI+geoposition even if the .hdr is absent),
+      following the convention used by your subaperture generator.
+    - Updates:
+        * Raster_Dimensions/NBANDS
+        * Image_Interpretation/Spectral_Band_Info
+        * Data_Access/Data_File (for i/q .hdr)
+        * Geocoding (Coordinate_Reference_System + Geoposition per band)
+      plus best-effort Abstracted_Metadata Band_* entries when templates exist.
     """
     if not dim_in.lower().endswith(".dim"):
         raise ValueError(f"It was expected a .dim: {dim_in}")
@@ -219,13 +274,12 @@ def update_dim_add_bands_from_data_dir(dim_in: str, dim_out: str = None, verbose
 
     georef_parent, template_crs, template_geo = _get_georef_templates(root)
 
-    abstract_md = None
-    for md in root.findall(".//MDElem"):
-        if md.get("name") == "Abstracted_Metadata":
-            abstract_md = md
-            break
-    if abstract_md is None:
-        raise RuntimeError("No encontré MDElem name='Abstracted_Metadata'")
+    # SNAP readers can choke if the template Geoposition misses BAND_INDEX
+    bi0 = template_geo.find("BAND_INDEX")
+    if bi0 is None:
+        bi0 = ET.SubElement(template_geo, "BAND_INDEX")
+    if not (bi0.text or "").strip():
+        bi0.text = "0"
 
     existing_dfs = root.findall(".//Data_File")
     if not existing_dfs:
@@ -235,47 +289,58 @@ def update_dim_add_bands_from_data_dir(dim_in: str, dim_out: str = None, verbose
     sbis = root.findall(".//Image_Interpretation/Spectral_Band_Info")
     if len(sbis) < 3:
         raise RuntimeError("Do not found enough Spectral_Band_Info for templates.")
-
     template_sbi_i = next((x for x in sbis if (x.findtext("BAND_NAME") or "").startswith("i_")), sbis[0])
     template_sbi_q = next((x for x in sbis if (x.findtext("BAND_NAME") or "").startswith("q_")), sbis[1])
     template_sbi_int = next((x for x in sbis if (x.findtext("BAND_NAME") or "").lower().startswith("intensity")), sbis[2])
 
-    band_mds = [md for md in abstract_md.findall("MDElem") if (md.get("name") or "").startswith("Band_")]
-    swath = None
-    if band_mds:
-        for md in band_mds:
-            name = md.get("name") or ""
-            m0 = re.match(r"Band_(.+)_([A-Z]{2}(?:_SA\d+)?)$", name, re.IGNORECASE)
-            if m0:
-                swath = m0.group(1)
-                break
+    # Best-effort Abstracted_Metadata templates (optional)
+    abstract_md = None
+    for md in root.findall(".//MDElem"):
+        if md.get("name") == "Abstracted_Metadata":
+            abstract_md = md
+            break
 
-    template_band_by_pol = {}
-    if swath:
+    template_band_by_key = {}  # (swath, pol) -> template MDElem
+    if abstract_md is not None:
+        band_mds = [md for md in abstract_md.findall("MDElem") if (md.get("name") or "").startswith("Band_")]
+        # try to collect Band_<swath>_<pol> templates
         for md in band_mds:
             name = md.get("name") or ""
-            m = re.match(rf"Band_{re.escape(swath)}_([A-Z]{{2}})$", name)
+            m = re.match(r"^Band_(?P<swath>[A-Z]{2}\d)_([A-Z]{2})$", name, re.IGNORECASE)
             if m:
-                template_band_by_pol[m.group(1)] = md
+                sw = m.group("swath").upper()
+                pol = name.split("_")[-1].upper()
+                template_band_by_key[(sw, pol)] = md
 
     name_to_idx, max_idx = _build_existing_band_maps(root)
 
-    def ensure_triplet(Lpref: Optional[str], pol: str, sa: Optional[str]):
+    def _existing_df_indices() -> set:
+        idxs = set()
+        for df in root.findall(".//Data_File"):
+            v = _safe_int(df.findtext("BAND_INDEX"))
+            if v is not None:
+                idxs.add(v)
+        return idxs
+
+    def _existing_geo_indices() -> set:
+        idxs = set()
+        for g in root.findall(".//Geoposition"):
+            v = _safe_int(g.findtext("BAND_INDEX"))
+            if v is not None:
+                idxs.add(v)
+        return idxs
+
+    def ensure_triplet(Lpref: Optional[str], swath: Optional[str], pol: str, sa: Optional[str]):
         nonlocal max_idx
 
-        # Build “token” SNAP uses in Band_* (polarization)
-        # example: VV, VH_SA1, etc.
         token = pol if not sa else f"{pol}_{sa}"
-
-        # EXACT Band names as stems of the .hdr:
-        #   i/q: (L2_)i_VV(_SA1)
-        #   intensity: Intensity_(L2_)VV(_SA1)
         iq_prefix = f"{Lpref}_" if Lpref else ""
+        sw_prefix = f"{swath}_" if swath else ""
         sa_suffix = f"_{sa}" if sa else ""
 
-        b_i = f"{iq_prefix}i_{pol}{sa_suffix}"
-        b_q = f"{iq_prefix}q_{pol}{sa_suffix}"
-        b_int = f"Intensity_{iq_prefix}{pol}{sa_suffix}"
+        b_i = f"{iq_prefix}i_{sw_prefix}{pol}{sa_suffix}"
+        b_q = f"{iq_prefix}q_{sw_prefix}{pol}{sa_suffix}"
+        b_int = f"Intensity_{iq_prefix}{sw_prefix}{pol}{sa_suffix}"
 
         def get_or_add(name: str) -> int:
             nonlocal max_idx
@@ -301,36 +366,31 @@ def update_dim_add_bands_from_data_dir(dim_in: str, dim_out: str = None, verbose
         if b_int not in xml_band_names:
             img_interp.append(_ensure_sbi(template_sbi_int, b_int, f"Intensity ({token})", "intensity", idx_int))
 
-        existing_df_indices = set(int(df.findtext("BAND_INDEX")) for df in root.findall(".//Data_File"))
-        if idx_i not in existing_df_indices:
+        df_idxs = _existing_df_indices()
+        if idx_i not in df_idxs:
             _ensure_data_file(data_access, template_df, idx_i, f"{b_i}.hdr", dim_in)
-        if idx_q not in existing_df_indices:
+        if idx_q not in df_idxs:
             _ensure_data_file(data_access, template_df, idx_q, f"{b_q}.hdr", dim_in)
 
-        existing_geo_indices = set(int(g.findtext("BAND_INDEX")) for g in root.findall(".//Geoposition"))
+        geo_idxs = _existing_geo_indices()
         for bi in (idx_i, idx_q, idx_int):
-            if bi not in existing_geo_indices:
+            if bi not in geo_idxs:
                 _append_georef_pair(georef_parent, template_crs, template_geo, bi)
-                existing_geo_indices.add(bi)
+                geo_idxs.add(bi)
 
-        tmpl = template_band_by_pol.get(pol)
-        if tmpl is not None and swath:
-            _ensure_band_mdelem(
-                abstract_md,
-                tmpl,
-                swath,
-                token,      
-                b_i,
-                b_q
-            )
+        # Optional Abstracted_Metadata update
+        if abstract_md is not None and swath is not None:
+            tmpl = template_band_by_key.get((swath, pol))
+            if tmpl is not None:
+                _ensure_band_mdelem(abstract_md, tmpl, swath, token, b_i, b_q)
 
-    for (Lpref, pol, sa) in groups:
-        ensure_triplet(Lpref, pol, sa)
+    for (Lpref, swath, pol, sa) in groups:
+        ensure_triplet(Lpref, swath, pol, sa)
 
     nbands_el.text = str(len(root.findall(".//Image_Interpretation/Spectral_Band_Info")))
 
     if dim_out is None:
-        dim_out = dim_in #[:-4] + "_subaps.dim"
+        dim_out = dim_in
 
     tree.write(dim_out, encoding="UTF-8", xml_declaration=True)
 

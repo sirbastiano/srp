@@ -2483,6 +2483,8 @@ class GPT:
         self.current_cmd.append(f'SAR-Simulation {" ".join(cmd_params)}')
         return self._call(suffix='SRSIM', output_name=output_name)
 
+
+
     def sar_mosaic(
         self,
         source_bands: Optional[List[str]] = None,
@@ -2530,6 +2532,7 @@ class GPT:
         byte_order: int = 1,
         prefix: str = "",
         VERBOSE: bool = False,
+        chunk_cols: Optional[int] = None,
     ) -> Path:
         """
         Run sub-aperture decomposition on a SNAP DIM product.
@@ -2585,6 +2588,7 @@ class GPT:
             byte_order=byte_order,
             prefix=prefix,
             VERBOSE=VERBOSE,
+            chunk_cols=chunk_cols
         )
 
         return dim_path
