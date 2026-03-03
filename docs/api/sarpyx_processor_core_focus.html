@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Exhaustive API reference for sarpyx.processor.core.focus" />
+  <title>API: sarpyx.processor.core.focus | SARPyX Documentation</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <script defer src="../assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="../index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">Home</a></li><li><a class="nav-link" href="../installation.html">Installation</a></li><li><a class="nav-link" href="../quickstart.html">Quick Start</a></li><li><a class="nav-link" href="../architecture.html">Architecture</a></li><li><a class="nav-link" href="../api/index.html">API</a></li><li><a class="nav-link" href="../configuration.html">Configuration</a></li><li><a class="nav-link" href="../usage.html">Usage</a></li><li><a class="nav-link" href="../testing.html">Testing</a></li><li><a class="nav-link" href="../contributing.html">Contributing</a></li><li><a class="nav-link" href="../faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="../api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="../api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="../api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="../api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="../api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="../api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link" href="../api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="../api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link active" href="../api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="../api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link" href="../api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="../api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link" href="../api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link" href="../api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link" href="../api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="../api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link" href="../api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link" href="../api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="../api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="../api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="../api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link" href="../api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="../api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="../api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="../api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="../index.html">Home</a></li><li><a href="index.html">API</a></li><li>sarpyx.processor.core.focus</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="API: sarpyx.processor.core.focus">
+        
+<section>
+  <h1 id="module-sarpyx_processor_core_focus">Module: <code>sarpyx.processor.core.focus</code></h1>
+  <p><strong>File:</strong> <code>sarpyx/processor/core/focus.py</code></p>
+  <p>No module docstring available; module purpose is inferred from implementation.</p>
+
+  <h2 id="module-exports">Exported Symbols (<code>__all__</code>)</h2>
+  <p>No explicit <code>__all__</code> list. Public symbols inferred from implementation.</p>
+
+  <h2 id="public-functions">Public Functions (9)</h2>
+  
+<details class="api-item" id="sarpyx-processor-core-focus-py-timing-decorator" data-searchable data-search="timing_decorator timing_decorator(func: Callable) -&gt; Callable">
+  <summary><code>timing_decorator</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Decorator to measure and print function execution time.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:44</code></p>
+    <h3 id="sarpyx-processor-core-focus-py-timing-decorator-signature">Signature</h3>
+    <pre><code class="language-python">timing_decorator(func: Callable) -&gt; Callable</code></pre>
+    <h3 id="sarpyx-processor-core-focus-py-timing-decorator-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>func</code></td><td><code>Callable</code></td><td>yes</td><td><code>-</code></td><td>The function to measure.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-focus-py-timing-decorator-returns">Return Type</h3>
+    <p><code>Callable</code></p>
+    <p>The wrapped function with timing measurement.</p>
+    <h3 id="sarpyx-processor-core-focus-py-timing-decorator-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-focus-py-timing-decorator-side-effects">Side Effects</h3>
+    <ul><li>io</li></ul>
+    <h3 id="sarpyx-processor-core-focus-py-timing-decorator-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import timing_decorator
+
+result = timing_decorator(func=&lt;func&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-focus-py-timing-decorator-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-focus-py-print-memory" data-searchable data-search="print_memory print_memory() -&gt; None">
+  <summary><code>print_memory</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Print current RAM memory usage percentage.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:66</code></p>
+    <h3 id="sarpyx-processor-core-focus-py-print-memory-signature">Signature</h3>
+    <pre><code class="language-python">print_memory() -&gt; None</code></pre>
+    <h3 id="sarpyx-processor-core-focus-py-print-memory-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-focus-py-print-memory-returns">Return Type</h3>
+    <p><code>None</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-focus-py-print-memory-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-focus-py-print-memory-side-effects">Side Effects</h3>
+    <ul><li>io</li></ul>
+    <h3 id="sarpyx-processor-core-focus-py-print-memory-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import print_memory
+
+result = print_memory()</code></pre>
+    <h3 id="sarpyx-processor-core-focus-py-print-memory-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-focus-py-flush-mem" data-searchable data-search="flush_mem flush_mem(func: Callable) -&gt; Callable">
+  <summary><code>flush_mem</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Decorator for memory-efficient operations with monitoring.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:70</code></p>
+    <h3 id="sarpyx-processor-core-focus-py-flush-mem-signature">Signature</h3>
+    <pre><code class="language-python">flush_mem(func: Callable) -&gt; Callable</code></pre>
+    <h3 id="sarpyx-processor-core-focus-py-flush-mem-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>func</code></td><td><code>Callable</code></td><td>yes</td><td><code>-</code></td><td>The function to wrap.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-focus-py-flush-mem-returns">Return Type</h3>
+    <p><code>Callable</code></p>
+    <p>The wrapped function with memory monitoring and cleanup.</p>
+    <h3 id="sarpyx-processor-core-focus-py-flush-mem-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-focus-py-flush-mem-side-effects">Side Effects</h3>
+    <ul><li>io</li></ul>
+    <h3 id="sarpyx-processor-core-focus-py-flush-mem-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import flush_mem
+
+result = flush_mem(func=&lt;func&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-focus-py-flush-mem-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-focus-py-cleanup-variables" data-searchable data-search="cleanup_variables cleanup_variables(*variables: Any) -&gt; None">
+  <summary><code>cleanup_variables</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Explicitly delete variables and run garbage collection.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:101</code></p>
+    <h3 id="sarpyx-processor-core-focus-py-cleanup-variables-signature">Signature</h3>
+    <pre><code class="language-python">cleanup_variables(*variables: Any) -&gt; None</code></pre>
+    <h3 id="sarpyx-processor-core-focus-py-cleanup-variables-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>*variables</code></td><td><code>Any</code></td><td>no</td><td><code>-</code></td><td>Variables to delete.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-focus-py-cleanup-variables-returns">Return Type</h3>
+    <p><code>None</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-focus-py-cleanup-variables-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-focus-py-cleanup-variables-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-focus-py-cleanup-variables-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import cleanup_variables
+
+result = cleanup_variables()</code></pre>
+    <h3 id="sarpyx-processor-core-focus-py-cleanup-variables-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-focus-py-initialize-params" data-searchable data-search="initialize_params initialize_params(device: Optional[torch.device]=None, slant_range_vec: Optional[np.ndarray]=None, D: Optional[np.ndarray]=None, c: Optional[float]=None, len_range_line: Optional[int]=None, range_sample_freq: Optional[float]=None, wavelength: Optional[float]=None) -&gt; Dict[str, Any]">
+  <summary><code>initialize_params</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Initialize processing parameters dictionary.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:111</code></p>
+    <h3 id="sarpyx-processor-core-focus-py-initialize-params-signature">Signature</h3>
+    <pre><code class="language-python">initialize_params(device: Optional[torch.device]=None, slant_range_vec: Optional[np.ndarray]=None, D: Optional[np.ndarray]=None, c: Optional[float]=None, len_range_line: Optional[int]=None, range_sample_freq: Optional[float]=None, wavelength: Optional[float]=None) -&gt; Dict[str, Any]</code></pre>
+    <h3 id="sarpyx-processor-core-focus-py-initialize-params-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>device</code></td><td><code>Optional[torch.device]</code></td><td>no</td><td><code>None</code></td><td>PyTorch device for computation.</td></tr><tr><td><code>slant_range_vec</code></td><td><code>Optional[np.ndarray]</code></td><td>no</td><td><code>None</code></td><td>Slant range vector.</td></tr><tr><td><code>D</code></td><td><code>Optional[np.ndarray]</code></td><td>no</td><td><code>None</code></td><td>Cosine of instantaneous squint angle.</td></tr><tr><td><code>c</code></td><td><code>Optional[float]</code></td><td>no</td><td><code>None</code></td><td>Speed of light.</td></tr><tr><td><code>len_range_line</code></td><td><code>Optional[int]</code></td><td>no</td><td><code>None</code></td><td>Length of range line.</td></tr><tr><td><code>range_sample_freq</code></td><td><code>Optional[float]</code></td><td>no</td><td><code>None</code></td><td>Range sampling frequency.</td></tr><tr><td><code>wavelength</code></td><td><code>Optional[float]</code></td><td>no</td><td><code>None</code></td><td>Radar wavelength.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-focus-py-initialize-params-returns">Return Type</h3>
+    <p><code>Dict[str, Any]</code></p>
+    <p>Dictionary containing all parameters.</p>
+    <h3 id="sarpyx-processor-core-focus-py-initialize-params-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-focus-py-initialize-params-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-focus-py-initialize-params-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import initialize_params
+
+result = initialize_params()</code></pre>
+    <h3 id="sarpyx-processor-core-focus-py-initialize-params-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-focus-py-multiply-inplace" data-searchable data-search="multiply_inplace multiply_inplace(a: Union[np.ndarray, torch.Tensor], b: Union[np.ndarray, torch.Tensor]) -&gt; Union[np.ndarray, torch.Tensor]">
+  <summary><code>multiply_inplace</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Multiply two arrays element-wise in-place with broadcasting support.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:136</code></p>
+    <h3 id="sarpyx-processor-core-focus-py-multiply-inplace-signature">Signature</h3>
+    <pre><code class="language-python">multiply_inplace(a: Union[np.ndarray, torch.Tensor], b: Union[np.ndarray, torch.Tensor]) -&gt; Union[np.ndarray, torch.Tensor]</code></pre>
+    <h3 id="sarpyx-processor-core-focus-py-multiply-inplace-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>a</code></td><td><code>Union[np.ndarray, torch.Tensor]</code></td><td>yes</td><td><code>-</code></td><td>First array (modified in-place).</td></tr><tr><td><code>b</code></td><td><code>Union[np.ndarray, torch.Tensor]</code></td><td>yes</td><td><code>-</code></td><td>Second array.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-focus-py-multiply-inplace-returns">Return Type</h3>
+    <p><code>Union[np.ndarray, torch.Tensor]</code></p>
+    <p>Reference to modified first array.</p>
+    <h3 id="sarpyx-processor-core-focus-py-multiply-inplace-exceptions">Exceptions</h3>
+    <ul><li><code>ValueError</code></li></ul>
+    <h3 id="sarpyx-processor-core-focus-py-multiply-inplace-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-focus-py-multiply-inplace-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import multiply_inplace
+
+result = multiply_inplace(a=&lt;a&gt;, b=&lt;b&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-focus-py-multiply-inplace-edge-cases">Edge Cases</h3>
+    <p>May raise: ValueError.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-focus-py-multiply" data-searchable data-search="multiply multiply(a: Union[np.ndarray, torch.Tensor], b: Union[np.ndarray, torch.Tensor], debug: bool=False) -&gt; Union[np.ndarray, torch.Tensor]">
+  <summary><code>multiply</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Multiply two arrays element-wise with broadcasting support.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:177</code></p>
+    <h3 id="sarpyx-processor-core-focus-py-multiply-signature">Signature</h3>
+    <pre><code class="language-python">multiply(a: Union[np.ndarray, torch.Tensor], b: Union[np.ndarray, torch.Tensor], debug: bool=False) -&gt; Union[np.ndarray, torch.Tensor]</code></pre>
+    <h3 id="sarpyx-processor-core-focus-py-multiply-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>a</code></td><td><code>Union[np.ndarray, torch.Tensor]</code></td><td>yes</td><td><code>-</code></td><td>First array.</td></tr><tr><td><code>b</code></td><td><code>Union[np.ndarray, torch.Tensor]</code></td><td>yes</td><td><code>-</code></td><td>Second array.</td></tr><tr><td><code>debug</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-focus-py-multiply-returns">Return Type</h3>
+    <p><code>Union[np.ndarray, torch.Tensor]</code></p>
+    <p>Element-wise multiplication result.</p>
+    <h3 id="sarpyx-processor-core-focus-py-multiply-exceptions">Exceptions</h3>
+    <ul><li><code>ValueError</code></li></ul>
+    <h3 id="sarpyx-processor-core-focus-py-multiply-side-effects">Side Effects</h3>
+    <ul><li>io</li></ul>
+    <h3 id="sarpyx-processor-core-focus-py-multiply-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import multiply
+
+result = multiply(a=&lt;a&gt;, b=&lt;b&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-focus-py-multiply-edge-cases">Edge Cases</h3>
+    <p>May raise: ValueError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-focus-py-ifft2d" data-searchable data-search="ifft2d ifft2d(radar_data: Union[np.ndarray, torch.Tensor], backend: str=&#x27;numpy&#x27;, verbose: bool=False) -&gt; Union[np.ndarray, torch.Tensor]">
+  <summary><code>ifft2d</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Perform memory-efficient 2D inverse FFT on radar data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:227</code></p>
+    <h3 id="sarpyx-processor-core-focus-py-ifft2d-signature">Signature</h3>
+    <pre><code class="language-python">ifft2d(radar_data: Union[np.ndarray, torch.Tensor], backend: str=&#x27;numpy&#x27;, verbose: bool=False) -&gt; Union[np.ndarray, torch.Tensor]</code></pre>
+    <h3 id="sarpyx-processor-core-focus-py-ifft2d-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>radar_data</code></td><td><code>Union[np.ndarray, torch.Tensor]</code></td><td>yes</td><td><code>-</code></td><td>Input radar data array.</td></tr><tr><td><code>backend</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;numpy&#x27;</code></td><td>Backend to use (&#x27;numpy&#x27; or &#x27;torch&#x27;).</td></tr><tr><td><code>verbose</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>Whether to print verbose output.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-focus-py-ifft2d-returns">Return Type</h3>
+    <p><code>Union[np.ndarray, torch.Tensor]</code></p>
+    <p>Processed radar data after 2D inverse FFT.</p>
+    <h3 id="sarpyx-processor-core-focus-py-ifft2d-exceptions">Exceptions</h3>
+    <ul><li><code>ValueError</code></li></ul>
+    <h3 id="sarpyx-processor-core-focus-py-ifft2d-side-effects">Side Effects</h3>
+    <ul><li>io</li></ul>
+    <h3 id="sarpyx-processor-core-focus-py-ifft2d-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import ifft2d
+
+result = ifft2d(radar_data=&lt;radar_data&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-focus-py-ifft2d-edge-cases">Edge Cases</h3>
+    <p>May raise: ValueError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-focus-py-iff-azimuth" data-searchable data-search="iff_azimuth iff_azimuth(radar_data: Union[np.ndarray, torch.Tensor], backend: str=&#x27;numpy&#x27;, verbose: bool=False) -&gt; Union[np.ndarray, torch.Tensor]">
+  <summary><code>iff_azimuth</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Perform memory-efficient inverse FFT along azimuth dimension.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:269</code></p>
+    <h3 id="sarpyx-processor-core-focus-py-iff-azimuth-signature">Signature</h3>
+    <pre><code class="language-python">iff_azimuth(radar_data: Union[np.ndarray, torch.Tensor], backend: str=&#x27;numpy&#x27;, verbose: bool=False) -&gt; Union[np.ndarray, torch.Tensor]</code></pre>
+    <h3 id="sarpyx-processor-core-focus-py-iff-azimuth-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>radar_data</code></td><td><code>Union[np.ndarray, torch.Tensor]</code></td><td>yes</td><td><code>-</code></td><td>Input radar data array.</td></tr><tr><td><code>backend</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;numpy&#x27;</code></td><td>Backend to use (&#x27;numpy&#x27; or &#x27;torch&#x27;).</td></tr><tr><td><code>verbose</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>Whether to print verbose output.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-focus-py-iff-azimuth-returns">Return Type</h3>
+    <p><code>Union[np.ndarray, torch.Tensor]</code></p>
+    <p>Processed radar data after inverse FFT along azimuth dimension.</p>
+    <h3 id="sarpyx-processor-core-focus-py-iff-azimuth-exceptions">Exceptions</h3>
+    <ul><li><code>ValueError</code></li></ul>
+    <h3 id="sarpyx-processor-core-focus-py-iff-azimuth-side-effects">Side Effects</h3>
+    <ul><li>io</li></ul>
+    <h3 id="sarpyx-processor-core-focus-py-iff-azimuth-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import iff_azimuth
+
+result = iff_azimuth(radar_data=&lt;radar_data&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-focus-py-iff-azimuth-edge-cases">Edge Cases</h3>
+    <p>May raise: ValueError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+
+  <h2 id="public-classes">Public Classes (1)</h2>
+  
+<details class="api-item class-item" id="sarpyx-processor-core-focus-py-coarserda" data-searchable data-search="CoarseRDA class CoarseRDA">
+  <summary><code>CoarseRDA</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Memory-efficient Coarse Range Doppler Algorithm processor for SAR data.
+
+This class implements a memory-optimized coarse Range Doppler Algorithm for processing
+synthetic aperture radar (SAR) data, specifically designed for Sentinel-1 data.
+
+The processing pipeline follows these main steps:
+1. Initialization and data loading
+2. Transmission replica generation
+3. 2D FFT transformation
+4. Range compression
+5. Range Cell Migration Correction (RCMC)
+6. Azimuth compression
+7. Final inverse transformations
+
+Memory optimizations include:
+- In-place operations where possible
+- Explicit memory cleanup
+- Memory usage monitoring
+- Efficient data type usage</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:304</code></p>
+    <h3 id="sarpyx-processor-core-focus-py-coarserda-signature">Class Signature</h3>
+    <pre><code class="language-python">class CoarseRDA</code></pre>
+    <h3 id="sarpyx-processor-core-focus-py-coarserda-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-processor-core-focus-py-coarserda-returns">Return Type</h3>
+    <p><code>CoarseRDA</code> instances.</p>
+    <h3 id="sarpyx-processor-core-focus-py-coarserda-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-processor-core-focus-py-coarserda-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-processor-core-focus-py-coarserda-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import CoarseRDA
+
+obj = CoarseRDA(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-processor-core-focus-py-coarserda-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-processor-core-focus-py-coarserda-methods">Public Methods (12)</h3>
+    
+<details class="api-item method" id="sarpyx-processor-core-focus-py-coarserda-fft2d" data-searchable data-search="CoarseRDA fft2d fft2d(self, w_pad: Optional[int]=None, executors: int=12) -&gt; None">
+  <summary><code>CoarseRDA.fft2d</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Perform memory-efficient 2D FFT on radar data in range and azimuth dimensions.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:509</code></p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-fft2d-signature">Signature</h4>
+    <pre><code class="language-python">fft2d(self, w_pad: Optional[int]=None, executors: int=12) -&gt; None</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-fft2d-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>w_pad</code></td><td><code>Optional[int]</code></td><td>no</td><td><code>None</code></td><td>Width padding for range FFT (ignored for dimension preservation).</td></tr><tr><td><code>executors</code></td><td><code>int</code></td><td>no</td><td><code>12</code></td><td>Number of executors for custom backend.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-fft2d-returns">Return Type</h4>
+    <p><code>None</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-fft2d-exceptions">Exceptions</h4>
+    <ul><li><code>ValueError</code></li></ul>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-fft2d-side-effects">Side Effects</h4>
+    <ul><li>io</li></ul>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-fft2d-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import CoarseRDA
+
+# Constructor arguments are inferred from implementation.
+obj = CoarseRDA(...)  # inferred from implementation
+result = obj.fft2d()</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-fft2d-edge-cases">Edge Cases</h4>
+    <p>May raise: ValueError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-focus-py-coarserda-ifft-range" data-searchable data-search="CoarseRDA ifft_range ifft_range(self) -&gt; None">
+  <summary><code>CoarseRDA.ifft_range</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Perform memory-efficient inverse FFT along range dimension and trim to original size.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:664</code></p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-ifft-range-signature">Signature</h4>
+    <pre><code class="language-python">ifft_range(self) -&gt; None</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-ifft-range-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-ifft-range-returns">Return Type</h4>
+    <p><code>None</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-ifft-range-exceptions">Exceptions</h4>
+    <ul><li><code>ValueError</code></li></ul>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-ifft-range-side-effects">Side Effects</h4>
+    <ul><li>io</li></ul>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-ifft-range-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import CoarseRDA
+
+# Constructor arguments are inferred from implementation.
+obj = CoarseRDA(...)  # inferred from implementation
+result = obj.ifft_range()</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-ifft-range-edge-cases">Edge Cases</h4>
+    <p>May raise: ValueError.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-focus-py-coarserda-ifft-azimuth" data-searchable data-search="CoarseRDA ifft_azimuth ifft_azimuth(self) -&gt; None">
+  <summary><code>CoarseRDA.ifft_azimuth</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Perform memory-efficient inverse FFT along azimuth dimension.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:689</code></p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-ifft-azimuth-signature">Signature</h4>
+    <pre><code class="language-python">ifft_azimuth(self) -&gt; None</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-ifft-azimuth-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-ifft-azimuth-returns">Return Type</h4>
+    <p><code>None</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-ifft-azimuth-exceptions">Exceptions</h4>
+    <ul><li><code>ValueError</code></li></ul>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-ifft-azimuth-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-ifft-azimuth-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import CoarseRDA
+
+# Constructor arguments are inferred from implementation.
+obj = CoarseRDA(...)  # inferred from implementation
+result = obj.ifft_azimuth()</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-ifft-azimuth-edge-cases">Edge Cases</h4>
+    <p>May raise: ValueError.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-focus-py-coarserda-pulse-compression" data-searchable data-search="CoarseRDA pulse_compression pulse_compression(self, signal: np.ndarray, reference: np.ndarray) -&gt; np.ndarray">
+  <summary><code>CoarseRDA.pulse_compression</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Perform pulse compression following C++ implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:779</code></p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-pulse-compression-signature">Signature</h4>
+    <pre><code class="language-python">pulse_compression(self, signal: np.ndarray, reference: np.ndarray) -&gt; np.ndarray</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-pulse-compression-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>signal</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Input signal array.</td></tr><tr><td><code>reference</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Reference function for compression.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-pulse-compression-returns">Return Type</h4>
+    <p><code>np.ndarray</code></p>
+    <p>Pulse compressed signal.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-pulse-compression-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-pulse-compression-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-pulse-compression-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import CoarseRDA
+
+# Constructor arguments are inferred from implementation.
+obj = CoarseRDA(...)  # inferred from implementation
+result = obj.pulse_compression(signal=&lt;signal&gt;, reference=&lt;reference&gt;)</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-pulse-compression-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-focus-py-coarserda-get-range-filter" data-searchable data-search="CoarseRDA get_range_filter get_range_filter(self, pad_w: int=0, window_type: str=&#x27;hamming&#x27;) -&gt; np.ndarray">
+  <summary><code>CoarseRDA.get_range_filter</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Compute memory-efficient range filter for radar data compression.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:803</code></p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-range-filter-signature">Signature</h4>
+    <pre><code class="language-python">get_range_filter(self, pad_w: int=0, window_type: str=&#x27;hamming&#x27;) -&gt; np.ndarray</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-range-filter-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pad_w</code></td><td><code>int</code></td><td>no</td><td><code>0</code></td><td>Width padding for FFT length optimization.</td></tr><tr><td><code>window_type</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;hamming&#x27;</code></td><td>Type of window to apply (&#x27;hamming&#x27;, &#x27;hanning&#x27;, &#x27;blackman&#x27;, &#x27;rectangular&#x27;).</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-range-filter-returns">Return Type</h4>
+    <p><code>np.ndarray</code></p>
+    <p>Range filter array exactly matching radar data range dimension.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-range-filter-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-range-filter-side-effects">Side Effects</h4>
+    <ul><li>io</li></ul>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-range-filter-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import CoarseRDA
+
+# Constructor arguments are inferred from implementation.
+obj = CoarseRDA(...)  # inferred from implementation
+result = obj.get_range_filter()</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-range-filter-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-focus-py-coarserda-get-rcmc" data-searchable data-search="CoarseRDA get_rcmc get_rcmc(self) -&gt; np.ndarray">
+  <summary><code>CoarseRDA.get_rcmc</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Calculate memory-efficient Range Cell Migration Correction filter.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:862</code></p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-rcmc-signature">Signature</h4>
+    <pre><code class="language-python">get_rcmc(self) -&gt; np.ndarray</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-rcmc-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-rcmc-returns">Return Type</h4>
+    <p><code>np.ndarray</code></p>
+    <p>RCMC filter array matching radar data dimensions.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-rcmc-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-rcmc-side-effects">Side Effects</h4>
+    <ul><li>io</li></ul>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-rcmc-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import CoarseRDA
+
+# Constructor arguments are inferred from implementation.
+obj = CoarseRDA(...)  # inferred from implementation
+result = obj.get_rcmc()</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-rcmc-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-focus-py-coarserda-get-azimuth-filter" data-searchable data-search="CoarseRDA get_azimuth_filter get_azimuth_filter(self) -&gt; np.ndarray">
+  <summary><code>CoarseRDA.get_azimuth_filter</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Calculate memory-efficient azimuth compression filter.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:943</code></p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-azimuth-filter-signature">Signature</h4>
+    <pre><code class="language-python">get_azimuth_filter(self) -&gt; np.ndarray</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-azimuth-filter-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-azimuth-filter-returns">Return Type</h4>
+    <p><code>np.ndarray</code></p>
+    <p>Azimuth filter array matching radar data dimensions.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-azimuth-filter-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-azimuth-filter-side-effects">Side Effects</h4>
+    <ul><li>io</li></ul>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-azimuth-filter-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import CoarseRDA
+
+# Constructor arguments are inferred from implementation.
+obj = CoarseRDA(...)  # inferred from implementation
+result = obj.get_azimuth_filter()</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-get-azimuth-filter-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-focus-py-coarserda-data-focus" data-searchable data-search="CoarseRDA data_focus data_focus(self) -&gt; None">
+  <summary><code>CoarseRDA.data_focus</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Perform memory-efficient complete SAR data focusing using Range Doppler Algorithm.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:1405</code></p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-data-focus-signature">Signature</h4>
+    <pre><code class="language-python">data_focus(self) -&gt; None</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-data-focus-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-data-focus-returns">Return Type</h4>
+    <p><code>None</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-data-focus-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-data-focus-side-effects">Side Effects</h4>
+    <ul><li>io</li></ul>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-data-focus-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import CoarseRDA
+
+# Constructor arguments are inferred from implementation.
+obj = CoarseRDA(...)  # inferred from implementation
+result = obj.data_focus()</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-data-focus-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-focus-py-coarserda-range-compression" data-searchable data-search="CoarseRDA range_compression range_compression(self) -&gt; None">
+  <summary><code>CoarseRDA.range_compression</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Perform memory-efficient range compression step.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:1465</code></p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-range-compression-signature">Signature</h4>
+    <pre><code class="language-python">range_compression(self) -&gt; None</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-range-compression-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-range-compression-returns">Return Type</h4>
+    <p><code>None</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-range-compression-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-range-compression-side-effects">Side Effects</h4>
+    <ul><li>io</li></ul>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-range-compression-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import CoarseRDA
+
+# Constructor arguments are inferred from implementation.
+obj = CoarseRDA(...)  # inferred from implementation
+result = obj.range_compression()</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-range-compression-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-focus-py-coarserda-rcmc" data-searchable data-search="CoarseRDA rcmc rcmc(self) -&gt; None">
+  <summary><code>CoarseRDA.rcmc</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Perform memory-efficient Range Cell Migration Correction.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:1503</code></p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-rcmc-signature">Signature</h4>
+    <pre><code class="language-python">rcmc(self) -&gt; None</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-rcmc-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-rcmc-returns">Return Type</h4>
+    <p><code>None</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-rcmc-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-rcmc-side-effects">Side Effects</h4>
+    <ul><li>io</li></ul>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-rcmc-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import CoarseRDA
+
+# Constructor arguments are inferred from implementation.
+obj = CoarseRDA(...)  # inferred from implementation
+result = obj.rcmc()</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-rcmc-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-focus-py-coarserda-azimuth-compression" data-searchable data-search="CoarseRDA azimuth_compression azimuth_compression(self) -&gt; None">
+  <summary><code>CoarseRDA.azimuth_compression</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Perform memory-efficient azimuth compression step.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:1532</code></p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-azimuth-compression-signature">Signature</h4>
+    <pre><code class="language-python">azimuth_compression(self) -&gt; None</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-azimuth-compression-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-azimuth-compression-returns">Return Type</h4>
+    <p><code>None</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-azimuth-compression-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-azimuth-compression-side-effects">Side Effects</h4>
+    <ul><li>io</li></ul>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-azimuth-compression-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import CoarseRDA
+
+# Constructor arguments are inferred from implementation.
+obj = CoarseRDA(...)  # inferred from implementation
+result = obj.azimuth_compression()</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-azimuth-compression-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-focus-py-coarserda-save-file" data-searchable data-search="CoarseRDA save_file save_file(self, save_path: Union[str, Path]) -&gt; None">
+  <summary><code>CoarseRDA.save_file</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Save processed radar data to file.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/focus.py:1663</code></p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-save-file-signature">Signature</h4>
+    <pre><code class="language-python">save_file(self, save_path: Union[str, Path]) -&gt; None</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-save-file-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>save_path</code></td><td><code>Union[str, Path]</code></td><td>yes</td><td><code>-</code></td><td>Path where to save the data.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-save-file-returns">Return Type</h4>
+    <p><code>None</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-save-file-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-save-file-side-effects">Side Effects</h4>
+    <ul><li>io</li></ul>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-save-file-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.focus import CoarseRDA
+
+# Constructor arguments are inferred from implementation.
+obj = CoarseRDA(...)  # inferred from implementation
+result = obj.save_file(save_path=&lt;save_path&gt;)</code></pre>
+    <h4 id="sarpyx-processor-core-focus-py-coarserda-save-file-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-02 17:41 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

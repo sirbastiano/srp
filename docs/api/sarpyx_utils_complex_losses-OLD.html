@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Exhaustive API reference for sarpyx.utils.complex_losses-OLD" />
+  <title>API: sarpyx.utils.complex_losses-OLD | SARPyX Documentation</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <script defer src="../assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="../index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">Home</a></li><li><a class="nav-link" href="../installation.html">Installation</a></li><li><a class="nav-link" href="../quickstart.html">Quick Start</a></li><li><a class="nav-link" href="../architecture.html">Architecture</a></li><li><a class="nav-link" href="../api/index.html">API</a></li><li><a class="nav-link" href="../configuration.html">Configuration</a></li><li><a class="nav-link" href="../usage.html">Usage</a></li><li><a class="nav-link" href="../testing.html">Testing</a></li><li><a class="nav-link" href="../contributing.html">Contributing</a></li><li><a class="nav-link" href="../faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="../api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="../api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="../api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="../api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="../api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="../api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link" href="../api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="../api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="../api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link" href="../api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="../api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link active" href="../api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link" href="../api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link" href="../api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link" href="../api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="../api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link" href="../api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link" href="../api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="../api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="../api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="../api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link" href="../api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="../api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="../api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="../api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="../index.html">Home</a></li><li><a href="index.html">API</a></li><li>sarpyx.utils.complex_losses-OLD</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="API: sarpyx.utils.complex_losses-OLD">
+        
+<section>
+  <h1 id="module-sarpyx_utils_complex_losses-OLD">Module: <code>sarpyx.utils.complex_losses-OLD</code></h1>
+  <p><strong>File:</strong> <code>sarpyx/utils/complex_losses-OLD.py</code></p>
+  <p>No module docstring available; module purpose is inferred from implementation.</p>
+
+  <h2 id="module-exports">Exported Symbols (<code>__all__</code>)</h2>
+  <p>No explicit <code>__all__</code> list. Public symbols inferred from implementation.</p>
+
+  <h2 id="public-functions">Public Functions (14)</h2>
+  
+<details class="api-item" id="sarpyx-utils-complex-losses-old-py-loss-split-mse" data-searchable data-search="loss_split_mse loss_split_mse(pred: torch.Tensor, target: torch.Tensor)">
+  <summary><code>loss_split_mse</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/complex_losses-OLD.py:5</code></p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-split-mse-signature">Signature</h3>
+    <pre><code class="language-python">loss_split_mse(pred: torch.Tensor, target: torch.Tensor)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-split-mse-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-split-mse-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-split-mse-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-split-mse-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-split-mse-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.complex_losses-OLD import loss_split_mse
+
+result = loss_split_mse(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-split-mse-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-complex-losses-old-py-loss-complex-l2" data-searchable data-search="loss_complex_l2 loss_complex_l2(pred: torch.Tensor, target: torch.Tensor)">
+  <summary><code>loss_complex_l2</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/complex_losses-OLD.py:9</code></p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-l2-signature">Signature</h3>
+    <pre><code class="language-python">loss_complex_l2(pred: torch.Tensor, target: torch.Tensor)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-l2-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-l2-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-l2-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-l2-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-l2-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.complex_losses-OLD import loss_complex_l2
+
+result = loss_complex_l2(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-l2-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-complex-losses-old-py-loss-complex-l1" data-searchable data-search="loss_complex_l1 loss_complex_l1(pred: torch.Tensor, target: torch.Tensor)">
+  <summary><code>loss_complex_l1</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/complex_losses-OLD.py:13</code></p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-l1-signature">Signature</h3>
+    <pre><code class="language-python">loss_complex_l1(pred: torch.Tensor, target: torch.Tensor)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-l1-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-l1-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-l1-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-l1-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-l1-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.complex_losses-OLD import loss_complex_l1
+
+result = loss_complex_l1(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-l1-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-complex-losses-old-py-loss-mag-l2" data-searchable data-search="loss_mag_l2 loss_mag_l2(pred: torch.Tensor, target: torch.Tensor)">
+  <summary><code>loss_mag_l2</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/complex_losses-OLD.py:17</code></p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-mag-l2-signature">Signature</h3>
+    <pre><code class="language-python">loss_mag_l2(pred: torch.Tensor, target: torch.Tensor)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-mag-l2-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-mag-l2-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-mag-l2-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-mag-l2-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-mag-l2-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.complex_losses-OLD import loss_mag_l2
+
+result = loss_mag_l2(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-mag-l2-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-complex-losses-old-py-loss-log-mag" data-searchable data-search="loss_log_mag loss_log_mag(pred: torch.Tensor, target: torch.Tensor, eps=1e-06)">
+  <summary><code>loss_log_mag</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/complex_losses-OLD.py:20</code></p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-log-mag-signature">Signature</h3>
+    <pre><code class="language-python">loss_log_mag(pred: torch.Tensor, target: torch.Tensor, eps=1e-06)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-log-mag-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>eps</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>1e-06</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-log-mag-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-log-mag-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-log-mag-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-log-mag-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.complex_losses-OLD import loss_log_mag
+
+result = loss_log_mag(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-log-mag-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-complex-losses-old-py-loss-amp-phase" data-searchable data-search="loss_amp_phase loss_amp_phase(pred: torch.Tensor, target: torch.Tensor, w_phase=1.0)">
+  <summary><code>loss_amp_phase</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/complex_losses-OLD.py:24</code></p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-amp-phase-signature">Signature</h3>
+    <pre><code class="language-python">loss_amp_phase(pred: torch.Tensor, target: torch.Tensor, w_phase=1.0)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-amp-phase-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>w_phase</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>1.0</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-amp-phase-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-amp-phase-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-amp-phase-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-amp-phase-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.complex_losses-OLD import loss_amp_phase
+
+result = loss_amp_phase(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-amp-phase-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-complex-losses-old-py-loss-power-consistency" data-searchable data-search="loss_power_consistency loss_power_consistency(pred: torch.Tensor, target: torch.Tensor)">
+  <summary><code>loss_power_consistency</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/complex_losses-OLD.py:30</code></p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-power-consistency-signature">Signature</h3>
+    <pre><code class="language-python">loss_power_consistency(pred: torch.Tensor, target: torch.Tensor)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-power-consistency-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-power-consistency-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-power-consistency-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-power-consistency-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-power-consistency-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.complex_losses-OLD import loss_power_consistency
+
+result = loss_power_consistency(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-power-consistency-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-complex-losses-old-py-loss-symmetry" data-searchable data-search="loss_symmetry loss_symmetry(pred: torch.Tensor, sym_op)">
+  <summary><code>loss_symmetry</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/complex_losses-OLD.py:35</code></p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-symmetry-signature">Signature</h3>
+    <pre><code class="language-python">loss_symmetry(pred: torch.Tensor, sym_op)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-symmetry-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>sym_op</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-symmetry-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-symmetry-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-symmetry-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-symmetry-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.complex_losses-OLD import loss_symmetry
+
+result = loss_symmetry(pred=&lt;pred&gt;, sym_op=&lt;sym_op&gt;)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-symmetry-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-complex-losses-old-py-loss-complex-tv" data-searchable data-search="loss_complex_tv loss_complex_tv(pred: torch.Tensor, p=1)">
+  <summary><code>loss_complex_tv</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/complex_losses-OLD.py:40</code></p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-tv-signature">Signature</h3>
+    <pre><code class="language-python">loss_complex_tv(pred: torch.Tensor, p=1)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-tv-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>p</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>1</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-tv-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-tv-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-tv-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-tv-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.complex_losses-OLD import loss_complex_tv
+
+result = loss_complex_tv(pred=&lt;pred&gt;)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-complex-tv-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-complex-losses-old-py-loss-phase-smooth" data-searchable data-search="loss_phase_smooth loss_phase_smooth(pred: torch.Tensor)">
+  <summary><code>loss_phase_smooth</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/complex_losses-OLD.py:48</code></p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-phase-smooth-signature">Signature</h3>
+    <pre><code class="language-python">loss_phase_smooth(pred: torch.Tensor)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-phase-smooth-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-phase-smooth-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-phase-smooth-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-phase-smooth-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-phase-smooth-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.complex_losses-OLD import loss_phase_smooth
+
+result = loss_phase_smooth(pred=&lt;pred&gt;)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-phase-smooth-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-complex-losses-old-py-loss-grad-match" data-searchable data-search="loss_grad_match loss_grad_match(pred: torch.Tensor, target: torch.Tensor)">
+  <summary><code>loss_grad_match</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/complex_losses-OLD.py:55</code></p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-grad-match-signature">Signature</h3>
+    <pre><code class="language-python">loss_grad_match(pred: torch.Tensor, target: torch.Tensor)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-grad-match-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-grad-match-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-grad-match-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-grad-match-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-grad-match-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.complex_losses-OLD import loss_grad_match
+
+result = loss_grad_match(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-grad-match-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-complex-losses-old-py-loss-speckle-nll" data-searchable data-search="loss_speckle_nll loss_speckle_nll(pred: torch.Tensor, target: torch.Tensor, variance: float=1.0)">
+  <summary><code>loss_speckle_nll</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/complex_losses-OLD.py:73</code></p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-speckle-nll-signature">Signature</h3>
+    <pre><code class="language-python">loss_speckle_nll(pred: torch.Tensor, target: torch.Tensor, variance: float=1.0)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-speckle-nll-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>variance</code></td><td><code>float</code></td><td>no</td><td><code>1.0</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-speckle-nll-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-speckle-nll-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-speckle-nll-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-speckle-nll-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.complex_losses-OLD import loss_speckle_nll
+
+result = loss_speckle_nll(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-speckle-nll-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-complex-losses-old-py-loss-adversarial" data-searchable data-search="loss_adversarial loss_adversarial(pred: torch.Tensor, discriminator, real_label=1.0, fake_label=0.0)">
+  <summary><code>loss_adversarial</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/complex_losses-OLD.py:80</code></p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-adversarial-signature">Signature</h3>
+    <pre><code class="language-python">loss_adversarial(pred: torch.Tensor, discriminator, real_label=1.0, fake_label=0.0)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-adversarial-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>discriminator</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>real_label</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>1.0</code></td><td>inferred from implementation.</td></tr><tr><td><code>fake_label</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>0.0</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-adversarial-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-adversarial-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-adversarial-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-adversarial-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.complex_losses-OLD import loss_adversarial
+
+result = loss_adversarial(pred=&lt;pred&gt;, discriminator=&lt;discriminator&gt;)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-adversarial-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-complex-losses-old-py-loss-feature" data-searchable data-search="loss_feature loss_feature(pred: torch.Tensor, target: torch.Tensor, feature_extractor)">
+  <summary><code>loss_feature</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/complex_losses-OLD.py:87</code></p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-feature-signature">Signature</h3>
+    <pre><code class="language-python">loss_feature(pred: torch.Tensor, target: torch.Tensor, feature_extractor)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-feature-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>feature_extractor</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-feature-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-feature-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-feature-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-feature-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.complex_losses-OLD import loss_feature
+
+result = loss_feature(pred=&lt;pred&gt;, target=&lt;target&gt;, feature_extractor=&lt;feature_extractor&gt;)</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-loss-feature-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+
+  <h2 id="public-classes">Public Classes (1)</h2>
+  
+<details class="api-item class-item" id="sarpyx-utils-complex-losses-old-py-complexlosscomposite" data-searchable data-search="ComplexLossComposite class ComplexLossComposite">
+  <summary><code>ComplexLossComposite</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/complex_losses-OLD.py:92</code></p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-complexlosscomposite-signature">Class Signature</h3>
+    <pre><code class="language-python">class ComplexLossComposite</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-complexlosscomposite-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-complex-losses-old-py-complexlosscomposite-returns">Return Type</h3>
+    <p><code>ComplexLossComposite</code> instances.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-complexlosscomposite-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-complexlosscomposite-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-complexlosscomposite-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.complex_losses-OLD import ComplexLossComposite
+
+obj = ComplexLossComposite(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-complex-losses-old-py-complexlosscomposite-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-complex-losses-old-py-complexlosscomposite-methods">Public Methods (0)</h3>
+    <p>No public methods detected.</p>
+  </div>
+</details>
+
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-02 17:41 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

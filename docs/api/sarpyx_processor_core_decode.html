@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Exhaustive API reference for sarpyx.processor.core.decode" />
+  <title>API: sarpyx.processor.core.decode | SARPyX Documentation</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <script defer src="../assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="../index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">Home</a></li><li><a class="nav-link" href="../installation.html">Installation</a></li><li><a class="nav-link" href="../quickstart.html">Quick Start</a></li><li><a class="nav-link" href="../architecture.html">Architecture</a></li><li><a class="nav-link" href="../api/index.html">API</a></li><li><a class="nav-link" href="../configuration.html">Configuration</a></li><li><a class="nav-link" href="../usage.html">Usage</a></li><li><a class="nav-link" href="../testing.html">Testing</a></li><li><a class="nav-link" href="../contributing.html">Contributing</a></li><li><a class="nav-link" href="../faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="../api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="../api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="../api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="../api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="../api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="../api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link" href="../api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="../api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link active" href="../api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="../api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link" href="../api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="../api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link" href="../api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link" href="../api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link" href="../api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="../api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link" href="../api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link" href="../api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="../api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="../api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="../api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link" href="../api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="../api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="../api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="../api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="../index.html">Home</a></li><li><a href="index.html">API</a></li><li>sarpyx.processor.core.decode</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="API: sarpyx.processor.core.decode">
+        
+<section>
+  <h1 id="module-sarpyx_processor_core_decode">Module: <code>sarpyx.processor.core.decode</code></h1>
+  <p><strong>File:</strong> <code>sarpyx/processor/core/decode.py</code></p>
+  <p>No module docstring available; module purpose is inferred from implementation.</p>
+
+  <h2 id="module-exports">Exported Symbols (<code>__all__</code>)</h2>
+  <p>No explicit <code>__all__</code> list. Public symbols inferred from implementation.</p>
+
+  <h2 id="public-functions">Public Functions (6)</h2>
+  
+<details class="api-item" id="sarpyx-processor-core-decode-py-extract-echo-bursts" data-searchable data-search="extract_echo_bursts extract_echo_bursts(records: List[Any]) -&gt; Tuple[List[List[Any]], List[int]]">
+  <summary><code>extract_echo_bursts</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract echo bursts from radar records and return burst data with indexes.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/decode.py:55</code></p>
+    <h3 id="sarpyx-processor-core-decode-py-extract-echo-bursts-signature">Signature</h3>
+    <pre><code class="language-python">extract_echo_bursts(records: List[Any]) -&gt; Tuple[List[List[Any]], List[int]]</code></pre>
+    <h3 id="sarpyx-processor-core-decode-py-extract-echo-bursts-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>records</code></td><td><code>List[Any]</code></td><td>yes</td><td><code>-</code></td><td>List of records from ISP decoder containing radar data. Each record should have radar_configuration_support.ses.signal_type and radar_sample_count.number_of_quads attributes.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-decode-py-extract-echo-bursts-returns">Return Type</h3>
+    <p><code>Tuple[List[List[Any]], List[int]]</code></p>
+    <p>Tuple[List[List[Any]], List[int]]: A tuple containing:
+        - List of echo burst sublists grouped by number of quads
+        - List of indexes indicating burst start/end positions in original records</p>
+    <h3 id="sarpyx-processor-core-decode-py-extract-echo-bursts-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-decode-py-extract-echo-bursts-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-decode-py-extract-echo-bursts-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.decode import extract_echo_bursts
+
+result = extract_echo_bursts(records=&lt;records&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-decode-py-extract-echo-bursts-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-decode-py-save-pickle-file" data-searchable data-search="save_pickle_file save_pickle_file(file_path: Union[str, Path], data: Any) -&gt; None">
+  <summary><code>save_pickle_file</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Save data to a pickle file with robust error handling.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/decode.py:130</code></p>
+    <h3 id="sarpyx-processor-core-decode-py-save-pickle-file-signature">Signature</h3>
+    <pre><code class="language-python">save_pickle_file(file_path: Union[str, Path], data: Any) -&gt; None</code></pre>
+    <h3 id="sarpyx-processor-core-decode-py-save-pickle-file-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>file_path</code></td><td><code>Union[str, Path]</code></td><td>yes</td><td><code>-</code></td><td>Path where to save the pickle file.</td></tr><tr><td><code>data</code></td><td><code>Any</code></td><td>yes</td><td><code>-</code></td><td>Data object to be pickled and saved.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-decode-py-save-pickle-file-returns">Return Type</h3>
+    <p><code>None</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-decode-py-save-pickle-file-exceptions">Exceptions</h3>
+    <ul><li><code>ValueError</code></li></ul>
+    <h3 id="sarpyx-processor-core-decode-py-save-pickle-file-side-effects">Side Effects</h3>
+    <ul><li>filesystem</li></ul>
+    <h3 id="sarpyx-processor-core-decode-py-save-pickle-file-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.decode import save_pickle_file
+
+result = save_pickle_file(file_path=&lt;file_path&gt;, data=&lt;data&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-decode-py-save-pickle-file-edge-cases">Edge Cases</h3>
+    <p>May raise: ValueError.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-decode-py-extract-headers" data-searchable data-search="extract_headers extract_headers(file_path: Union[str, Path], mode: str=&#x27;s1isp&#x27;, apply_transformations: bool=False) -&gt; pd.DataFrame">
+  <summary><code>extract_headers</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract metadata headers from radar file using specified decoding mode.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/decode.py:158</code></p>
+    <h3 id="sarpyx-processor-core-decode-py-extract-headers-signature">Signature</h3>
+    <pre><code class="language-python">extract_headers(file_path: Union[str, Path], mode: str=&#x27;s1isp&#x27;, apply_transformations: bool=False) -&gt; pd.DataFrame</code></pre>
+    <h3 id="sarpyx-processor-core-decode-py-extract-headers-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>file_path</code></td><td><code>Union[str, Path]</code></td><td>yes</td><td><code>-</code></td><td>Path to the radar data file.</td></tr><tr><td><code>mode</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;s1isp&#x27;</code></td><td>Extraction mode. Currently only &#x27;s1isp&#x27; is fully supported.</td></tr><tr><td><code>apply_transformations</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>Whether to apply parameter transformations to convert raw values to physical units.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-decode-py-extract-headers-returns">Return Type</h3>
+    <p><code>pd.DataFrame</code></p>
+    <p>pd.DataFrame: DataFrame containing the extracted metadata headers with optional transformations.</p>
+    <h3 id="sarpyx-processor-core-decode-py-extract-headers-exceptions">Exceptions</h3>
+    <ul><li><code>FileNotFoundError</code></li><li><code>NotImplementedError</code></li><li><code>RuntimeError</code></li><li><code>ValueError</code></li></ul>
+    <h3 id="sarpyx-processor-core-decode-py-extract-headers-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-decode-py-extract-headers-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.decode import extract_headers
+
+result = extract_headers(file_path=&lt;file_path&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-decode-py-extract-headers-edge-cases">Edge Cases</h3>
+    <p>May raise: FileNotFoundError, NotImplementedError, RuntimeError, ValueError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-decode-py-decode-radar-file-old" data-searchable data-search="decode_radar_file_old decode_radar_file_old(input_file: Union[str, Path], apply_transformations: bool=False) -&gt; Tuple[List[Dict[str, Any]], List[int]]">
+  <summary><code>decode_radar_file_old</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Decode Sentinel-1 Level 0 radar file and extract burst data with ephemeris.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/decode.py:214</code></p>
+    <h3 id="sarpyx-processor-core-decode-py-decode-radar-file-old-signature">Signature</h3>
+    <pre><code class="language-python">decode_radar_file_old(input_file: Union[str, Path], apply_transformations: bool=False) -&gt; Tuple[List[Dict[str, Any]], List[int]]</code></pre>
+    <h3 id="sarpyx-processor-core-decode-py-decode-radar-file-old-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>input_file</code></td><td><code>Union[str, Path]</code></td><td>yes</td><td><code>-</code></td><td>Path to the input Level 0 radar file.</td></tr><tr><td><code>apply_transformations</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>Whether to apply parameter transformations to convert raw values to physical units.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-decode-py-decode-radar-file-old-returns">Return Type</h3>
+    <p><code>Tuple[List[Dict[str, Any]], List[int]]</code></p>
+    <p>Tuple[List[Dict[str, Any]], List[int]]: A tuple containing:
+        - List of dictionaries with &#x27;echo&#x27;, &#x27;metadata&#x27;, and &#x27;ephemeris&#x27; keys
+        - List of indexes indicating burst positions in the original data</p>
+    <h3 id="sarpyx-processor-core-decode-py-decode-radar-file-old-exceptions">Exceptions</h3>
+    <ul><li><code>FileNotFoundError</code></li><li><code>RuntimeError</code></li></ul>
+    <h3 id="sarpyx-processor-core-decode-py-decode-radar-file-old-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-decode-py-decode-radar-file-old-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.decode import decode_radar_file_old
+
+result = decode_radar_file_old(input_file=&lt;input_file&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-decode-py-decode-radar-file-old-edge-cases">Edge Cases</h3>
+    <p>May raise: FileNotFoundError, RuntimeError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-decode-py-decode-radar-file" data-searchable data-search="decode_radar_file decode_radar_file(input_file: Union[str, Path], apply_transformations: bool=True) -&gt; Tuple[List[Dict[str, Any]], List[int]]">
+  <summary><code>decode_radar_file</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Decode Sentinel-1 Level 0 radar file and extract burst data with ephemeris.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/decode.py:301</code></p>
+    <h3 id="sarpyx-processor-core-decode-py-decode-radar-file-signature">Signature</h3>
+    <pre><code class="language-python">decode_radar_file(input_file: Union[str, Path], apply_transformations: bool=True) -&gt; Tuple[List[Dict[str, Any]], List[int]]</code></pre>
+    <h3 id="sarpyx-processor-core-decode-py-decode-radar-file-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>input_file</code></td><td><code>Union[str, Path]</code></td><td>yes</td><td><code>-</code></td><td>Path to the input Level 0 radar file.</td></tr><tr><td><code>apply_transformations</code></td><td><code>bool</code></td><td>no</td><td><code>True</code></td><td>Whether to apply parameter transformations to convert raw values to physical units.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-decode-py-decode-radar-file-returns">Return Type</h3>
+    <p><code>Tuple[List[Dict[str, Any]], List[int]]</code></p>
+    <p>Dict</p>
+    <h3 id="sarpyx-processor-core-decode-py-decode-radar-file-exceptions">Exceptions</h3>
+    <ul><li><code>FileNotFoundError</code></li><li><code>RuntimeError</code></li></ul>
+    <h3 id="sarpyx-processor-core-decode-py-decode-radar-file-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-decode-py-decode-radar-file-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.decode import decode_radar_file
+
+result = decode_radar_file(input_file=&lt;input_file&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-decode-py-decode-radar-file-edge-cases">Edge Cases</h3>
+    <p>May raise: FileNotFoundError, RuntimeError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-decode-py-main" data-searchable data-search="main main() -&gt; int">
+  <summary><code>main</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Main entry point for the radar file decoder.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/decode.py:887</code></p>
+    <h3 id="sarpyx-processor-core-decode-py-main-signature">Signature</h3>
+    <pre><code class="language-python">main() -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-decode-py-main-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-decode-py-main-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>int: Exit code - 0 for success, 1 for failure.</p>
+    <h3 id="sarpyx-processor-core-decode-py-main-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-decode-py-main-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-decode-py-main-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.decode import main
+
+result = main()</code></pre>
+    <h3 id="sarpyx-processor-core-decode-py-main-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+
+  <h2 id="public-classes">Public Classes (1)</h2>
+  
+<details class="api-item class-item" id="sarpyx-processor-core-decode-py-s1l0decoder" data-searchable data-search="S1L0Decoder class S1L0Decoder">
+  <summary><code>S1L0Decoder</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Minimal API for decoding Sentinel-1 Level 0 data files.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/decode.py:405</code></p>
+    <h3 id="sarpyx-processor-core-decode-py-s1l0decoder-signature">Class Signature</h3>
+    <pre><code class="language-python">class S1L0Decoder</code></pre>
+    <h3 id="sarpyx-processor-core-decode-py-s1l0decoder-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-processor-core-decode-py-s1l0decoder-returns">Return Type</h3>
+    <p><code>S1L0Decoder</code> instances.</p>
+    <h3 id="sarpyx-processor-core-decode-py-s1l0decoder-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-processor-core-decode-py-s1l0decoder-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-processor-core-decode-py-s1l0decoder-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.decode import S1L0Decoder
+
+obj = S1L0Decoder(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-processor-core-decode-py-s1l0decoder-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-processor-core-decode-py-s1l0decoder-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-processor-core-decode-py-s1l0decoder-decode-file" data-searchable data-search="S1L0Decoder decode_file decode_file(self, input_file: Path | str, output_dir: Optional[Path | str]=None, headers_only: bool=False, save_to_zarr: bool=False, apply_transformations: bool=True) -&gt; Dict[str, Any]">
+  <summary><code>S1L0Decoder.decode_file</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Decode a Sentinel-1 Level 0 .dat file.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/decode.py:417</code></p>
+    <h4 id="sarpyx-processor-core-decode-py-s1l0decoder-decode-file-signature">Signature</h4>
+    <pre><code class="language-python">decode_file(self, input_file: Path | str, output_dir: Optional[Path | str]=None, headers_only: bool=False, save_to_zarr: bool=False, apply_transformations: bool=True) -&gt; Dict[str, Any]</code></pre>
+    <h4 id="sarpyx-processor-core-decode-py-s1l0decoder-decode-file-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>input_file</code></td><td><code>Path | str</code></td><td>yes</td><td><code>-</code></td><td>Path to the input .dat file</td></tr><tr><td><code>output_dir</code></td><td><code>Optional[Path | str]</code></td><td>no</td><td><code>None</code></td><td>Directory to save processed data (optional)</td></tr><tr><td><code>headers_only</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>If True, extract only headers for quick preview</td></tr><tr><td><code>save_to_zarr</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>If True, save output in Zarr format with compression</td></tr><tr><td><code>apply_transformations</code></td><td><code>bool</code></td><td>no</td><td><code>True</code></td><td>If True, apply parameter transformations to convert raw values to physical units</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-decode-py-s1l0decoder-decode-file-returns">Return Type</h4>
+    <p><code>Dict[str, Any]</code></p>
+    <p>Dictionary containing decoded data with keys:
+    - &#x27;burst_data&#x27;: List of burst dictionaries (if headers_only=False)
+    - &#x27;headers&#x27;: DataFrame with header information (if headers_only=True)
+    - &#x27;file_info&#x27;: Basic file information</p>
+    <h4 id="sarpyx-processor-core-decode-py-s1l0decoder-decode-file-exceptions">Exceptions</h4>
+    <ul><li><code>FileNotFoundError</code></li><li><code>ValueError</code></li></ul>
+    <h4 id="sarpyx-processor-core-decode-py-s1l0decoder-decode-file-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-processor-core-decode-py-s1l0decoder-decode-file-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.decode import S1L0Decoder
+
+# Constructor arguments are inferred from implementation.
+obj = S1L0Decoder(...)  # inferred from implementation
+result = obj.decode_file(input_file=&lt;input_file&gt;)</code></pre>
+    <h4 id="sarpyx-processor-core-decode-py-s1l0decoder-decode-file-edge-cases">Edge Cases</h4>
+    <p>May raise: FileNotFoundError, ValueError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-02 17:41 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

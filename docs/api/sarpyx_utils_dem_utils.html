@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Exhaustive API reference for sarpyx.utils.dem_utils" />
+  <title>API: sarpyx.utils.dem_utils | SARPyX Documentation</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <script defer src="../assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="../index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">Home</a></li><li><a class="nav-link" href="../installation.html">Installation</a></li><li><a class="nav-link" href="../quickstart.html">Quick Start</a></li><li><a class="nav-link" href="../architecture.html">Architecture</a></li><li><a class="nav-link" href="../api/index.html">API</a></li><li><a class="nav-link" href="../configuration.html">Configuration</a></li><li><a class="nav-link" href="../usage.html">Usage</a></li><li><a class="nav-link" href="../testing.html">Testing</a></li><li><a class="nav-link" href="../contributing.html">Contributing</a></li><li><a class="nav-link" href="../faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="../api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="../api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="../api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="../api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="../api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="../api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link" href="../api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="../api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="../api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link" href="../api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="../api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link active" href="../api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link" href="../api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link" href="../api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="../api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link" href="../api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link" href="../api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="../api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="../api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="../api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link" href="../api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="../api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="../api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="../api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="../index.html">Home</a></li><li><a href="index.html">API</a></li><li>sarpyx.utils.dem_utils</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="API: sarpyx.utils.dem_utils">
+        
+<section>
+  <h1 id="module-sarpyx_utils_dem_utils">Module: <code>sarpyx.utils.dem_utils</code></h1>
+  <p><strong>File:</strong> <code>sarpyx/utils/dem_utils.py</code></p>
+  <p>Copernicus DEM COG tile utilities.
+
+Download and manage Copernicus GLO-30 (30m) and GLO-90 (90m) DEM tiles
+from the public AWS S3 bucket, selecting only the tiles that intersect
+a given WKT geometry.
+
+Tile naming convention (GLO-30 example)::
+
+    Copernicus_DSM_COG_10_N54_00_W004_00_DEM
+    ─────────────────── ── ────── ─────── ───
+           prefix       res  lat     lon  suffix
+
+Resolution codes: 10 → GLO-30 (30 m), 30 → GLO-90 (90 m).
+Each tile covers a 1×1 degree cell.
+
+Public HTTPS base URLs (no authentication required)::
+
+    GLO-30: https://copernicus-dem-30m.s3.eu-central-1.amazonaws.com/
+    GLO-90: https://copernicus-dem-90m.s3.eu-central-1.amazonaws.com/</p>
+
+  <h2 id="module-exports">Exported Symbols (<code>__all__</code>)</h2>
+  <p>No explicit <code>__all__</code> list. Public symbols inferred from implementation.</p>
+
+  <h2 id="public-functions">Public Functions (6)</h2>
+  
+<details class="api-item" id="sarpyx-utils-dem-utils-py-tile-name" data-searchable data-search="tile_name tile_name(lat: int, lon: int, resolution_m: int=30) -&gt; str">
+  <summary><code>tile_name</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Build the canonical Copernicus DEM COG tile name.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/dem_utils.py:69</code></p>
+    <h3 id="sarpyx-utils-dem-utils-py-tile-name-signature">Signature</h3>
+    <pre><code class="language-python">tile_name(lat: int, lon: int, resolution_m: int=30) -&gt; str</code></pre>
+    <h3 id="sarpyx-utils-dem-utils-py-tile-name-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>lat</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>int Latitude of the **south edge** of the 1×1° cell.</td></tr><tr><td><code>lon</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>int Longitude of the **west edge** of the 1×1° cell.</td></tr><tr><td><code>resolution_m</code></td><td><code>int</code></td><td>no</td><td><code>30</code></td><td>int DEM resolution in metres (30 or 90).</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-dem-utils-py-tile-name-returns">Return Type</h3>
+    <p><code>str</code></p>
+    <p>str
+    e.g. ``&#x27;Copernicus_DSM_COG_10_N54_00_W004_00_DEM&#x27;``</p>
+    <h3 id="sarpyx-utils-dem-utils-py-tile-name-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-dem-utils-py-tile-name-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-dem-utils-py-tile-name-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.dem_utils import tile_name
+
+result = tile_name(lat=&lt;lat&gt;, lon=&lt;lon&gt;)</code></pre>
+    <h3 id="sarpyx-utils-dem-utils-py-tile-name-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-dem-utils-py-tile-url" data-searchable data-search="tile_url tile_url(lat: int, lon: int, resolution_m: int=30) -&gt; str">
+  <summary><code>tile_url</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Full HTTPS URL for a Copernicus DEM COG GeoTIFF tile.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/dem_utils.py:90</code></p>
+    <h3 id="sarpyx-utils-dem-utils-py-tile-url-signature">Signature</h3>
+    <pre><code class="language-python">tile_url(lat: int, lon: int, resolution_m: int=30) -&gt; str</code></pre>
+    <h3 id="sarpyx-utils-dem-utils-py-tile-url-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>lat</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>lon</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>resolution_m</code></td><td><code>int</code></td><td>no</td><td><code>30</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-dem-utils-py-tile-url-returns">Return Type</h3>
+    <p><code>str</code></p>
+    <p>str
+    e.g. ``&#x27;https://copernicus-dem-30m.s3.eu-central-1.amazonaws.com/
+    Copernicus_DSM_COG_10_N54_00_W004_00_DEM/
+    Copernicus_DSM_COG_10_N54_00_W004_00_DEM.tif&#x27;``</p>
+    <h3 id="sarpyx-utils-dem-utils-py-tile-url-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-dem-utils-py-tile-url-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-dem-utils-py-tile-url-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.dem_utils import tile_url
+
+result = tile_url(lat=&lt;lat&gt;, lon=&lt;lon&gt;)</code></pre>
+    <h3 id="sarpyx-utils-dem-utils-py-tile-url-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-dem-utils-py-tiles-from-wkt" data-searchable data-search="tiles_from_wkt tiles_from_wkt(wkt_string: str, resolution_m: int=30) -&gt; List[Tuple[int, int, str, str]]">
+  <summary><code>tiles_from_wkt</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute the DEM tile grid cells that intersect a WKT geometry.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/dem_utils.py:138</code></p>
+    <h3 id="sarpyx-utils-dem-utils-py-tiles-from-wkt-signature">Signature</h3>
+    <pre><code class="language-python">tiles_from_wkt(wkt_string: str, resolution_m: int=30) -&gt; List[Tuple[int, int, str, str]]</code></pre>
+    <h3 id="sarpyx-utils-dem-utils-py-tiles-from-wkt-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>wkt_string</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>str Any valid WKT geometry (POLYGON, MULTIPOLYGON, POINT, …).</td></tr><tr><td><code>resolution_m</code></td><td><code>int</code></td><td>no</td><td><code>30</code></td><td>int DEM resolution (30 or 90).</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-dem-utils-py-tiles-from-wkt-returns">Return Type</h3>
+    <p><code>List[Tuple[int, int, str, str]]</code></p>
+    <p>list of (lat, lon, tile_name, tile_url)
+    One entry per intersecting 1×1° tile.</p>
+    <h3 id="sarpyx-utils-dem-utils-py-tiles-from-wkt-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-dem-utils-py-tiles-from-wkt-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-dem-utils-py-tiles-from-wkt-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.dem_utils import tiles_from_wkt
+
+result = tiles_from_wkt(wkt_string=&lt;wkt_string&gt;)</code></pre>
+    <h3 id="sarpyx-utils-dem-utils-py-tiles-from-wkt-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-dem-utils-py-download-tiles-for-wkt" data-searchable data-search="download_tiles_for_wkt download_tiles_for_wkt(wkt_string: str, output_dir: str | Path, resolution_m: int=30, overwrite: bool=False, max_workers: int=4) -&gt; List[Path]">
+  <summary><code>download_tiles_for_wkt</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Download all Copernicus DEM tiles intersecting a WKT geometry.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/dem_utils.py:212</code></p>
+    <h3 id="sarpyx-utils-dem-utils-py-download-tiles-for-wkt-signature">Signature</h3>
+    <pre><code class="language-python">download_tiles_for_wkt(wkt_string: str, output_dir: str | Path, resolution_m: int=30, overwrite: bool=False, max_workers: int=4) -&gt; List[Path]</code></pre>
+    <h3 id="sarpyx-utils-dem-utils-py-download-tiles-for-wkt-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>wkt_string</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>str Any valid WKT geometry string.</td></tr><tr><td><code>output_dir</code></td><td><code>str | Path</code></td><td>yes</td><td><code>-</code></td><td>str or Path Directory to save the downloaded ``.tif`` files into. A flat layout is used: ``&lt;output_dir&gt;/&lt;tile_name&gt;.tif``.</td></tr><tr><td><code>resolution_m</code></td><td><code>int</code></td><td>no</td><td><code>30</code></td><td>int DEM resolution in metres — 30 (GLO-30) or 90 (GLO-90).</td></tr><tr><td><code>overwrite</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>bool Re-download tiles that already exist locally.</td></tr><tr><td><code>max_workers</code></td><td><code>int</code></td><td>no</td><td><code>4</code></td><td>int Number of parallel download threads.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-dem-utils-py-download-tiles-for-wkt-returns">Return Type</h3>
+    <p><code>List[Path]</code></p>
+    <p>list of Path
+    Paths to the downloaded (or already existing) GeoTIFF files.</p>
+    <h3 id="sarpyx-utils-dem-utils-py-download-tiles-for-wkt-exceptions">Exceptions</h3>
+    <ul><li><code>ValueError</code></li></ul>
+    <h3 id="sarpyx-utils-dem-utils-py-download-tiles-for-wkt-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-dem-utils-py-download-tiles-for-wkt-example">Example Usage</h3>
+    <pre><code class="language-python">&gt;&gt;&gt; from sarpyx.utils.dem_utils import download_tiles_for_wkt
+&gt;&gt;&gt; wkt = &quot;POLYGON ((-3.18 54.28, -3.78 55.89, 0.31 56.30, 0.75 54.69, -3.18 54.28))&quot;
+&gt;&gt;&gt; tiles = download_tiles_for_wkt(wkt, &quot;/tmp/dem_tiles&quot;)
+&gt;&gt;&gt; print([t.name for t in tiles])
+[&#x27;Copernicus_DSM_COG_10_N54_00_W004_00_DEM.tif&#x27;, ...]</code></pre>
+    <h3 id="sarpyx-utils-dem-utils-py-download-tiles-for-wkt-edge-cases">Edge Cases</h3>
+    <p>May raise: ValueError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-dem-utils-py-build-vrt" data-searchable data-search="build_vrt build_vrt(tile_paths: Sequence[Path | str], output_vrt: str | Path) -&gt; Path">
+  <summary><code>build_vrt</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Merge multiple DEM GeoTIFFs into a single raster mosaic.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/dem_utils.py:307</code></p>
+    <h3 id="sarpyx-utils-dem-utils-py-build-vrt-signature">Signature</h3>
+    <pre><code class="language-python">build_vrt(tile_paths: Sequence[Path | str], output_vrt: str | Path) -&gt; Path</code></pre>
+    <h3 id="sarpyx-utils-dem-utils-py-build-vrt-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>tile_paths</code></td><td><code>Sequence[Path | str]</code></td><td>yes</td><td><code>-</code></td><td>sequence of Path Paths to ``.tif`` DEM tiles.</td></tr><tr><td><code>output_vrt</code></td><td><code>str | Path</code></td><td>yes</td><td><code>-</code></td><td>str or Path Path for the output ``.vrt`` file.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-dem-utils-py-build-vrt-returns">Return Type</h3>
+    <p><code>Path</code></p>
+    <p>Path
+    The output mosaic path.</p>
+    <h3 id="sarpyx-utils-dem-utils-py-build-vrt-exceptions">Exceptions</h3>
+    <ul><li><code>ImportError</code></li><li><code>ValueError</code></li></ul>
+    <h3 id="sarpyx-utils-dem-utils-py-build-vrt-side-effects">Side Effects</h3>
+    <ul><li>filesystem</li></ul>
+    <h3 id="sarpyx-utils-dem-utils-py-build-vrt-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.dem_utils import build_vrt
+
+result = build_vrt(tile_paths=&lt;tile_paths&gt;, output_vrt=&lt;output_vrt&gt;)</code></pre>
+    <h3 id="sarpyx-utils-dem-utils-py-build-vrt-edge-cases">Edge Cases</h3>
+    <p>May raise: ImportError, ValueError.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-dem-utils-py-main" data-searchable data-search="main main() -&gt; None">
+  <summary><code>main</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Command-line entry point for downloading Copernicus DEM tiles.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/dem_utils.py:375</code></p>
+    <h3 id="sarpyx-utils-dem-utils-py-main-signature">Signature</h3>
+    <pre><code class="language-python">main() -&gt; None</code></pre>
+    <h3 id="sarpyx-utils-dem-utils-py-main-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-dem-utils-py-main-returns">Return Type</h3>
+    <p><code>None</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-dem-utils-py-main-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-dem-utils-py-main-side-effects">Side Effects</h3>
+    <ul><li>io</li></ul>
+    <h3 id="sarpyx-utils-dem-utils-py-main-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.dem_utils import main
+
+result = main()</code></pre>
+    <h3 id="sarpyx-utils-dem-utils-py-main-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+
+  <h2 id="public-classes">Public Classes (0)</h2>
+  <p>No public classes detected.</p>
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-02 17:41 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

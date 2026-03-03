@@ -1,0 +1,2469 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Exhaustive API reference for sarpyx.utils.losses" />
+  <title>API: sarpyx.utils.losses | SARPyX Documentation</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <script defer src="../assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="../index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">Home</a></li><li><a class="nav-link" href="../installation.html">Installation</a></li><li><a class="nav-link" href="../quickstart.html">Quick Start</a></li><li><a class="nav-link" href="../architecture.html">Architecture</a></li><li><a class="nav-link" href="../api/index.html">API</a></li><li><a class="nav-link" href="../configuration.html">Configuration</a></li><li><a class="nav-link" href="../usage.html">Usage</a></li><li><a class="nav-link" href="../testing.html">Testing</a></li><li><a class="nav-link" href="../contributing.html">Contributing</a></li><li><a class="nav-link" href="../faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="../api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="../api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="../api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="../api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="../api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="../api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link" href="../api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="../api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="../api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link" href="../api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="../api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link" href="../api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link" href="../api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link" href="../api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="../api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link" href="../api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link active" href="../api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="../api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="../api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="../api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link" href="../api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="../api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="../api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="../api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="../index.html">Home</a></li><li><a href="index.html">API</a></li><li>sarpyx.utils.losses</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="API: sarpyx.utils.losses">
+        
+<section>
+  <h1 id="module-sarpyx_utils_losses">Module: <code>sarpyx.utils.losses</code></h1>
+  <p><strong>File:</strong> <code>sarpyx/utils/losses.py</code></p>
+  <p>Differentiable loss functions for SAR applications.
+
+This module provides various loss functions optimized for SAR data processing,
+including standard regression and classification losses, as well as specialized
+losses for complex-valued SAR data.</p>
+
+  <h2 id="module-exports">Exported Symbols (<code>__all__</code>)</h2>
+  <p>No explicit <code>__all__</code> list. Public symbols inferred from implementation.</p>
+
+  <h2 id="public-functions">Public Functions (5)</h2>
+  
+<details class="api-item" id="sarpyx-utils-losses-py-complex-abs" data-searchable data-search="complex_abs complex_abs(x: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>complex_abs</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:19</code></p>
+    <h3 id="sarpyx-utils-losses-py-complex-abs-signature">Signature</h3>
+    <pre><code class="language-python">complex_abs(x: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-utils-losses-py-complex-abs-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>x</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-losses-py-complex-abs-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-losses-py-complex-abs-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-losses-py-complex-abs-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-losses-py-complex-abs-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import complex_abs
+
+result = complex_abs(x=&lt;x&gt;)</code></pre>
+    <h3 id="sarpyx-utils-losses-py-complex-abs-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-losses-py-complex-angle" data-searchable data-search="complex_angle complex_angle(x: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>complex_angle</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:27</code></p>
+    <h3 id="sarpyx-utils-losses-py-complex-angle-signature">Signature</h3>
+    <pre><code class="language-python">complex_angle(x: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-utils-losses-py-complex-angle-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>x</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-losses-py-complex-angle-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-losses-py-complex-angle-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-losses-py-complex-angle-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-losses-py-complex-angle-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import complex_angle
+
+result = complex_angle(x=&lt;x&gt;)</code></pre>
+    <h3 id="sarpyx-utils-losses-py-complex-angle-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-losses-py-angle-difference" data-searchable data-search="angle_difference angle_difference(a: torch.Tensor, b: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>angle_difference</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:34</code></p>
+    <h3 id="sarpyx-utils-losses-py-angle-difference-signature">Signature</h3>
+    <pre><code class="language-python">angle_difference(a: torch.Tensor, b: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-utils-losses-py-angle-difference-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>a</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>b</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-losses-py-angle-difference-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-losses-py-angle-difference-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-losses-py-angle-difference-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-losses-py-angle-difference-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import angle_difference
+
+result = angle_difference(a=&lt;a&gt;, b=&lt;b&gt;)</code></pre>
+    <h3 id="sarpyx-utils-losses-py-angle-difference-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-losses-py-gaussian-1d-kernel" data-searchable data-search="gaussian_1d_kernel gaussian_1d_kernel(window_size: int, sigma: Optional[float]=None, device=None, dtype=torch.float32)">
+  <summary><code>gaussian_1d_kernel</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:548</code></p>
+    <h3 id="sarpyx-utils-losses-py-gaussian-1d-kernel-signature">Signature</h3>
+    <pre><code class="language-python">gaussian_1d_kernel(window_size: int, sigma: Optional[float]=None, device=None, dtype=torch.float32)</code></pre>
+    <h3 id="sarpyx-utils-losses-py-gaussian-1d-kernel-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>window_size</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>sigma</code></td><td><code>Optional[float]</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>device</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>dtype</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>torch.float32</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-losses-py-gaussian-1d-kernel-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-losses-py-gaussian-1d-kernel-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-losses-py-gaussian-1d-kernel-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-losses-py-gaussian-1d-kernel-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import gaussian_1d_kernel
+
+result = gaussian_1d_kernel(window_size=&lt;window_size&gt;)</code></pre>
+    <h3 id="sarpyx-utils-losses-py-gaussian-1d-kernel-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-losses-py-get-loss-function" data-searchable data-search="get_loss_function get_loss_function(loss_name: str, **kwargs) -&gt; BaseLoss">
+  <summary><code>get_loss_function</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Factory function to get loss function by name.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:2165</code></p>
+    <h3 id="sarpyx-utils-losses-py-get-loss-function-signature">Signature</h3>
+    <pre><code class="language-python">get_loss_function(loss_name: str, **kwargs) -&gt; BaseLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-get-loss-function-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>loss_name</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Name of the loss function</td></tr><tr><td><code>**kwargs</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>-</code></td><td>Additional arguments for the loss function</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-losses-py-get-loss-function-returns">Return Type</h3>
+    <p><code>BaseLoss</code></p>
+    <p>BaseLoss: Instantiated loss function</p>
+    <h3 id="sarpyx-utils-losses-py-get-loss-function-exceptions">Exceptions</h3>
+    <ul><li><code>ValueError</code></li></ul>
+    <h3 id="sarpyx-utils-losses-py-get-loss-function-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-losses-py-get-loss-function-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import get_loss_function
+
+result = get_loss_function(loss_name=&lt;loss_name&gt;)</code></pre>
+    <h3 id="sarpyx-utils-losses-py-get-loss-function-edge-cases">Edge Cases</h3>
+    <p>May raise: ValueError.</p>
+  </div>
+</details>
+
+
+  <h2 id="public-classes">Public Classes (33)</h2>
+  
+<details class="api-item class-item" id="sarpyx-utils-losses-py-baseloss" data-searchable data-search="BaseLoss class BaseLoss">
+  <summary><code>BaseLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Base class for all loss functions.
+
+Args:
+    reduction (str): Specifies the reduction to apply to the output.
+        &#x27;none&#x27; | &#x27;mean&#x27; | &#x27;sum&#x27;. Default: &#x27;mean&#x27;</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:39</code></p>
+    <h3 id="sarpyx-utils-losses-py-baseloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class BaseLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-baseloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-baseloss-returns">Return Type</h3>
+    <p><code>BaseLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-baseloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-baseloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-baseloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import BaseLoss
+
+obj = BaseLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-baseloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-baseloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-baseloss-forward" data-searchable data-search="BaseLoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>BaseLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Forward pass of the loss function.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:54</code></p>
+    <h4 id="sarpyx-utils-losses-py-baseloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-baseloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted values</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Ground truth values</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-baseloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>torch.Tensor: Computed loss</p>
+    <h4 id="sarpyx-utils-losses-py-baseloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-baseloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-baseloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import BaseLoss
+
+# Constructor arguments are inferred from implementation.
+obj = BaseLoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-baseloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-mseloss" data-searchable data-search="MSELoss class MSELoss">
+  <summary><code>MSELoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Mean Squared Error loss.
+
+Args:
+    reduction (str): Reduction method. Default: &#x27;mean&#x27;</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:76</code></p>
+    <h3 id="sarpyx-utils-losses-py-mseloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class MSELoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-mseloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-mseloss-returns">Return Type</h3>
+    <p><code>MSELoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-mseloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-mseloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-mseloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import MSELoss
+
+obj = MSELoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-mseloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-mseloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-mseloss-forward" data-searchable data-search="MSELoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>MSELoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Compute MSE loss.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:84</code></p>
+    <h4 id="sarpyx-utils-losses-py-mseloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-mseloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted values of shape (N, ...)</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target values of shape (N, ...)</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-mseloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>torch.Tensor: MSE loss</p>
+    <h4 id="sarpyx-utils-losses-py-mseloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-mseloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-mseloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import MSELoss
+
+# Constructor arguments are inferred from implementation.
+obj = MSELoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-mseloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-distributionawaremseloss" data-searchable data-search="DistributionAwareMSELoss class DistributionAwareMSELoss">
+  <summary><code>DistributionAwareMSELoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Distribution-Aware MSE Loss that weights errors by local statistics.
+
+This loss normalizes the squared error by the target&#x27;s variance, effectively
+making the loss distribution-aware. It encourages the model to match both
+the reconstruction quality AND the statistical distribution of the target.
+
+Formula:
+    For each pixel: loss = ((pred - target) / (sigma + eps))^2
+    Where sigma = sqrt(variance of target in the batch/patch)
+    
+Alternatively (normalized version):
+    loss = ((pred - target) * (target - mean) / (variance + eps))^2
+
+This creates a weighted MSE where:
+- Errors in high-variance regions are weighted less (natural variation)
+- Errors in low-variance regions are weighted more (should be consistent)
+- Implicitly encourages matching the distribution&#x27;s shape
+
+Args:
+    normalization_mode (str): How to compute statistics
+        &#x27;batch&#x27;: Use batch-level mean/variance (default)
+        &#x27;spatial&#x27;: Use spatial (per-sample) mean/variance
+        &#x27;channel&#x27;: Use per-channel statistics
+    use_standardization (bool): If True, uses (x - mean) / std weighting
+        If False, uses 1 / std weighting (simpler). Default: True
+    eps (float): Small constant for numerical stability. Default: 1e-6
+    reduction (str): Reduction method. Default: &#x27;mean&#x27;</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:100</code></p>
+    <h3 id="sarpyx-utils-losses-py-distributionawaremseloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class DistributionAwareMSELoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-distributionawaremseloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-distributionawaremseloss-returns">Return Type</h3>
+    <p><code>DistributionAwareMSELoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-distributionawaremseloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-distributionawaremseloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-distributionawaremseloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import DistributionAwareMSELoss
+
+obj = DistributionAwareMSELoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-distributionawaremseloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-distributionawaremseloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-distributionawaremseloss-forward" data-searchable data-search="DistributionAwareMSELoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>DistributionAwareMSELoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Compute distribution-aware MSE loss.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:147</code></p>
+    <h4 id="sarpyx-utils-losses-py-distributionawaremseloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-distributionawaremseloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted values of shape (B, ..., C) or (B, ...) Can be complex-valued or real-valued</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target values of same shape as prediction</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-distributionawaremseloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>torch.Tensor: Distribution-aware MSE loss</p>
+    <h4 id="sarpyx-utils-losses-py-distributionawaremseloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-distributionawaremseloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-distributionawaremseloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import DistributionAwareMSELoss
+
+# Constructor arguments are inferred from implementation.
+obj = DistributionAwareMSELoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-distributionawaremseloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-maeloss" data-searchable data-search="MAELoss class MAELoss">
+  <summary><code>MAELoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Mean Absolute Error loss.
+
+Args:
+    reduction (str): Reduction method. Default: &#x27;mean&#x27;</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:223</code></p>
+    <h3 id="sarpyx-utils-losses-py-maeloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class MAELoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-maeloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-maeloss-returns">Return Type</h3>
+    <p><code>MAELoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-maeloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-maeloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-maeloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import MAELoss
+
+obj = MAELoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-maeloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-maeloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-maeloss-forward" data-searchable data-search="MAELoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>MAELoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Compute MAE loss.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:231</code></p>
+    <h4 id="sarpyx-utils-losses-py-maeloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-maeloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted values of shape (N, ...)</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target values of shape (N, ...)</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-maeloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>torch.Tensor: MAE loss</p>
+    <h4 id="sarpyx-utils-losses-py-maeloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-maeloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-maeloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import MAELoss
+
+# Constructor arguments are inferred from implementation.
+obj = MAELoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-maeloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-huberloss" data-searchable data-search="HuberLoss class HuberLoss">
+  <summary><code>HuberLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Huber loss (smooth L1 loss).
+
+Args:
+    delta (float): Threshold for switching between quadratic and linear loss. Default: 1.0
+    reduction (str): Reduction method. Default: &#x27;mean&#x27;</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:247</code></p>
+    <h3 id="sarpyx-utils-losses-py-huberloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class HuberLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-huberloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-huberloss-returns">Return Type</h3>
+    <p><code>HuberLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-huberloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-huberloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-huberloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import HuberLoss
+
+obj = HuberLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-huberloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-huberloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-huberloss-forward" data-searchable data-search="HuberLoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>HuberLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Compute Huber loss.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:261</code></p>
+    <h4 id="sarpyx-utils-losses-py-huberloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-huberloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted values of shape (N, ...)</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target values of shape (N, ...)</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-huberloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>torch.Tensor: Huber loss</p>
+    <h4 id="sarpyx-utils-losses-py-huberloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-huberloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-huberloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import HuberLoss
+
+# Constructor arguments are inferred from implementation.
+obj = HuberLoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-huberloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-focalloss" data-searchable data-search="FocalLoss class FocalLoss">
+  <summary><code>FocalLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Focal Loss for addressing class imbalance.
+
+Args:
+    alpha (float, optional): Weighting factor for rare class. Default: 1.0
+    gamma (float): Focusing parameter. Default: 2.0
+    reduction (str): Reduction method. Default: &#x27;mean&#x27;</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:282</code></p>
+    <h3 id="sarpyx-utils-losses-py-focalloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class FocalLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-focalloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-focalloss-returns">Return Type</h3>
+    <p><code>FocalLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-focalloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-focalloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-focalloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import FocalLoss
+
+obj = FocalLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-focalloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-focalloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-focalloss-forward" data-searchable data-search="FocalLoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>FocalLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Compute Focal loss.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:299</code></p>
+    <h4 id="sarpyx-utils-losses-py-focalloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-focalloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted logits of shape (N, C)</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target class indices of shape (N,)</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-focalloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>torch.Tensor: Focal loss</p>
+    <h4 id="sarpyx-utils-losses-py-focalloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-focalloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-focalloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import FocalLoss
+
+# Constructor arguments are inferred from implementation.
+obj = FocalLoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-focalloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-complexmseloss" data-searchable data-search="ComplexMSELoss class ComplexMSELoss">
+  <summary><code>ComplexMSELoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Mean Squared Error loss for complex-valued tensors.
+
+Args:
+    reduction (str): Reduction method. Default: &#x27;mean&#x27;</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:320</code></p>
+    <h3 id="sarpyx-utils-losses-py-complexmseloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class ComplexMSELoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-complexmseloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-complexmseloss-returns">Return Type</h3>
+    <p><code>ComplexMSELoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-complexmseloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-complexmseloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-complexmseloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import ComplexMSELoss
+
+obj = ComplexMSELoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-complexmseloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-complexmseloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-complexmseloss-forward" data-searchable data-search="ComplexMSELoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>ComplexMSELoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Compute MSE loss for complex tensors.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:328</code></p>
+    <h4 id="sarpyx-utils-losses-py-complexmseloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-complexmseloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted complex values of shape (N, ...)</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target complex values of shape (N, ...)</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-complexmseloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>torch.Tensor: Complex MSE loss (real-valued)</p>
+    <h4 id="sarpyx-utils-losses-py-complexmseloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-complexmseloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-complexmseloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import ComplexMSELoss
+
+# Constructor arguments are inferred from implementation.
+obj = ComplexMSELoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-complexmseloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-complexmaeloss" data-searchable data-search="ComplexMAELoss class ComplexMAELoss">
+  <summary><code>ComplexMAELoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Mean Absolute Error loss for complex-valued tensors.
+
+Args:
+    reduction (str): Reduction method. Default: &#x27;mean&#x27;</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:347</code></p>
+    <h3 id="sarpyx-utils-losses-py-complexmaeloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class ComplexMAELoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-complexmaeloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-complexmaeloss-returns">Return Type</h3>
+    <p><code>ComplexMAELoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-complexmaeloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-complexmaeloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-complexmaeloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import ComplexMAELoss
+
+obj = ComplexMAELoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-complexmaeloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-complexmaeloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-complexmaeloss-forward" data-searchable data-search="ComplexMAELoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>ComplexMAELoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Compute MAE loss for complex tensors.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:355</code></p>
+    <h4 id="sarpyx-utils-losses-py-complexmaeloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-complexmaeloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted complex values of shape (N, ...)</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target complex values of shape (N, ...)</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-complexmaeloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-complexmaeloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-complexmaeloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-complexmaeloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import ComplexMAELoss
+
+# Constructor arguments are inferred from implementation.
+obj = ComplexMAELoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-complexmaeloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-phaseloss" data-searchable data-search="PhaseLoss class PhaseLoss">
+  <summary><code>PhaseLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Phase-based loss for complex-valued tensors.
+
+Args:
+    reduction (str): Reduction method. Default: &#x27;mean&#x27;</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:371</code></p>
+    <h3 id="sarpyx-utils-losses-py-phaseloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class PhaseLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-phaseloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-phaseloss-returns">Return Type</h3>
+    <p><code>PhaseLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-phaseloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-phaseloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-phaseloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import PhaseLoss
+
+obj = PhaseLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-phaseloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-phaseloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-phaseloss-forward" data-searchable data-search="PhaseLoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>PhaseLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Compute phase difference loss.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:379</code></p>
+    <h4 id="sarpyx-utils-losses-py-phaseloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-phaseloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted complex values of shape (N, ...)</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target complex values of shape (N, ...)</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-phaseloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>torch.Tensor: Phase loss</p>
+    <h4 id="sarpyx-utils-losses-py-phaseloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-phaseloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-phaseloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import PhaseLoss
+
+# Constructor arguments are inferred from implementation.
+obj = PhaseLoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-phaseloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-combinedcomplexloss" data-searchable data-search="CombinedComplexLoss class CombinedComplexLoss">
+  <summary><code>CombinedComplexLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Combined magnitude and phase loss for complex-valued tensors.
+
+Args:
+    magnitude_weight (float): Weight for magnitude loss. Default: 1.0
+    phase_weight (float): Weight for phase loss. Default: 1.0
+    reduction (str): Reduction method. Default: &#x27;mean&#x27;</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:404</code></p>
+    <h3 id="sarpyx-utils-losses-py-combinedcomplexloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class CombinedComplexLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-combinedcomplexloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-combinedcomplexloss-returns">Return Type</h3>
+    <p><code>CombinedComplexLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-combinedcomplexloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-combinedcomplexloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-combinedcomplexloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import CombinedComplexLoss
+
+obj = CombinedComplexLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-combinedcomplexloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-combinedcomplexloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-combinedcomplexloss-forward" data-searchable data-search="CombinedComplexLoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>CombinedComplexLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Compute combined magnitude and phase loss.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:429</code></p>
+    <h4 id="sarpyx-utils-losses-py-combinedcomplexloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-combinedcomplexloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted complex values of shape (N, ...)</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target complex values of shape (N, ...)</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-combinedcomplexloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>torch.Tensor: Combined loss</p>
+    <h4 id="sarpyx-utils-losses-py-combinedcomplexloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-combinedcomplexloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-combinedcomplexloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import CombinedComplexLoss
+
+# Constructor arguments are inferred from implementation.
+obj = CombinedComplexLoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-combinedcomplexloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-magnitudel1loss" data-searchable data-search="MagnitudeL1Loss class MagnitudeL1Loss">
+  <summary><code>MagnitudeL1Loss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:449</code></p>
+    <h3 id="sarpyx-utils-losses-py-magnitudel1loss-signature">Class Signature</h3>
+    <pre><code class="language-python">class MagnitudeL1Loss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-magnitudel1loss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-magnitudel1loss-returns">Return Type</h3>
+    <p><code>MagnitudeL1Loss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-magnitudel1loss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-magnitudel1loss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-magnitudel1loss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import MagnitudeL1Loss
+
+obj = MagnitudeL1Loss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-magnitudel1loss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-magnitudel1loss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-magnitudel1loss-forward" data-searchable data-search="MagnitudeL1Loss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>MagnitudeL1Loss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:450</code></p>
+    <h4 id="sarpyx-utils-losses-py-magnitudel1loss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-magnitudel1loss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-magnitudel1loss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-magnitudel1loss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-magnitudel1loss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-magnitudel1loss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import MagnitudeL1Loss
+
+# Constructor arguments are inferred from implementation.
+obj = MagnitudeL1Loss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-magnitudel1loss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-logmagmseloss" data-searchable data-search="LogMagMSELoss class LogMagMSELoss">
+  <summary><code>LogMagMSELoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>MSE on log(1 + alpha*|z|) to preserve dynamic range.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:457</code></p>
+    <h3 id="sarpyx-utils-losses-py-logmagmseloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class LogMagMSELoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-logmagmseloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-logmagmseloss-returns">Return Type</h3>
+    <p><code>LogMagMSELoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-logmagmseloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-logmagmseloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-logmagmseloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import LogMagMSELoss
+
+obj = LogMagMSELoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-logmagmseloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-logmagmseloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-logmagmseloss-forward" data-searchable data-search="LogMagMSELoss forward forward(self, prediction, target)">
+  <summary><code>LogMagMSELoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:462</code></p>
+    <h4 id="sarpyx-utils-losses-py-logmagmseloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction, target)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-logmagmseloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-logmagmseloss-forward-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-logmagmseloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-logmagmseloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-logmagmseloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import LogMagMSELoss
+
+# Constructor arguments are inferred from implementation.
+obj = LogMagMSELoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-logmagmseloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-phaselossmasked" data-searchable data-search="PhaseLossMasked class PhaseLossMasked">
+  <summary><code>PhaseLossMasked</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Angular difference, weighted by target magnitude to avoid tiny-mag noise.
+
+Expects:
+  - prediction and target either complex tensors (dtype=torch.cfloat / torch.cdouble)
+    OR real tensors where the last dimension is size 2 and contains [real, imag],
+    e.g. shape (B, L, 2). If your real tensors are (B, 2, L) adapt before calling.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:469</code></p>
+    <h3 id="sarpyx-utils-losses-py-phaselossmasked-signature">Class Signature</h3>
+    <pre><code class="language-python">class PhaseLossMasked</code></pre>
+    <h3 id="sarpyx-utils-losses-py-phaselossmasked-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-phaselossmasked-returns">Return Type</h3>
+    <p><code>PhaseLossMasked</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-phaselossmasked-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-phaselossmasked-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-phaselossmasked-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import PhaseLossMasked
+
+obj = PhaseLossMasked(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-phaselossmasked-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-phaselossmasked-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-phaselossmasked-forward" data-searchable data-search="PhaseLossMasked forward forward(self, pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>PhaseLossMasked.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:490</code></p>
+    <h4 id="sarpyx-utils-losses-py-phaselossmasked-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-phaselossmasked-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-phaselossmasked-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-phaselossmasked-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-phaselossmasked-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-phaselossmasked-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import PhaseLossMasked
+
+# Constructor arguments are inferred from implementation.
+obj = PhaseLossMasked(...)  # inferred from implementation
+result = obj.forward(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-phaselossmasked-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-edgeloss" data-searchable data-search="EdgeLoss class EdgeLoss">
+  <summary><code>EdgeLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:528</code></p>
+    <h3 id="sarpyx-utils-losses-py-edgeloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class EdgeLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-edgeloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-edgeloss-returns">Return Type</h3>
+    <p><code>EdgeLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-edgeloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-edgeloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-edgeloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import EdgeLoss
+
+obj = EdgeLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-edgeloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-edgeloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-edgeloss-forward" data-searchable data-search="EdgeLoss forward forward(self, pred, target)">
+  <summary><code>EdgeLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:533</code></p>
+    <h4 id="sarpyx-utils-losses-py-edgeloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, pred, target)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-edgeloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-edgeloss-forward-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-edgeloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-edgeloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-edgeloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import EdgeLoss
+
+# Constructor arguments are inferred from implementation.
+obj = EdgeLoss(...)  # inferred from implementation
+result = obj.forward(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-edgeloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-ssim1dloss" data-searchable data-search="SSIM1DLoss class SSIM1DLoss">
+  <summary><code>SSIM1DLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:556</code></p>
+    <h3 id="sarpyx-utils-losses-py-ssim1dloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class SSIM1DLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-ssim1dloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-ssim1dloss-returns">Return Type</h3>
+    <p><code>SSIM1DLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-ssim1dloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-ssim1dloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-ssim1dloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import SSIM1DLoss
+
+obj = SSIM1DLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-ssim1dloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-ssim1dloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-ssim1dloss-forward" data-searchable data-search="SSIM1DLoss forward forward(self, pred, target)">
+  <summary><code>SSIM1DLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:570</code></p>
+    <h4 id="sarpyx-utils-losses-py-ssim1dloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, pred, target)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-ssim1dloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-ssim1dloss-forward-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-ssim1dloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-ssim1dloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-ssim1dloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import SSIM1DLoss
+
+# Constructor arguments are inferred from implementation.
+obj = SSIM1DLoss(...)  # inferred from implementation
+result = obj.forward(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-ssim1dloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-complexssimcombinedloss" data-searchable data-search="ComplexSSIMCombinedLoss class ComplexSSIMCombinedLoss">
+  <summary><code>ComplexSSIMCombinedLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:627</code></p>
+    <h3 id="sarpyx-utils-losses-py-complexssimcombinedloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class ComplexSSIMCombinedLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-complexssimcombinedloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-complexssimcombinedloss-returns">Return Type</h3>
+    <p><code>ComplexSSIMCombinedLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-complexssimcombinedloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-complexssimcombinedloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-complexssimcombinedloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import ComplexSSIMCombinedLoss
+
+obj = ComplexSSIMCombinedLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-complexssimcombinedloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-complexssimcombinedloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-complexssimcombinedloss-forward" data-searchable data-search="ComplexSSIMCombinedLoss forward forward(self, pred, tgt)">
+  <summary><code>ComplexSSIMCombinedLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:639</code></p>
+    <h4 id="sarpyx-utils-losses-py-complexssimcombinedloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, pred, tgt)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-complexssimcombinedloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>tgt</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-complexssimcombinedloss-forward-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-complexssimcombinedloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-complexssimcombinedloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-complexssimcombinedloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import ComplexSSIMCombinedLoss
+
+# Constructor arguments are inferred from implementation.
+obj = ComplexSSIMCombinedLoss(...)  # inferred from implementation
+result = obj.forward(pred=&lt;pred&gt;, tgt=&lt;tgt&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-complexssimcombinedloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-splitrealimagloss" data-searchable data-search="SplitRealImagLoss class SplitRealImagLoss">
+  <summary><code>SplitRealImagLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Lsplit = ||Re(X^) - Re(X)||^2 + ||Im(X^) - Im(X)||^2</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:658</code></p>
+    <h3 id="sarpyx-utils-losses-py-splitrealimagloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class SplitRealImagLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-splitrealimagloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-splitrealimagloss-returns">Return Type</h3>
+    <p><code>SplitRealImagLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-splitrealimagloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-splitrealimagloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-splitrealimagloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import SplitRealImagLoss
+
+obj = SplitRealImagLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-splitrealimagloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-splitrealimagloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-splitrealimagloss-forward" data-searchable data-search="SplitRealImagLoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>SplitRealImagLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:660</code></p>
+    <h4 id="sarpyx-utils-losses-py-splitrealimagloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-splitrealimagloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-splitrealimagloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-splitrealimagloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-splitrealimagloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-splitrealimagloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import SplitRealImagLoss
+
+# Constructor arguments are inferred from implementation.
+obj = SplitRealImagLoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-splitrealimagloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-polarloss" data-searchable data-search="PolarLoss class PolarLoss">
+  <summary><code>PolarLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Lpolar = w_mag * |||X^| - |X|||^2 + w_phase * ||phase_diff||^2
+Uses robust principal-value angle-difference.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:669</code></p>
+    <h3 id="sarpyx-utils-losses-py-polarloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class PolarLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-polarloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-polarloss-returns">Return Type</h3>
+    <p><code>PolarLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-polarloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-polarloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-polarloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import PolarLoss
+
+obj = PolarLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-polarloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-polarloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-polarloss-forward" data-searchable data-search="PolarLoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>PolarLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:679</code></p>
+    <h4 id="sarpyx-utils-losses-py-polarloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-polarloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-polarloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-polarloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-polarloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-polarloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import PolarLoss
+
+# Constructor arguments are inferred from implementation.
+obj = PolarLoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-polarloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-complexmseloss" data-searchable data-search="ComplexMSELoss class ComplexMSELoss">
+  <summary><code>ComplexMSELoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>LcMSE = ||X^ - X||^2 (complex squared error)</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:693</code></p>
+    <h3 id="sarpyx-utils-losses-py-complexmseloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class ComplexMSELoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-complexmseloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-complexmseloss-returns">Return Type</h3>
+    <p><code>ComplexMSELoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-complexmseloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-complexmseloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-complexmseloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import ComplexMSELoss
+
+obj = ComplexMSELoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-complexmseloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-complexmseloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-complexmseloss-forward" data-searchable data-search="ComplexMSELoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>ComplexMSELoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:695</code></p>
+    <h4 id="sarpyx-utils-losses-py-complexmseloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-complexmseloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-complexmseloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-complexmseloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-complexmseloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-complexmseloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import ComplexMSELoss
+
+# Constructor arguments are inferred from implementation.
+obj = ComplexMSELoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-complexmseloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-robustcomplexloss" data-searchable data-search="RobustComplexLoss class RobustComplexLoss">
+  <summary><code>RobustComplexLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Robust alternatives. Two modes:
+  - &#x27;quartic&#x27; -&gt; sum |diff|^4
+  - &#x27;logcosh&#x27; -&gt; sum log(cosh(|diff|))</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:703</code></p>
+    <h3 id="sarpyx-utils-losses-py-robustcomplexloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class RobustComplexLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-robustcomplexloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-robustcomplexloss-returns">Return Type</h3>
+    <p><code>RobustComplexLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-robustcomplexloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-robustcomplexloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-robustcomplexloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import RobustComplexLoss
+
+obj = RobustComplexLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-robustcomplexloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-robustcomplexloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-robustcomplexloss-forward" data-searchable data-search="RobustComplexLoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>RobustComplexLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:714</code></p>
+    <h4 id="sarpyx-utils-losses-py-robustcomplexloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-robustcomplexloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-robustcomplexloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-robustcomplexloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-robustcomplexloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-robustcomplexloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import RobustComplexLoss
+
+# Constructor arguments are inferred from implementation.
+obj = RobustComplexLoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-robustcomplexloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-logmagnitudeloss" data-searchable data-search="LogMagnitudeLoss class LogMagnitudeLoss">
+  <summary><code>LogMagnitudeLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Llogmag = || ln|X^| - ln|X| ||^2
+Avoids -inf at zeros with eps.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:727</code></p>
+    <h3 id="sarpyx-utils-losses-py-logmagnitudeloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class LogMagnitudeLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-logmagnitudeloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-logmagnitudeloss-returns">Return Type</h3>
+    <p><code>LogMagnitudeLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-logmagnitudeloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-logmagnitudeloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-logmagnitudeloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import LogMagnitudeLoss
+
+obj = LogMagnitudeLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-logmagnitudeloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-logmagnitudeloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-logmagnitudeloss-forward" data-searchable data-search="LogMagnitudeLoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>LogMagnitudeLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:736</code></p>
+    <h4 id="sarpyx-utils-losses-py-logmagnitudeloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-logmagnitudeloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-logmagnitudeloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-logmagnitudeloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-logmagnitudeloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-logmagnitudeloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import LogMagnitudeLoss
+
+# Constructor arguments are inferred from implementation.
+obj = LogMagnitudeLoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-logmagnitudeloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-symmetryconstrainedloss" data-searchable data-search="SymmetryConstrainedLoss class SymmetryConstrainedLoss">
+  <summary><code>SymmetryConstrainedLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>L = ||X^ - X||^2 + lambda * ||X^ - S(X^)||^2,
+where S is a symmetry operator (callable). If S is None, defaults to conjugate transpose along last two dims (Hermitian)</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:743</code></p>
+    <h3 id="sarpyx-utils-losses-py-symmetryconstrainedloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class SymmetryConstrainedLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-symmetryconstrainedloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-symmetryconstrainedloss-returns">Return Type</h3>
+    <p><code>SymmetryConstrainedLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-symmetryconstrainedloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-symmetryconstrainedloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-symmetryconstrainedloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import SymmetryConstrainedLoss
+
+obj = SymmetryConstrainedLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-symmetryconstrainedloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-symmetryconstrainedloss-methods">Public Methods (2)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-symmetryconstrainedloss-default-symmetry" data-searchable data-search="SymmetryConstrainedLoss default_symmetry default_symmetry(self, x: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>SymmetryConstrainedLoss.default_symmetry</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:753</code></p>
+    <h4 id="sarpyx-utils-losses-py-symmetryconstrainedloss-default-symmetry-signature">Signature</h4>
+    <pre><code class="language-python">default_symmetry(self, x: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-symmetryconstrainedloss-default-symmetry-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>x</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-symmetryconstrainedloss-default-symmetry-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-symmetryconstrainedloss-default-symmetry-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-symmetryconstrainedloss-default-symmetry-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-symmetryconstrainedloss-default-symmetry-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import SymmetryConstrainedLoss
+
+# Constructor arguments are inferred from implementation.
+obj = SymmetryConstrainedLoss(...)  # inferred from implementation
+result = obj.default_symmetry(x=&lt;x&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-symmetryconstrainedloss-default-symmetry-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-losses-py-symmetryconstrainedloss-forward" data-searchable data-search="SymmetryConstrainedLoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>SymmetryConstrainedLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:763</code></p>
+    <h4 id="sarpyx-utils-losses-py-symmetryconstrainedloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-symmetryconstrainedloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-symmetryconstrainedloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-symmetryconstrainedloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-symmetryconstrainedloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-symmetryconstrainedloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import SymmetryConstrainedLoss
+
+# Constructor arguments are inferred from implementation.
+obj = SymmetryConstrainedLoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-symmetryconstrainedloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-polarimetricdecompositionloss" data-searchable data-search="PolarimetricDecompositionLoss class PolarimetricDecompositionLoss">
+  <summary><code>PolarimetricDecompositionLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>For PolSAR: expects predictions and targets as sequence/tuple/list of complex components cpred_i.
+Usage: pass prediction as tensor with extra channel dim or a sequence of component tensors.
+Simple implementation supports two styles:
+ - prediction/target: (B, C, H, W) complex with C = number of polarimetric channels
+ - or prediction/target: list/tuple of length C of (B, H, W) complex tensors</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:771</code></p>
+    <h3 id="sarpyx-utils-losses-py-polarimetricdecompositionloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class PolarimetricDecompositionLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-polarimetricdecompositionloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-polarimetricdecompositionloss-returns">Return Type</h3>
+    <p><code>PolarimetricDecompositionLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-polarimetricdecompositionloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-polarimetricdecompositionloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-polarimetricdecompositionloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import PolarimetricDecompositionLoss
+
+obj = PolarimetricDecompositionLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-polarimetricdecompositionloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-polarimetricdecompositionloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-polarimetricdecompositionloss-forward" data-searchable data-search="PolarimetricDecompositionLoss forward forward(self, prediction, target)">
+  <summary><code>PolarimetricDecompositionLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:782</code></p>
+    <h4 id="sarpyx-utils-losses-py-polarimetricdecompositionloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction, target)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-polarimetricdecompositionloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-polarimetricdecompositionloss-forward-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-polarimetricdecompositionloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-polarimetricdecompositionloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-polarimetricdecompositionloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import PolarimetricDecompositionLoss
+
+# Constructor arguments are inferred from implementation.
+obj = PolarimetricDecompositionLoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-polarimetricdecompositionloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-powerloss" data-searchable data-search="PowerLoss class PowerLoss">
+  <summary><code>PowerLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Lpower = (sum |X^|^2 - sum |X|^2)^2
+Computes global power difference per-batch.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:802</code></p>
+    <h3 id="sarpyx-utils-losses-py-powerloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class PowerLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-powerloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-powerloss-returns">Return Type</h3>
+    <p><code>PowerLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-powerloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-powerloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-powerloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import PowerLoss
+
+obj = PowerLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-powerloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-powerloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-powerloss-forward" data-searchable data-search="PowerLoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>PowerLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:810</code></p>
+    <h4 id="sarpyx-utils-losses-py-powerloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-powerloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-powerloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-powerloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-powerloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-powerloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import PowerLoss
+
+# Constructor arguments are inferred from implementation.
+obj = PowerLoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-powerloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-specklenllloss" data-searchable data-search="SpeckleNLLLoss class SpeckleNLLLoss">
+  <summary><code>SpeckleNLLLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Negative log-likelihood for circular complex Gaussian speckle:
+p(x | mu, sigma^2) = 1/(pi sigma^2) * exp(-|x-mu|^2 / sigma^2)
+NLL per pixel: ln(pi sigma^2) + |x-mu|^2 / sigma^2
+Two modes:
+   - fixed_sigma: scalar sigma provided
+   - predicted_sigma: second output channel gives variance estimate
+prediction can be:
+   - complex tensor (mu) and sigma given as float
+   - tuple (mu, sigma_pred) where sigma_pred is real non-negative (same shape as mu magnitude)</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:820</code></p>
+    <h3 id="sarpyx-utils-losses-py-specklenllloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class SpeckleNLLLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-specklenllloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-specklenllloss-returns">Return Type</h3>
+    <p><code>SpeckleNLLLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-specklenllloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-specklenllloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-specklenllloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import SpeckleNLLLoss
+
+obj = SpeckleNLLLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-specklenllloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-specklenllloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-specklenllloss-forward" data-searchable data-search="SpeckleNLLLoss forward forward(self, prediction, target)">
+  <summary><code>SpeckleNLLLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:837</code></p>
+    <h4 id="sarpyx-utils-losses-py-specklenllloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction, target)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-specklenllloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-specklenllloss-forward-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-specklenllloss-forward-exceptions">Exceptions</h4>
+    <ul><li><code>ValueError</code></li></ul>
+    <h4 id="sarpyx-utils-losses-py-specklenllloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-specklenllloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import SpeckleNLLLoss
+
+# Constructor arguments are inferred from implementation.
+obj = SpeckleNLLLoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-specklenllloss-forward-edge-cases">Edge Cases</h4>
+    <p>May raise: ValueError.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-complextvloss" data-searchable data-search="ComplexTVLoss class ComplexTVLoss">
+  <summary><code>ComplexTVLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Isotropic TV on complex-valued image:
+sum_{m,n} (|X_{m+1,n} - X_{m,n}| + |X_{m,n+1} - X_{m,n}|)
+Implemented with magnitude of complex differences.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:856</code></p>
+    <h3 id="sarpyx-utils-losses-py-complextvloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class ComplexTVLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-complextvloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-complextvloss-returns">Return Type</h3>
+    <p><code>ComplexTVLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-complextvloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-complextvloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-complextvloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import ComplexTVLoss
+
+obj = ComplexTVLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-complextvloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-complextvloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-complextvloss-forward" data-searchable data-search="ComplexTVLoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor=None) -&gt; torch.Tensor">
+  <summary><code>ComplexTVLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:862</code></p>
+    <h4 id="sarpyx-utils-losses-py-complextvloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor=None) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-complextvloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-complextvloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-complextvloss-forward-exceptions">Exceptions</h4>
+    <ul><li><code>ValueError</code></li></ul>
+    <h4 id="sarpyx-utils-losses-py-complextvloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-complextvloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import ComplexTVLoss
+
+# Constructor arguments are inferred from implementation.
+obj = ComplexTVLoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-complextvloss-forward-edge-cases">Edge Cases</h4>
+    <p>May raise: ValueError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-gradientmatchingloss" data-searchable data-search="GradientMatchingLoss class GradientMatchingLoss">
+  <summary><code>GradientMatchingLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Lgrad = ||grad |X^| - grad |X|||^2 + ||grad angle(X^) - grad angle(X)||^2
+Uses simple finite differences to compute gradients (sobel-ish could be added).</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:892</code></p>
+    <h3 id="sarpyx-utils-losses-py-gradientmatchingloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class GradientMatchingLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-gradientmatchingloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-gradientmatchingloss-returns">Return Type</h3>
+    <p><code>GradientMatchingLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-gradientmatchingloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-gradientmatchingloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-gradientmatchingloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import GradientMatchingLoss
+
+obj = GradientMatchingLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-gradientmatchingloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-gradientmatchingloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-gradientmatchingloss-forward" data-searchable data-search="GradientMatchingLoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>GradientMatchingLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:914</code></p>
+    <h4 id="sarpyx-utils-losses-py-gradientmatchingloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-gradientmatchingloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-gradientmatchingloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-gradientmatchingloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-gradientmatchingloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-gradientmatchingloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import GradientMatchingLoss
+
+# Constructor arguments are inferred from implementation.
+obj = GradientMatchingLoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-gradientmatchingloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-phasesmoothnessloss" data-searchable data-search="PhaseSmoothnessLoss class PhaseSmoothnessLoss">
+  <summary><code>PhaseSmoothnessLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Penalize Laplacian (second-order differences) of the phase to encourage smooth phase.
+Lphase = sum (Delta angle(Xhat))^2</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:935</code></p>
+    <h3 id="sarpyx-utils-losses-py-phasesmoothnessloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class PhaseSmoothnessLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-phasesmoothnessloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-phasesmoothnessloss-returns">Return Type</h3>
+    <p><code>PhaseSmoothnessLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-phasesmoothnessloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-phasesmoothnessloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-phasesmoothnessloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import PhaseSmoothnessLoss
+
+obj = PhaseSmoothnessLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-phasesmoothnessloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-phasesmoothnessloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-phasesmoothnessloss-forward" data-searchable data-search="PhaseSmoothnessLoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor=None) -&gt; torch.Tensor">
+  <summary><code>PhaseSmoothnessLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:943</code></p>
+    <h4 id="sarpyx-utils-losses-py-phasesmoothnessloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor=None) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-phasesmoothnessloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-phasesmoothnessloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-phasesmoothnessloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-phasesmoothnessloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-phasesmoothnessloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import PhaseSmoothnessLoss
+
+# Constructor arguments are inferred from implementation.
+obj = PhaseSmoothnessLoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-phasesmoothnessloss-forward-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-ganloss" data-searchable data-search="GANLoss class GANLoss">
+  <summary><code>GANLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Standard GAN loss wrappers. Expects discriminator outputs.
+mode:
+  - &#x27;vanilla&#x27; -&gt; BCE with logits
+  - &#x27;hinge&#x27; -&gt; hinge loss
+The forward signature:
+  - forward(pred_fake_logits, pred_real_logits=None)
+  or provide labels tensors.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:960</code></p>
+    <h3 id="sarpyx-utils-losses-py-ganloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class GANLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-ganloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-ganloss-returns">Return Type</h3>
+    <p><code>GANLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-ganloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-ganloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-ganloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import GANLoss
+
+obj = GANLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-ganloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-ganloss-methods">Public Methods (3)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-ganloss-fake-loss" data-searchable data-search="GANLoss fake_loss fake_loss(self, pred_fake: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>GANLoss.fake_loss</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:976</code></p>
+    <h4 id="sarpyx-utils-losses-py-ganloss-fake-loss-signature">Signature</h4>
+    <pre><code class="language-python">fake_loss(self, pred_fake: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-ganloss-fake-loss-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred_fake</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-ganloss-fake-loss-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-ganloss-fake-loss-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-ganloss-fake-loss-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-ganloss-fake-loss-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import GANLoss
+
+# Constructor arguments are inferred from implementation.
+obj = GANLoss(...)  # inferred from implementation
+result = obj.fake_loss(pred_fake=&lt;pred_fake&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-ganloss-fake-loss-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-losses-py-ganloss-real-loss" data-searchable data-search="GANLoss real_loss real_loss(self, pred_real: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>GANLoss.real_loss</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:984</code></p>
+    <h4 id="sarpyx-utils-losses-py-ganloss-real-loss-signature">Signature</h4>
+    <pre><code class="language-python">real_loss(self, pred_real: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-ganloss-real-loss-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred_real</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-ganloss-real-loss-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-ganloss-real-loss-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-ganloss-real-loss-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-ganloss-real-loss-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import GANLoss
+
+# Constructor arguments are inferred from implementation.
+obj = GANLoss(...)  # inferred from implementation
+result = obj.real_loss(pred_real=&lt;pred_real&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-ganloss-real-loss-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-losses-py-ganloss-forward" data-searchable data-search="GANLoss forward forward(self, pred_fake: torch.Tensor, pred_real: Optional[torch.Tensor]=None, which: str=&#x27;both&#x27;) -&gt; torch.Tensor">
+  <summary><code>GANLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>which: &#x27;both&#x27;, &#x27;gen&#x27; (generator wants fake to be real), &#x27;disc&#x27; (compute discriminator loss using pred_real and pred_fake)</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:991</code></p>
+    <h4 id="sarpyx-utils-losses-py-ganloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, pred_fake: torch.Tensor, pred_real: Optional[torch.Tensor]=None, which: str=&#x27;both&#x27;) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-ganloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred_fake</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>pred_real</code></td><td><code>Optional[torch.Tensor]</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>which</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;both&#x27;</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-ganloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-ganloss-forward-exceptions">Exceptions</h4>
+    <ul><li><code>ValueError</code></li></ul>
+    <h4 id="sarpyx-utils-losses-py-ganloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-ganloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import GANLoss
+
+# Constructor arguments are inferred from implementation.
+obj = GANLoss(...)  # inferred from implementation
+result = obj.forward(pred_fake=&lt;pred_fake&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-ganloss-forward-edge-cases">Edge Cases</h4>
+    <p>May raise: ValueError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-featureloss" data-searchable data-search="FeatureLoss class FeatureLoss">
+  <summary><code>FeatureLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Lfeat = ||Phi(X^) - Phi(X)||^2
+feature_extractor should accept complex or real tensors and produce a real feature tensor.
+Provide preprocess_fn if conversion from complex to feature extractor input is needed.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:1012</code></p>
+    <h3 id="sarpyx-utils-losses-py-featureloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class FeatureLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-featureloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-featureloss-returns">Return Type</h3>
+    <p><code>FeatureLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-featureloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-featureloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-featureloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import FeatureLoss
+
+obj = FeatureLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-featureloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-featureloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-featureloss-forward" data-searchable data-search="FeatureLoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>FeatureLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:1023</code></p>
+    <h4 id="sarpyx-utils-losses-py-featureloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-featureloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-featureloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-featureloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-featureloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-featureloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import FeatureLoss
+
+# Constructor arguments are inferred from implementation.
+obj = FeatureLoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-featureloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-compositeloss" data-searchable data-search="CompositeLoss class CompositeLoss">
+  <summary><code>CompositeLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Composite weighted combination of sub-losses:
+L = sum_i alpha_i * Li
+sub_losses: sequence of (weight, loss_instance)</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:1032</code></p>
+    <h3 id="sarpyx-utils-losses-py-compositeloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class CompositeLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-compositeloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-compositeloss-returns">Return Type</h3>
+    <p><code>CompositeLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-compositeloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-compositeloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-compositeloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import CompositeLoss
+
+obj = CompositeLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-compositeloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-compositeloss-methods">Public Methods (1)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-compositeloss-forward" data-searchable data-search="CompositeLoss forward forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>CompositeLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:1044</code></p>
+    <h4 id="sarpyx-utils-losses-py-compositeloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, prediction: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-compositeloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prediction</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-compositeloss-forward-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-compositeloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-compositeloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-compositeloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import CompositeLoss
+
+# Constructor arguments are inferred from implementation.
+obj = CompositeLoss(...)  # inferred from implementation
+result = obj.forward(prediction=&lt;prediction&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-compositeloss-forward-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-multidomainsarloss" data-searchable data-search="MultiDomainSARLoss class MultiDomainSARLoss">
+  <summary><code>MultiDomainSARLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Multi-domain loss for physics-aware SAR compression.
+Combines spatial, frequency, phase, sparsity, rate, SSIM, perceptual, and edge losses.
+
+ENHANCED VERSION (Oct 2024): Added structure-preserving losses for better detail retention.
+
+Designed for use with PhysicsAwareSpatialTransformer model.
+
+Args:
+    spatial_weight: Weight for spatial domain loss (default: 1.0)
+    frequency_weight: Weight for frequency domain loss (default: 0.3)
+    phase_weight: Weight for phase consistency loss (default: 0.5)
+    sparsity_weight: Weight for sparsity penalty (default: 0.01)
+    rate_weight: Weight for rate penalty (default: 0.01)
+    ssim_weight: Weight for SSIM loss (default: 0.0)
+    perceptual_weight: Weight for perceptual loss (default: 0.0)
+    edge_weight: Weight for edge-preserving loss (default: 0.0)
+    reduction: Loss reduction method (&#x27;mean&#x27;, &#x27;sum&#x27;, &#x27;none&#x27;)</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:1063</code></p>
+    <h3 id="sarpyx-utils-losses-py-multidomainsarloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class MultiDomainSARLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-multidomainsarloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-multidomainsarloss-returns">Return Type</h3>
+    <p><code>MultiDomainSARLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-multidomainsarloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-multidomainsarloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-multidomainsarloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import MultiDomainSARLoss
+
+obj = MultiDomainSARLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-multidomainsarloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-multidomainsarloss-methods">Public Methods (7)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-multidomainsarloss-complex-mse" data-searchable data-search="MultiDomainSARLoss complex_mse complex_mse(self, pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>MultiDomainSARLoss.complex_mse</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Complex MSE: |pred - target|^2</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:1105</code></p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-complex-mse-signature">Signature</h4>
+    <pre><code class="language-python">complex_mse(self, pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-complex-mse-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-complex-mse-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-complex-mse-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-complex-mse-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-complex-mse-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import MultiDomainSARLoss
+
+# Constructor arguments are inferred from implementation.
+obj = MultiDomainSARLoss(...)  # inferred from implementation
+result = obj.complex_mse(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-complex-mse-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-losses-py-multidomainsarloss-frequency-domain-loss" data-searchable data-search="MultiDomainSARLoss frequency_domain_loss frequency_domain_loss(self, pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>MultiDomainSARLoss.frequency_domain_loss</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>MSE in azimuth frequency domain.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:1109</code></p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-frequency-domain-loss-signature">Signature</h4>
+    <pre><code class="language-python">frequency_domain_loss(self, pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-frequency-domain-loss-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-frequency-domain-loss-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-frequency-domain-loss-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-frequency-domain-loss-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-frequency-domain-loss-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import MultiDomainSARLoss
+
+# Constructor arguments are inferred from implementation.
+obj = MultiDomainSARLoss(...)  # inferred from implementation
+result = obj.frequency_domain_loss(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-frequency-domain-loss-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-losses-py-multidomainsarloss-phase-consistency-loss" data-searchable data-search="MultiDomainSARLoss phase_consistency_loss phase_consistency_loss(self, pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>MultiDomainSARLoss.phase_consistency_loss</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Phase loss using complex inner product.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:1128</code></p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-phase-consistency-loss-signature">Signature</h4>
+    <pre><code class="language-python">phase_consistency_loss(self, pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-phase-consistency-loss-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-phase-consistency-loss-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-phase-consistency-loss-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-phase-consistency-loss-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-phase-consistency-loss-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import MultiDomainSARLoss
+
+# Constructor arguments are inferred from implementation.
+obj = MultiDomainSARLoss(...)  # inferred from implementation
+result = obj.phase_consistency_loss(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-phase-consistency-loss-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-losses-py-multidomainsarloss-ssim-loss" data-searchable data-search="MultiDomainSARLoss ssim_loss ssim_loss(self, pred: torch.Tensor, target: torch.Tensor, window_size: int=11) -&gt; torch.Tensor">
+  <summary><code>MultiDomainSARLoss.ssim_loss</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Structural Similarity Index (SSIM) loss for structure preservation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:1165</code></p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-ssim-loss-signature">Signature</h4>
+    <pre><code class="language-python">ssim_loss(self, pred: torch.Tensor, target: torch.Tensor, window_size: int=11) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-ssim-loss-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>window_size</code></td><td><code>int</code></td><td>no</td><td><code>11</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-ssim-loss-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-ssim-loss-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-ssim-loss-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-ssim-loss-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import MultiDomainSARLoss
+
+# Constructor arguments are inferred from implementation.
+obj = MultiDomainSARLoss(...)  # inferred from implementation
+result = obj.ssim_loss(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-ssim-loss-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-losses-py-multidomainsarloss-edge-preserving-loss" data-searchable data-search="MultiDomainSARLoss edge_preserving_loss edge_preserving_loss(self, pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>MultiDomainSARLoss.edge_preserving_loss</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Edge-preserving loss using gradient differences.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:1210</code></p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-edge-preserving-loss-signature">Signature</h4>
+    <pre><code class="language-python">edge_preserving_loss(self, pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-edge-preserving-loss-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-edge-preserving-loss-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-edge-preserving-loss-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-edge-preserving-loss-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-edge-preserving-loss-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import MultiDomainSARLoss
+
+# Constructor arguments are inferred from implementation.
+obj = MultiDomainSARLoss(...)  # inferred from implementation
+result = obj.edge_preserving_loss(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-edge-preserving-loss-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-losses-py-multidomainsarloss-perceptual-loss" data-searchable data-search="MultiDomainSARLoss perceptual_loss perceptual_loss(self, pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>MultiDomainSARLoss.perceptual_loss</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Simple perceptual loss using multi-scale gradients.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:1236</code></p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-perceptual-loss-signature">Signature</h4>
+    <pre><code class="language-python">perceptual_loss(self, pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-perceptual-loss-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-perceptual-loss-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-perceptual-loss-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-perceptual-loss-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-perceptual-loss-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import MultiDomainSARLoss
+
+# Constructor arguments are inferred from implementation.
+obj = MultiDomainSARLoss(...)  # inferred from implementation
+result = obj.perceptual_loss(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-perceptual-loss-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-losses-py-multidomainsarloss-forward" data-searchable data-search="MultiDomainSARLoss forward forward(self, pred: torch.Tensor, target: torch.Tensor, aux_outputs: Optional[dict]=None) -&gt; Union[torch.Tensor, Tuple[torch.Tensor, dict]]">
+  <summary><code>MultiDomainSARLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Compute multi-domain loss.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:1269</code></p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, pred: torch.Tensor, target: torch.Tensor, aux_outputs: Optional[dict]=None) -&gt; Union[torch.Tensor, Tuple[torch.Tensor, dict]]</code></pre>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted tensor [B, H, W, 2] or complex format</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Ground truth tensor [B, H, W, 2] or complex format</td></tr><tr><td><code>aux_outputs</code></td><td><code>Optional[dict]</code></td><td>no</td><td><code>None</code></td><td>Optional dictionary with &#x27;sparsity&#x27; and &#x27;rate&#x27; from model</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-forward-returns">Return Type</h4>
+    <p><code>Union[torch.Tensor, Tuple[torch.Tensor, dict]]</code></p>
+    <p>If aux_outputs is None: scalar loss
+    Otherwise: (loss, loss_dict) tuple with individual components</p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import MultiDomainSARLoss
+
+# Constructor arguments are inferred from implementation.
+obj = MultiDomainSARLoss(...)  # inferred from implementation
+result = obj.forward(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-multidomainsarloss-forward-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior. Documented return may be None for some execution paths.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-losses-py-sarfocusingloss" data-searchable data-search="SARFocusingLoss class SARFocusingLoss">
+  <summary><code>SARFocusingLoss</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Comprehensive SAR focusing loss combining reconstruction, focus quality, 
+distribution matching, and total variation.
+
+IMPROVED VERSION with better scaling and normalization for stable training.
+
+Full combined loss:
+    L = λ_rec * L_rec + λ_focus * L_focus + λ_dist * L_dist + λ_tv * L_tv
+
+where:
+    L_rec    = Reconstruction loss (L1, L2, or complex MSE to ground truth)
+    L_focus  = Focus quality metric (normalized variance, entropy, or contrast)
+    L_dist   = Distribution matching (statistical moments or histogram L1)
+    L_tv     = Total variation regularization (suppress speckle artifacts)
+
+Args:
+    lambda_rec (float): Weight for reconstruction loss. Default: 1.0
+    lambda_focus (float): Weight for focus quality. Default: 0.1
+    lambda_dist (float): Weight for distribution matching. Default: 0.5
+    lambda_tv (float): Weight for total variation. Default: 0.01
+    rec_loss_type (str): Type of reconstruction loss (&#x27;mse&#x27;, &#x27;mae&#x27;, &#x27;complex_mse&#x27;). Default: &#x27;complex_mse&#x27;
+    focus_metric (str): Focus quality metric
+        (&#x27;variance&#x27;, &#x27;entropy&#x27;, &#x27;contrast&#x27;, &#x27;structure&#x27;/&#x27;ssim&#x27;). Default: &#x27;contrast&#x27;
+    dist_metric (str): Distribution matching metric (&#x27;moments&#x27;, &#x27;histogram&#x27;, &#x27;none&#x27;). Default: &#x27;moments&#x27;
+    use_tv (bool): Whether to use total variation regularization. Default: True
+    use_adaptive_weights (bool): Dynamically balance loss components. Default: True
+    reduction (str): Loss reduction method. Default: &#x27;mean&#x27;
+
+Hyperparameter tips:
+    - λ_rec = 1.0 (baseline)
+    - λ_focus = 0.1-0.5 (higher than before due to normalization)
+    - λ_dist = 0.5-2.0 (distribution matching is now more important)
+    - λ_tv = 0.01-0.1 (can be higher due to magnitude-based computation)</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:1348</code></p>
+    <h3 id="sarpyx-utils-losses-py-sarfocusingloss-signature">Class Signature</h3>
+    <pre><code class="language-python">class SARFocusingLoss</code></pre>
+    <h3 id="sarpyx-utils-losses-py-sarfocusingloss-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-losses-py-sarfocusingloss-returns">Return Type</h3>
+    <p><code>SARFocusingLoss</code> instances.</p>
+    <h3 id="sarpyx-utils-losses-py-sarfocusingloss-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-losses-py-sarfocusingloss-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-losses-py-sarfocusingloss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.losses import SARFocusingLoss
+
+obj = SARFocusingLoss(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-losses-py-sarfocusingloss-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-losses-py-sarfocusingloss-methods">Public Methods (5)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-losses-py-sarfocusingloss-reconstruction-loss" data-searchable data-search="SARFocusingLoss reconstruction_loss reconstruction_loss(self, pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>SARFocusingLoss.reconstruction_loss</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Forward-model reconstruction or L1/L2 to ground truth.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:1465</code></p>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-reconstruction-loss-signature">Signature</h4>
+    <pre><code class="language-python">reconstruction_loss(self, pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-reconstruction-loss-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-reconstruction-loss-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-reconstruction-loss-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-reconstruction-loss-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-reconstruction-loss-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import SARFocusingLoss
+
+# Constructor arguments are inferred from implementation.
+obj = SARFocusingLoss(...)  # inferred from implementation
+result = obj.reconstruction_loss(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-reconstruction-loss-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-losses-py-sarfocusingloss-focus-quality-loss" data-searchable data-search="SARFocusingLoss focus_quality_loss focus_quality_loss(self, pred: torch.Tensor, target: torch.Tensor=None) -&gt; torch.Tensor">
+  <summary><code>SARFocusingLoss.focus_quality_loss</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Focus quality metric based on spatial concentration.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:1469</code></p>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-focus-quality-loss-signature">Signature</h4>
+    <pre><code class="language-python">focus_quality_loss(self, pred: torch.Tensor, target: torch.Tensor=None) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-focus-quality-loss-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-focus-quality-loss-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-focus-quality-loss-exceptions">Exceptions</h4>
+    <ul><li><code>ValueError</code></li></ul>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-focus-quality-loss-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-focus-quality-loss-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import SARFocusingLoss
+
+# Constructor arguments are inferred from implementation.
+obj = SARFocusingLoss(...)  # inferred from implementation
+result = obj.focus_quality_loss(pred=&lt;pred&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-focus-quality-loss-edge-cases">Edge Cases</h4>
+    <p>May raise: ValueError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-losses-py-sarfocusingloss-distribution-matching-loss" data-searchable data-search="SARFocusingLoss distribution_matching_loss distribution_matching_loss(self, pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>SARFocusingLoss.distribution_matching_loss</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Distribution matching loss - IMPROVED for better gradients.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:1722</code></p>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-distribution-matching-loss-signature">Signature</h4>
+    <pre><code class="language-python">distribution_matching_loss(self, pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-distribution-matching-loss-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-distribution-matching-loss-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-distribution-matching-loss-exceptions">Exceptions</h4>
+    <ul><li><code>ValueError</code></li></ul>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-distribution-matching-loss-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-distribution-matching-loss-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import SARFocusingLoss
+
+# Constructor arguments are inferred from implementation.
+obj = SARFocusingLoss(...)  # inferred from implementation
+result = obj.distribution_matching_loss(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-distribution-matching-loss-edge-cases">Edge Cases</h4>
+    <p>May raise: ValueError.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-losses-py-sarfocusingloss-total-variation-loss" data-searchable data-search="SARFocusingLoss total_variation_loss total_variation_loss(self, pred: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>SARFocusingLoss.total_variation_loss</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Total variation regularization to suppress speckle artifacts.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:2055</code></p>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-total-variation-loss-signature">Signature</h4>
+    <pre><code class="language-python">total_variation_loss(self, pred: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-total-variation-loss-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-total-variation-loss-returns">Return Type</h4>
+    <p><code>torch.Tensor</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-total-variation-loss-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-total-variation-loss-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-total-variation-loss-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import SARFocusingLoss
+
+# Constructor arguments are inferred from implementation.
+obj = SARFocusingLoss(...)  # inferred from implementation
+result = obj.total_variation_loss(pred=&lt;pred&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-total-variation-loss-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-losses-py-sarfocusingloss-forward" data-searchable data-search="SARFocusingLoss forward forward(self, pred: torch.Tensor, target: torch.Tensor, return_components: bool=False) -&gt; Union[torch.Tensor, Tuple[torch.Tensor, dict]]">
+  <summary><code>SARFocusingLoss.forward</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Compute combined SAR focusing loss with ADAPTIVE WEIGHTING.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/losses.py:2092</code></p>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-forward-signature">Signature</h4>
+    <pre><code class="language-python">forward(self, pred: torch.Tensor, target: torch.Tensor, return_components: bool=False) -&gt; Union[torch.Tensor, Tuple[torch.Tensor, dict]]</code></pre>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-forward-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted focused SAR image</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Ground truth (focused or reference)</td></tr><tr><td><code>return_components</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>If True, return dictionary with individual loss components</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-forward-returns">Return Type</h4>
+    <p><code>Union[torch.Tensor, Tuple[torch.Tensor, dict]]</code></p>
+    <p>If return_components=False: scalar total loss
+    If return_components=True: (total_loss, loss_dict)</p>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-forward-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-forward-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-forward-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.losses import SARFocusingLoss
+
+# Constructor arguments are inferred from implementation.
+obj = SARFocusingLoss(...)  # inferred from implementation
+result = obj.forward(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h4 id="sarpyx-utils-losses-py-sarfocusingloss-forward-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-02 17:41 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

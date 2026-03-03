@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Exhaustive API reference for sarpyx.processor.core.subaperture_full_img" />
+  <title>API: sarpyx.processor.core.subaperture_full_img | SARPyX Documentation</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <script defer src="../assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="../index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">Home</a></li><li><a class="nav-link" href="../installation.html">Installation</a></li><li><a class="nav-link" href="../quickstart.html">Quick Start</a></li><li><a class="nav-link" href="../architecture.html">Architecture</a></li><li><a class="nav-link" href="../api/index.html">API</a></li><li><a class="nav-link" href="../configuration.html">Configuration</a></li><li><a class="nav-link" href="../usage.html">Usage</a></li><li><a class="nav-link" href="../testing.html">Testing</a></li><li><a class="nav-link" href="../contributing.html">Contributing</a></li><li><a class="nav-link" href="../faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="../api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="../api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="../api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="../api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="../api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="../api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link" href="../api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="../api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link active" href="../api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="../api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link" href="../api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="../api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link" href="../api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link" href="../api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link" href="../api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="../api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link" href="../api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link" href="../api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="../api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="../api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="../api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link" href="../api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="../api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="../api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="../api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="../index.html">Home</a></li><li><a href="index.html">API</a></li><li>sarpyx.processor.core.subaperture_full_img</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="API: sarpyx.processor.core.subaperture_full_img">
+        
+<section>
+  <h1 id="module-sarpyx_processor_core_subaperture_full_img">Module: <code>sarpyx.processor.core.subaperture_full_img</code></h1>
+  <p><strong>File:</strong> <code>sarpyx/processor/core/subaperture_full_img.py</code></p>
+  <p>No module docstring available; module purpose is inferred from implementation.</p>
+
+  <h2 id="module-exports">Exported Symbols (<code>__all__</code>)</h2>
+  <p>No explicit <code>__all__</code> list. Public symbols inferred from implementation.</p>
+
+  <h2 id="public-functions">Public Functions (6)</h2>
+  
+<details class="api-item" id="sarpyx-processor-core-subaperture-full-img-py-find-base-iq-pairs-in-dim-data" data-searchable data-search="find_base_iq_pairs_in_dim_data find_base_iq_pairs_in_dim_data(data_dir: str)">
+  <summary><code>find_base_iq_pairs_in_dim_data</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Detect base complex i/q pairs per polarization from a DIM ``.data`` folder.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/subaperture_full_img.py:50</code></p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-find-base-iq-pairs-in-dim-data-signature">Signature</h3>
+    <pre><code class="language-python">find_base_iq_pairs_in_dim_data(data_dir: str)</code></pre>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-find-base-iq-pairs-in-dim-data-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data_dir</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-find-base-iq-pairs-in-dim-data-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-find-base-iq-pairs-in-dim-data-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-find-base-iq-pairs-in-dim-data-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-find-base-iq-pairs-in-dim-data-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.subaperture_full_img import find_base_iq_pairs_in_dim_data
+
+result = find_base_iq_pairs_in_dim_data(data_dir=&lt;data_dir&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-find-base-iq-pairs-in-dim-data-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-subaperture-full-img-py-dehammwin" data-searchable data-search="DeHammWin DeHammWin(signal, coeff)">
+  <summary><code>DeHammWin</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Vectorized Hamming de-weighting.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/subaperture_full_img.py:104</code></p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-dehammwin-signature">Signature</h3>
+    <pre><code class="language-python">DeHammWin(signal, coeff)</code></pre>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-dehammwin-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>signal</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>np.ndarray, 1-D complex</td></tr><tr><td><code>coeff</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>float  (Hamming coefficient, typically 0.5–1.0)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-dehammwin-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>np.ndarray – de-weighted signal (complex64).</p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-dehammwin-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-dehammwin-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-dehammwin-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.subaperture_full_img import DeHammWin
+
+result = DeHammWin(signal=&lt;signal&gt;, coeff=&lt;coeff&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-dehammwin-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-subaperture-full-img-py-dehammwin-2d" data-searchable data-search="DeHammWin_2d DeHammWin_2d(signals_2d, coeff)">
+  <summary><code>DeHammWin_2d</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Apply Hamming de-weighting to every column (axis-1 slice) of a 2-D array.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/subaperture_full_img.py:128</code></p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-dehammwin-2d-signature">Signature</h3>
+    <pre><code class="language-python">DeHammWin_2d(signals_2d, coeff)</code></pre>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-dehammwin-2d-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>signals_2d</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>np.ndarray, shape (nGood, nCols), complex</td></tr><tr><td><code>coeff</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>float</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-dehammwin-2d-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>np.ndarray – same shape, de-weighted and conjugated (complex64).</p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-dehammwin-2d-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-dehammwin-2d-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-dehammwin-2d-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.subaperture_full_img import DeHammWin_2d
+
+result = DeHammWin_2d(signals_2d=&lt;signals_2d&gt;, coeff=&lt;coeff&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-dehammwin-2d-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-subaperture-full-img-py-write-envi-bsq-float32" data-searchable data-search="write_envi_bsq_float32 write_envi_bsq_float32(path_img, path_hdr, arr2d, band_name, byte_order=1, type_=&#x27;real&#x27;)">
+  <summary><code>write_envi_bsq_float32</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Write a single-band ENVI BSQ float32 image + header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/subaperture_full_img.py:147</code></p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-write-envi-bsq-float32-signature">Signature</h3>
+    <pre><code class="language-python">write_envi_bsq_float32(path_img, path_hdr, arr2d, band_name, byte_order=1, type_=&#x27;real&#x27;)</code></pre>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-write-envi-bsq-float32-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>path_img</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>str Output binary file path (.img).</td></tr><tr><td><code>path_hdr</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>str Output ENVI header path (.hdr).</td></tr><tr><td><code>arr2d</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>array-like 2D array (lines, samples).</td></tr><tr><td><code>band_name</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>str Band name to write into the ENVI header (must match your naming convention).</td></tr><tr><td><code>byte_order</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>1</code></td><td>int ENVI byte order: 0 = little endian, 1 = big endian.</td></tr><tr><td><code>type_</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>&#x27;real&#x27;</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-write-envi-bsq-float32-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-write-envi-bsq-float32-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-write-envi-bsq-float32-side-effects">Side Effects</h3>
+    <ul><li>filesystem</li></ul>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-write-envi-bsq-float32-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.subaperture_full_img import write_envi_bsq_float32
+
+result = write_envi_bsq_float32(path_img=&lt;path_img&gt;, path_hdr=&lt;path_hdr&gt;, arr2d=&lt;arr2d&gt;, band_name=&lt;band_name&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-write-envi-bsq-float32-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-subaperture-full-img-py-find-pols-in-dim-data" data-searchable data-search="find_pols_in_dim_data find_pols_in_dim_data(data_dir: str)">
+  <summary><code>find_pols_in_dim_data</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Search for base polarization i/q pairs in the product .data folder.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/subaperture_full_img.py:781</code></p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-find-pols-in-dim-data-signature">Signature</h3>
+    <pre><code class="language-python">find_pols_in_dim_data(data_dir: str)</code></pre>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-find-pols-in-dim-data-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data_dir</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-find-pols-in-dim-data-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-find-pols-in-dim-data-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-find-pols-in-dim-data-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-find-pols-in-dim-data-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.subaperture_full_img import find_pols_in_dim_data
+
+result = find_pols_in_dim_data(data_dir=&lt;data_dir&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-find-pols-in-dim-data-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-subaperture-full-img-py-do-subaps" data-searchable data-search="do_subaps do_subaps(dim_path: str, safe_path: str, numberofLooks: int=3, n_decompositions: Optional[Union[int, List[int]]]=None, DownSample: bool=True, byte_order: int=1, prefix: str=&#x27;&#x27;, VERBOSE: bool=False, force_dask: Optional[bool]=None, chunk_cols: Optional[int]=None)">
+  <summary><code>do_subaps</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Orchestrator:</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/subaperture_full_img.py:793</code></p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-do-subaps-signature">Signature</h3>
+    <pre><code class="language-python">do_subaps(dim_path: str, safe_path: str, numberofLooks: int=3, n_decompositions: Optional[Union[int, List[int]]]=None, DownSample: bool=True, byte_order: int=1, prefix: str=&#x27;&#x27;, VERBOSE: bool=False, force_dask: Optional[bool]=None, chunk_cols: Optional[int]=None)</code></pre>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-do-subaps-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>dim_path</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>safe_path</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>numberofLooks</code></td><td><code>int</code></td><td>no</td><td><code>3</code></td><td>inferred from implementation.</td></tr><tr><td><code>n_decompositions</code></td><td><code>Optional[Union[int, List[int]]]</code></td><td>no</td><td><code>None</code></td><td>* None -&gt; uses numberofLooks (backward compatible) * int  -&gt; runs a single decomposition with that N * list -&gt; runs all decompositions in the list (e.g. [2,3,5,7])</td></tr><tr><td><code>DownSample</code></td><td><code>bool</code></td><td>no</td><td><code>True</code></td><td>inferred from implementation.</td></tr><tr><td><code>byte_order</code></td><td><code>int</code></td><td>no</td><td><code>1</code></td><td>inferred from implementation.</td></tr><tr><td><code>prefix</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>VERBOSE</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr><tr><td><code>force_dask</code></td><td><code>Optional[bool]</code></td><td>no</td><td><code>None</code></td><td>bool | None ``True`` → always use dask lazy backend (bounded memory). ``False`` → always use numpy eager backend. ``None`` (default) → auto-detect based on image size vs available RAM.</td></tr><tr><td><code>chunk_cols</code></td><td><code>Optional[int]</code></td><td>no</td><td><code>None</code></td><td>int | None Column-chunk width for dask.  ``None`` → auto-computed.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-do-subaps-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-do-subaps-exceptions">Exceptions</h3>
+    <ul><li><code>FileNotFoundError</code></li><li><code>RuntimeError</code></li><li><code>ValueError</code></li></ul>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-do-subaps-side-effects">Side Effects</h3>
+    <ul><li>io</li></ul>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-do-subaps-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.subaperture_full_img import do_subaps
+
+result = do_subaps(dim_path=&lt;dim_path&gt;, safe_path=&lt;safe_path&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-do-subaps-edge-cases">Edge Cases</h3>
+    <p>May raise: FileNotFoundError, RuntimeError, ValueError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+
+  <h2 id="public-classes">Public Classes (1)</h2>
+  
+<details class="api-item class-item" id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking" data-searchable data-search="CombinedSublooking class CombinedSublooking">
+  <summary><code>CombinedSublooking</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Subaperture decomposition of a SAR SLC image.
+
+Supports two execution backends selected automatically based on image
+size (or overridden with ``force_dask``):
+
+* **numpy** – eager, in-memory.  Fast for moderate images.
+* **dask**  – lazy, chunked along columns.  Handles arbitrarily large
+  images with bounded RAM.
+
+Parameters
+----------
+metadata_pointer_safe : str
+    Path to the .SAFE product (metadata source).
+numberofLooks : int
+    Number of sublooks to generate (≥ 2).
+i_image, q_image : str | np.ndarray | None
+    In-phase / quadrature inputs (file paths or arrays).
+DownSample : bool
+    Reserved for legacy compatibility.
+assetMetadata : dict | None
+    Optional pre-extracted metadata dictionary.
+force_dask : bool | None
+    ``True`` → always use dask.  ``False`` → always numpy.
+    ``None`` (default) → auto-detect from image size vs available RAM.
+chunk_cols : int | None
+    Column-chunk width for the dask path (auto-computed if *None*).</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/subaperture_full_img.py:251</code></p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-signature">Class Signature</h3>
+    <pre><code class="language-python">class CombinedSublooking</code></pre>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-returns">Return Type</h3>
+    <p><code>CombinedSublooking</code> instances.</p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.subaperture_full_img import CombinedSublooking
+
+obj = CombinedSublooking(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-methods">Public Methods (11)</h3>
+    
+<details class="api-item method" id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-frequencycomputation" data-searchable data-search="CombinedSublooking FrequencyComputation FrequencyComputation(self, VERBOSE=False)">
+  <summary><code>CombinedSublooking.FrequencyComputation</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Calculate the min, max and central frequencies of each sublook.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/subaperture_full_img.py:388</code></p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-frequencycomputation-signature">Signature</h4>
+    <pre><code class="language-python">FrequencyComputation(self, VERBOSE=False)</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-frequencycomputation-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>VERBOSE</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-frequencycomputation-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-frequencycomputation-exceptions">Exceptions</h4>
+    <ul><li><code>ValueError</code></li></ul>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-frequencycomputation-side-effects">Side Effects</h4>
+    <ul><li>io</li></ul>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-frequencycomputation-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.subaperture_full_img import CombinedSublooking
+
+# Constructor arguments are inferred from implementation.
+obj = CombinedSublooking(...)  # inferred from implementation
+result = obj.FrequencyComputation()</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-frequencycomputation-edge-cases">Edge Cases</h4>
+    <p>May raise: ValueError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-calcfrequencyvectors" data-searchable data-search="CombinedSublooking CalcFrequencyVectors CalcFrequencyVectors(self, VERBOSE=False)">
+  <summary><code>CombinedSublooking.CalcFrequencyVectors</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Zero-centred frequency vector for the analysis axis.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/subaperture_full_img.py:432</code></p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-calcfrequencyvectors-signature">Signature</h4>
+    <pre><code class="language-python">CalcFrequencyVectors(self, VERBOSE=False)</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-calcfrequencyvectors-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>VERBOSE</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-calcfrequencyvectors-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-calcfrequencyvectors-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-calcfrequencyvectors-side-effects">Side Effects</h4>
+    <ul><li>io</li></ul>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-calcfrequencyvectors-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.subaperture_full_img import CombinedSublooking
+
+# Constructor arguments are inferred from implementation.
+obj = CombinedSublooking(...)  # inferred from implementation
+result = obj.CalcFrequencyVectors()</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-calcfrequencyvectors-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumcomputation" data-searchable data-search="CombinedSublooking SpectrumComputation SpectrumComputation(self, VERBOSE=False)">
+  <summary><code>CombinedSublooking.SpectrumComputation</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>FFT along the chosen axis (azimuth=0 or range=1), with fftshift.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/subaperture_full_img.py:449</code></p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumcomputation-signature">Signature</h4>
+    <pre><code class="language-python">SpectrumComputation(self, VERBOSE=False)</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumcomputation-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>VERBOSE</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumcomputation-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumcomputation-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumcomputation-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumcomputation-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.subaperture_full_img import CombinedSublooking
+
+# Constructor arguments are inferred from implementation.
+obj = CombinedSublooking(...)  # inferred from implementation
+result = obj.SpectrumComputation()</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumcomputation-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumnormalization" data-searchable data-search="CombinedSublooking SpectrumNormalization SpectrumNormalization(self, VERBOSE=False)">
+  <summary><code>CombinedSublooking.SpectrumNormalization</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Normalise spectrum to the average magnitude profile.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/subaperture_full_img.py:476</code></p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumnormalization-signature">Signature</h4>
+    <pre><code class="language-python">SpectrumNormalization(self, VERBOSE=False)</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumnormalization-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>VERBOSE</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumnormalization-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumnormalization-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumnormalization-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumnormalization-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.subaperture_full_img import CombinedSublooking
+
+# Constructor arguments are inferred from implementation.
+obj = CombinedSublooking(...)  # inferred from implementation
+result = obj.SpectrumNormalization()</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumnormalization-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumdeweighting" data-searchable data-search="CombinedSublooking SpectrumDeWeighting SpectrumDeWeighting(self)">
+  <summary><code>CombinedSublooking.SpectrumDeWeighting</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/subaperture_full_img.py:511</code></p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumdeweighting-signature">Signature</h4>
+    <pre><code class="language-python">SpectrumDeWeighting(self)</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumdeweighting-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumdeweighting-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumdeweighting-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumdeweighting-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumdeweighting-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.subaperture_full_img import CombinedSublooking
+
+# Constructor arguments are inferred from implementation.
+obj = CombinedSublooking(...)  # inferred from implementation
+result = obj.SpectrumDeWeighting()</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-spectrumdeweighting-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-averagedewe" data-searchable data-search="CombinedSublooking AverageDeWe AverageDeWe(self, VERBOSE=False)">
+  <summary><code>CombinedSublooking.AverageDeWe</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/subaperture_full_img.py:517</code></p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-averagedewe-signature">Signature</h4>
+    <pre><code class="language-python">AverageDeWe(self, VERBOSE=False)</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-averagedewe-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>VERBOSE</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-averagedewe-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-averagedewe-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-averagedewe-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-averagedewe-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.subaperture_full_img import CombinedSublooking
+
+# Constructor arguments are inferred from implementation.
+obj = CombinedSublooking(...)  # inferred from implementation
+result = obj.AverageDeWe()</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-averagedewe-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-ancillarydewe" data-searchable data-search="CombinedSublooking AncillaryDeWe AncillaryDeWe(self, VERBOSE=False)">
+  <summary><code>CombinedSublooking.AncillaryDeWe</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/subaperture_full_img.py:625</code></p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-ancillarydewe-signature">Signature</h4>
+    <pre><code class="language-python">AncillaryDeWe(self, VERBOSE=False)</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-ancillarydewe-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>VERBOSE</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-ancillarydewe-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-ancillarydewe-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-ancillarydewe-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-ancillarydewe-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.subaperture_full_img import CombinedSublooking
+
+# Constructor arguments are inferred from implementation.
+obj = CombinedSublooking(...)  # inferred from implementation
+result = obj.AncillaryDeWe()</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-ancillarydewe-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-generation" data-searchable data-search="CombinedSublooking Generation Generation(self, VERBOSE=False)">
+  <summary><code>CombinedSublooking.Generation</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/subaperture_full_img.py:716</code></p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-generation-signature">Signature</h4>
+    <pre><code class="language-python">Generation(self, VERBOSE=False)</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-generation-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>VERBOSE</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-generation-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-generation-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-generation-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-generation-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.subaperture_full_img import CombinedSublooking
+
+# Constructor arguments are inferred from implementation.
+obj = CombinedSublooking(...)  # inferred from implementation
+result = obj.Generation()</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-generation-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-save-sublooks-envi" data-searchable data-search="CombinedSublooking save_sublooks_envi save_sublooks_envi(self, out_dir, pol, prefix=&#x27;&#x27;, byte_order=1)">
+  <summary><code>CombinedSublooking.save_sublooks_envi</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Save i/q of each sublook as ENVI BSQ float32, forcing endianness.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/subaperture_full_img.py:725</code></p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-save-sublooks-envi-signature">Signature</h4>
+    <pre><code class="language-python">save_sublooks_envi(self, out_dir, pol, prefix=&#x27;&#x27;, byte_order=1)</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-save-sublooks-envi-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>out_dir</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>pol</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>prefix</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>&#x27;&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>byte_order</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>1</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-save-sublooks-envi-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-save-sublooks-envi-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-save-sublooks-envi-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-save-sublooks-envi-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.subaperture_full_img import CombinedSublooking
+
+# Constructor arguments are inferred from implementation.
+obj = CombinedSublooking(...)  # inferred from implementation
+result = obj.save_sublooks_envi(out_dir=&lt;out_dir&gt;, pol=&lt;pol&gt;)</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-save-sublooks-envi-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-chain" data-searchable data-search="CombinedSublooking chain chain(self, VERBOSE=False)">
+  <summary><code>CombinedSublooking.chain</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/subaperture_full_img.py:762</code></p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-chain-signature">Signature</h4>
+    <pre><code class="language-python">chain(self, VERBOSE=False)</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-chain-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>VERBOSE</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-chain-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-chain-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-chain-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-chain-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.subaperture_full_img import CombinedSublooking
+
+# Constructor arguments are inferred from implementation.
+obj = CombinedSublooking(...)  # inferred from implementation
+result = obj.chain()</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-chain-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-run-and-save" data-searchable data-search="CombinedSublooking run_and_save run_and_save(self, out_dir, pol, prefix=&#x27;&#x27;, byte_order=1, VERBOSE=False)">
+  <summary><code>CombinedSublooking.run_and_save</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/subaperture_full_img.py:771</code></p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-run-and-save-signature">Signature</h4>
+    <pre><code class="language-python">run_and_save(self, out_dir, pol, prefix=&#x27;&#x27;, byte_order=1, VERBOSE=False)</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-run-and-save-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>out_dir</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>pol</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>prefix</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>&#x27;&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>byte_order</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>1</code></td><td>inferred from implementation.</td></tr><tr><td><code>VERBOSE</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-run-and-save-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-run-and-save-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-run-and-save-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-run-and-save-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.processor.core.subaperture_full_img import CombinedSublooking
+
+# Constructor arguments are inferred from implementation.
+obj = CombinedSublooking(...)  # inferred from implementation
+result = obj.run_and_save(out_dir=&lt;out_dir&gt;, pol=&lt;pol&gt;)</code></pre>
+    <h4 id="sarpyx-processor-core-subaperture-full-img-py-combinedsublooking-run-and-save-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-02 17:41 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

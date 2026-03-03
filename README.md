@@ -63,6 +63,31 @@ python -m pip install -e .
 
 See `docs/user_manual.md` for full CLI usage and end-to-end workflows.
 
+## Container grid configuration
+
+At startup the container checks for grid files in this order:
+
+1. `GRID_PATH` (or `grid_path`) if it points to an existing `*.geojson`
+2. First `*.geojson` found in `/workspace/grid`
+3. Generate a grid on startup only if no `*.geojson` is available
+
+To use a mounted grid:
+
+```bash
+mkdir -p ./grid
+# put any grid GeoJSON here, e.g. ./grid/my_region.geojson
+docker compose up
+```
+
+For direct `docker run`, pass an explicit in-container path when needed:
+
+```bash
+export GRID_PATH=/workspace/grid/my_region.geojson
+docker run --rm -e GRID_PATH=$GRID_PATH ...
+```
+
+You can also pass `--grid-path` to the `worldsar` CLI command.
+
 ##
 <div align="center">
 

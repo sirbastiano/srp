@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Exhaustive API reference for sarpyx.utils.io" />
+  <title>API: sarpyx.utils.io | SARPyX Documentation</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <script defer src="../assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="../index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">Home</a></li><li><a class="nav-link" href="../installation.html">Installation</a></li><li><a class="nav-link" href="../quickstart.html">Quick Start</a></li><li><a class="nav-link" href="../architecture.html">Architecture</a></li><li><a class="nav-link" href="../api/index.html">API</a></li><li><a class="nav-link" href="../configuration.html">Configuration</a></li><li><a class="nav-link" href="../usage.html">Usage</a></li><li><a class="nav-link" href="../testing.html">Testing</a></li><li><a class="nav-link" href="../contributing.html">Contributing</a></li><li><a class="nav-link" href="../faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="../api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="../api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="../api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="../api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="../api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="../api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link" href="../api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="../api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="../api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link" href="../api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="../api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link" href="../api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link" href="../api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link" href="../api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="../api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link active" href="../api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link" href="../api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="../api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="../api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="../api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link" href="../api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="../api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="../api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="../api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="../index.html">Home</a></li><li><a href="index.html">API</a></li><li>sarpyx.utils.io</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="API: sarpyx.utils.io">
+        
+<section>
+  <h1 id="module-sarpyx_utils_io">Module: <code>sarpyx.utils.io</code></h1>
+  <p><strong>File:</strong> <code>sarpyx/utils/io.py</code></p>
+  <p>No module docstring available; module purpose is inferred from implementation.</p>
+
+  <h2 id="module-exports">Exported Symbols (<code>__all__</code>)</h2>
+  <p>No explicit <code>__all__</code> list. Public symbols inferred from implementation.</p>
+
+  <h2 id="public-functions">Public Functions (10)</h2>
+  
+<details class="api-item" id="sarpyx-utils-io-py-gc-collect" data-searchable data-search="gc_collect gc_collect(func: Callable) -&gt; Callable">
+  <summary><code>gc_collect</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Decorator to perform garbage collection after function execution.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/io.py:17</code></p>
+    <h3 id="sarpyx-utils-io-py-gc-collect-signature">Signature</h3>
+    <pre><code class="language-python">gc_collect(func: Callable) -&gt; Callable</code></pre>
+    <h3 id="sarpyx-utils-io-py-gc-collect-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>func</code></td><td><code>Callable</code></td><td>yes</td><td><code>-</code></td><td>The function to decorate.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-io-py-gc-collect-returns">Return Type</h3>
+    <p><code>Callable</code></p>
+    <p>Callable: The wrapped function with garbage collection.</p>
+    <h3 id="sarpyx-utils-io-py-gc-collect-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-io-py-gc-collect-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-io-py-gc-collect-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.io import gc_collect
+
+result = gc_collect(func=&lt;func&gt;)</code></pre>
+    <h3 id="sarpyx-utils-io-py-gc-collect-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-io-py-calculate-slice-indices" data-searchable data-search="calculate_slice_indices calculate_slice_indices(array_height: int, slice_height: int) -&gt; List[dict]">
+  <summary><code>calculate_slice_indices</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Calculate slice indices and drop information for array slicing.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/io.py:193</code></p>
+    <h3 id="sarpyx-utils-io-py-calculate-slice-indices-signature">Signature</h3>
+    <pre><code class="language-python">calculate_slice_indices(array_height: int, slice_height: int) -&gt; List[dict]</code></pre>
+    <h3 id="sarpyx-utils-io-py-calculate-slice-indices-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>array_height</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>Total height of the array to slice</td></tr><tr><td><code>slice_height</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>Height of each slice portion</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-io-py-calculate-slice-indices-returns">Return Type</h3>
+    <p><code>List[dict]</code></p>
+    <p>List[dict]: List of dictionaries containing slice information with keys:
+        - slice_index: Index of the slice
+        - original_start: Original starting row
+        - original_end: Original ending row
+        - actual_start: Actual starting row after drops
+        - actual_end: Actual ending row after drops
+        - is_first: Whether this is the first slice
+        - is_last: Whether this is the last slice
+        - drop_start: Number of rows dropped from start
+        - drop_end: Number of rows dropped from end
+        - original_height: Height of original slice
+        - actual_height: Height after drops</p>
+    <h3 id="sarpyx-utils-io-py-calculate-slice-indices-exceptions">Exceptions</h3>
+    <ul><li><code>ValueError</code></li></ul>
+    <h3 id="sarpyx-utils-io-py-calculate-slice-indices-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-io-py-calculate-slice-indices-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.io import calculate_slice_indices
+
+result = calculate_slice_indices(array_height=&lt;array_height&gt;, slice_height=&lt;slice_height&gt;)</code></pre>
+    <h3 id="sarpyx-utils-io-py-calculate-slice-indices-edge-cases">Edge Cases</h3>
+    <p>May raise: ValueError.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-io-py-save-matlab-mat" data-searchable data-search="save_matlab_mat save_matlab_mat(data_object: Any, filename: str, filepath: Union[str, Path]) -&gt; bool">
+  <summary><code>save_matlab_mat</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Saves a Python object to a MATLAB .mat file.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/io.py:375</code></p>
+    <h3 id="sarpyx-utils-io-py-save-matlab-mat-signature">Signature</h3>
+    <pre><code class="language-python">save_matlab_mat(data_object: Any, filename: str, filepath: Union[str, Path]) -&gt; bool</code></pre>
+    <h3 id="sarpyx-utils-io-py-save-matlab-mat-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data_object</code></td><td><code>Any</code></td><td>yes</td><td><code>-</code></td><td>The Python object to save in the MATLAB file.</td></tr><tr><td><code>filename</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>The name for the MATLAB file (without .mat extension).</td></tr><tr><td><code>filepath</code></td><td><code>Union[str, Path]</code></td><td>yes</td><td><code>-</code></td><td>Path to the directory where the file will be saved.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-io-py-save-matlab-mat-returns">Return Type</h3>
+    <p><code>bool</code></p>
+    <p>True if save was successful, False otherwise.</p>
+    <h3 id="sarpyx-utils-io-py-save-matlab-mat-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-io-py-save-matlab-mat-side-effects">Side Effects</h3>
+    <ul><li>io</li></ul>
+    <h3 id="sarpyx-utils-io-py-save-matlab-mat-example">Example Usage</h3>
+    <pre><code class="language-python">&gt;&gt;&gt; save_matlab_mat(my_array, &quot;data&quot;, &quot;path/to/dir&quot;)
+    Saved MATLAB file to: path/to/dir/data.mat
+    True</code></pre>
+    <h3 id="sarpyx-utils-io-py-save-matlab-mat-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-io-py-delete" data-searchable data-search="delete delete(path_to_delete: Union[str, Path])">
+  <summary><code>delete</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Deletes a file or directory.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/io.py:402</code></p>
+    <h3 id="sarpyx-utils-io-py-delete-signature">Signature</h3>
+    <pre><code class="language-python">delete(path_to_delete: Union[str, Path])</code></pre>
+    <h3 id="sarpyx-utils-io-py-delete-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>path_to_delete</code></td><td><code>Union[str, Path]</code></td><td>yes</td><td><code>-</code></td><td>The path to the file or directory to delete.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-io-py-delete-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-io-py-delete-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-io-py-delete-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-io-py-delete-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.io import delete
+
+result = delete(path_to_delete=&lt;path_to_delete&gt;)</code></pre>
+    <h3 id="sarpyx-utils-io-py-delete-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-io-py-unzip" data-searchable data-search="unzip unzip(path_to_zip_file: Union[str, Path])">
+  <summary><code>unzip</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Unzips a file to its parent directory.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/io.py:418</code></p>
+    <h3 id="sarpyx-utils-io-py-unzip-signature">Signature</h3>
+    <pre><code class="language-python">unzip(path_to_zip_file: Union[str, Path])</code></pre>
+    <h3 id="sarpyx-utils-io-py-unzip-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>path_to_zip_file</code></td><td><code>Union[str, Path]</code></td><td>yes</td><td><code>-</code></td><td>The path to the zip file to extract.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-io-py-unzip-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-io-py-unzip-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-io-py-unzip-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-io-py-unzip-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.io import unzip
+
+result = unzip(path_to_zip_file=&lt;path_to_zip_file&gt;)</code></pre>
+    <h3 id="sarpyx-utils-io-py-unzip-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-io-py-delprod" data-searchable data-search="delProd delProd(prodToDelete: Union[str, Path])">
+  <summary><code>delProd</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Deletes a SNAP product (.dim file and associated .data directory).</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/io.py:430</code></p>
+    <h3 id="sarpyx-utils-io-py-delprod-signature">Signature</h3>
+    <pre><code class="language-python">delProd(prodToDelete: Union[str, Path])</code></pre>
+    <h3 id="sarpyx-utils-io-py-delprod-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prodToDelete</code></td><td><code>Union[str, Path]</code></td><td>yes</td><td><code>-</code></td><td>The path to the .dim file of the product to delete.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-io-py-delprod-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-io-py-delprod-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-io-py-delprod-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-io-py-delprod-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.io import delProd
+
+result = delProd(prodToDelete=&lt;prodToDelete&gt;)</code></pre>
+    <h3 id="sarpyx-utils-io-py-delprod-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-io-py-command-line" data-searchable data-search="command_line command_line(cmd: str)">
+  <summary><code>command_line</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Executes a command line process and prints its output.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/io.py:446</code></p>
+    <h3 id="sarpyx-utils-io-py-command-line-signature">Signature</h3>
+    <pre><code class="language-python">command_line(cmd: str)</code></pre>
+    <h3 id="sarpyx-utils-io-py-command-line-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>cmd</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>The command string to execute in the shell.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-io-py-command-line-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-io-py-command-line-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-io-py-command-line-side-effects">Side Effects</h3>
+    <ul><li>io</li><li>subprocess</li></ul>
+    <h3 id="sarpyx-utils-io-py-command-line-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.io import command_line
+
+result = command_line(cmd=&lt;cmd&gt;)</code></pre>
+    <h3 id="sarpyx-utils-io-py-command-line-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-io-py-iternodes" data-searchable data-search="iterNodes iterNodes(root, val_dict: dict) -&gt; dict">
+  <summary><code>iterNodes</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Recursively iterates through XML nodes and extracts tag/text pairs.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/io.py:465</code></p>
+    <h3 id="sarpyx-utils-io-py-iternodes-signature">Signature</h3>
+    <pre><code class="language-python">iterNodes(root, val_dict: dict) -&gt; dict</code></pre>
+    <h3 id="sarpyx-utils-io-py-iternodes-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>root</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>The root element of the XML tree or subtree to iterate.</td></tr><tr><td><code>val_dict</code></td><td><code>dict</code></td><td>yes</td><td><code>-</code></td><td>A dictionary to store the extracted tag/text pairs.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-io-py-iternodes-returns">Return Type</h3>
+    <p><code>dict</code></p>
+    <p>The dictionary containing the extracted tag/text pairs.</p>
+    <h3 id="sarpyx-utils-io-py-iternodes-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-io-py-iternodes-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-io-py-iternodes-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.io import iterNodes
+
+result = iterNodes(root=&lt;root&gt;, val_dict=&lt;val_dict&gt;)</code></pre>
+    <h3 id="sarpyx-utils-io-py-iternodes-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-io-py-find-dat-file" data-searchable data-search="find_dat_file find_dat_file(folder: Path, pol: str) -&gt; Path">
+  <summary><code>find_dat_file</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Find the .dat file in a SAFE folder for a specific polarization using recursive search.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/io.py:490</code></p>
+    <h3 id="sarpyx-utils-io-py-find-dat-file-signature">Signature</h3>
+    <pre><code class="language-python">find_dat_file(folder: Path, pol: str) -&gt; Path</code></pre>
+    <h3 id="sarpyx-utils-io-py-find-dat-file-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>folder</code></td><td><code>Path</code></td><td>yes</td><td><code>-</code></td><td>Path to the SAFE folder to search in.</td></tr><tr><td><code>pol</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Polarization string to match (e.g., &#x27;vh&#x27;, &#x27;vv&#x27;).</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-io-py-find-dat-file-returns">Return Type</h3>
+    <p><code>Path</code></p>
+    <p>Path: Path to the matching .dat file.</p>
+    <h3 id="sarpyx-utils-io-py-find-dat-file-exceptions">Exceptions</h3>
+    <ul><li><code>FileNotFoundError</code></li></ul>
+    <h3 id="sarpyx-utils-io-py-find-dat-file-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-io-py-find-dat-file-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.io import find_dat_file
+
+result = find_dat_file(folder=&lt;folder&gt;, pol=&lt;pol&gt;)</code></pre>
+    <h3 id="sarpyx-utils-io-py-find-dat-file-edge-cases">Edge Cases</h3>
+    <p>May raise: FileNotFoundError.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-io-py-read-h5" data-searchable data-search="read_h5 read_h5(file_path: str) -&gt; tuple[dict, dict]">
+  <summary><code>read_h5</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Read an HDF5 file and return its contents and metadata as dictionaries.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/io.py:516</code></p>
+    <h3 id="sarpyx-utils-io-py-read-h5-signature">Signature</h3>
+    <pre><code class="language-python">read_h5(file_path: str) -&gt; tuple[dict, dict]</code></pre>
+    <h3 id="sarpyx-utils-io-py-read-h5-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>file_path</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Path to the HDF5 file to read.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-io-py-read-h5-returns">Return Type</h3>
+    <p><code>tuple[dict, dict]</code></p>
+    <p>Tuple containing:
+        - Dictionary with datasets and their values from the HDF5 file
+        - Dictionary with metadata (attributes) from the HDF5 file</p>
+    <h3 id="sarpyx-utils-io-py-read-h5-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-io-py-read-h5-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-io-py-read-h5-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.io import read_h5
+
+result = read_h5(file_path=&lt;file_path&gt;)</code></pre>
+    <h3 id="sarpyx-utils-io-py-read-h5-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+
+  <h2 id="public-classes">Public Classes (1)</h2>
+  
+<details class="api-item class-item" id="sarpyx-utils-io-py-arrayslicer" data-searchable data-search="ArraySlicer class ArraySlicer">
+  <summary><code>ArraySlicer</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Class for slicing arrays into overlapping portions with specific drop rules.
+
+This class implements a sophisticated slicing strategy where:
+- First slice drops last 30% of rows
+- Subsequent slices start at 50% overlap and drop 30% from both ends
+- Final slice preserves the end portion
+- All slices are merged without gaps
+- Optional processing function can be applied to each slice before dropping
+
+Args:
+    array (np.ndarray): Input array to be sliced
+    slice_height (int): Height of each slice portion
+    processing_func (Optional[callable]): Function to apply to each slice before dropping</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/io.py:36</code></p>
+    <h3 id="sarpyx-utils-io-py-arrayslicer-signature">Class Signature</h3>
+    <pre><code class="language-python">class ArraySlicer</code></pre>
+    <h3 id="sarpyx-utils-io-py-arrayslicer-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-io-py-arrayslicer-returns">Return Type</h3>
+    <p><code>ArraySlicer</code> instances.</p>
+    <h3 id="sarpyx-utils-io-py-arrayslicer-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-io-py-arrayslicer-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-io-py-arrayslicer-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.io import ArraySlicer
+
+obj = ArraySlicer(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-io-py-arrayslicer-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-io-py-arrayslicer-methods">Public Methods (4)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-io-py-arrayslicer-slice-array" data-searchable data-search="ArraySlicer slice_array slice_array(self) -&gt; List[np.ndarray]">
+  <summary><code>ArraySlicer.slice_array</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Perform the complete slicing operation using calculate_slice_indices.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/io.py:79</code></p>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-slice-array-signature">Signature</h4>
+    <pre><code class="language-python">slice_array(self) -&gt; List[np.ndarray]</code></pre>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-slice-array-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-slice-array-returns">Return Type</h4>
+    <p><code>List[np.ndarray]</code></p>
+    <p>List[np.ndarray]: List of sliced array portions</p>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-slice-array-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-slice-array-side-effects">Side Effects</h4>
+    <ul><li>io</li></ul>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-slice-array-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.io import ArraySlicer
+
+# Constructor arguments are inferred from implementation.
+obj = ArraySlicer(...)  # inferred from implementation
+result = obj.slice_array()</code></pre>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-slice-array-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-io-py-arrayslicer-merge-slices" data-searchable data-search="ArraySlicer merge_slices merge_slices(self) -&gt; np.ndarray">
+  <summary><code>ArraySlicer.merge_slices</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Merge all slices back into a single array without gaps.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/io.py:115</code></p>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-merge-slices-signature">Signature</h4>
+    <pre><code class="language-python">merge_slices(self) -&gt; np.ndarray</code></pre>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-merge-slices-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-merge-slices-returns">Return Type</h4>
+    <p><code>np.ndarray</code></p>
+    <p>np.ndarray: Merged array</p>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-merge-slices-exceptions">Exceptions</h4>
+    <ul><li><code>ValueError</code></li></ul>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-merge-slices-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-merge-slices-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.io import ArraySlicer
+
+# Constructor arguments are inferred from implementation.
+obj = ArraySlicer(...)  # inferred from implementation
+result = obj.merge_slices()</code></pre>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-merge-slices-edge-cases">Edge Cases</h4>
+    <p>May raise: ValueError.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-io-py-arrayslicer-get-slice-info" data-searchable data-search="ArraySlicer get_slice_info get_slice_info(self) -&gt; List[dict]">
+  <summary><code>ArraySlicer.get_slice_info</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Get detailed information about each slice.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/io.py:126</code></p>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-get-slice-info-signature">Signature</h4>
+    <pre><code class="language-python">get_slice_info(self) -&gt; List[dict]</code></pre>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-get-slice-info-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-get-slice-info-returns">Return Type</h4>
+    <p><code>List[dict]</code></p>
+    <p>List[dict]: Information about each slice</p>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-get-slice-info-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-get-slice-info-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-get-slice-info-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.io import ArraySlicer
+
+# Constructor arguments are inferred from implementation.
+obj = ArraySlicer(...)  # inferred from implementation
+result = obj.get_slice_info()</code></pre>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-get-slice-info-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-io-py-arrayslicer-visualize-slicing" data-searchable data-search="ArraySlicer visualize_slicing visualize_slicing(self, figsize: Tuple[int, int]=(12, 8)) -&gt; None">
+  <summary><code>ArraySlicer.visualize_slicing</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Visualize the slicing process.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/io.py:134</code></p>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-visualize-slicing-signature">Signature</h4>
+    <pre><code class="language-python">visualize_slicing(self, figsize: Tuple[int, int]=(12, 8)) -&gt; None</code></pre>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-visualize-slicing-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>figsize</code></td><td><code>Tuple[int, int]</code></td><td>no</td><td><code>(12, 8)</code></td><td>Figure size for the plot</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-visualize-slicing-returns">Return Type</h4>
+    <p><code>None</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-visualize-slicing-exceptions">Exceptions</h4>
+    <ul><li><code>ValueError</code></li></ul>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-visualize-slicing-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-visualize-slicing-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.io import ArraySlicer
+
+# Constructor arguments are inferred from implementation.
+obj = ArraySlicer(...)  # inferred from implementation
+result = obj.visualize_slicing()</code></pre>
+    <h4 id="sarpyx-utils-io-py-arrayslicer-visualize-slicing-edge-cases">Edge Cases</h4>
+    <p>May raise: ValueError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-02 17:41 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

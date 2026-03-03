@@ -23,6 +23,29 @@ Before installing sarpyx, ensure you have:
 
 ## Installation Methods
 
+### Containerized execution (optional)
+
+If you run `sarpyx` via the provided container, the entrypoint uses this order:
+
+1. `GRID_PATH` (or `grid_path`) if it points to an existing `*.geojson`
+2. first `*.geojson` found under `/workspace/grid`
+3. startup-time generation only if no `*.geojson` exists
+
+To use your own mounted grid, place any GeoJSON in `./grid`:
+
+```bash
+mkdir -p ./grid
+# Example: cp my_region.geojson ./grid/
+docker compose up
+```
+
+If you use `docker-compose`, mount the grid directory and optionally set `GRID_PATH` to choose a specific file:
+
+```bash
+- ./grid:/workspace/grid
+- GRID_PATH=/workspace/grid/my_region.geojson
+```
+
 ### 1. Using pip (Recommended for Users)
 
 Once sarpyx is published to PyPI, you can install it using:

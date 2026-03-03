@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Exhaustive API reference for sarpyx.processor.utils.metrics" />
+  <title>API: sarpyx.processor.utils.metrics | SARPyX Documentation</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <script defer src="../assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="../index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">Home</a></li><li><a class="nav-link" href="../installation.html">Installation</a></li><li><a class="nav-link" href="../quickstart.html">Quick Start</a></li><li><a class="nav-link" href="../architecture.html">Architecture</a></li><li><a class="nav-link" href="../api/index.html">API</a></li><li><a class="nav-link" href="../configuration.html">Configuration</a></li><li><a class="nav-link" href="../usage.html">Usage</a></li><li><a class="nav-link" href="../testing.html">Testing</a></li><li><a class="nav-link" href="../contributing.html">Contributing</a></li><li><a class="nav-link" href="../faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="../api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="../api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="../api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="../api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="../api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="../api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link" href="../api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="../api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="../api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link active" href="../api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link" href="../api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="../api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link" href="../api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link" href="../api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link" href="../api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="../api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link" href="../api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link" href="../api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="../api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="../api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="../api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link" href="../api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="../api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="../api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="../api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="../index.html">Home</a></li><li><a href="index.html">API</a></li><li>sarpyx.processor.utils.metrics</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="API: sarpyx.processor.utils.metrics">
+        
+<section>
+  <h1 id="module-sarpyx_processor_utils_metrics">Module: <code>sarpyx.processor.utils.metrics</code></h1>
+  <p><strong>File:</strong> <code>sarpyx/processor/utils/metrics.py</code></p>
+  <p>No module docstring available; module purpose is inferred from implementation.</p>
+
+  <h2 id="module-exports">Exported Symbols (<code>__all__</code>)</h2>
+  <p>No explicit <code>__all__</code> list. Public symbols inferred from implementation.</p>
+
+  <h2 id="public-functions">Public Functions (6)</h2>
+  
+<details class="api-item" id="sarpyx-processor-utils-metrics-py-luminance" data-searchable data-search="luminance luminance(img1: np.ndarray, img2: np.ndarray) -&gt; float">
+  <summary><code>luminance</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Calculate the luminance component of SSIM.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/utils/metrics.py:12</code></p>
+    <h3 id="sarpyx-processor-utils-metrics-py-luminance-signature">Signature</h3>
+    <pre><code class="language-python">luminance(img1: np.ndarray, img2: np.ndarray) -&gt; float</code></pre>
+    <h3 id="sarpyx-processor-utils-metrics-py-luminance-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>img1</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>First input image as numpy array.</td></tr><tr><td><code>img2</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Second input image as numpy array.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-utils-metrics-py-luminance-returns">Return Type</h3>
+    <p><code>float</code></p>
+    <p>Luminance similarity value.</p>
+    <h3 id="sarpyx-processor-utils-metrics-py-luminance-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-utils-metrics-py-luminance-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-utils-metrics-py-luminance-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.utils.metrics import luminance
+
+result = luminance(img1=&lt;img1&gt;, img2=&lt;img2&gt;)</code></pre>
+    <h3 id="sarpyx-processor-utils-metrics-py-luminance-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-utils-metrics-py-contrast" data-searchable data-search="contrast contrast(img1: np.ndarray, img2: np.ndarray) -&gt; float">
+  <summary><code>contrast</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Calculate the contrast component of SSIM.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/utils/metrics.py:33</code></p>
+    <h3 id="sarpyx-processor-utils-metrics-py-contrast-signature">Signature</h3>
+    <pre><code class="language-python">contrast(img1: np.ndarray, img2: np.ndarray) -&gt; float</code></pre>
+    <h3 id="sarpyx-processor-utils-metrics-py-contrast-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>img1</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>First input image as numpy array.</td></tr><tr><td><code>img2</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Second input image as numpy array.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-utils-metrics-py-contrast-returns">Return Type</h3>
+    <p><code>float</code></p>
+    <p>Contrast similarity value.</p>
+    <h3 id="sarpyx-processor-utils-metrics-py-contrast-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-utils-metrics-py-contrast-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-utils-metrics-py-contrast-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.utils.metrics import contrast
+
+result = contrast(img1=&lt;img1&gt;, img2=&lt;img2&gt;)</code></pre>
+    <h3 id="sarpyx-processor-utils-metrics-py-contrast-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-utils-metrics-py-structure" data-searchable data-search="structure structure(img1: np.ndarray, img2: np.ndarray) -&gt; float">
+  <summary><code>structure</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Calculate the structure component of SSIM.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/utils/metrics.py:54</code></p>
+    <h3 id="sarpyx-processor-utils-metrics-py-structure-signature">Signature</h3>
+    <pre><code class="language-python">structure(img1: np.ndarray, img2: np.ndarray) -&gt; float</code></pre>
+    <h3 id="sarpyx-processor-utils-metrics-py-structure-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>img1</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>First input image as numpy array.</td></tr><tr><td><code>img2</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Second input image as numpy array.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-utils-metrics-py-structure-returns">Return Type</h3>
+    <p><code>float</code></p>
+    <p>Structure similarity value.</p>
+    <h3 id="sarpyx-processor-utils-metrics-py-structure-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-utils-metrics-py-structure-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-utils-metrics-py-structure-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.utils.metrics import structure
+
+result = structure(img1=&lt;img1&gt;, img2=&lt;img2&gt;)</code></pre>
+    <h3 id="sarpyx-processor-utils-metrics-py-structure-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-utils-metrics-py-create-window" data-searchable data-search="create_window create_window(window_size: int, channel: int) -&gt; torch.Tensor">
+  <summary><code>create_window</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Create a 2D Hann window for SSIM calculation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/utils/metrics.py:77</code></p>
+    <h3 id="sarpyx-processor-utils-metrics-py-create-window-signature">Signature</h3>
+    <pre><code class="language-python">create_window(window_size: int, channel: int) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-processor-utils-metrics-py-create-window-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>window_size</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>Size of the window.</td></tr><tr><td><code>channel</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>Number of channels.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-utils-metrics-py-create-window-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>2D Hann window as torch tensor.</p>
+    <h3 id="sarpyx-processor-utils-metrics-py-create-window-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-utils-metrics-py-create-window-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-utils-metrics-py-create-window-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.utils.metrics import create_window
+
+result = create_window(window_size=&lt;window_size&gt;, channel=&lt;channel&gt;)</code></pre>
+    <h3 id="sarpyx-processor-utils-metrics-py-create-window-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-utils-metrics-py-ssim" data-searchable data-search="ssim ssim(img1: Union[torch.Tensor, np.ndarray], img2: Union[torch.Tensor, np.ndarray], window_size: int=11, window: Optional[torch.Tensor]=None, size_average: bool=True, full: bool=False, val_range: Optional[Tuple[float, float]]=None) -&gt; torch.Tensor">
+  <summary><code>ssim</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Calculate Structural Similarity Index Measure (SSIM) between two images.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/utils/metrics.py:96</code></p>
+    <h3 id="sarpyx-processor-utils-metrics-py-ssim-signature">Signature</h3>
+    <pre><code class="language-python">ssim(img1: Union[torch.Tensor, np.ndarray], img2: Union[torch.Tensor, np.ndarray], window_size: int=11, window: Optional[torch.Tensor]=None, size_average: bool=True, full: bool=False, val_range: Optional[Tuple[float, float]]=None) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-processor-utils-metrics-py-ssim-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>img1</code></td><td><code>Union[torch.Tensor, np.ndarray]</code></td><td>yes</td><td><code>-</code></td><td>First input image as tensor or numpy array.</td></tr><tr><td><code>img2</code></td><td><code>Union[torch.Tensor, np.ndarray]</code></td><td>yes</td><td><code>-</code></td><td>Second input image as tensor or numpy array.</td></tr><tr><td><code>window_size</code></td><td><code>int</code></td><td>no</td><td><code>11</code></td><td>Size of sliding window for SSIM calculation.</td></tr><tr><td><code>window</code></td><td><code>Optional[torch.Tensor]</code></td><td>no</td><td><code>None</code></td><td>Pre-computed window tensor. If None, creates Hann window.</td></tr><tr><td><code>size_average</code></td><td><code>bool</code></td><td>no</td><td><code>True</code></td><td>If True, returns mean SSIM value.</td></tr><tr><td><code>full</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>If True, returns full SSIM map (currently unused).</td></tr><tr><td><code>val_range</code></td><td><code>Optional[Tuple[float, float]]</code></td><td>no</td><td><code>None</code></td><td>Dynamic range of input images as (min, max) tuple.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-utils-metrics-py-ssim-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>SSIM value or map as torch tensor.</p>
+    <h3 id="sarpyx-processor-utils-metrics-py-ssim-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-utils-metrics-py-ssim-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-utils-metrics-py-ssim-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.utils.metrics import ssim
+
+result = ssim(img1=&lt;img1&gt;, img2=&lt;img2&gt;)</code></pre>
+    <h3 id="sarpyx-processor-utils-metrics-py-ssim-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior. Documented return may be None for some execution paths.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-utils-metrics-py-psnr" data-searchable data-search="psnr psnr(img1: Union[torch.Tensor, np.ndarray], img2: Union[torch.Tensor, np.ndarray], max_val: float=1.0) -&gt; torch.Tensor">
+  <summary><code>psnr</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Calculate Peak Signal-to-Noise Ratio (PSNR) between two images.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/utils/metrics.py:174</code></p>
+    <h3 id="sarpyx-processor-utils-metrics-py-psnr-signature">Signature</h3>
+    <pre><code class="language-python">psnr(img1: Union[torch.Tensor, np.ndarray], img2: Union[torch.Tensor, np.ndarray], max_val: float=1.0) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-processor-utils-metrics-py-psnr-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>img1</code></td><td><code>Union[torch.Tensor, np.ndarray]</code></td><td>yes</td><td><code>-</code></td><td>First input image as tensor or numpy array.</td></tr><tr><td><code>img2</code></td><td><code>Union[torch.Tensor, np.ndarray]</code></td><td>yes</td><td><code>-</code></td><td>Second input image as tensor or numpy array.</td></tr><tr><td><code>max_val</code></td><td><code>float</code></td><td>no</td><td><code>1.0</code></td><td>Maximum possible pixel value.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-utils-metrics-py-psnr-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>PSNR value as torch tensor.</p>
+    <h3 id="sarpyx-processor-utils-metrics-py-psnr-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-utils-metrics-py-psnr-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-utils-metrics-py-psnr-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.utils.metrics import psnr
+
+result = psnr(img1=&lt;img1&gt;, img2=&lt;img2&gt;)</code></pre>
+    <h3 id="sarpyx-processor-utils-metrics-py-psnr-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+
+  <h2 id="public-classes">Public Classes (0)</h2>
+  <p>No public classes detected.</p>
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-02 17:41 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

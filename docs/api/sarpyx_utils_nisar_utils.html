@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Exhaustive API reference for sarpyx.utils.nisar_utils" />
+  <title>API: sarpyx.utils.nisar_utils | SARPyX Documentation</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <script defer src="../assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="../index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">Home</a></li><li><a class="nav-link" href="../installation.html">Installation</a></li><li><a class="nav-link" href="../quickstart.html">Quick Start</a></li><li><a class="nav-link" href="../architecture.html">Architecture</a></li><li><a class="nav-link" href="../api/index.html">API</a></li><li><a class="nav-link" href="../configuration.html">Configuration</a></li><li><a class="nav-link" href="../usage.html">Usage</a></li><li><a class="nav-link" href="../testing.html">Testing</a></li><li><a class="nav-link" href="../contributing.html">Contributing</a></li><li><a class="nav-link" href="../faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="../api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="../api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="../api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="../api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="../api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="../api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link" href="../api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="../api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="../api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link" href="../api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="../api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link" href="../api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link" href="../api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link" href="../api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="../api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link" href="../api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link" href="../api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="../api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="../api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link active" href="../api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="../api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link" href="../api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="../api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="../api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="../api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="../index.html">Home</a></li><li><a href="index.html">API</a></li><li>sarpyx.utils.nisar_utils</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="API: sarpyx.utils.nisar_utils">
+        
+<section>
+  <h1 id="module-sarpyx_utils_nisar_utils">Module: <code>sarpyx.utils.nisar_utils</code></h1>
+  <p><strong>File:</strong> <code>sarpyx/utils/nisar_utils.py</code></p>
+  <p>NISAR Product Reader and Cutter Utilities.
+
+This module provides tools for reading NISAR GSLC (Geocoded Single Look Complex)
+products and subsetting them based on WKT polygon geometries.
+
+Classes:
+    NISARMetadata: Metadata container for NISAR products
+    NISARReader: Reader for NISAR HDF5 products
+    NISARCutter: Polygon-based product subsetting tool
+
+Example:
+    &gt;&gt;&gt; from nisar_utils import NISARReader, NISARCutter
+    &gt;&gt;&gt; 
+    &gt;&gt;&gt; # Read product
+    &gt;&gt;&gt; reader = NISARReader(&#x27;nisar_product.h5&#x27;)
+    &gt;&gt;&gt; info = reader.info()
+    &gt;&gt;&gt; 
+    &gt;&gt;&gt; # Cut by WKT polygon
+    &gt;&gt;&gt; cutter = NISARCutter(reader)
+    &gt;&gt;&gt; wkt_polygon = &#x27;POLYGON((x1 y1, x2 y2, x3 y3, x4 y4, x1 y1))&#x27;
+    &gt;&gt;&gt; subset = cutter.cut_by_wkt(wkt_polygon, &#x27;HH&#x27;)
+    &gt;&gt;&gt; cutter.save_subset(subset, &#x27;output.tif&#x27;)</p>
+
+  <h2 id="module-exports">Exported Symbols (<code>__all__</code>)</h2>
+  <p>No explicit <code>__all__</code> list. Public symbols inferred from implementation.</p>
+
+  <h2 id="public-functions">Public Functions (0)</h2>
+  <p>No public top-level functions detected.</p>
+
+  <h2 id="public-classes">Public Classes (3)</h2>
+  
+<details class="api-item class-item" id="sarpyx-utils-nisar-utils-py-nisarmetadata" data-searchable data-search="NISARMetadata class NISARMetadata">
+  <summary><code>NISARMetadata</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Metadata container for NISAR GSLC products.
+
+Attributes:
+    product_path: Path to the NISAR product file
+    frequency: Frequency band (e.g., &#x27;frequencyA&#x27;)
+    polarizations: List of available polarizations
+    grid_name: Grid name
+    shape: Data shape as (rows, cols)
+    epsg: EPSG code for coordinate system
+    x_spacing: Pixel spacing in X direction
+    y_spacing: Pixel spacing in Y direction
+    x_min: Minimum X coordinate
+    y_min: Minimum Y coordinate
+    x_max: Maximum X coordinate
+    y_max: Maximum Y coordinate</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/nisar_utils.py:41</code></p>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarmetadata-signature">Class Signature</h3>
+    <pre><code class="language-python">class NISARMetadata</code></pre>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarmetadata-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarmetadata-returns">Return Type</h3>
+    <p><code>NISARMetadata</code> instances.</p>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarmetadata-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarmetadata-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarmetadata-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.nisar_utils import NISARMetadata
+
+obj = NISARMetadata(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarmetadata-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarmetadata-methods">Public Methods (2)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-nisar-utils-py-nisarmetadata-bounds" data-searchable data-search="NISARMetadata bounds bounds(self) -&gt; Tuple[float, float, float, float]">
+  <summary><code>NISARMetadata.bounds</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Return bounds as (xmin, ymin, xmax, ymax).</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/nisar_utils.py:73</code></p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarmetadata-bounds-signature">Signature</h4>
+    <pre><code class="language-python">bounds(self) -&gt; Tuple[float, float, float, float]</code></pre>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarmetadata-bounds-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarmetadata-bounds-returns">Return Type</h4>
+    <p><code>Tuple[float, float, float, float]</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarmetadata-bounds-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarmetadata-bounds-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarmetadata-bounds-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.nisar_utils import NISARMetadata
+
+# Constructor arguments are inferred from implementation.
+obj = NISARMetadata(...)  # inferred from implementation
+result = obj.bounds()</code></pre>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarmetadata-bounds-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-nisar-utils-py-nisarmetadata-transform" data-searchable data-search="NISARMetadata transform transform(self) -&gt; Affine">
+  <summary><code>NISARMetadata.transform</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Return affine transform for georeferencing.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/nisar_utils.py:78</code></p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarmetadata-transform-signature">Signature</h4>
+    <pre><code class="language-python">transform(self) -&gt; Affine</code></pre>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarmetadata-transform-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarmetadata-transform-returns">Return Type</h4>
+    <p><code>Affine</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarmetadata-transform-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarmetadata-transform-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarmetadata-transform-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.nisar_utils import NISARMetadata
+
+# Constructor arguments are inferred from implementation.
+obj = NISARMetadata(...)  # inferred from implementation
+result = obj.transform()</code></pre>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarmetadata-transform-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-nisar-utils-py-nisarreader" data-searchable data-search="NISARReader class NISARReader">
+  <summary><code>NISARReader</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Reader for NISAR GSLC (Geocoded Single Look Complex) products.
+
+This class provides methods to read NISAR HDF5 products and extract
+geocoded SAR data with proper geospatial metadata.
+
+Args:
+    product_path: Path to the NISAR HDF5 product file
+
+Example:
+    &gt;&gt;&gt; reader = NISARReader(&#x27;nisar_product.h5&#x27;)
+    &gt;&gt;&gt; metadata = reader.get_metadata()
+    &gt;&gt;&gt; data = reader.read_data(&#x27;HH&#x27;)</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/nisar_utils.py:85</code></p>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarreader-signature">Class Signature</h3>
+    <pre><code class="language-python">class NISARReader</code></pre>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarreader-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarreader-returns">Return Type</h3>
+    <p><code>NISARReader</code> instances.</p>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarreader-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarreader-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarreader-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.nisar_utils import NISARReader
+
+obj = NISARReader(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarreader-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarreader-methods">Public Methods (5)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-nisar-utils-py-nisarreader-get-available-polarizations" data-searchable data-search="NISARReader get_available_polarizations get_available_polarizations(self, frequency: str=&#x27;frequencyA&#x27;) -&gt; List[str]">
+  <summary><code>NISARReader.get_available_polarizations</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Get list of available polarizations in the product.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/nisar_utils.py:138</code></p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-available-polarizations-signature">Signature</h4>
+    <pre><code class="language-python">get_available_polarizations(self, frequency: str=&#x27;frequencyA&#x27;) -&gt; List[str]</code></pre>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-available-polarizations-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>frequency</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;frequencyA&#x27;</code></td><td>&#x27;frequencyA&#x27;)</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-available-polarizations-returns">Return Type</h4>
+    <p><code>List[str]</code></p>
+    <p>List of polarization strings (e.g., [&#x27;HH&#x27;, &#x27;HV&#x27;, &#x27;VH&#x27;, &#x27;VV&#x27;])</p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-available-polarizations-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-available-polarizations-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-available-polarizations-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.nisar_utils import NISARReader
+
+# Constructor arguments are inferred from implementation.
+obj = NISARReader(...)  # inferred from implementation
+result = obj.get_available_polarizations()</code></pre>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-available-polarizations-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-nisar-utils-py-nisarreader-get-metadata" data-searchable data-search="NISARReader get_metadata get_metadata(self, frequency: str=&#x27;frequencyA&#x27;) -&gt; NISARMetadata">
+  <summary><code>NISARReader.get_metadata</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Extract metadata from NISAR product.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/nisar_utils.py:158</code></p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-metadata-signature">Signature</h4>
+    <pre><code class="language-python">get_metadata(self, frequency: str=&#x27;frequencyA&#x27;) -&gt; NISARMetadata</code></pre>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-metadata-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>frequency</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;frequencyA&#x27;</code></td><td>&#x27;frequencyA&#x27;)</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-metadata-returns">Return Type</h4>
+    <p><code>NISARMetadata</code></p>
+    <p>NISARMetadata object containing product metadata</p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-metadata-exceptions">Exceptions</h4>
+    <ul><li><code>ValueError</code></li></ul>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-metadata-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-metadata-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.nisar_utils import NISARReader
+
+# Constructor arguments are inferred from implementation.
+obj = NISARReader(...)  # inferred from implementation
+result = obj.get_metadata()</code></pre>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-metadata-edge-cases">Edge Cases</h4>
+    <p>May raise: ValueError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-nisar-utils-py-nisarreader-read-data" data-searchable data-search="NISARReader read_data read_data(self, polarization: str, frequency: str=&#x27;frequencyA&#x27;, window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]]=None) -&gt; np.ndarray">
+  <summary><code>NISARReader.read_data</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Read SAR data for a specific polarization.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/nisar_utils.py:235</code></p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-read-data-signature">Signature</h4>
+    <pre><code class="language-python">read_data(self, polarization: str, frequency: str=&#x27;frequencyA&#x27;, window: Optional[Tuple[Tuple[int, int], Tuple[int, int]]]=None) -&gt; np.ndarray</code></pre>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-read-data-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>polarization</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Polarization to read (e.g., &#x27;HH&#x27;, &#x27;HV&#x27;, &#x27;VH&#x27;, &#x27;VV&#x27;)</td></tr><tr><td><code>frequency</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;frequencyA&#x27;</code></td><td>&#x27;frequencyA&#x27;)</td></tr><tr><td><code>window</code></td><td><code>Optional[Tuple[Tuple[int, int], Tuple[int, int]]]</code></td><td>no</td><td><code>None</code></td><td>Optional window to read as ((row_start, row_stop), (col_start, col_stop))</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-read-data-returns">Return Type</h4>
+    <p><code>np.ndarray</code></p>
+    <p>Complex numpy array containing SAR data</p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-read-data-exceptions">Exceptions</h4>
+    <ul><li><code>ValueError</code></li></ul>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-read-data-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-read-data-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.nisar_utils import NISARReader
+
+# Constructor arguments are inferred from implementation.
+obj = NISARReader(...)  # inferred from implementation
+result = obj.read_data(polarization=&lt;polarization&gt;)</code></pre>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-read-data-edge-cases">Edge Cases</h4>
+    <p>May raise: ValueError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-nisar-utils-py-nisarreader-get-coordinates" data-searchable data-search="NISARReader get_coordinates get_coordinates(self, frequency: str=&#x27;frequencyA&#x27;) -&gt; Tuple[np.ndarray, np.ndarray]">
+  <summary><code>NISARReader.get_coordinates</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Get X and Y coordinate arrays.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/nisar_utils.py:271</code></p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-coordinates-signature">Signature</h4>
+    <pre><code class="language-python">get_coordinates(self, frequency: str=&#x27;frequencyA&#x27;) -&gt; Tuple[np.ndarray, np.ndarray]</code></pre>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-coordinates-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>frequency</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;frequencyA&#x27;</code></td><td>&#x27;frequencyA&#x27;)</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-coordinates-returns">Return Type</h4>
+    <p><code>Tuple[np.ndarray, np.ndarray]</code></p>
+    <p>Tuple of (x_coordinates, y_coordinates) as 1D arrays</p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-coordinates-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-coordinates-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-coordinates-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.nisar_utils import NISARReader
+
+# Constructor arguments are inferred from implementation.
+obj = NISARReader(...)  # inferred from implementation
+result = obj.get_coordinates()</code></pre>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-get-coordinates-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-nisar-utils-py-nisarreader-info" data-searchable data-search="NISARReader info info(self) -&gt; Dict">
+  <summary><code>NISARReader.info</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Get comprehensive product information.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/nisar_utils.py:291</code></p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-info-signature">Signature</h4>
+    <pre><code class="language-python">info(self) -&gt; Dict</code></pre>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-info-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-info-returns">Return Type</h4>
+    <p><code>Dict</code></p>
+    <p>Dictionary containing product information</p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-info-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-info-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-info-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.nisar_utils import NISARReader
+
+# Constructor arguments are inferred from implementation.
+obj = NISARReader(...)  # inferred from implementation
+result = obj.info()</code></pre>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarreader-info-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-utils-nisar-utils-py-nisarcutter" data-searchable data-search="NISARCutter class NISARCutter">
+  <summary><code>NISARCutter</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Cut/subset NISAR products based on WKT polygons.
+
+This class provides functionality to subset NISAR GSLC products
+based on WKT polygon geometries, preserving georeferencing information.
+
+Args:
+    reader: NISARReader instance
+
+Example:
+    &gt;&gt;&gt; reader = NISARReader(&#x27;product.h5&#x27;)
+    &gt;&gt;&gt; cutter = NISARCutter(reader)
+    &gt;&gt;&gt; wkt_polygon = &#x27;POLYGON((lon1 lat1, lon2 lat2, ...))&#x27;
+    &gt;&gt;&gt; subset_data = cutter.cut_by_wkt(wkt_polygon, &#x27;HH&#x27;)</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/nisar_utils.py:312</code></p>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarcutter-signature">Class Signature</h3>
+    <pre><code class="language-python">class NISARCutter</code></pre>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarcutter-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarcutter-returns">Return Type</h3>
+    <p><code>NISARCutter</code> instances.</p>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarcutter-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarcutter-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarcutter-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.nisar_utils import NISARCutter
+
+obj = NISARCutter(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarcutter-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-nisar-utils-py-nisarcutter-methods">Public Methods (2)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-nisar-utils-py-nisarcutter-cut-by-wkt" data-searchable data-search="NISARCutter cut_by_wkt cut_by_wkt(self, wkt_polygon: str, polarization: str, frequency: str=&#x27;frequencyA&#x27;, apply_mask: bool=True) -&gt; Dict[str, Union[np.ndarray, NISARMetadata, Affine]]">
+  <summary><code>NISARCutter.cut_by_wkt</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Cut NISAR product by WKT polygon.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/nisar_utils.py:426</code></p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarcutter-cut-by-wkt-signature">Signature</h4>
+    <pre><code class="language-python">cut_by_wkt(self, wkt_polygon: str, polarization: str, frequency: str=&#x27;frequencyA&#x27;, apply_mask: bool=True) -&gt; Dict[str, Union[np.ndarray, NISARMetadata, Affine]]</code></pre>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarcutter-cut-by-wkt-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>wkt_polygon</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Well-Known Text polygon string defining AOI</td></tr><tr><td><code>polarization</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Polarization to read (e.g., &#x27;HH&#x27;, &#x27;HV&#x27;, &#x27;VH&#x27;, &#x27;VV&#x27;)</td></tr><tr><td><code>frequency</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;frequencyA&#x27;</code></td><td>&#x27;frequencyA&#x27;)</td></tr><tr><td><code>apply_mask</code></td><td><code>bool</code></td><td>no</td><td><code>True</code></td><td>If True, apply polygon mask to data (pixels outside polygon set to NaN)</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarcutter-cut-by-wkt-returns">Return Type</h4>
+    <p><code>Dict[str, Union[np.ndarray, NISARMetadata, Affine]]</code></p>
+    <p>Dictionary containing:
+        - &#x27;data&#x27;: Subset SAR data array
+        - &#x27;mask&#x27;: Boolean mask (True inside polygon)
+        - &#x27;metadata&#x27;: Updated metadata for subset
+        - &#x27;transform&#x27;: Affine transform for subset
+        - &#x27;window&#x27;: Pixel window used for extraction
+        - &#x27;polygon&#x27;: Original polygon geometry</p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarcutter-cut-by-wkt-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarcutter-cut-by-wkt-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarcutter-cut-by-wkt-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.nisar_utils import NISARCutter
+
+# Constructor arguments are inferred from implementation.
+obj = NISARCutter(...)  # inferred from implementation
+result = obj.cut_by_wkt(wkt_polygon=&lt;wkt_polygon&gt;, polarization=&lt;polarization&gt;)</code></pre>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarcutter-cut-by-wkt-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-nisar-utils-py-nisarcutter-save-subset" data-searchable data-search="NISARCutter save_subset save_subset(self, subset_result: Dict, output_path: Union[str, Path], driver: str=&#x27;GTiff&#x27;, **kwargs) -&gt; None">
+  <summary><code>NISARCutter.save_subset</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Save subset result to a georeferenced file.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/nisar_utils.py:514</code></p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarcutter-save-subset-signature">Signature</h4>
+    <pre><code class="language-python">save_subset(self, subset_result: Dict, output_path: Union[str, Path], driver: str=&#x27;GTiff&#x27;, **kwargs) -&gt; None</code></pre>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarcutter-save-subset-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>subset_result</code></td><td><code>Dict</code></td><td>yes</td><td><code>-</code></td><td>Result dictionary from cut_by_wkt()</td></tr><tr><td><code>output_path</code></td><td><code>Union[str, Path]</code></td><td>yes</td><td><code>-</code></td><td>Output file path</td></tr><tr><td><code>driver</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;GTiff&#x27;</code></td><td>&#x27;GTiff&#x27;) or &#x27;HDF5&#x27;/&#x27;h5&#x27; for HDF5 format</td></tr><tr><td><code>**kwargs</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>-</code></td><td>Additional arguments passed to rasterio.open() or h5py.File.create_dataset()</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarcutter-save-subset-returns">Return Type</h4>
+    <p><code>None</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarcutter-save-subset-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarcutter-save-subset-side-effects">Side Effects</h4>
+    <ul><li>io</li></ul>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarcutter-save-subset-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.nisar_utils import NISARCutter
+
+# Constructor arguments are inferred from implementation.
+obj = NISARCutter(...)  # inferred from implementation
+result = obj.save_subset(subset_result=&lt;subset_result&gt;, output_path=&lt;output_path&gt;)</code></pre>
+    <h4 id="sarpyx-utils-nisar-utils-py-nisarcutter-save-subset-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-02 17:41 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

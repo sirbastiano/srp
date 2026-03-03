@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Exhaustive API reference for sarpyx.science.indices" />
+  <title>API: sarpyx.science.indices | SARPyX Documentation</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <script defer src="../assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="../index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">Home</a></li><li><a class="nav-link" href="../installation.html">Installation</a></li><li><a class="nav-link" href="../quickstart.html">Quick Start</a></li><li><a class="nav-link" href="../architecture.html">Architecture</a></li><li><a class="nav-link" href="../api/index.html">API</a></li><li><a class="nav-link" href="../configuration.html">Configuration</a></li><li><a class="nav-link" href="../usage.html">Usage</a></li><li><a class="nav-link" href="../testing.html">Testing</a></li><li><a class="nav-link" href="../contributing.html">Contributing</a></li><li><a class="nav-link" href="../faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="../api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="../api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="../api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="../api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="../api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="../api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link" href="../api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="../api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="../api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link active" href="../api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="../api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link" href="../api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link" href="../api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link" href="../api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="../api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link" href="../api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link" href="../api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="../api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="../api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="../api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link" href="../api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="../api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="../api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="../api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="../index.html">Home</a></li><li><a href="index.html">API</a></li><li>sarpyx.science.indices</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="API: sarpyx.science.indices">
+        
+<section>
+  <h1 id="module-sarpyx_science_indices">Module: <code>sarpyx.science.indices</code></h1>
+  <p><strong>File:</strong> <code>sarpyx/science/indices.py</code></p>
+  <p>No module docstring available; module purpose is inferred from implementation.</p>
+
+  <h2 id="module-exports">Exported Symbols (<code>__all__</code>)</h2>
+  <p>No explicit <code>__all__</code> list. Public symbols inferred from implementation.</p>
+
+  <h2 id="public-functions">Public Functions (14)</h2>
+  
+<details class="api-item" id="sarpyx-science-indices-py-calculate-rvi" data-searchable data-search="calculate_rvi calculate_rvi(sigma_vv, sigma_vh)">
+  <summary><code>calculate_rvi</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Calculates the Radar Vegetation Index (RVI) from Sentinel-1 dual-pol data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/science/indices.py:4</code></p>
+    <h3 id="sarpyx-science-indices-py-calculate-rvi-signature">Signature</h3>
+    <pre><code class="language-python">calculate_rvi(sigma_vv, sigma_vh)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-rvi-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>sigma_vv</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VV polarization.</td></tr><tr><td><code>sigma_vh</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VH polarization.</td></tr></tbody></table>
+    <h3 id="sarpyx-science-indices-py-calculate-rvi-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>np.ndarray: The Radar Vegetation Index (RVI) array.
+                Returns NaN where denominator is zero or negative.
+                
+References:
+    - https://www.mdpi.com/2076-3417/9/4/655
+    - https://forum.step.esa.int/t/creating-radar-vegetation-index/12444/18</p>
+    <h3 id="sarpyx-science-indices-py-calculate-rvi-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-rvi-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-science-indices-py-calculate-rvi-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.science.indices import calculate_rvi
+
+result = calculate_rvi(sigma_vv=&lt;sigma_vv&gt;, sigma_vh=&lt;sigma_vh&gt;)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-rvi-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-science-indices-py-calculate-dpdd" data-searchable data-search="calculate_dpdd calculate_dpdd(sigma_vv, sigma_vh)">
+  <summary><code>calculate_dpdd</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Calculates the Dual-Pol Diagonal Distance (DPDD) from Sentinel-1 dual-pol data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/science/indices.py:36</code></p>
+    <h3 id="sarpyx-science-indices-py-calculate-dpdd-signature">Signature</h3>
+    <pre><code class="language-python">calculate_dpdd(sigma_vv, sigma_vh)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-dpdd-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>sigma_vv</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VV polarization.</td></tr><tr><td><code>sigma_vh</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VH polarization.</td></tr></tbody></table>
+    <h3 id="sarpyx-science-indices-py-calculate-dpdd-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>np.ndarray: The Dual-Pol Diagonal Distance (DPDD) array.
+
+References:
+    - See documentation: https://www.sciencedirect.com/science/article/pii/S0034425718304140?via%3Dihub</p>
+    <h3 id="sarpyx-science-indices-py-calculate-dpdd-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-dpdd-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-science-indices-py-calculate-dpdd-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.science.indices import calculate_dpdd
+
+result = calculate_dpdd(sigma_vv=&lt;sigma_vv&gt;, sigma_vh=&lt;sigma_vh&gt;)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-dpdd-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-science-indices-py-calculate-dprvi-hh" data-searchable data-search="calculate_dprvi_hh calculate_dprvi_hh(sigma_hh, sigma_hv)">
+  <summary><code>calculate_dprvi_hh</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Calculates the Dual-Polarized Radar Vegetation Index HH (DpRVIHH) from radar data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/science/indices.py:64</code></p>
+    <h3 id="sarpyx-science-indices-py-calculate-dprvi-hh-signature">Signature</h3>
+    <pre><code class="language-python">calculate_dprvi_hh(sigma_hh, sigma_hv)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-dprvi-hh-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>sigma_hh</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for HH polarization.</td></tr><tr><td><code>sigma_hv</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for HV polarization.</td></tr></tbody></table>
+    <h3 id="sarpyx-science-indices-py-calculate-dprvi-hh-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>np.ndarray: The Dual-Polarized Radar Vegetation Index HH array.
+                Returns NaN where denominator is zero or negative.
+                
+References:
+    - See documentation for full reference details: https://www.tandfonline.com/doi/abs/10.5589/m12-043</p>
+    <h3 id="sarpyx-science-indices-py-calculate-dprvi-hh-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-dprvi-hh-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-science-indices-py-calculate-dprvi-hh-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.science.indices import calculate_dprvi_hh
+
+result = calculate_dprvi_hh(sigma_hh=&lt;sigma_hh&gt;, sigma_hv=&lt;sigma_hv&gt;)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-dprvi-hh-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-science-indices-py-calculate-dprvi-vv" data-searchable data-search="calculate_dprvi_vv calculate_dprvi_vv(sigma_vv, sigma_vh)">
+  <summary><code>calculate_dprvi_vv</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Calculates the Dual-Polarized Radar Vegetation Index VV (DpRVIVV) from radar data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/science/indices.py:95</code></p>
+    <h3 id="sarpyx-science-indices-py-calculate-dprvi-vv-signature">Signature</h3>
+    <pre><code class="language-python">calculate_dprvi_vv(sigma_vv, sigma_vh)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-dprvi-vv-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>sigma_vv</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VV polarization.</td></tr><tr><td><code>sigma_vh</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VH polarization.</td></tr></tbody></table>
+    <h3 id="sarpyx-science-indices-py-calculate-dprvi-vv-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>np.ndarray: The Dual-Polarized Radar Vegetation Index VV array.
+                Returns NaN where denominator is zero or negative.
+                
+References:
+    - See ref: https://www.mdpi.com/2076-3417/9/4/655</p>
+    <h3 id="sarpyx-science-indices-py-calculate-dprvi-vv-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-dprvi-vv-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-science-indices-py-calculate-dprvi-vv-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.science.indices import calculate_dprvi_vv
+
+result = calculate_dprvi_vv(sigma_vv=&lt;sigma_vv&gt;, sigma_vh=&lt;sigma_vh&gt;)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-dprvi-vv-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-science-indices-py-calculate-ndpoll" data-searchable data-search="calculate_ndpoll calculate_ndpoll(sigma_vv, sigma_vh)">
+  <summary><code>calculate_ndpoll</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Calculates the Normalized Difference Polarization Index (NDPoll).</p>
+    <p><strong>File location:</strong> <code>sarpyx/science/indices.py:126</code></p>
+    <h3 id="sarpyx-science-indices-py-calculate-ndpoll-signature">Signature</h3>
+    <pre><code class="language-python">calculate_ndpoll(sigma_vv, sigma_vh)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-ndpoll-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>sigma_vv</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VV polarization.</td></tr><tr><td><code>sigma_vh</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VH polarization.</td></tr></tbody></table>
+    <h3 id="sarpyx-science-indices-py-calculate-ndpoll-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>np.ndarray: The NDPoll array. Returns NaN where the denominator is zero.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-ndpoll-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-ndpoll-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-science-indices-py-calculate-ndpoll-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.science.indices import calculate_ndpoll
+
+result = calculate_ndpoll(sigma_vv=&lt;sigma_vv&gt;, sigma_vh=&lt;sigma_vh&gt;)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-ndpoll-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-science-indices-py-calculate-qprvi" data-searchable data-search="calculate_qprvi calculate_qprvi(sigma_hh, sigma_vv, sigma_hv)">
+  <summary><code>calculate_qprvi</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Calculates the Quad-Polarized Radar Vegetation Index (QpRVI).</p>
+    <p><strong>File location:</strong> <code>sarpyx/science/indices.py:152</code></p>
+    <h3 id="sarpyx-science-indices-py-calculate-qprvi-signature">Signature</h3>
+    <pre><code class="language-python">calculate_qprvi(sigma_hh, sigma_vv, sigma_hv)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-qprvi-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>sigma_hh</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for HH polarization.</td></tr><tr><td><code>sigma_vv</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VV polarization.</td></tr><tr><td><code>sigma_hv</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for HV polarization.</td></tr></tbody></table>
+    <h3 id="sarpyx-science-indices-py-calculate-qprvi-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>np.ndarray: The QpRVI array. Returns NaN where the denominator is zero.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-qprvi-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-qprvi-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-science-indices-py-calculate-qprvi-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.science.indices import calculate_qprvi
+
+result = calculate_qprvi(sigma_hh=&lt;sigma_hh&gt;, sigma_vv=&lt;sigma_vv&gt;, sigma_hv=&lt;sigma_hv&gt;)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-qprvi-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-science-indices-py-calculate-rfdi" data-searchable data-search="calculate_rfdi calculate_rfdi(sigma_hh, sigma_hv)">
+  <summary><code>calculate_rfdi</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Calculates the Radar Forest Degradation Index (RFDI).</p>
+    <p><strong>File location:</strong> <code>sarpyx/science/indices.py:180</code></p>
+    <h3 id="sarpyx-science-indices-py-calculate-rfdi-signature">Signature</h3>
+    <pre><code class="language-python">calculate_rfdi(sigma_hh, sigma_hv)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-rfdi-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>sigma_hh</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for HH polarization.</td></tr><tr><td><code>sigma_hv</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for HV polarization.</td></tr></tbody></table>
+    <h3 id="sarpyx-science-indices-py-calculate-rfdi-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>np.ndarray: The RFDI array. Returns NaN where the denominator is zero.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-rfdi-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-rfdi-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-science-indices-py-calculate-rfdi-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.science.indices import calculate_rfdi
+
+result = calculate_rfdi(sigma_hh=&lt;sigma_hh&gt;, sigma_hv=&lt;sigma_hv&gt;)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-rfdi-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-science-indices-py-calculate-vddpi" data-searchable data-search="calculate_vddpi calculate_vddpi(sigma_vv, sigma_vh)">
+  <summary><code>calculate_vddpi</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Calculates the Vertical Dual De-Polarization Index (VDDPI).</p>
+    <p><strong>File location:</strong> <code>sarpyx/science/indices.py:206</code></p>
+    <h3 id="sarpyx-science-indices-py-calculate-vddpi-signature">Signature</h3>
+    <pre><code class="language-python">calculate_vddpi(sigma_vv, sigma_vh)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-vddpi-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>sigma_vv</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VV polarization.</td></tr><tr><td><code>sigma_vh</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VH polarization.</td></tr></tbody></table>
+    <h3 id="sarpyx-science-indices-py-calculate-vddpi-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>np.ndarray: The VDDPI array. Returns NaN where VV is zero.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-vddpi-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-vddpi-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-science-indices-py-calculate-vddpi-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.science.indices import calculate_vddpi
+
+result = calculate_vddpi(sigma_vv=&lt;sigma_vv&gt;, sigma_vh=&lt;sigma_vh&gt;)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-vddpi-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-science-indices-py-calculate-vhvvd" data-searchable data-search="calculate_vhvvd calculate_vhvvd(sigma_vh, sigma_vv)">
+  <summary><code>calculate_vhvvd</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Calculates the VH-VV Difference.</p>
+    <p><strong>File location:</strong> <code>sarpyx/science/indices.py:232</code></p>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvd-signature">Signature</h3>
+    <pre><code class="language-python">calculate_vhvvd(sigma_vh, sigma_vv)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvd-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>sigma_vh</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VH polarization.</td></tr><tr><td><code>sigma_vv</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VV polarization.</td></tr></tbody></table>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvd-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>np.ndarray: The VH-VV Difference array.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvd-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvd-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvd-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.science.indices import calculate_vhvvd
+
+result = calculate_vhvvd(sigma_vh=&lt;sigma_vh&gt;, sigma_vv=&lt;sigma_vv&gt;)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvd-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-science-indices-py-calculate-vhvvp" data-searchable data-search="calculate_vhvvp calculate_vhvvp(sigma_vh, sigma_vv)">
+  <summary><code>calculate_vhvvp</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Calculates the VH-VV Product.</p>
+    <p><strong>File location:</strong> <code>sarpyx/science/indices.py:250</code></p>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvp-signature">Signature</h3>
+    <pre><code class="language-python">calculate_vhvvp(sigma_vh, sigma_vv)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvp-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>sigma_vh</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VH polarization.</td></tr><tr><td><code>sigma_vv</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VV polarization.</td></tr></tbody></table>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvp-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>np.ndarray: The VH-VV Product array.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvp-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvp-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvp-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.science.indices import calculate_vhvvp
+
+result = calculate_vhvvp(sigma_vh=&lt;sigma_vh&gt;, sigma_vv=&lt;sigma_vv&gt;)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvp-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-science-indices-py-calculate-vhvvr" data-searchable data-search="calculate_vhvvr calculate_vhvvr(sigma_vh, sigma_vv)">
+  <summary><code>calculate_vhvvr</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Calculates the VH-VV Ratio.</p>
+    <p><strong>File location:</strong> <code>sarpyx/science/indices.py:268</code></p>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvr-signature">Signature</h3>
+    <pre><code class="language-python">calculate_vhvvr(sigma_vh, sigma_vv)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvr-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>sigma_vh</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VH polarization.</td></tr><tr><td><code>sigma_vv</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VV polarization.</td></tr></tbody></table>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvr-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>np.ndarray: The VH-VV Ratio array. Returns NaN where VV is zero.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvr-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvr-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvr-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.science.indices import calculate_vhvvr
+
+result = calculate_vhvvr(sigma_vh=&lt;sigma_vh&gt;, sigma_vv=&lt;sigma_vv&gt;)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-vhvvr-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-science-indices-py-calculate-vvvhd" data-searchable data-search="calculate_vvvhd calculate_vvvhd(sigma_vv, sigma_vh)">
+  <summary><code>calculate_vvvhd</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Calculates the VV-VH Difference.</p>
+    <p><strong>File location:</strong> <code>sarpyx/science/indices.py:291</code></p>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhd-signature">Signature</h3>
+    <pre><code class="language-python">calculate_vvvhd(sigma_vv, sigma_vh)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhd-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>sigma_vv</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VV polarization.</td></tr><tr><td><code>sigma_vh</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VH polarization.</td></tr></tbody></table>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhd-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>np.ndarray: The VV-VH Difference array.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhd-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhd-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhd-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.science.indices import calculate_vvvhd
+
+result = calculate_vvvhd(sigma_vv=&lt;sigma_vv&gt;, sigma_vh=&lt;sigma_vh&gt;)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhd-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-science-indices-py-calculate-vvvhr" data-searchable data-search="calculate_vvvhr calculate_vvvhr(sigma_vv, sigma_vh)">
+  <summary><code>calculate_vvvhr</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Calculates the VV-VH Ratio.</p>
+    <p><strong>File location:</strong> <code>sarpyx/science/indices.py:310</code></p>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhr-signature">Signature</h3>
+    <pre><code class="language-python">calculate_vvvhr(sigma_vv, sigma_vh)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhr-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>sigma_vv</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VV polarization.</td></tr><tr><td><code>sigma_vh</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VH polarization.</td></tr></tbody></table>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhr-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>np.ndarray: The VV-VH Ratio array. Returns NaN where VH is zero.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhr-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhr-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhr-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.science.indices import calculate_vvvhr
+
+result = calculate_vvvhr(sigma_vv=&lt;sigma_vv&gt;, sigma_vh=&lt;sigma_vh&gt;)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhr-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-science-indices-py-calculate-vvvhs" data-searchable data-search="calculate_vvvhs calculate_vvvhs(sigma_vv, sigma_vh)">
+  <summary><code>calculate_vvvhs</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Calculates the VV-VH Sum.</p>
+    <p><strong>File location:</strong> <code>sarpyx/science/indices.py:333</code></p>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhs-signature">Signature</h3>
+    <pre><code class="language-python">calculate_vvvhs(sigma_vv, sigma_vh)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhs-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>sigma_vv</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VV polarization.</td></tr><tr><td><code>sigma_vh</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>Backscatter coefficient (linear scale) for VH polarization.</td></tr></tbody></table>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhs-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>np.ndarray: The VV-VH Sum array.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhs-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhs-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhs-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.science.indices import calculate_vvvhs
+
+result = calculate_vvvhs(sigma_vv=&lt;sigma_vv&gt;, sigma_vh=&lt;sigma_vh&gt;)</code></pre>
+    <h3 id="sarpyx-science-indices-py-calculate-vvvhs-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+
+  <h2 id="public-classes">Public Classes (0)</h2>
+  <p>No public classes detected.</p>
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-02 17:41 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

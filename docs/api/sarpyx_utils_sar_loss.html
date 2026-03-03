@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Exhaustive API reference for sarpyx.utils.sar_loss" />
+  <title>API: sarpyx.utils.sar_loss | SARPyX Documentation</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <script defer src="../assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="../index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">Home</a></li><li><a class="nav-link" href="../installation.html">Installation</a></li><li><a class="nav-link" href="../quickstart.html">Quick Start</a></li><li><a class="nav-link" href="../architecture.html">Architecture</a></li><li><a class="nav-link" href="../api/index.html">API</a></li><li><a class="nav-link" href="../configuration.html">Configuration</a></li><li><a class="nav-link" href="../usage.html">Usage</a></li><li><a class="nav-link" href="../testing.html">Testing</a></li><li><a class="nav-link" href="../contributing.html">Contributing</a></li><li><a class="nav-link" href="../faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="../api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="../api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="../api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="../api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="../api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="../api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link" href="../api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="../api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="../api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link" href="../api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="../api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link" href="../api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link" href="../api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link" href="../api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="../api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link" href="../api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link" href="../api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="../api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="../api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="../api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link active" href="../api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="../api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="../api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="../api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="../index.html">Home</a></li><li><a href="index.html">API</a></li><li>sarpyx.utils.sar_loss</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="API: sarpyx.utils.sar_loss">
+        
+<section>
+  <h1 id="module-sarpyx_utils_sar_loss">Module: <code>sarpyx.utils.sar_loss</code></h1>
+  <p><strong>File:</strong> <code>sarpyx/utils/sar_loss.py</code></p>
+  <p>Loss Functions for Complex-Valued SAR Image Super-Resolution.
+
+This module provides specialized loss functions for Synthetic Aperture Radar (SAR)
+image super-resolution tasks, handling both amplitude and phase components of
+complex-valued SAR data.</p>
+
+  <h2 id="module-exports">Exported Symbols (<code>__all__</code>)</h2>
+  <p>No explicit <code>__all__</code> list. Public symbols inferred from implementation.</p>
+
+  <h2 id="public-functions">Public Functions (15)</h2>
+  
+<details class="api-item" id="sarpyx-utils-sar-loss-py-amplitude-l1-loss" data-searchable data-search="amplitude_l1_loss amplitude_l1_loss(pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>amplitude_l1_loss</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute L1 loss between magnitudes of predicted and target complex SAR images.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/sar_loss.py:18</code></p>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-l1-loss-signature">Signature</h3>
+    <pre><code class="language-python">amplitude_l1_loss(pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-l1-loss-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted complex SAR image tensor of shape (..., H, W) or (..., H, W, 2)</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target complex SAR image tensor of same shape as pred</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-l1-loss-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>Scalar tensor representing the L1 amplitude loss</p>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-l1-loss-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-l1-loss-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-l1-loss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.sar_loss import amplitude_l1_loss
+
+result = amplitude_l1_loss(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-l1-loss-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-sar-loss-py-amplitude-l2-loss" data-searchable data-search="amplitude_l2_loss amplitude_l2_loss(pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>amplitude_l2_loss</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute L2 loss (MSE) between magnitudes of predicted and target SAR images.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/sar_loss.py:48</code></p>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-l2-loss-signature">Signature</h3>
+    <pre><code class="language-python">amplitude_l2_loss(pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-l2-loss-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted complex SAR image tensor of shape (..., H, W) or (..., H, W, 2)</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target complex SAR image tensor of same shape as pred</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-l2-loss-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>Scalar tensor representing the L2 amplitude loss</p>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-l2-loss-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-l2-loss-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-l2-loss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.sar_loss import amplitude_l2_loss
+
+result = amplitude_l2_loss(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-l2-loss-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-sar-loss-py-amplitude-ssim-loss" data-searchable data-search="amplitude_ssim_loss amplitude_ssim_loss(pred: torch.Tensor, target: torch.Tensor, window_size: int=11) -&gt; torch.Tensor">
+  <summary><code>amplitude_ssim_loss</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute SSIM loss between magnitudes of predicted and target SAR images.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/sar_loss.py:79</code></p>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-ssim-loss-signature">Signature</h3>
+    <pre><code class="language-python">amplitude_ssim_loss(pred: torch.Tensor, target: torch.Tensor, window_size: int=11) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-ssim-loss-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted complex SAR image tensor of shape (B, C, H, W) or (H, W)</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target complex SAR image tensor of same shape as pred</td></tr><tr><td><code>window_size</code></td><td><code>int</code></td><td>no</td><td><code>11</code></td><td>Size of Gaussian window for SSIM computation</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-ssim-loss-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>Scalar tensor representing the SSIM loss (1 - SSIM)</p>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-ssim-loss-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-ssim-loss-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-ssim-loss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.sar_loss import amplitude_ssim_loss
+
+result = amplitude_ssim_loss(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-ssim-loss-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-sar-loss-py-amplitude-log-cosh-loss" data-searchable data-search="amplitude_log_cosh_loss amplitude_log_cosh_loss(pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>amplitude_log_cosh_loss</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute log-cosh loss between magnitudes of predicted and target SAR images.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/sar_loss.py:151</code></p>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-log-cosh-loss-signature">Signature</h3>
+    <pre><code class="language-python">amplitude_log_cosh_loss(pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-log-cosh-loss-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted complex SAR image tensor of shape (..., H, W) or (..., H, W, 2)</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target complex SAR image tensor of same shape as pred</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-log-cosh-loss-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>Scalar tensor representing the log-cosh amplitude loss</p>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-log-cosh-loss-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-log-cosh-loss-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-log-cosh-loss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.sar_loss import amplitude_log_cosh_loss
+
+result = amplitude_log_cosh_loss(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-amplitude-log-cosh-loss-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-sar-loss-py-phase-l1-loss" data-searchable data-search="phase_l1_loss phase_l1_loss(pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>phase_l1_loss</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute L1 loss between phases of predicted and target complex SAR images.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/sar_loss.py:187</code></p>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-l1-loss-signature">Signature</h3>
+    <pre><code class="language-python">phase_l1_loss(pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-l1-loss-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted complex SAR image tensor</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target complex SAR image tensor of same shape as pred</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-l1-loss-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>Scalar tensor representing the phase L1 loss</p>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-l1-loss-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-l1-loss-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-l1-loss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.sar_loss import phase_l1_loss
+
+result = phase_l1_loss(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-l1-loss-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-sar-loss-py-phase-l2-loss" data-searchable data-search="phase_l2_loss phase_l2_loss(pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>phase_l2_loss</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute L2 loss between phases of predicted and target complex SAR images.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/sar_loss.py:223</code></p>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-l2-loss-signature">Signature</h3>
+    <pre><code class="language-python">phase_l2_loss(pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-l2-loss-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted complex SAR image tensor</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target complex SAR image tensor of same shape as pred</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-l2-loss-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>Scalar tensor representing the phase L2 loss</p>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-l2-loss-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-l2-loss-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-l2-loss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.sar_loss import phase_l2_loss
+
+result = phase_l2_loss(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-l2-loss-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-sar-loss-py-phase-wrapping-error-loss" data-searchable data-search="phase_wrapping_error_loss phase_wrapping_error_loss(pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>phase_wrapping_error_loss</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute phase wrapping error loss between predicted and target SAR images.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/sar_loss.py:257</code></p>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-wrapping-error-loss-signature">Signature</h3>
+    <pre><code class="language-python">phase_wrapping_error_loss(pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-wrapping-error-loss-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted complex SAR image tensor</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target complex SAR image tensor of same shape as pred</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-wrapping-error-loss-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>Scalar tensor representing the phase wrapping error loss</p>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-wrapping-error-loss-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-wrapping-error-loss-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-wrapping-error-loss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.sar_loss import phase_wrapping_error_loss
+
+result = phase_wrapping_error_loss(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-wrapping-error-loss-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-sar-loss-py-phase-correlation-loss" data-searchable data-search="phase_correlation_loss phase_correlation_loss(pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>phase_correlation_loss</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute phase correlation loss between predicted and target complex SAR images.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/sar_loss.py:283</code></p>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-correlation-loss-signature">Signature</h3>
+    <pre><code class="language-python">phase_correlation_loss(pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-correlation-loss-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted complex SAR image tensor</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target complex SAR image tensor of same shape as pred</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-correlation-loss-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>Scalar tensor representing the phase correlation loss</p>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-correlation-loss-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-correlation-loss-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-correlation-loss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.sar_loss import phase_correlation_loss
+
+result = phase_correlation_loss(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-phase-correlation-loss-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-sar-loss-py-complex-l2-loss" data-searchable data-search="complex_l2_loss complex_l2_loss(pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>complex_l2_loss</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute MSE between predicted and target complex SAR images.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/sar_loss.py:325</code></p>
+    <h3 id="sarpyx-utils-sar-loss-py-complex-l2-loss-signature">Signature</h3>
+    <pre><code class="language-python">complex_l2_loss(pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-complex-l2-loss-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted complex SAR image tensor</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target complex SAR image tensor of same shape as pred</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-sar-loss-py-complex-l2-loss-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>Scalar tensor representing the complex L2 loss</p>
+    <h3 id="sarpyx-utils-sar-loss-py-complex-l2-loss-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-sar-loss-py-complex-l2-loss-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-sar-loss-py-complex-l2-loss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.sar_loss import complex_l2_loss
+
+result = complex_l2_loss(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-complex-l2-loss-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-sar-loss-py-complex-correlation-loss" data-searchable data-search="complex_correlation_loss complex_correlation_loss(pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>complex_correlation_loss</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute loss based on complex correlation between predicted and target SAR images.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/sar_loss.py:366</code></p>
+    <h3 id="sarpyx-utils-sar-loss-py-complex-correlation-loss-signature">Signature</h3>
+    <pre><code class="language-python">complex_correlation_loss(pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-complex-correlation-loss-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted complex SAR image tensor</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target complex SAR image tensor of same shape as pred</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-sar-loss-py-complex-correlation-loss-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>Scalar tensor representing the complex correlation loss</p>
+    <h3 id="sarpyx-utils-sar-loss-py-complex-correlation-loss-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-sar-loss-py-complex-correlation-loss-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-sar-loss-py-complex-correlation-loss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.sar_loss import complex_correlation_loss
+
+result = complex_correlation_loss(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-complex-correlation-loss-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-sar-loss-py-coherence-loss" data-searchable data-search="coherence_loss coherence_loss(pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>coherence_loss</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute interferometric coherence loss between predicted and target SAR images.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/sar_loss.py:404</code></p>
+    <h3 id="sarpyx-utils-sar-loss-py-coherence-loss-signature">Signature</h3>
+    <pre><code class="language-python">coherence_loss(pred: torch.Tensor, target: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-coherence-loss-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted complex SAR image tensor</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target complex SAR image tensor of same shape as pred</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-sar-loss-py-coherence-loss-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>Scalar tensor representing the coherence loss</p>
+    <h3 id="sarpyx-utils-sar-loss-py-coherence-loss-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-sar-loss-py-coherence-loss-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-sar-loss-py-coherence-loss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.sar_loss import coherence_loss
+
+result = coherence_loss(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-coherence-loss-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-sar-loss-py-gan-generator-loss" data-searchable data-search="gan_generator_loss gan_generator_loss(disc_pred: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>gan_generator_loss</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute adversarial loss for generator in GAN training.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/sar_loss.py:444</code></p>
+    <h3 id="sarpyx-utils-sar-loss-py-gan-generator-loss-signature">Signature</h3>
+    <pre><code class="language-python">gan_generator_loss(disc_pred: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-gan-generator-loss-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>disc_pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Discriminator&#x27;s output probabilities for generated images</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-sar-loss-py-gan-generator-loss-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>Scalar tensor representing the generator&#x27;s adversarial loss</p>
+    <h3 id="sarpyx-utils-sar-loss-py-gan-generator-loss-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-sar-loss-py-gan-generator-loss-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-sar-loss-py-gan-generator-loss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.sar_loss import gan_generator_loss
+
+result = gan_generator_loss(disc_pred=&lt;disc_pred&gt;)</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-gan-generator-loss-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-sar-loss-py-gan-discriminator-loss" data-searchable data-search="gan_discriminator_loss gan_discriminator_loss(disc_real: torch.Tensor, disc_fake: torch.Tensor) -&gt; torch.Tensor">
+  <summary><code>gan_discriminator_loss</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute discriminator loss in GAN for SAR super-resolution.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/sar_loss.py:470</code></p>
+    <h3 id="sarpyx-utils-sar-loss-py-gan-discriminator-loss-signature">Signature</h3>
+    <pre><code class="language-python">gan_discriminator_loss(disc_real: torch.Tensor, disc_fake: torch.Tensor) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-gan-discriminator-loss-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>disc_real</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Discriminator predictions on real images</td></tr><tr><td><code>disc_fake</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Discriminator predictions on generated images</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-sar-loss-py-gan-discriminator-loss-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>Scalar tensor representing the discriminator loss</p>
+    <h3 id="sarpyx-utils-sar-loss-py-gan-discriminator-loss-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-sar-loss-py-gan-discriminator-loss-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-sar-loss-py-gan-discriminator-loss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.sar_loss import gan_discriminator_loss
+
+result = gan_discriminator_loss(disc_real=&lt;disc_real&gt;, disc_fake=&lt;disc_fake&gt;)</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-gan-discriminator-loss-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-sar-loss-py-perceptual-loss" data-searchable data-search="perceptual_loss perceptual_loss(pred: torch.Tensor, target: torch.Tensor, feature_extractor: nn.Module) -&gt; torch.Tensor">
+  <summary><code>perceptual_loss</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute perceptual feature loss using pretrained feature extractor.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/sar_loss.py:502</code></p>
+    <h3 id="sarpyx-utils-sar-loss-py-perceptual-loss-signature">Signature</h3>
+    <pre><code class="language-python">perceptual_loss(pred: torch.Tensor, target: torch.Tensor, feature_extractor: nn.Module) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-perceptual-loss-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted SAR image tensor</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target SAR image tensor of same shape as pred</td></tr><tr><td><code>feature_extractor</code></td><td><code>nn.Module</code></td><td>yes</td><td><code>-</code></td><td>Pretrained CNN for feature extraction (e.g., VGG)</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-sar-loss-py-perceptual-loss-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>Scalar tensor representing the perceptual loss</p>
+    <h3 id="sarpyx-utils-sar-loss-py-perceptual-loss-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-sar-loss-py-perceptual-loss-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-sar-loss-py-perceptual-loss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.sar_loss import perceptual_loss
+
+result = perceptual_loss(pred=&lt;pred&gt;, target=&lt;target&gt;, feature_extractor=&lt;feature_extractor&gt;)</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-perceptual-loss-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-sar-loss-py-combined-sar-loss" data-searchable data-search="combined_sar_loss combined_sar_loss(pred: torch.Tensor, target: torch.Tensor, amplitude_weight: float=1.0, phase_weight: float=0.5, complex_weight: float=0.3, ssim_weight: float=0.2) -&gt; torch.Tensor">
+  <summary><code>combined_sar_loss</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute combined SAR loss with multiple components.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/sar_loss.py:547</code></p>
+    <h3 id="sarpyx-utils-sar-loss-py-combined-sar-loss-signature">Signature</h3>
+    <pre><code class="language-python">combined_sar_loss(pred: torch.Tensor, target: torch.Tensor, amplitude_weight: float=1.0, phase_weight: float=0.5, complex_weight: float=0.3, ssim_weight: float=0.2) -&gt; torch.Tensor</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-combined-sar-loss-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pred</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Predicted complex SAR image tensor</td></tr><tr><td><code>target</code></td><td><code>torch.Tensor</code></td><td>yes</td><td><code>-</code></td><td>Target complex SAR image tensor</td></tr><tr><td><code>amplitude_weight</code></td><td><code>float</code></td><td>no</td><td><code>1.0</code></td><td>Weight for amplitude L1 loss</td></tr><tr><td><code>phase_weight</code></td><td><code>float</code></td><td>no</td><td><code>0.5</code></td><td>Weight for phase L1 loss</td></tr><tr><td><code>complex_weight</code></td><td><code>float</code></td><td>no</td><td><code>0.3</code></td><td>Weight for complex L2 loss</td></tr><tr><td><code>ssim_weight</code></td><td><code>float</code></td><td>no</td><td><code>0.2</code></td><td>Weight for SSIM loss</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-sar-loss-py-combined-sar-loss-returns">Return Type</h3>
+    <p><code>torch.Tensor</code></p>
+    <p>Scalar tensor representing the combined loss</p>
+    <h3 id="sarpyx-utils-sar-loss-py-combined-sar-loss-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-sar-loss-py-combined-sar-loss-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-sar-loss-py-combined-sar-loss-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.sar_loss import combined_sar_loss
+
+result = combined_sar_loss(pred=&lt;pred&gt;, target=&lt;target&gt;)</code></pre>
+    <h3 id="sarpyx-utils-sar-loss-py-combined-sar-loss-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+
+  <h2 id="public-classes">Public Classes (0)</h2>
+  <p>No public classes detected.</p>
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-02 17:41 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

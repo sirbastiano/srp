@@ -1,0 +1,416 @@
+[
+  {
+    "diagram_name": "High-level system architecture",
+    "purpose": "Show top-level package boundaries and external dependencies.",
+    "nodes": [
+      {
+        "id": "cli",
+        "label": "CLI Layer",
+        "type": "layer"
+      },
+      {
+        "id": "core",
+        "label": "Processing Core",
+        "type": "layer"
+      },
+      {
+        "id": "utils",
+        "label": "Utilities",
+        "type": "layer"
+      },
+      {
+        "id": "science",
+        "label": "Science Indices",
+        "type": "layer"
+      },
+      {
+        "id": "sla",
+        "label": "Sub-look Analysis",
+        "type": "layer"
+      },
+      {
+        "id": "snapflow",
+        "label": "SNAP Flow",
+        "type": "integration"
+      },
+      {
+        "id": "ext_snap",
+        "label": "ESA SNAP GPT",
+        "type": "external"
+      },
+      {
+        "id": "ext_hf",
+        "label": "Hugging Face Hub",
+        "type": "external"
+      },
+      {
+        "id": "ext_io",
+        "label": "Filesystem / Zarr",
+        "type": "external"
+      }
+    ],
+    "edges": [
+      {
+        "source": "cli",
+        "target": "core",
+        "label": "decode/focus"
+      },
+      {
+        "source": "cli",
+        "target": "snapflow",
+        "label": "shipdet/worldsar"
+      },
+      {
+        "source": "core",
+        "target": "utils",
+        "label": "shared helpers"
+      },
+      {
+        "source": "science",
+        "target": "utils",
+        "label": "array ops"
+      },
+      {
+        "source": "sla",
+        "target": "utils",
+        "label": "metrics/io"
+      },
+      {
+        "source": "snapflow",
+        "target": "ext_snap",
+        "label": "subprocess gpt"
+      },
+      {
+        "source": "cli",
+        "target": "ext_hf",
+        "label": "upload"
+      },
+      {
+        "source": "core",
+        "target": "ext_io",
+        "label": "read/write"
+      }
+    ],
+    "suggested_layout_strategy": "Layered horizontal swimlanes: interfaces top, internals middle, externals bottom.",
+    "suggested_dark_theme_colors": {
+      "background": "#0f1117",
+      "surface": "#171a23",
+      "layer": "#273044",
+      "integration": "#2f3a56",
+      "external": "#3f4b6a",
+      "edge": "#7aa2f7",
+      "text": "#e6edf3"
+    },
+    "component_grouping_guidance": "Group package nodes by top-level namespace; keep external nodes visually separated with dashed borders."
+  },
+  {
+    "diagram_name": "Module dependency graph",
+    "purpose": "Show coupling between high-traffic modules.",
+    "nodes": [
+      {
+        "id": "cli_main",
+        "label": "sarpyx.cli.main",
+        "type": "module"
+      },
+      {
+        "id": "cli_worldsar",
+        "label": "sarpyx.cli.worldsar",
+        "type": "module"
+      },
+      {
+        "id": "snap_engine",
+        "label": "sarpyx.snapflow.engine",
+        "type": "module"
+      },
+      {
+        "id": "focus_core",
+        "label": "sarpyx.processor.core.focus",
+        "type": "module"
+      },
+      {
+        "id": "decode_core",
+        "label": "sarpyx.processor.core.decode",
+        "type": "module"
+      },
+      {
+        "id": "zarr_utils",
+        "label": "sarpyx.utils.zarr_utils",
+        "type": "module"
+      },
+      {
+        "id": "geos",
+        "label": "sarpyx.utils.geos",
+        "type": "module"
+      }
+    ],
+    "edges": [
+      {
+        "source": "cli_main",
+        "target": "cli_worldsar",
+        "label": "dispatch"
+      },
+      {
+        "source": "cli_worldsar",
+        "target": "snap_engine",
+        "label": "GPT wrapper"
+      },
+      {
+        "source": "cli_worldsar",
+        "target": "geos",
+        "label": "tiling geometry"
+      },
+      {
+        "source": "decode_core",
+        "target": "zarr_utils",
+        "label": "persist decode output"
+      },
+      {
+        "source": "focus_core",
+        "target": "zarr_utils",
+        "label": "persist focused slices"
+      }
+    ],
+    "suggested_layout_strategy": "Force-directed layout with edge labels; place orchestration modules at center.",
+    "suggested_dark_theme_colors": {
+      "background": "#0f1117",
+      "surface": "#171a23",
+      "module": "#26324c",
+      "edge": "#8fb8ff",
+      "text": "#e6edf3"
+    },
+    "component_grouping_guidance": "Color-code nodes by namespace: cli, processor, snapflow, utils."
+  },
+  {
+    "diagram_name": "Data flow diagram",
+    "purpose": "Describe decode->focus->analysis->export lifecycle.",
+    "nodes": [
+      {
+        "id": "input",
+        "label": "Input Product (.SAFE/.dat/.zip)",
+        "type": "data"
+      },
+      {
+        "id": "decode",
+        "label": "Decode",
+        "type": "process"
+      },
+      {
+        "id": "zarr",
+        "label": "Decoded Zarr",
+        "type": "data"
+      },
+      {
+        "id": "focus",
+        "label": "Focus (CoarseRDA)",
+        "type": "process"
+      },
+      {
+        "id": "focused",
+        "label": "Focused Arrays",
+        "type": "data"
+      },
+      {
+        "id": "analysis",
+        "label": "SLA/Science Metrics",
+        "type": "process"
+      },
+      {
+        "id": "outputs",
+        "label": "Exports (GeoTIFF/HDF5/Zarr)",
+        "type": "data"
+      }
+    ],
+    "edges": [
+      {
+        "source": "input",
+        "target": "decode",
+        "label": "read"
+      },
+      {
+        "source": "decode",
+        "target": "zarr",
+        "label": "write"
+      },
+      {
+        "source": "zarr",
+        "target": "focus",
+        "label": "load"
+      },
+      {
+        "source": "focus",
+        "target": "focused",
+        "label": "persist"
+      },
+      {
+        "source": "focused",
+        "target": "analysis",
+        "label": "compute"
+      },
+      {
+        "source": "analysis",
+        "target": "outputs",
+        "label": "export"
+      }
+    ],
+    "suggested_layout_strategy": "Left-to-right pipeline with process nodes above data nodes.",
+    "suggested_dark_theme_colors": {
+      "background": "#0f1117",
+      "surface": "#171a23",
+      "process": "#2f3f5f",
+      "data": "#3c4f77",
+      "edge": "#86a8ff",
+      "text": "#e6edf3"
+    },
+    "component_grouping_guidance": "Group decode/focus as core processing stage; keep analysis/export as downstream stage."
+  },
+  {
+    "diagram_name": "Request lifecycle",
+    "purpose": "Model CLI request lifecycle including argument parsing, dispatch, processing, and reporting.",
+    "nodes": [
+      {
+        "id": "argv",
+        "label": "CLI Args",
+        "type": "event"
+      },
+      {
+        "id": "parser",
+        "label": "Argument Parser",
+        "type": "process"
+      },
+      {
+        "id": "dispatch",
+        "label": "Subcommand Dispatch",
+        "type": "process"
+      },
+      {
+        "id": "op",
+        "label": "Operation Execution",
+        "type": "process"
+      },
+      {
+        "id": "log",
+        "label": "Logs/Status",
+        "type": "data"
+      },
+      {
+        "id": "exit",
+        "label": "Exit Code",
+        "type": "event"
+      }
+    ],
+    "edges": [
+      {
+        "source": "argv",
+        "target": "parser",
+        "label": "parse"
+      },
+      {
+        "source": "parser",
+        "target": "dispatch",
+        "label": "validate"
+      },
+      {
+        "source": "dispatch",
+        "target": "op",
+        "label": "run handler"
+      },
+      {
+        "source": "op",
+        "target": "log",
+        "label": "emit logs"
+      },
+      {
+        "source": "op",
+        "target": "exit",
+        "label": "success/failure"
+      }
+    ],
+    "suggested_layout_strategy": "Sequence-diagram style horizontal stages.",
+    "suggested_dark_theme_colors": {
+      "background": "#0f1117",
+      "surface": "#171a23",
+      "event": "#30415f",
+      "process": "#2b3955",
+      "data": "#40557f",
+      "edge": "#90b4ff",
+      "text": "#e6edf3"
+    },
+    "component_grouping_guidance": "Separate validation steps from execution to highlight failure boundaries."
+  },
+  {
+    "diagram_name": "Deployment architecture",
+    "purpose": "Show local and container execution topology for GitHub Pages docs and runtime services.",
+    "nodes": [
+      {
+        "id": "dev",
+        "label": "Developer Host",
+        "type": "environment"
+      },
+      {
+        "id": "venv",
+        "label": ".venv + uv",
+        "type": "runtime"
+      },
+      {
+        "id": "docker",
+        "label": "Docker Container",
+        "type": "runtime"
+      },
+      {
+        "id": "snap",
+        "label": "SNAP + GPT",
+        "type": "dependency"
+      },
+      {
+        "id": "data",
+        "label": "Mounted Data/Output",
+        "type": "storage"
+      },
+      {
+        "id": "pages",
+        "label": "GitHub Pages (docs/)",
+        "type": "deployment"
+      }
+    ],
+    "edges": [
+      {
+        "source": "dev",
+        "target": "venv",
+        "label": "local runs"
+      },
+      {
+        "source": "dev",
+        "target": "docker",
+        "label": "compose"
+      },
+      {
+        "source": "docker",
+        "target": "snap",
+        "label": "processing"
+      },
+      {
+        "source": "docker",
+        "target": "data",
+        "label": "read/write volumes"
+      },
+      {
+        "source": "dev",
+        "target": "pages",
+        "label": "publish static docs"
+      }
+    ],
+    "suggested_layout_strategy": "Clustered deployment view with host and container zones.",
+    "suggested_dark_theme_colors": {
+      "background": "#0f1117",
+      "surface": "#171a23",
+      "environment": "#2f3d5a",
+      "runtime": "#34476a",
+      "dependency": "#40557f",
+      "storage": "#315173",
+      "deployment": "#2f5b73",
+      "edge": "#8ab5ff",
+      "text": "#e6edf3"
+    },
+    "component_grouping_guidance": "Use container boundary frames and separate deployment target frame for GitHub Pages."
+  }
+]

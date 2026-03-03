@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Exhaustive API reference for sarpyx.utils.grid" />
+  <title>API: sarpyx.utils.grid | SARPyX Documentation</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <script defer src="../assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="../index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">Home</a></li><li><a class="nav-link" href="../installation.html">Installation</a></li><li><a class="nav-link" href="../quickstart.html">Quick Start</a></li><li><a class="nav-link" href="../architecture.html">Architecture</a></li><li><a class="nav-link" href="../api/index.html">API</a></li><li><a class="nav-link" href="../configuration.html">Configuration</a></li><li><a class="nav-link" href="../usage.html">Usage</a></li><li><a class="nav-link" href="../testing.html">Testing</a></li><li><a class="nav-link" href="../contributing.html">Contributing</a></li><li><a class="nav-link" href="../faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="../api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="../api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="../api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="../api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="../api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="../api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link" href="../api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="../api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="../api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link" href="../api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="../api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link" href="../api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link" href="../api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link active" href="../api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="../api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link" href="../api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link" href="../api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="../api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="../api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="../api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link" href="../api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="../api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="../api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="../api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="../index.html">Home</a></li><li><a href="index.html">API</a></li><li>sarpyx.utils.grid</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="API: sarpyx.utils.grid">
+        
+<section>
+  <h1 id="module-sarpyx_utils_grid">Module: <code>sarpyx.utils.grid</code></h1>
+  <p><strong>File:</strong> <code>sarpyx/utils/grid.py</code></p>
+  <p>No module docstring available; module purpose is inferred from implementation.</p>
+
+  <h2 id="module-exports">Exported Symbols (<code>__all__</code>)</h2>
+  <p>No explicit <code>__all__</code> list. Public symbols inferred from implementation.</p>
+
+  <h2 id="public-functions">Public Functions (1)</h2>
+  
+<details class="api-item" id="sarpyx-utils-grid-py-get-utm-zone-from-latlng" data-searchable data-search="get_utm_zone_from_latlng get_utm_zone_from_latlng(latlng)">
+  <summary><code>get_utm_zone_from_latlng</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Get the UTM zone from a latlng list and return the corresponding EPSG code.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/grid.py:207</code></p>
+    <h3 id="sarpyx-utils-grid-py-get-utm-zone-from-latlng-signature">Signature</h3>
+    <pre><code class="language-python">get_utm_zone_from_latlng(latlng)</code></pre>
+    <h3 id="sarpyx-utils-grid-py-get-utm-zone-from-latlng-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>latlng</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>List[Union[int, float]] The latlng list to get the UTM zone from.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-grid-py-get-utm-zone-from-latlng-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>str
+    The EPSG code for the UTM zone.</p>
+    <h3 id="sarpyx-utils-grid-py-get-utm-zone-from-latlng-exceptions">Exceptions</h3>
+    <ul><li><code>ValueError</code></li></ul>
+    <h3 id="sarpyx-utils-grid-py-get-utm-zone-from-latlng-side-effects">Side Effects</h3>
+    <ul><li>io</li></ul>
+    <h3 id="sarpyx-utils-grid-py-get-utm-zone-from-latlng-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.grid import get_utm_zone_from_latlng
+
+result = get_utm_zone_from_latlng(latlng=&lt;latlng&gt;)</code></pre>
+    <h3 id="sarpyx-utils-grid-py-get-utm-zone-from-latlng-edge-cases">Edge Cases</h3>
+    <p>May raise: ValueError.</p>
+  </div>
+</details>
+
+
+  <h2 id="public-classes">Public Classes (1)</h2>
+  
+<details class="api-item class-item" id="sarpyx-utils-grid-py-grid" data-searchable data-search="Grid class Grid">
+  <summary><code>Grid</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/grid.py:12</code></p>
+    <h3 id="sarpyx-utils-grid-py-grid-signature">Class Signature</h3>
+    <pre><code class="language-python">class Grid</code></pre>
+    <h3 id="sarpyx-utils-grid-py-grid-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-grid-py-grid-returns">Return Type</h3>
+    <p><code>Grid</code> instances.</p>
+    <h3 id="sarpyx-utils-grid-py-grid-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-grid-py-grid-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-grid-py-grid-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.grid import Grid
+
+obj = Grid(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-grid-py-grid-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-grid-py-grid-methods">Public Methods (9)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-grid-py-grid-get-rows" data-searchable data-search="Grid get_rows get_rows(self)">
+  <summary><code>Grid.get_rows</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/grid.py:24</code></p>
+    <h4 id="sarpyx-utils-grid-py-grid-get-rows-signature">Signature</h4>
+    <pre><code class="language-python">get_rows(self)</code></pre>
+    <h4 id="sarpyx-utils-grid-py-grid-get-rows-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-grid-py-grid-get-rows-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-grid-py-grid-get-rows-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-grid-py-grid-get-rows-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-grid-py-grid-get-rows-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.grid import Grid
+
+# Constructor arguments are inferred from implementation.
+obj = Grid(...)  # inferred from implementation
+result = obj.get_rows()</code></pre>
+    <h4 id="sarpyx-utils-grid-py-grid-get-rows-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-grid-py-grid-get-circumference-at-latitude" data-searchable data-search="Grid get_circumference_at_latitude get_circumference_at_latitude(self, lat)">
+  <summary><code>Grid.get_circumference_at_latitude</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/grid.py:50</code></p>
+    <h4 id="sarpyx-utils-grid-py-grid-get-circumference-at-latitude-signature">Signature</h4>
+    <pre><code class="language-python">get_circumference_at_latitude(self, lat)</code></pre>
+    <h4 id="sarpyx-utils-grid-py-grid-get-circumference-at-latitude-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>lat</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-grid-py-grid-get-circumference-at-latitude-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-grid-py-grid-get-circumference-at-latitude-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-grid-py-grid-get-circumference-at-latitude-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-grid-py-grid-get-circumference-at-latitude-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.grid import Grid
+
+# Constructor arguments are inferred from implementation.
+obj = Grid(...)  # inferred from implementation
+result = obj.get_circumference_at_latitude(lat=&lt;lat&gt;)</code></pre>
+    <h4 id="sarpyx-utils-grid-py-grid-get-circumference-at-latitude-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-grid-py-grid-subdivide-circumference" data-searchable data-search="Grid subdivide_circumference subdivide_circumference(self, lat, return_cols=False)">
+  <summary><code>Grid.subdivide_circumference</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/grid.py:59</code></p>
+    <h4 id="sarpyx-utils-grid-py-grid-subdivide-circumference-signature">Signature</h4>
+    <pre><code class="language-python">subdivide_circumference(self, lat, return_cols=False)</code></pre>
+    <h4 id="sarpyx-utils-grid-py-grid-subdivide-circumference-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>lat</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>return_cols</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-grid-py-grid-subdivide-circumference-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-grid-py-grid-subdivide-circumference-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-grid-py-grid-subdivide-circumference-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-grid-py-grid-subdivide-circumference-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.grid import Grid
+
+# Constructor arguments are inferred from implementation.
+obj = Grid(...)  # inferred from implementation
+result = obj.subdivide_circumference(lat=&lt;lat&gt;)</code></pre>
+    <h4 id="sarpyx-utils-grid-py-grid-subdivide-circumference-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-grid-py-grid-get-points" data-searchable data-search="Grid get_points get_points(self)">
+  <summary><code>Grid.get_points</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/grid.py:79</code></p>
+    <h4 id="sarpyx-utils-grid-py-grid-get-points-signature">Signature</h4>
+    <pre><code class="language-python">get_points(self)</code></pre>
+    <h4 id="sarpyx-utils-grid-py-grid-get-points-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-grid-py-grid-get-points-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-grid-py-grid-get-points-exceptions">Exceptions</h4>
+    <ul><li><code>ValueError</code></li></ul>
+    <h4 id="sarpyx-utils-grid-py-grid-get-points-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-grid-py-grid-get-points-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.grid import Grid
+
+# Constructor arguments are inferred from implementation.
+obj = Grid(...)  # inferred from implementation
+result = obj.get_points()</code></pre>
+    <h4 id="sarpyx-utils-grid-py-grid-get-points-edge-cases">Edge Cases</h4>
+    <p>May raise: ValueError.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-grid-py-grid-group-points-by-row" data-searchable data-search="Grid group_points_by_row group_points_by_row(self)">
+  <summary><code>Grid.group_points_by_row</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/grid.py:122</code></p>
+    <h4 id="sarpyx-utils-grid-py-grid-group-points-by-row-signature">Signature</h4>
+    <pre><code class="language-python">group_points_by_row(self)</code></pre>
+    <h4 id="sarpyx-utils-grid-py-grid-group-points-by-row-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-grid-py-grid-group-points-by-row-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-grid-py-grid-group-points-by-row-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-grid-py-grid-group-points-by-row-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-grid-py-grid-group-points-by-row-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.grid import Grid
+
+# Constructor arguments are inferred from implementation.
+obj = Grid(...)  # inferred from implementation
+result = obj.group_points_by_row()</code></pre>
+    <h4 id="sarpyx-utils-grid-py-grid-group-points-by-row-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-grid-py-grid-filter-longitude" data-searchable data-search="Grid filter_longitude filter_longitude(self, cols, lons)">
+  <summary><code>Grid.filter_longitude</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/grid.py:129</code></p>
+    <h4 id="sarpyx-utils-grid-py-grid-filter-longitude-signature">Signature</h4>
+    <pre><code class="language-python">filter_longitude(self, cols, lons)</code></pre>
+    <h4 id="sarpyx-utils-grid-py-grid-filter-longitude-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>cols</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>lons</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-grid-py-grid-filter-longitude-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-grid-py-grid-filter-longitude-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-grid-py-grid-filter-longitude-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-grid-py-grid-filter-longitude-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.grid import Grid
+
+# Constructor arguments are inferred from implementation.
+obj = Grid(...)  # inferred from implementation
+result = obj.filter_longitude(cols=&lt;cols&gt;, lons=&lt;lons&gt;)</code></pre>
+    <h4 id="sarpyx-utils-grid-py-grid-filter-longitude-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-grid-py-grid-latlon2rowcol" data-searchable data-search="Grid latlon2rowcol latlon2rowcol(self, lats, lons, return_idx=False, integer=False)">
+  <summary><code>Grid.latlon2rowcol</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Convert latitude and longitude to row and column number from the grid</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/grid.py:134</code></p>
+    <h4 id="sarpyx-utils-grid-py-grid-latlon2rowcol-signature">Signature</h4>
+    <pre><code class="language-python">latlon2rowcol(self, lats, lons, return_idx=False, integer=False)</code></pre>
+    <h4 id="sarpyx-utils-grid-py-grid-latlon2rowcol-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>lats</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>lons</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>return_idx</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr><tr><td><code>integer</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-grid-py-grid-latlon2rowcol-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-grid-py-grid-latlon2rowcol-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-grid-py-grid-latlon2rowcol-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-grid-py-grid-latlon2rowcol-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.grid import Grid
+
+# Constructor arguments are inferred from implementation.
+obj = Grid(...)  # inferred from implementation
+result = obj.latlon2rowcol(lats=&lt;lats&gt;, lons=&lt;lons&gt;)</code></pre>
+    <h4 id="sarpyx-utils-grid-py-grid-latlon2rowcol-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-grid-py-grid-rowcol2latlon" data-searchable data-search="Grid rowcol2latlon rowcol2latlon(self, rows, cols)">
+  <summary><code>Grid.rowcol2latlon</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/grid.py:161</code></p>
+    <h4 id="sarpyx-utils-grid-py-grid-rowcol2latlon-signature">Signature</h4>
+    <pre><code class="language-python">rowcol2latlon(self, rows, cols)</code></pre>
+    <h4 id="sarpyx-utils-grid-py-grid-rowcol2latlon-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>rows</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>cols</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-grid-py-grid-rowcol2latlon-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-grid-py-grid-rowcol2latlon-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-grid-py-grid-rowcol2latlon-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-grid-py-grid-rowcol2latlon-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.grid import Grid
+
+# Constructor arguments are inferred from implementation.
+obj = Grid(...)  # inferred from implementation
+result = obj.rowcol2latlon(rows=&lt;rows&gt;, cols=&lt;cols&gt;)</code></pre>
+    <h4 id="sarpyx-utils-grid-py-grid-rowcol2latlon-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-grid-py-grid-get-bounded-footprint" data-searchable data-search="Grid get_bounded_footprint get_bounded_footprint(self, point, buffer_ratio=0)">
+  <summary><code>Grid.get_bounded_footprint</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/grid.py:167</code></p>
+    <h4 id="sarpyx-utils-grid-py-grid-get-bounded-footprint-signature">Signature</h4>
+    <pre><code class="language-python">get_bounded_footprint(self, point, buffer_ratio=0)</code></pre>
+    <h4 id="sarpyx-utils-grid-py-grid-get-bounded-footprint-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>point</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>buffer_ratio</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>0</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-grid-py-grid-get-bounded-footprint-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-grid-py-grid-get-bounded-footprint-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-grid-py-grid-get-bounded-footprint-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-grid-py-grid-get-bounded-footprint-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.grid import Grid
+
+# Constructor arguments are inferred from implementation.
+obj = Grid(...)  # inferred from implementation
+result = obj.get_bounded_footprint(point=&lt;point&gt;)</code></pre>
+    <h4 id="sarpyx-utils-grid-py-grid-get-bounded-footprint-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-02 17:41 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

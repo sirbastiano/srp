@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Exhaustive API reference for sarpyx.cli.worldsar" />
+  <title>API: sarpyx.cli.worldsar | SARPyX Documentation</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <script defer src="../assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="../index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">Home</a></li><li><a class="nav-link" href="../installation.html">Installation</a></li><li><a class="nav-link" href="../quickstart.html">Quick Start</a></li><li><a class="nav-link" href="../architecture.html">Architecture</a></li><li><a class="nav-link" href="../api/index.html">API</a></li><li><a class="nav-link" href="../configuration.html">Configuration</a></li><li><a class="nav-link" href="../usage.html">Usage</a></li><li><a class="nav-link" href="../testing.html">Testing</a></li><li><a class="nav-link" href="../contributing.html">Contributing</a></li><li><a class="nav-link" href="../faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="../api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="../api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="../api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="../api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="../api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="../api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link active" href="../api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="../api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="../api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link" href="../api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="../api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link" href="../api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link" href="../api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link" href="../api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="../api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link" href="../api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link" href="../api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="../api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="../api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="../api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link" href="../api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="../api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="../api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="../api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="../index.html">Home</a></li><li><a href="index.html">API</a></li><li>sarpyx.cli.worldsar</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="API: sarpyx.cli.worldsar">
+        
+<section>
+  <h1 id="module-sarpyx_cli_worldsar">Module: <code>sarpyx.cli.worldsar</code></h1>
+  <p><strong>File:</strong> <code>sarpyx/cli/worldsar.py</code></p>
+  <p>WorldSAR CLI pipelines for SAR product preprocessing and tiling.
+
+TODO: metadate reorganization.
+TODO: SUBAPERTURE PROCESSING for all missions.
+TODO: PolSAR support.
+TODO: InSAR support.</p>
+
+  <h2 id="module-exports">Exported Symbols (<code>__all__</code>)</h2>
+  <p>No explicit <code>__all__</code> list. Public symbols inferred from implementation.</p>
+
+  <h2 id="public-functions">Public Functions (13)</h2>
+  
+<details class="api-item" id="sarpyx-cli-worldsar-py-create-parser" data-searchable data-search="create_parser create_parser() -&gt; argparse.ArgumentParser">
+  <summary><code>create_parser</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Create command-line argument parser.</p>
+    <p><strong>File location:</strong> <code>sarpyx/cli/worldsar.py:54</code></p>
+    <h3 id="sarpyx-cli-worldsar-py-create-parser-signature">Signature</h3>
+    <pre><code class="language-python">create_parser() -&gt; argparse.ArgumentParser</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-create-parser-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-cli-worldsar-py-create-parser-returns">Return Type</h3>
+    <p><code>argparse.ArgumentParser</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-cli-worldsar-py-create-parser-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-cli-worldsar-py-create-parser-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-cli-worldsar-py-create-parser-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.cli.worldsar import create_parser
+
+result = create_parser()</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-create-parser-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-cli-worldsar-py-extract-product-id" data-searchable data-search="extract_product_id extract_product_id(path: str) -&gt; str | None">
+  <summary><code>extract_product_id</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract product ID from BEAM-DIMAP path.</p>
+    <p><strong>File location:</strong> <code>sarpyx/cli/worldsar.py:205</code></p>
+    <h3 id="sarpyx-cli-worldsar-py-extract-product-id-signature">Signature</h3>
+    <pre><code class="language-python">extract_product_id(path: str) -&gt; str | None</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-extract-product-id-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>path</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-cli-worldsar-py-extract-product-id-returns">Return Type</h3>
+    <p><code>str | None</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-cli-worldsar-py-extract-product-id-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-cli-worldsar-py-extract-product-id-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-cli-worldsar-py-extract-product-id-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.cli.worldsar import extract_product_id
+
+result = extract_product_id(path=&lt;path&gt;)</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-extract-product-id-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-cli-worldsar-py-infer-product-mode" data-searchable data-search="infer_product_mode infer_product_mode(product_path: Path) -&gt; str">
+  <summary><code>infer_product_mode</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Infer product mode from product naming patterns.</p>
+    <p><strong>File location:</strong> <code>sarpyx/cli/worldsar.py:211</code></p>
+    <h3 id="sarpyx-cli-worldsar-py-infer-product-mode-signature">Signature</h3>
+    <pre><code class="language-python">infer_product_mode(product_path: Path) -&gt; str</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-infer-product-mode-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>product_path</code></td><td><code>Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-cli-worldsar-py-infer-product-mode-returns">Return Type</h3>
+    <p><code>str</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-cli-worldsar-py-infer-product-mode-exceptions">Exceptions</h3>
+    <ul><li><code>ValueError</code></li></ul>
+    <h3 id="sarpyx-cli-worldsar-py-infer-product-mode-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-cli-worldsar-py-infer-product-mode-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.cli.worldsar import infer_product_mode
+
+result = infer_product_mode(product_path=&lt;product_path&gt;)</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-infer-product-mode-edge-cases">Edge Cases</h3>
+    <p>May raise: ValueError.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-cli-worldsar-py-prefetch-sentinel-orbits" data-searchable data-search="prefetch_sentinel_orbits prefetch_sentinel_orbits(years: list[int], orbit_type: str, satellites: list[str], outdir: Path, base_url: str) -&gt; None">
+  <summary><code>prefetch_sentinel_orbits</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/cli/worldsar.py:339</code></p>
+    <h3 id="sarpyx-cli-worldsar-py-prefetch-sentinel-orbits-signature">Signature</h3>
+    <pre><code class="language-python">prefetch_sentinel_orbits(years: list[int], orbit_type: str, satellites: list[str], outdir: Path, base_url: str) -&gt; None</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-prefetch-sentinel-orbits-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>years</code></td><td><code>list[int]</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>orbit_type</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>satellites</code></td><td><code>list[str]</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>outdir</code></td><td><code>Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>base_url</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-cli-worldsar-py-prefetch-sentinel-orbits-returns">Return Type</h3>
+    <p><code>None</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-cli-worldsar-py-prefetch-sentinel-orbits-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-cli-worldsar-py-prefetch-sentinel-orbits-side-effects">Side Effects</h3>
+    <ul><li>io</li></ul>
+    <h3 id="sarpyx-cli-worldsar-py-prefetch-sentinel-orbits-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.cli.worldsar import prefetch_sentinel_orbits
+
+result = prefetch_sentinel_orbits(years=&lt;years&gt;, orbit_type=&lt;orbit_type&gt;, satellites=&lt;satellites&gt;, outdir=&lt;outdir&gt;, base_url=&lt;base_url&gt;)</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-prefetch-sentinel-orbits-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-cli-worldsar-py-create-tile-database" data-searchable data-search="create_tile_database create_tile_database(input_folder: str, output_db_folder: str) -&gt; pd.DataFrame">
+  <summary><code>create_tile_database</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Create a database of tile metadata from h5 files.</p>
+    <p><strong>File location:</strong> <code>sarpyx/cli/worldsar.py:372</code></p>
+    <h3 id="sarpyx-cli-worldsar-py-create-tile-database-signature">Signature</h3>
+    <pre><code class="language-python">create_tile_database(input_folder: str, output_db_folder: str) -&gt; pd.DataFrame</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-create-tile-database-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>input_folder</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>output_db_folder</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-cli-worldsar-py-create-tile-database-returns">Return Type</h3>
+    <p><code>pd.DataFrame</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-cli-worldsar-py-create-tile-database-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-cli-worldsar-py-create-tile-database-side-effects">Side Effects</h3>
+    <ul><li>io</li></ul>
+    <h3 id="sarpyx-cli-worldsar-py-create-tile-database-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.cli.worldsar import create_tile_database
+
+result = create_tile_database(input_folder=&lt;input_folder&gt;, output_db_folder=&lt;output_db_folder&gt;)</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-create-tile-database-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-cli-worldsar-py-to-geotiff" data-searchable data-search="to_geotiff to_geotiff(product_path: Path, output_dir: Path, geo_region: str=None, output_name: str=None, gpt_memory: str | None=None, gpt_parallelism: int | None=None, gpt_timeout: int | None=None)">
+  <summary><code>to_geotiff</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/cli/worldsar.py:397</code></p>
+    <h3 id="sarpyx-cli-worldsar-py-to-geotiff-signature">Signature</h3>
+    <pre><code class="language-python">to_geotiff(product_path: Path, output_dir: Path, geo_region: str=None, output_name: str=None, gpt_memory: str | None=None, gpt_parallelism: int | None=None, gpt_timeout: int | None=None)</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-to-geotiff-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>product_path</code></td><td><code>Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>output_dir</code></td><td><code>Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>geo_region</code></td><td><code>str</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>output_name</code></td><td><code>str</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_memory</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_parallelism</code></td><td><code>int | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_timeout</code></td><td><code>int | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-cli-worldsar-py-to-geotiff-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-cli-worldsar-py-to-geotiff-exceptions">Exceptions</h3>
+    <ul><li><code>RuntimeError</code></li></ul>
+    <h3 id="sarpyx-cli-worldsar-py-to-geotiff-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-cli-worldsar-py-to-geotiff-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.cli.worldsar import to_geotiff
+
+result = to_geotiff(product_path=&lt;product_path&gt;, output_dir=&lt;output_dir&gt;)</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-to-geotiff-edge-cases">Edge Cases</h3>
+    <p>May raise: RuntimeError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-cli-worldsar-py-subset" data-searchable data-search="subset subset(product_path: Path, output_dir: Path, geo_region: str=None, output_name: str=None, gpt_memory: str | None=None, gpt_parallelism: int | None=None, gpt_timeout: int | None=None)">
+  <summary><code>subset</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/cli/worldsar.py:424</code></p>
+    <h3 id="sarpyx-cli-worldsar-py-subset-signature">Signature</h3>
+    <pre><code class="language-python">subset(product_path: Path, output_dir: Path, geo_region: str=None, output_name: str=None, gpt_memory: str | None=None, gpt_parallelism: int | None=None, gpt_timeout: int | None=None)</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-subset-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>product_path</code></td><td><code>Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>output_dir</code></td><td><code>Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>geo_region</code></td><td><code>str</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>output_name</code></td><td><code>str</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_memory</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_parallelism</code></td><td><code>int | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_timeout</code></td><td><code>int | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-cli-worldsar-py-subset-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-cli-worldsar-py-subset-exceptions">Exceptions</h3>
+    <ul><li><code>RuntimeError</code></li></ul>
+    <h3 id="sarpyx-cli-worldsar-py-subset-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-cli-worldsar-py-subset-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.cli.worldsar import subset
+
+result = subset(product_path=&lt;product_path&gt;, output_dir=&lt;output_dir&gt;)</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-subset-edge-cases">Edge Cases</h3>
+    <p>May raise: RuntimeError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-cli-worldsar-py-pipeline-sentinel" data-searchable data-search="pipeline_sentinel pipeline_sentinel(product_path: Path, output_dir: Path, is_TOPS: bool=False, subaperture: bool=False, use_graph: bool=False, orbit_type: str=&#x27;Sentinel Precise (Auto Download)&#x27;, orbit_continue_on_fail: bool=False, gpt_memory: str | None=None, gpt_parallelism: int | None=None, gpt_timeout: int | None=None)">
+  <summary><code>pipeline_sentinel</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Sentinel-1 pipeline.</p>
+    <p><strong>File location:</strong> <code>sarpyx/cli/worldsar.py:899</code></p>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-sentinel-signature">Signature</h3>
+    <pre><code class="language-python">pipeline_sentinel(product_path: Path, output_dir: Path, is_TOPS: bool=False, subaperture: bool=False, use_graph: bool=False, orbit_type: str=&#x27;Sentinel Precise (Auto Download)&#x27;, orbit_continue_on_fail: bool=False, gpt_memory: str | None=None, gpt_parallelism: int | None=None, gpt_timeout: int | None=None)</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-sentinel-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>product_path</code></td><td><code>Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>output_dir</code></td><td><code>Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>is_TOPS</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr><tr><td><code>subaperture</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr><tr><td><code>use_graph</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr><tr><td><code>orbit_type</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;Sentinel Precise (Auto Download)&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>orbit_continue_on_fail</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_memory</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_parallelism</code></td><td><code>int | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_timeout</code></td><td><code>int | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-sentinel-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-sentinel-exceptions">Exceptions</h3>
+    <ul><li><code>RuntimeError</code></li></ul>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-sentinel-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-sentinel-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.cli.worldsar import pipeline_sentinel
+
+result = pipeline_sentinel(product_path=&lt;product_path&gt;, output_dir=&lt;output_dir&gt;)</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-sentinel-edge-cases">Edge Cases</h3>
+    <p>May raise: RuntimeError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-cli-worldsar-py-pipeline-terrasar" data-searchable data-search="pipeline_terrasar pipeline_terrasar(product_path: Path, output_dir: Path, use_graph: bool=False, orbit_type: str=&#x27;Sentinel Precise (Auto Download)&#x27;, orbit_continue_on_fail: bool=False, gpt_memory: str | None=None, gpt_parallelism: int | None=None, gpt_timeout: int | None=None)">
+  <summary><code>pipeline_terrasar</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Terrasar-X pipeline.</p>
+    <p><strong>File location:</strong> <code>sarpyx/cli/worldsar.py:1010</code></p>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-terrasar-signature">Signature</h3>
+    <pre><code class="language-python">pipeline_terrasar(product_path: Path, output_dir: Path, use_graph: bool=False, orbit_type: str=&#x27;Sentinel Precise (Auto Download)&#x27;, orbit_continue_on_fail: bool=False, gpt_memory: str | None=None, gpt_parallelism: int | None=None, gpt_timeout: int | None=None)</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-terrasar-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>product_path</code></td><td><code>Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>output_dir</code></td><td><code>Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>use_graph</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr><tr><td><code>orbit_type</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;Sentinel Precise (Auto Download)&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>orbit_continue_on_fail</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_memory</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_parallelism</code></td><td><code>int | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_timeout</code></td><td><code>int | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-terrasar-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-terrasar-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-terrasar-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-terrasar-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.cli.worldsar import pipeline_terrasar
+
+result = pipeline_terrasar(product_path=&lt;product_path&gt;, output_dir=&lt;output_dir&gt;)</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-terrasar-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-cli-worldsar-py-pipeline-cosmo" data-searchable data-search="pipeline_cosmo pipeline_cosmo(product_path: Path, output_dir: Path, use_graph: bool=False, orbit_type: str=&#x27;Sentinel Precise (Auto Download)&#x27;, orbit_continue_on_fail: bool=False, gpt_memory: str | None=None, gpt_parallelism: int | None=None, gpt_timeout: int | None=None)">
+  <summary><code>pipeline_cosmo</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>COSMO-SkyMed pipeline.</p>
+    <p><strong>File location:</strong> <code>sarpyx/cli/worldsar.py:1030</code></p>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-cosmo-signature">Signature</h3>
+    <pre><code class="language-python">pipeline_cosmo(product_path: Path, output_dir: Path, use_graph: bool=False, orbit_type: str=&#x27;Sentinel Precise (Auto Download)&#x27;, orbit_continue_on_fail: bool=False, gpt_memory: str | None=None, gpt_parallelism: int | None=None, gpt_timeout: int | None=None)</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-cosmo-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>product_path</code></td><td><code>Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>output_dir</code></td><td><code>Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>use_graph</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr><tr><td><code>orbit_type</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;Sentinel Precise (Auto Download)&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>orbit_continue_on_fail</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_memory</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_parallelism</code></td><td><code>int | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_timeout</code></td><td><code>int | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-cosmo-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-cosmo-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-cosmo-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-cosmo-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.cli.worldsar import pipeline_cosmo
+
+result = pipeline_cosmo(product_path=&lt;product_path&gt;, output_dir=&lt;output_dir&gt;)</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-cosmo-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-cli-worldsar-py-pipeline-biomass" data-searchable data-search="pipeline_biomass pipeline_biomass(product_path: Path, output_dir: Path, use_graph: bool=False, orbit_type: str=&#x27;Sentinel Precise (Auto Download)&#x27;, orbit_continue_on_fail: bool=False, gpt_memory: str | None=None, gpt_parallelism: int | None=None, gpt_timeout: int | None=None)">
+  <summary><code>pipeline_biomass</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>BIOMASS pipeline.</p>
+    <p><strong>File location:</strong> <code>sarpyx/cli/worldsar.py:1050</code></p>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-biomass-signature">Signature</h3>
+    <pre><code class="language-python">pipeline_biomass(product_path: Path, output_dir: Path, use_graph: bool=False, orbit_type: str=&#x27;Sentinel Precise (Auto Download)&#x27;, orbit_continue_on_fail: bool=False, gpt_memory: str | None=None, gpt_parallelism: int | None=None, gpt_timeout: int | None=None)</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-biomass-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>product_path</code></td><td><code>Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>output_dir</code></td><td><code>Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>use_graph</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr><tr><td><code>orbit_type</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;Sentinel Precise (Auto Download)&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>orbit_continue_on_fail</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_memory</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_parallelism</code></td><td><code>int | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_timeout</code></td><td><code>int | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-biomass-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-biomass-exceptions">Exceptions</h3>
+    <ul><li><code>RuntimeError</code></li></ul>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-biomass-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-biomass-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.cli.worldsar import pipeline_biomass
+
+result = pipeline_biomass(product_path=&lt;product_path&gt;, output_dir=&lt;output_dir&gt;)</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-biomass-edge-cases">Edge Cases</h3>
+    <p>May raise: RuntimeError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-cli-worldsar-py-pipeline-nisar" data-searchable data-search="pipeline_nisar pipeline_nisar(product_path: Path, output_dir: Path, use_graph: bool=False, orbit_type: str=&#x27;Sentinel Precise (Auto Download)&#x27;, orbit_continue_on_fail: bool=False, gpt_memory: str | None=None, gpt_parallelism: int | None=None, gpt_timeout: int | None=None)">
+  <summary><code>pipeline_nisar</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>NISAR pipeline.</p>
+    <p><strong>File location:</strong> <code>sarpyx/cli/worldsar.py:1076</code></p>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-nisar-signature">Signature</h3>
+    <pre><code class="language-python">pipeline_nisar(product_path: Path, output_dir: Path, use_graph: bool=False, orbit_type: str=&#x27;Sentinel Precise (Auto Download)&#x27;, orbit_continue_on_fail: bool=False, gpt_memory: str | None=None, gpt_parallelism: int | None=None, gpt_timeout: int | None=None)</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-nisar-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>product_path</code></td><td><code>Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>output_dir</code></td><td><code>Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>use_graph</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr><tr><td><code>orbit_type</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;Sentinel Precise (Auto Download)&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>orbit_continue_on_fail</code></td><td><code>bool</code></td><td>no</td><td><code>False</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_memory</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_parallelism</code></td><td><code>int | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_timeout</code></td><td><code>int | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-nisar-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-nisar-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-nisar-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-nisar-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.cli.worldsar import pipeline_nisar
+
+result = pipeline_nisar(product_path=&lt;product_path&gt;, output_dir=&lt;output_dir&gt;)</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-pipeline-nisar-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-cli-worldsar-py-main" data-searchable data-search="main main()">
+  <summary><code>main</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/cli/worldsar.py:1326</code></p>
+    <h3 id="sarpyx-cli-worldsar-py-main-signature">Signature</h3>
+    <pre><code class="language-python">main()</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-main-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>-</code></td><td><code>-</code></td><td>no</td><td><code>-</code></td><td>No explicit public parameters; behavior inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-cli-worldsar-py-main-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-cli-worldsar-py-main-exceptions">Exceptions</h3>
+    <ul><li><code>ValueError</code></li></ul>
+    <h3 id="sarpyx-cli-worldsar-py-main-side-effects">Side Effects</h3>
+    <ul><li>io</li></ul>
+    <h3 id="sarpyx-cli-worldsar-py-main-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.cli.worldsar import main
+
+result = main()</code></pre>
+    <h3 id="sarpyx-cli-worldsar-py-main-edge-cases">Edge Cases</h3>
+    <p>May raise: ValueError.</p>
+  </div>
+</details>
+
+
+  <h2 id="public-classes">Public Classes (0)</h2>
+  <p>No public classes detected.</p>
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-02 17:41 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

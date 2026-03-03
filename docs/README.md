@@ -66,6 +66,10 @@ cd sarpyx
 pip install -e .
 ```
 
+### Container note
+
+For container workflows, mount or otherwise provide any `*.geojson` grid in `/workspace/grid` (or set `GRID_PATH` to a specific `*.geojson`). The entrypoint will load an existing grid first and only generate one at startup if none is available.
+
 ## Support and Community
 
 - 📧 **Issues**: [GitHub Issues](https://github.com/ESA-PhiLab/sarpyx/issues)

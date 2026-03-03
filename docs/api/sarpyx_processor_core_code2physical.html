@@ -1,0 +1,1318 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Exhaustive API reference for sarpyx.processor.core.code2physical" />
+  <title>API: sarpyx.processor.core.code2physical | SARPyX Documentation</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <script defer src="../assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="../index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">Home</a></li><li><a class="nav-link" href="../installation.html">Installation</a></li><li><a class="nav-link" href="../quickstart.html">Quick Start</a></li><li><a class="nav-link" href="../architecture.html">Architecture</a></li><li><a class="nav-link" href="../api/index.html">API</a></li><li><a class="nav-link" href="../configuration.html">Configuration</a></li><li><a class="nav-link" href="../usage.html">Usage</a></li><li><a class="nav-link" href="../testing.html">Testing</a></li><li><a class="nav-link" href="../contributing.html">Contributing</a></li><li><a class="nav-link" href="../faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="../api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="../api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="../api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="../api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="../api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="../api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link" href="../api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="../api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link active" href="../api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="../api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link" href="../api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="../api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link" href="../api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link" href="../api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link" href="../api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="../api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link" href="../api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link" href="../api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="../api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="../api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="../api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link" href="../api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="../api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="../api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="../api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="../index.html">Home</a></li><li><a href="index.html">API</a></li><li>sarpyx.processor.core.code2physical</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="API: sarpyx.processor.core.code2physical">
+        
+<section>
+  <h1 id="module-sarpyx_processor_core_code2physical">Module: <code>sarpyx.processor.core.code2physical</code></h1>
+  <p><strong>File:</strong> <code>sarpyx/processor/core/code2physical.py</code></p>
+  <p>Sentinel-1 Parameter Transformations: From Bytecodes to Physical Values
+
+This module provides comprehensive transformation functions to convert raw bytecode
+values from Sentinel-1 data packets into meaningful physical parameters.
+
+All transformations follow the exact specifications from the Sentinel-1 documentation
+and match the implementation in the original decoder.</p>
+
+  <h2 id="module-exports">Exported Symbols (<code>__all__</code>)</h2>
+  <p>No explicit <code>__all__</code> list. Public symbols inferred from implementation.</p>
+
+  <h2 id="public-functions">Public Functions (50)</h2>
+  
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-packet-version-number" data-searchable data-search="extract_packet_version_number extract_packet_version_number(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_packet_version_number</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract packet version number from primary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:23</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-version-number-signature">Signature</h3>
+    <pre><code class="language-python">extract_packet_version_number(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-version-number-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Primary header bytes (6 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-version-number-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Packet version number (3 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-version-number-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-version-number-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-version-number-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_packet_version_number
+
+result = extract_packet_version_number(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-version-number-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-packet-type" data-searchable data-search="extract_packet_type extract_packet_type(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_packet_type</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract packet type from primary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:38</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-type-signature">Signature</h3>
+    <pre><code class="language-python">extract_packet_type(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-type-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Primary header bytes (6 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-type-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Packet type (1 bit)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-type-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-type-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-type-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_packet_type
+
+result = extract_packet_type(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-type-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-secondary-header-flag" data-searchable data-search="extract_secondary_header_flag extract_secondary_header_flag(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_secondary_header_flag</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract secondary header flag from primary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:53</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-secondary-header-flag-signature">Signature</h3>
+    <pre><code class="language-python">extract_secondary_header_flag(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-secondary-header-flag-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Primary header bytes (6 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-secondary-header-flag-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Secondary header flag (1 bit)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-secondary-header-flag-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-secondary-header-flag-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-secondary-header-flag-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_secondary_header_flag
+
+result = extract_secondary_header_flag(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-secondary-header-flag-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-process-id" data-searchable data-search="extract_process_id extract_process_id(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_process_id</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract process ID (PID) from primary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:68</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-process-id-signature">Signature</h3>
+    <pre><code class="language-python">extract_process_id(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-process-id-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Primary header bytes (6 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-process-id-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Process ID (7 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-process-id-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-process-id-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-process-id-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_process_id
+
+result = extract_process_id(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-process-id-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-packet-category" data-searchable data-search="extract_packet_category extract_packet_category(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_packet_category</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract packet category (PCAT) from primary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:83</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-category-signature">Signature</h3>
+    <pre><code class="language-python">extract_packet_category(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-category-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Primary header bytes (6 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-category-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Packet category (4 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-category-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-category-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-category-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_packet_category
+
+result = extract_packet_category(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-category-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-sequence-flags" data-searchable data-search="extract_sequence_flags extract_sequence_flags(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_sequence_flags</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract sequence flags from primary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:98</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sequence-flags-signature">Signature</h3>
+    <pre><code class="language-python">extract_sequence_flags(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sequence-flags-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Primary header bytes (6 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sequence-flags-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Sequence flags (2 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sequence-flags-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sequence-flags-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sequence-flags-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_sequence_flags
+
+result = extract_sequence_flags(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sequence-flags-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-packet-sequence-count" data-searchable data-search="extract_packet_sequence_count extract_packet_sequence_count(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_packet_sequence_count</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract packet sequence count from primary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:113</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-sequence-count-signature">Signature</h3>
+    <pre><code class="language-python">extract_packet_sequence_count(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-sequence-count-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Primary header bytes (6 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-sequence-count-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Packet sequence count (14 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-sequence-count-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-sequence-count-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-sequence-count-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_packet_sequence_count
+
+result = extract_packet_sequence_count(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-sequence-count-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-packet-data-length" data-searchable data-search="extract_packet_data_length extract_packet_data_length(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_packet_data_length</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract packet data length from primary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:128</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-data-length-signature">Signature</h3>
+    <pre><code class="language-python">extract_packet_data_length(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-data-length-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Primary header bytes (6 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-data-length-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Packet data length in bytes (length is stored as N-1)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-data-length-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-data-length-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-data-length-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_packet_data_length
+
+result = extract_packet_data_length(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-packet-data-length-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-coarse-time" data-searchable data-search="extract_coarse_time extract_coarse_time(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_coarse_time</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract coarse time from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:149</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-coarse-time-signature">Signature</h3>
+    <pre><code class="language-python">extract_coarse_time(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-coarse-time-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-coarse-time-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Coarse time (32 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-coarse-time-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-coarse-time-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-coarse-time-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_coarse_time
+
+result = extract_coarse_time(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-coarse-time-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-fine-time" data-searchable data-search="extract_fine_time extract_fine_time(header_bytes: bytes) -&gt; float">
+  <summary><code>extract_fine_time</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract fine time from secondary header and convert to fractional seconds.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:163</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-fine-time-signature">Signature</h3>
+    <pre><code class="language-python">extract_fine_time(header_bytes: bytes) -&gt; float</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-fine-time-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-fine-time-returns">Return Type</h3>
+    <p><code>float</code></p>
+    <p>Fine time in fractional seconds</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-fine-time-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-fine-time-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-fine-time-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_fine_time
+
+result = extract_fine_time(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-fine-time-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-sync-marker" data-searchable data-search="extract_sync_marker extract_sync_marker(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_sync_marker</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract sync marker from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:180</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sync-marker-signature">Signature</h3>
+    <pre><code class="language-python">extract_sync_marker(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sync-marker-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sync-marker-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Sync marker (32 bits, expected: 0x352EF853)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sync-marker-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sync-marker-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sync-marker-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_sync_marker
+
+result = extract_sync_marker(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sync-marker-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-data-take-id" data-searchable data-search="extract_data_take_id extract_data_take_id(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_data_take_id</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract data take ID from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:194</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-data-take-id-signature">Signature</h3>
+    <pre><code class="language-python">extract_data_take_id(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-data-take-id-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-data-take-id-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Data take ID (32 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-data-take-id-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-data-take-id-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-data-take-id-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_data_take_id
+
+result = extract_data_take_id(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-data-take-id-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-ecc-number" data-searchable data-search="extract_ecc_number extract_ecc_number(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_ecc_number</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract ECC number from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:208</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-ecc-number-signature">Signature</h3>
+    <pre><code class="language-python">extract_ecc_number(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-ecc-number-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-ecc-number-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>ECC number (8 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-ecc-number-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-ecc-number-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-ecc-number-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_ecc_number
+
+result = extract_ecc_number(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-ecc-number-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-test-mode" data-searchable data-search="extract_test_mode extract_test_mode(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_test_mode</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract test mode from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:222</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-test-mode-signature">Signature</h3>
+    <pre><code class="language-python">extract_test_mode(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-test-mode-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-test-mode-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Test mode (3 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-test-mode-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-test-mode-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-test-mode-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_test_mode
+
+result = extract_test_mode(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-test-mode-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-rx-channel-id" data-searchable data-search="extract_rx_channel_id extract_rx_channel_id(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_rx_channel_id</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract Rx channel ID from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:236</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rx-channel-id-signature">Signature</h3>
+    <pre><code class="language-python">extract_rx_channel_id(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rx-channel-id-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rx-channel-id-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Rx channel ID (4 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rx-channel-id-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rx-channel-id-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rx-channel-id-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_rx_channel_id
+
+result = extract_rx_channel_id(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rx-channel-id-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-instrument-config-id" data-searchable data-search="extract_instrument_config_id extract_instrument_config_id(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_instrument_config_id</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract instrument configuration ID from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:250</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-instrument-config-id-signature">Signature</h3>
+    <pre><code class="language-python">extract_instrument_config_id(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-instrument-config-id-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-instrument-config-id-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Instrument configuration ID (32 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-instrument-config-id-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-instrument-config-id-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-instrument-config-id-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_instrument_config_id
+
+result = extract_instrument_config_id(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-instrument-config-id-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-subcom-data-word-index" data-searchable data-search="extract_subcom_data_word_index extract_subcom_data_word_index(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_subcom_data_word_index</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract sub-commutated data word index from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:266</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-subcom-data-word-index-signature">Signature</h3>
+    <pre><code class="language-python">extract_subcom_data_word_index(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-subcom-data-word-index-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-subcom-data-word-index-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Sub-commutated data word index (8 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-subcom-data-word-index-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-subcom-data-word-index-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-subcom-data-word-index-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_subcom_data_word_index
+
+result = extract_subcom_data_word_index(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-subcom-data-word-index-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-subcom-data-word" data-searchable data-search="extract_subcom_data_word extract_subcom_data_word(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_subcom_data_word</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract sub-commutated data word from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:280</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-subcom-data-word-signature">Signature</h3>
+    <pre><code class="language-python">extract_subcom_data_word(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-subcom-data-word-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-subcom-data-word-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Sub-commutated data word (16 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-subcom-data-word-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-subcom-data-word-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-subcom-data-word-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_subcom_data_word
+
+result = extract_subcom_data_word(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-subcom-data-word-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-space-packet-count" data-searchable data-search="extract_space_packet_count extract_space_packet_count(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_space_packet_count</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract space packet count from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:296</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-space-packet-count-signature">Signature</h3>
+    <pre><code class="language-python">extract_space_packet_count(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-space-packet-count-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-space-packet-count-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Space packet count (32 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-space-packet-count-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-space-packet-count-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-space-packet-count-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_space_packet_count
+
+result = extract_space_packet_count(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-space-packet-count-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-pri-count" data-searchable data-search="extract_pri_count extract_pri_count(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_pri_count</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract PRI count from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:310</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-pri-count-signature">Signature</h3>
+    <pre><code class="language-python">extract_pri_count(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-pri-count-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-pri-count-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>PRI count (32 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-pri-count-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-pri-count-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-pri-count-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_pri_count
+
+result = extract_pri_count(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-pri-count-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-error-flag" data-searchable data-search="extract_error_flag extract_error_flag(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_error_flag</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract error flag from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:326</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-error-flag-signature">Signature</h3>
+    <pre><code class="language-python">extract_error_flag(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-error-flag-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-error-flag-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Error flag (1 bit)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-error-flag-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-error-flag-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-error-flag-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_error_flag
+
+result = extract_error_flag(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-error-flag-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-baq-mode" data-searchable data-search="extract_baq_mode extract_baq_mode(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_baq_mode</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract BAQ mode from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:340</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-baq-mode-signature">Signature</h3>
+    <pre><code class="language-python">extract_baq_mode(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-baq-mode-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-baq-mode-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>BAQ mode (5 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-baq-mode-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-baq-mode-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-baq-mode-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_baq_mode
+
+result = extract_baq_mode(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-baq-mode-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-baq-block-length" data-searchable data-search="extract_baq_block_length extract_baq_block_length(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_baq_block_length</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract BAQ block length from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:354</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-baq-block-length-signature">Signature</h3>
+    <pre><code class="language-python">extract_baq_block_length(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-baq-block-length-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-baq-block-length-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>BAQ block length (8 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-baq-block-length-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-baq-block-length-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-baq-block-length-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_baq_block_length
+
+result = extract_baq_block_length(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-baq-block-length-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-range-decimation" data-searchable data-search="extract_range_decimation extract_range_decimation(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_range_decimation</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract range decimation from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:368</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-range-decimation-signature">Signature</h3>
+    <pre><code class="language-python">extract_range_decimation(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-range-decimation-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-range-decimation-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Range decimation code (8 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-range-decimation-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-range-decimation-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-range-decimation-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_range_decimation
+
+result = extract_range_decimation(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-range-decimation-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-range-dec-to-sample-rate" data-searchable data-search="range_dec_to_sample_rate range_dec_to_sample_rate(rgdec_code: int) -&gt; float">
+  <summary><code>range_dec_to_sample_rate</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Convert range decimation code to sample rate in Hz.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:382</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-range-dec-to-sample-rate-signature">Signature</h3>
+    <pre><code class="language-python">range_dec_to_sample_rate(rgdec_code: int) -&gt; float</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-range-dec-to-sample-rate-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>rgdec_code</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>Range decimation code (0-11)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-range-dec-to-sample-rate-returns">Return Type</h3>
+    <p><code>float</code></p>
+    <p>Sample rate in Hz</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-range-dec-to-sample-rate-exceptions">Exceptions</h3>
+    <ul><li><code>ValueError</code></li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-range-dec-to-sample-rate-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-range-dec-to-sample-rate-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import range_dec_to_sample_rate
+
+result = range_dec_to_sample_rate(rgdec_code=&lt;rgdec_code&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-range-dec-to-sample-rate-edge-cases">Edge Cases</h3>
+    <p>May raise: ValueError.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-rx-gain" data-searchable data-search="extract_rx_gain extract_rx_gain(header_bytes: bytes) -&gt; float">
+  <summary><code>extract_rx_gain</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract and convert Rx gain from secondary header to dB.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:415</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rx-gain-signature">Signature</h3>
+    <pre><code class="language-python">extract_rx_gain(header_bytes: bytes) -&gt; float</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rx-gain-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rx-gain-returns">Return Type</h3>
+    <p><code>float</code></p>
+    <p>Rx gain in dB</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rx-gain-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rx-gain-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rx-gain-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_rx_gain
+
+result = extract_rx_gain(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rx-gain-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-ramp-rate" data-searchable data-search="extract_tx_pulse_ramp_rate extract_tx_pulse_ramp_rate(header_bytes: bytes) -&gt; float">
+  <summary><code>extract_tx_pulse_ramp_rate</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract and convert Tx pulse ramp rate (TXPRR) from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:430</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-ramp-rate-signature">Signature</h3>
+    <pre><code class="language-python">extract_tx_pulse_ramp_rate(header_bytes: bytes) -&gt; float</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-ramp-rate-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-ramp-rate-returns">Return Type</h3>
+    <p><code>float</code></p>
+    <p>Tx pulse ramp rate in Hz/s</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-ramp-rate-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-ramp-rate-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-ramp-rate-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_tx_pulse_ramp_rate
+
+result = extract_tx_pulse_ramp_rate(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-ramp-rate-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-start-frequency" data-searchable data-search="extract_tx_pulse_start_frequency extract_tx_pulse_start_frequency(header_bytes: bytes) -&gt; float">
+  <summary><code>extract_tx_pulse_start_frequency</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract and convert Tx pulse start frequency (TXPSF) from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:455</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-start-frequency-signature">Signature</h3>
+    <pre><code class="language-python">extract_tx_pulse_start_frequency(header_bytes: bytes) -&gt; float</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-start-frequency-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-start-frequency-returns">Return Type</h3>
+    <p><code>float</code></p>
+    <p>Tx pulse start frequency in Hz</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-start-frequency-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-start-frequency-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-start-frequency-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_tx_pulse_start_frequency
+
+result = extract_tx_pulse_start_frequency(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-start-frequency-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-length" data-searchable data-search="extract_tx_pulse_length extract_tx_pulse_length(header_bytes: bytes) -&gt; float">
+  <summary><code>extract_tx_pulse_length</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract and convert Tx pulse length from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:488</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-length-signature">Signature</h3>
+    <pre><code class="language-python">extract_tx_pulse_length(header_bytes: bytes) -&gt; float</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-length-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-length-returns">Return Type</h3>
+    <p><code>float</code></p>
+    <p>Tx pulse length in seconds</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-length-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-length-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-length-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_tx_pulse_length
+
+result = extract_tx_pulse_length(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-length-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-rank" data-searchable data-search="extract_rank extract_rank(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_rank</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract rank from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:503</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rank-signature">Signature</h3>
+    <pre><code class="language-python">extract_rank(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rank-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rank-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Rank (5 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rank-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rank-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rank-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_rank
+
+result = extract_rank(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-rank-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-pri" data-searchable data-search="extract_pri extract_pri(header_bytes: bytes) -&gt; float">
+  <summary><code>extract_pri</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract and convert PRI (Pulse Repetition Interval) from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:517</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-pri-signature">Signature</h3>
+    <pre><code class="language-python">extract_pri(header_bytes: bytes) -&gt; float</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-pri-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-pri-returns">Return Type</h3>
+    <p><code>float</code></p>
+    <p>PRI in seconds</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-pri-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-pri-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-pri-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_pri
+
+result = extract_pri(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-pri-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-sampling-window-start-time" data-searchable data-search="extract_sampling_window_start_time extract_sampling_window_start_time(header_bytes: bytes) -&gt; float">
+  <summary><code>extract_sampling_window_start_time</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract and convert SWST (Sampling Window Start Time) from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:532</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sampling-window-start-time-signature">Signature</h3>
+    <pre><code class="language-python">extract_sampling_window_start_time(header_bytes: bytes) -&gt; float</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sampling-window-start-time-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sampling-window-start-time-returns">Return Type</h3>
+    <p><code>float</code></p>
+    <p>SWST in seconds</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sampling-window-start-time-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sampling-window-start-time-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sampling-window-start-time-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_sampling_window_start_time
+
+result = extract_sampling_window_start_time(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sampling-window-start-time-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-sampling-window-length" data-searchable data-search="extract_sampling_window_length extract_sampling_window_length(header_bytes: bytes) -&gt; float">
+  <summary><code>extract_sampling_window_length</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract and convert SWL (Sampling Window Length) from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:547</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sampling-window-length-signature">Signature</h3>
+    <pre><code class="language-python">extract_sampling_window_length(header_bytes: bytes) -&gt; float</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sampling-window-length-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sampling-window-length-returns">Return Type</h3>
+    <p><code>float</code></p>
+    <p>SWL in seconds</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sampling-window-length-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sampling-window-length-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sampling-window-length-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_sampling_window_length
+
+result = extract_sampling_window_length(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sampling-window-length-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-sas-ssb-flag" data-searchable data-search="extract_sas_ssb_flag extract_sas_ssb_flag(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_sas_ssb_flag</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract SAS SSB flag from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:562</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sas-ssb-flag-signature">Signature</h3>
+    <pre><code class="language-python">extract_sas_ssb_flag(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sas-ssb-flag-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sas-ssb-flag-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>SAS SSB flag (1 bit)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sas-ssb-flag-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sas-ssb-flag-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sas-ssb-flag-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_sas_ssb_flag
+
+result = extract_sas_ssb_flag(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-sas-ssb-flag-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-polarisation" data-searchable data-search="extract_polarisation extract_polarisation(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_polarisation</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract polarisation from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:576</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-polarisation-signature">Signature</h3>
+    <pre><code class="language-python">extract_polarisation(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-polarisation-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-polarisation-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Polarisation (3 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-polarisation-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-polarisation-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-polarisation-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_polarisation
+
+result = extract_polarisation(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-polarisation-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-temperature-compensation" data-searchable data-search="extract_temperature_compensation extract_temperature_compensation(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_temperature_compensation</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract temperature compensation from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:590</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-temperature-compensation-signature">Signature</h3>
+    <pre><code class="language-python">extract_temperature_compensation(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-temperature-compensation-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-temperature-compensation-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Temperature compensation (2 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-temperature-compensation-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-temperature-compensation-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-temperature-compensation-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_temperature_compensation
+
+result = extract_temperature_compensation(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-temperature-compensation-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-calibration-mode" data-searchable data-search="extract_calibration_mode extract_calibration_mode(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_calibration_mode</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract calibration mode from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:604</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-calibration-mode-signature">Signature</h3>
+    <pre><code class="language-python">extract_calibration_mode(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-calibration-mode-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-calibration-mode-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Calibration mode (2 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-calibration-mode-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-calibration-mode-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-calibration-mode-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_calibration_mode
+
+result = extract_calibration_mode(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-calibration-mode-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-number" data-searchable data-search="extract_tx_pulse_number extract_tx_pulse_number(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_tx_pulse_number</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract Tx pulse number from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:618</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-number-signature">Signature</h3>
+    <pre><code class="language-python">extract_tx_pulse_number(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-number-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-number-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Tx pulse number (5 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-number-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-number-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-number-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_tx_pulse_number
+
+result = extract_tx_pulse_number(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-tx-pulse-number-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-signal-type" data-searchable data-search="extract_signal_type extract_signal_type(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_signal_type</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract signal type from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:632</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-signal-type-signature">Signature</h3>
+    <pre><code class="language-python">extract_signal_type(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-signal-type-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-signal-type-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Signal type (4 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-signal-type-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-signal-type-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-signal-type-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_signal_type
+
+result = extract_signal_type(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-signal-type-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-swap-flag" data-searchable data-search="extract_swap_flag extract_swap_flag(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_swap_flag</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract swap flag from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:646</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-swap-flag-signature">Signature</h3>
+    <pre><code class="language-python">extract_swap_flag(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-swap-flag-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-swap-flag-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Swap flag (1 bit)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-swap-flag-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-swap-flag-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-swap-flag-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_swap_flag
+
+result = extract_swap_flag(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-swap-flag-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-swath-number" data-searchable data-search="extract_swath_number extract_swath_number(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_swath_number</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract swath number from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:660</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-swath-number-signature">Signature</h3>
+    <pre><code class="language-python">extract_swath_number(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-swath-number-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-swath-number-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Swath number (8 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-swath-number-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-swath-number-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-swath-number-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_swath_number
+
+result = extract_swath_number(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-swath-number-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-number-of-quads" data-searchable data-search="extract_number_of_quads extract_number_of_quads(header_bytes: bytes) -&gt; int">
+  <summary><code>extract_number_of_quads</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract number of quads from secondary header.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:674</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-number-of-quads-signature">Signature</h3>
+    <pre><code class="language-python">extract_number_of_quads(header_bytes: bytes) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-number-of-quads-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-number-of-quads-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Number of quads (16 bits)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-number-of-quads-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-number-of-quads-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-number-of-quads-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_number_of_quads
+
+result = extract_number_of_quads(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-number-of-quads-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-ten-bit-unsigned-to-signed-int" data-searchable data-search="ten_bit_unsigned_to_signed_int ten_bit_unsigned_to_signed_int(ten_bit: int) -&gt; int">
+  <summary><code>ten_bit_unsigned_to_signed_int</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Convert 10-bit unsigned to signed integer using two&#x27;s complement.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:692</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-ten-bit-unsigned-to-signed-int-signature">Signature</h3>
+    <pre><code class="language-python">ten_bit_unsigned_to_signed_int(ten_bit: int) -&gt; int</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-ten-bit-unsigned-to-signed-int-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>ten_bit</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>10-bit unsigned integer value (0-1023)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-ten-bit-unsigned-to-signed-int-returns">Return Type</h3>
+    <p><code>int</code></p>
+    <p>Signed integer value (-511 to +511)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-ten-bit-unsigned-to-signed-int-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-ten-bit-unsigned-to-signed-int-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-ten-bit-unsigned-to-signed-int-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import ten_bit_unsigned_to_signed_int
+
+result = ten_bit_unsigned_to_signed_int(ten_bit=&lt;ten_bit&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-ten-bit-unsigned-to-signed-int-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-extract-bypass-samples" data-searchable data-search="extract_bypass_samples extract_bypass_samples(user_data: bytes, num_samples: int) -&gt; list[int]">
+  <summary><code>extract_bypass_samples</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extract and convert 10-bit bypass mode samples from user data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:713</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-bypass-samples-signature">Signature</h3>
+    <pre><code class="language-python">extract_bypass_samples(user_data: bytes, num_samples: int) -&gt; list[int]</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-bypass-samples-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>user_data</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Raw user data bytes</td></tr><tr><td><code>num_samples</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>Number of samples to extract</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-bypass-samples-returns">Return Type</h3>
+    <p><code>list[int]</code></p>
+    <p>List of signed sample values</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-bypass-samples-exceptions">Exceptions</h3>
+    <ul><li><code>ValueError</code></li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-bypass-samples-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-bypass-samples-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import extract_bypass_samples
+
+result = extract_bypass_samples(user_data=&lt;user_data&gt;, num_samples=&lt;num_samples&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-extract-bypass-samples-edge-cases">Edge Cases</h3>
+    <p>May raise: ValueError.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-decode-all-primary-header-parameters" data-searchable data-search="decode_all_primary_header_parameters decode_all_primary_header_parameters(header_bytes: bytes) -&gt; Dict[str, Union[int, float]]">
+  <summary><code>decode_all_primary_header_parameters</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Decode all parameters from primary header in one call.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:769</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-all-primary-header-parameters-signature">Signature</h3>
+    <pre><code class="language-python">decode_all_primary_header_parameters(header_bytes: bytes) -&gt; Dict[str, Union[int, float]]</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-all-primary-header-parameters-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Primary header bytes (6 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-all-primary-header-parameters-returns">Return Type</h3>
+    <p><code>Dict[str, Union[int, float]]</code></p>
+    <p>Dictionary with all primary header parameters</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-all-primary-header-parameters-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-all-primary-header-parameters-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-all-primary-header-parameters-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import decode_all_primary_header_parameters
+
+result = decode_all_primary_header_parameters(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-all-primary-header-parameters-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-decode-all-secondary-header-parameters" data-searchable data-search="decode_all_secondary_header_parameters decode_all_secondary_header_parameters(header_bytes: bytes) -&gt; Dict[str, Union[int, float]]">
+  <summary><code>decode_all_secondary_header_parameters</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Decode all parameters from secondary header in one call.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:793</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-all-secondary-header-parameters-signature">Signature</h3>
+    <pre><code class="language-python">decode_all_secondary_header_parameters(header_bytes: bytes) -&gt; Dict[str, Union[int, float]]</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-all-secondary-header-parameters-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>header_bytes</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-all-secondary-header-parameters-returns">Return Type</h3>
+    <p><code>Dict[str, Union[int, float]]</code></p>
+    <p>Dictionary with all secondary header parameters</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-all-secondary-header-parameters-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-all-secondary-header-parameters-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-all-secondary-header-parameters-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import decode_all_secondary_header_parameters
+
+result = decode_all_secondary_header_parameters(header_bytes=&lt;header_bytes&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-all-secondary-header-parameters-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-decode-complete-packet-header" data-searchable data-search="decode_complete_packet_header decode_complete_packet_header(primary_header: bytes, secondary_header: bytes) -&gt; Dict[str, Union[int, float]]">
+  <summary><code>decode_complete_packet_header</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Decode all parameters from both primary and secondary headers.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:851</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-complete-packet-header-signature">Signature</h3>
+    <pre><code class="language-python">decode_complete_packet_header(primary_header: bytes, secondary_header: bytes) -&gt; Dict[str, Union[int, float]]</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-complete-packet-header-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>primary_header</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Primary header bytes (6 bytes)</td></tr><tr><td><code>secondary_header</code></td><td><code>bytes</code></td><td>yes</td><td><code>-</code></td><td>Secondary header bytes (62 bytes)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-complete-packet-header-returns">Return Type</h3>
+    <p><code>Dict[str, Union[int, float]]</code></p>
+    <p>Dictionary with all header parameters</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-complete-packet-header-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-complete-packet-header-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-complete-packet-header-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import decode_complete_packet_header
+
+result = decode_complete_packet_header(primary_header=&lt;primary_header&gt;, secondary_header=&lt;secondary_header&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-decode-complete-packet-header-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-validate-sync-marker" data-searchable data-search="validate_sync_marker validate_sync_marker(sync_marker: int) -&gt; bool">
+  <summary><code>validate_sync_marker</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Validate that the sync marker has the expected value.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:876</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-sync-marker-signature">Signature</h3>
+    <pre><code class="language-python">validate_sync_marker(sync_marker: int) -&gt; bool</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-sync-marker-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>sync_marker</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>Extracted sync marker value</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-sync-marker-returns">Return Type</h3>
+    <p><code>bool</code></p>
+    <p>True if sync marker is valid (0x352EF853)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-sync-marker-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-sync-marker-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-sync-marker-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import validate_sync_marker
+
+result = validate_sync_marker(sync_marker=&lt;sync_marker&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-sync-marker-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-validate-packet-version" data-searchable data-search="validate_packet_version validate_packet_version(version: int) -&gt; bool">
+  <summary><code>validate_packet_version</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Validate packet version number.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:889</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-packet-version-signature">Signature</h3>
+    <pre><code class="language-python">validate_packet_version(version: int) -&gt; bool</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-packet-version-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>version</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>Packet version number</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-packet-version-returns">Return Type</h3>
+    <p><code>bool</code></p>
+    <p>True if version is valid (typically 0)</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-packet-version-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-packet-version-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-packet-version-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import validate_packet_version
+
+result = validate_packet_version(version=&lt;version&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-packet-version-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-code2physical-py-validate-baq-mode" data-searchable data-search="validate_baq_mode validate_baq_mode(baq_mode: int) -&gt; bool">
+  <summary><code>validate_baq_mode</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Validate BAQ mode value.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/code2physical.py:902</code></p>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-baq-mode-signature">Signature</h3>
+    <pre><code class="language-python">validate_baq_mode(baq_mode: int) -&gt; bool</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-baq-mode-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>baq_mode</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>BAQ mode value</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-baq-mode-returns">Return Type</h3>
+    <p><code>bool</code></p>
+    <p>True if BAQ mode is valid</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-baq-mode-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-baq-mode-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-baq-mode-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.code2physical import validate_baq_mode
+
+result = validate_baq_mode(baq_mode=&lt;baq_mode&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-code2physical-py-validate-baq-mode-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+
+  <h2 id="public-classes">Public Classes (0)</h2>
+  <p>No public classes detected.</p>
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-02 17:41 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

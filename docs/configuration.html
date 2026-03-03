@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Configuration Reference" />
+  <title>Configuration Reference | SARPyX Documentation</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script defer src="assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="index.html">Home</a></li><li><a class="nav-link" href="installation.html">Installation</a></li><li><a class="nav-link" href="quickstart.html">Quick Start</a></li><li><a class="nav-link" href="architecture.html">Architecture</a></li><li><a class="nav-link" href="api/index.html">API</a></li><li><a class="nav-link active" href="configuration.html">Configuration</a></li><li><a class="nav-link" href="usage.html">Usage</a></li><li><a class="nav-link" href="testing.html">Testing</a></li><li><a class="nav-link" href="contributing.html">Contributing</a></li><li><a class="nav-link" href="faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link" href="api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link" href="api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link" href="api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link" href="api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link" href="api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link" href="api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link" href="api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link" href="api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link" href="api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link" href="api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link" href="api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link" href="api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link" href="api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link" href="api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link" href="api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link" href="api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link" href="api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link" href="api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link" href="api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="index.html">Home</a></li><li>Configuration Reference</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="Configuration Reference">
+        
+<section>
+  <h1 id="configuration-reference">Configuration Reference</h1>
+  <h2 id="environment-variables">Environment Variables</h2>
+  <table>
+    <thead><tr><th>Name</th><th>Default</th><th>Source</th><th>Description</th><th>Security</th></tr></thead>
+    <tbody><tr><td><code>gpt_path / GPT_PATH</code></td><td><code>None</code></td><td><code>sarpyx/cli/worldsar.py</code></td><td>Path to SNAP GPT executable used by worldsar pipeline.</td><td>Prefer absolute trusted path; avoid untrusted binaries in PATH.</td></tr><tr><td><code>grid_path / GRID_PATH</code></td><td><code>None</code></td><td><code>sarpyx/cli/worldsar.py, Makefile</code></td><td>Path to GeoJSON tiling grid.</td><td>Validate file provenance; malformed geometry can break tiling workflows.</td></tr><tr><td><code>db_dir / DB_DIR</code></td><td><code>None</code></td><td><code>sarpyx/cli/worldsar.py</code></td><td>Output directory for tile database artifacts.</td><td>Use writable path with least privilege.</td></tr><tr><td><code>cuts_outdir / OUTPUT_CUTS_DIR</code></td><td><code>None</code></td><td><code>sarpyx/cli/worldsar.py</code></td><td>Output directory for generated raster tiles.</td><td>Avoid writing to shared sensitive directories.</td></tr><tr><td><code>base_path / BASE_PATH</code></td><td><code>project root</code></td><td><code>sarpyx/cli/worldsar.py</code></td><td>Base path used by worldsar fallback filesystem operations.</td><td>Keep under controlled workspace.</td></tr><tr><td><code>SNAP_USERDIR / snap_userdir</code></td><td><code>&lt;project_root&gt;/.snap</code></td><td><code>sarpyx/cli/worldsar.py, sarpyx/snapflow/engine.py</code></td><td>SNAP user configuration and cache directory.</td><td>Contains execution metadata; protect in multi-user environments.</td></tr><tr><td><code>orbit_base_url / ORBIT_BASE_URL</code></td><td><code>https://step.esa.int/auxdata/orbits/Sentinel-1</code></td><td><code>sarpyx/cli/worldsar.py</code></td><td>Base URL for Sentinel orbit prefetch.</td><td>Use trusted HTTPS endpoint only.</td></tr><tr><td><code>HF_TOKEN</code></td><td><code>unset</code></td><td><code>sarpyx/cli/upload.py</code></td><td>Hugging Face access token for upload operations.</td><td>Treat as secret; do not commit to repository.</td></tr><tr><td><code>JAVA_HOME</code></td><td><code>/usr/lib/jvm/java-8-openjdk-amd64 (container)</code></td><td><code>Dockerfile, docker-compose.yml</code></td><td>Java runtime required by SNAP.</td><td>Pin to trusted JRE installation.</td></tr><tr><td><code>SNAP_HOME</code></td><td><code>/snap12 or /workspace/snap12 (container)</code></td><td><code>Dockerfile, entrypoint.sh</code></td><td>SNAP installation directory.</td><td>Read-only in production container images where possible.</td></tr><tr><td><code>SNAP_SKIP_UPDATES</code></td><td><code>1</code></td><td><code>entrypoint.sh</code></td><td>If set to 1, startup script skips SNAP online update check.</td><td>Disabling auto-updates improves reproducibility.</td></tr><tr><td><code>JUPYTER_ENABLE_LAB / JUPYTER_TOKEN / JUPYTER_ALLOW_INSECURE_WRITES</code></td><td><code>compose defaults</code></td><td><code>docker-compose.yml</code></td><td>Jupyter runtime behavior inside containerized workflow.</td><td>Setting empty token is insecure outside localhost-bound environments.</td></tr></tbody>
+  </table>
+
+  <h2 id="config-files">Config Files</h2>
+  <ul>
+    <li><code>pyproject.toml</code></li><li><code>uv.lock</code></li><li><code>pdm.lock</code></li><li><code>docker-compose.yml</code></li><li><code>Dockerfile</code></li><li><code>Makefile</code></li><li><code>entrypoint.sh</code></li><li><code>support/snap.varfile</code></li><li><code>conda/recipe/meta.yaml</code></li>
+  </ul>
+
+  <h2 id="defaults">Defaults</h2>
+  <ul>
+    <li>Package metadata and dependencies come from <code>pyproject.toml</code>.</li>
+    <li>CLI defaults are defined in each parser function (for example <code>sarpyx/cli/main.py</code> and <code>sarpyx/cli/worldsar.py</code>).</li>
+    <li>Container defaults are defined in <code>Dockerfile</code> and <code>docker-compose.yml</code>.</li>
+  </ul>
+
+  <h2 id="security-considerations">Security Considerations</h2>
+  <ul>
+    <li>Store <code>HF_TOKEN</code> in environment or secret manager, never in versioned files.</li>
+    <li>Do not expose Jupyter with an empty token outside localhost-bound development contexts.</li>
+    <li>Pin trusted SNAP/Java binaries and validate filesystem paths passed to CLI commands.</li>
+  </ul>
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-02 17:41 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

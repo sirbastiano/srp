@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Exhaustive API reference for sarpyx.processor.core.utilis" />
+  <title>API: sarpyx.processor.core.utilis | SARPyX Documentation</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <script defer src="../assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="../index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">Home</a></li><li><a class="nav-link" href="../installation.html">Installation</a></li><li><a class="nav-link" href="../quickstart.html">Quick Start</a></li><li><a class="nav-link" href="../architecture.html">Architecture</a></li><li><a class="nav-link" href="../api/index.html">API</a></li><li><a class="nav-link" href="../configuration.html">Configuration</a></li><li><a class="nav-link" href="../usage.html">Usage</a></li><li><a class="nav-link" href="../testing.html">Testing</a></li><li><a class="nav-link" href="../contributing.html">Contributing</a></li><li><a class="nav-link" href="../faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="../api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="../api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="../api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="../api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="../api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="../api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link" href="../api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="../api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link active" href="../api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="../api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link" href="../api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="../api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link" href="../api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link" href="../api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link" href="../api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="../api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link" href="../api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link" href="../api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="../api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="../api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="../api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link" href="../api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="../api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="../api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="../api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="../index.html">Home</a></li><li><a href="index.html">API</a></li><li>sarpyx.processor.core.utilis</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="API: sarpyx.processor.core.utilis">
+        
+<section>
+  <h1 id="module-sarpyx_processor_core_utilis">Module: <code>sarpyx.processor.core.utilis</code></h1>
+  <p><strong>File:</strong> <code>sarpyx/processor/core/utilis.py</code></p>
+  <p>No module docstring available; module purpose is inferred from implementation.</p>
+
+  <h2 id="module-exports">Exported Symbols (<code>__all__</code>)</h2>
+  <p>No explicit <code>__all__</code> list. Public symbols inferred from implementation.</p>
+
+  <h2 id="public-functions">Public Functions (13)</h2>
+  
+<details class="api-item" id="sarpyx-processor-core-utilis-py-delete" data-searchable data-search="delete delete(path_to_delete)">
+  <summary><code>delete</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Deletes the specified file or directory.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/utilis.py:12</code></p>
+    <h3 id="sarpyx-processor-core-utilis-py-delete-signature">Signature</h3>
+    <pre><code class="language-python">delete(path_to_delete)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-delete-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>path_to_delete</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>The path to the file or directory to delete. Can be provided as a string or a pathlib.Path object.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-utilis-py-delete-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-delete-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-delete-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-utilis-py-delete-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.utilis import delete
+
+result = delete(path_to_delete=&lt;path_to_delete&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-delete-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-utilis-py-unzip" data-searchable data-search="unzip unzip(path_to_zip_file)">
+  <summary><code>unzip</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Extracts the contents of a ZIP file to the directory containing the ZIP file.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/utilis.py:36</code></p>
+    <h3 id="sarpyx-processor-core-utilis-py-unzip-signature">Signature</h3>
+    <pre><code class="language-python">unzip(path_to_zip_file)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-unzip-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>path_to_zip_file</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>The file path to the ZIP file to be extracted.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-utilis-py-unzip-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>None</p>
+    <h3 id="sarpyx-processor-core-utilis-py-unzip-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-unzip-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-utilis-py-unzip-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.utilis import unzip
+
+result = unzip(path_to_zip_file=&lt;path_to_zip_file&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-unzip-edge-cases">Edge Cases</h3>
+    <p>Documented return may be None for some execution paths.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-utilis-py-delprod" data-searchable data-search="delProd delProd(prodToDelete)">
+  <summary><code>delProd</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Deletes a product file and its associated data folder, while ensuring the last</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/utilis.py:51</code></p>
+    <h3 id="sarpyx-processor-core-utilis-py-delprod-signature">Signature</h3>
+    <pre><code class="language-python">delProd(prodToDelete)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-delprod-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>prodToDelete</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>The product file to delete. Can be a Path object or a string representing the file path.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-utilis-py-delprod-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-delprod-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-delprod-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-utilis-py-delprod-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.utilis import delProd
+
+result = delProd(prodToDelete=&lt;prodToDelete&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-delprod-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-utilis-py-command-line" data-searchable data-search="command_line command_line(cmd: str)">
+  <summary><code>command_line</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Executes a shell command provided as a string and prints its output.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/utilis.py:72</code></p>
+    <h3 id="sarpyx-processor-core-utilis-py-command-line-signature">Signature</h3>
+    <pre><code class="language-python">command_line(cmd: str)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-command-line-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>cmd</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>The shell command to execute. The command should be provided as a single string, with arguments separated by spaces.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-utilis-py-command-line-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-command-line-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-command-line-side-effects">Side Effects</h3>
+    <ul><li>io</li><li>subprocess</li></ul>
+    <h3 id="sarpyx-processor-core-utilis-py-command-line-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.utilis import command_line
+
+result = command_line(cmd=&lt;cmd&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-command-line-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-utilis-py-iternodes" data-searchable data-search="iterNodes iterNodes(root, Val_Dict={})">
+  <summary><code>iterNodes</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Recursively iterates through the children of an XML element tree and populates a dictionary</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/utilis.py:92</code></p>
+    <h3 id="sarpyx-processor-core-utilis-py-iternodes-signature">Signature</h3>
+    <pre><code class="language-python">iterNodes(root, Val_Dict={})</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-iternodes-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>root</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>The root element of the XML tree to iterate through.</td></tr><tr><td><code>Val_Dict</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>{}</code></td><td>A dictionary to store the tags and text values of the leaf nodes.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-utilis-py-iternodes-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>dict: The updated dictionary containing tags as keys and their corresponding text values 
+    as values from the leaf nodes of the XML tree.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-iternodes-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-iternodes-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-utilis-py-iternodes-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.utilis import iterNodes
+
+result = iterNodes(root=&lt;root&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-iternodes-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-utilis-py-get-annotations" data-searchable data-search="get_annotations get_annotations(filepath)">
+  <summary><code>get_annotations</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Retrieves the list of annotation files from the .SAFE directory.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/utilis.py:121</code></p>
+    <h3 id="sarpyx-processor-core-utilis-py-get-annotations-signature">Signature</h3>
+    <pre><code class="language-python">get_annotations(filepath)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-get-annotations-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>filepath</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-utilis-py-get-annotations-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-get-annotations-exceptions">Exceptions</h3>
+    <ul><li><code>RuntimeError</code></li><li><code>ValueError</code></li></ul>
+    <h3 id="sarpyx-processor-core-utilis-py-get-annotations-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-utilis-py-get-annotations-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.utilis import get_annotations
+
+result = get_annotations(filepath=&lt;filepath&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-get-annotations-edge-cases">Edge Cases</h3>
+    <p>May raise: RuntimeError, ValueError.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-utilis-py-read-annotation" data-searchable data-search="read_annotation read_annotation(annotations)">
+  <summary><code>read_annotation</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Reads the content of the first annotation file.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/utilis.py:143</code></p>
+    <h3 id="sarpyx-processor-core-utilis-py-read-annotation-signature">Signature</h3>
+    <pre><code class="language-python">read_annotation(annotations)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-read-annotation-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>annotations</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-utilis-py-read-annotation-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-read-annotation-exceptions">Exceptions</h3>
+    <ul><li><code>RuntimeError</code></li></ul>
+    <h3 id="sarpyx-processor-core-utilis-py-read-annotation-side-effects">Side Effects</h3>
+    <ul><li>filesystem</li></ul>
+    <h3 id="sarpyx-processor-core-utilis-py-read-annotation-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.utilis import read_annotation
+
+result = read_annotation(annotations=&lt;annotations&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-read-annotation-edge-cases">Edge Cases</h3>
+    <p>May raise: RuntimeError.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-utilis-py-create-complex-image-from-file" data-searchable data-search="create_complex_image_from_file create_complex_image_from_file(i_path, q_path)">
+  <summary><code>create_complex_image_from_file</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Create a complex image array from the in-phase and quadrature components files in a beam-dimap file.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/utilis.py:157</code></p>
+    <h3 id="sarpyx-processor-core-utilis-py-create-complex-image-from-file-signature">Signature</h3>
+    <pre><code class="language-python">create_complex_image_from_file(i_path, q_path)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-create-complex-image-from-file-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>i_path</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>q_path</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-utilis-py-create-complex-image-from-file-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-create-complex-image-from-file-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-create-complex-image-from-file-side-effects">Side Effects</h3>
+    <ul><li>filesystem</li></ul>
+    <h3 id="sarpyx-processor-core-utilis-py-create-complex-image-from-file-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.utilis import create_complex_image_from_file
+
+result = create_complex_image_from_file(i_path=&lt;i_path&gt;, q_path=&lt;q_path&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-create-complex-image-from-file-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-utilis-py-get-image-shape-from-file" data-searchable data-search="get_image_shape_from_file get_image_shape_from_file(img_path)">
+  <summary><code>get_image_shape_from_file</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Return (nRows, nCols) of an ENVI/rasterio image without loading data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/utilis.py:176</code></p>
+    <h3 id="sarpyx-processor-core-utilis-py-get-image-shape-from-file-signature">Signature</h3>
+    <pre><code class="language-python">get_image_shape_from_file(img_path)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-get-image-shape-from-file-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>img_path</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-utilis-py-get-image-shape-from-file-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-get-image-shape-from-file-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-get-image-shape-from-file-side-effects">Side Effects</h3>
+    <ul><li>filesystem</li></ul>
+    <h3 id="sarpyx-processor-core-utilis-py-get-image-shape-from-file-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.utilis import get_image_shape_from_file
+
+result = get_image_shape_from_file(img_path=&lt;img_path&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-get-image-shape-from-file-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-utilis-py-randomize-subset-origins" data-searchable data-search="randomize_subset_origins randomize_subset_origins(file_path, subset_count=500, sub_dims=1024)">
+  <summary><code>randomize_subset_origins</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Get set of random origins for subsetting to, adjusted to image shape and desired subset dimension (square subset)</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/utilis.py:184</code></p>
+    <h3 id="sarpyx-processor-core-utilis-py-randomize-subset-origins-signature">Signature</h3>
+    <pre><code class="language-python">randomize_subset_origins(file_path, subset_count=500, sub_dims=1024)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-randomize-subset-origins-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>file_path</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>subset_count</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>500</code></td><td>inferred from implementation.</td></tr><tr><td><code>sub_dims</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>1024</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-utilis-py-randomize-subset-origins-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-randomize-subset-origins-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-randomize-subset-origins-side-effects">Side Effects</h3>
+    <ul><li>filesystem</li></ul>
+    <h3 id="sarpyx-processor-core-utilis-py-randomize-subset-origins-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.utilis import randomize_subset_origins
+
+result = randomize_subset_origins(file_path=&lt;file_path&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-randomize-subset-origins-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-utilis-py-find-measurement-image" data-searchable data-search="find_measurement_image find_measurement_image(asset_path)">
+  <summary><code>find_measurement_image</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Get path to a tiff image for an asset.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/utilis.py:198</code></p>
+    <h3 id="sarpyx-processor-core-utilis-py-find-measurement-image-signature">Signature</h3>
+    <pre><code class="language-python">find_measurement_image(asset_path)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-find-measurement-image-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>asset_path</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-utilis-py-find-measurement-image-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>Path to the first matching tiff image in the measurement folder.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-find-measurement-image-exceptions">Exceptions</h3>
+    <ul><li><code>FileNotFoundError</code></li></ul>
+    <h3 id="sarpyx-processor-core-utilis-py-find-measurement-image-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-utilis-py-find-measurement-image-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.utilis import find_measurement_image
+
+result = find_measurement_image(asset_path=&lt;asset_path&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-find-measurement-image-edge-cases">Edge Cases</h3>
+    <p>May raise: FileNotFoundError.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-utilis-py-create-complex-image-from-array" data-searchable data-search="create_complex_image_from_array create_complex_image_from_array(i_image, q_image)">
+  <summary><code>create_complex_image_from_array</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Create a complex64 image array from in-phase and quadrature numpy arrays.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/utilis.py:213</code></p>
+    <h3 id="sarpyx-processor-core-utilis-py-create-complex-image-from-array-signature">Signature</h3>
+    <pre><code class="language-python">create_complex_image_from_array(i_image, q_image)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-create-complex-image-from-array-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>i_image</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>q_image</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-utilis-py-create-complex-image-from-array-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-create-complex-image-from-array-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-create-complex-image-from-array-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-utilis-py-create-complex-image-from-array-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.utilis import create_complex_image_from_array
+
+result = create_complex_image_from_array(i_image=&lt;i_image&gt;, q_image=&lt;q_image&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-create-complex-image-from-array-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-utilis-py-check-file" data-searchable data-search="check_file check_file(file_path, max_retries=5, retry_delay=0.5)">
+  <summary><code>check_file</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Check for existence and completeness of input file with attempts and time delay. Returns file path.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/utilis.py:225</code></p>
+    <h3 id="sarpyx-processor-core-utilis-py-check-file-signature">Signature</h3>
+    <pre><code class="language-python">check_file(file_path, max_retries=5, retry_delay=0.5)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-check-file-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>file_path</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>max_retries</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>5</code></td><td>inferred from implementation.</td></tr><tr><td><code>retry_delay</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>0.5</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-utilis-py-check-file-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-utilis-py-check-file-exceptions">Exceptions</h3>
+    <ul><li><code>FileNotFoundError</code></li><li><code>e</code></li></ul>
+    <h3 id="sarpyx-processor-core-utilis-py-check-file-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-utilis-py-check-file-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.utilis import check_file
+
+result = check_file(file_path=&lt;file_path&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-utilis-py-check-file-edge-cases">Edge Cases</h3>
+    <p>May raise: FileNotFoundError, e. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+
+  <h2 id="public-classes">Public Classes (0)</h2>
+  <p>No public classes detected.</p>
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-02 17:41 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

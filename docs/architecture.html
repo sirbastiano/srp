@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Architecture" />
+  <title>Architecture | SARPyX Documentation</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script defer src="assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="index.html">Home</a></li><li><a class="nav-link" href="installation.html">Installation</a></li><li><a class="nav-link" href="quickstart.html">Quick Start</a></li><li><a class="nav-link active" href="architecture.html">Architecture</a></li><li><a class="nav-link" href="api/index.html">API</a></li><li><a class="nav-link" href="configuration.html">Configuration</a></li><li><a class="nav-link" href="usage.html">Usage</a></li><li><a class="nav-link" href="testing.html">Testing</a></li><li><a class="nav-link" href="contributing.html">Contributing</a></li><li><a class="nav-link" href="faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link" href="api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link" href="api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link" href="api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link" href="api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link" href="api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link" href="api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link" href="api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link" href="api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link" href="api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link" href="api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link" href="api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link" href="api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link" href="api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link" href="api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link" href="api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link" href="api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link" href="api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link" href="api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link" href="api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="index.html">Home</a></li><li>Architecture</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="Architecture">
+        
+<section>
+  <h1 id="architecture">Architecture</h1>
+  <h2 id="folder-structure">Folder Structure</h2>
+  <pre><code class="language-text">sarpyx/
+  cli/
+    __init__.py
+    algorithms/AdaptiveThresholding.py
+    algorithms/__init__.py
+    decode.py
+    focus.py
+    main.py
+    shipdet.py
+    unzip.py
+    upload.py
+    utils.py
+    worldsar.py
+  processor/
+    __init__.py
+    algorithms/__init__.py
+    algorithms/backprojection.py
+    algorithms/constants.py
+    algorithms/mbautofocus.py
+    algorithms/rda.py
+    core/__init__.py
+    core/aux.py
+    core/code2physical.py
+    core/constants.py
+    core/decode.py
+    core/dim_updater.py
+    core/focus.py
+    core/meta.py
+    core/signal.py
+    core/spectrum.py
+    ... (14 more files)
+  root/
+    sarpyx/__init__.py
+  science/
+    __init__.py
+    indices.py
+  sla/
+    __init__.py
+    core/__init__.py
+    core/meta.py
+    core/spectrum.py
+    metrics.py
+    utilis.py
+  snapflow/
+    __init__.py
+    engine.py
+    op.py
+    snap2stamps_pipelines.py
+  utils/
+    __init__.py
+    complex_losses-OLD.py
+    dem_utils.py
+    executor.py
+    geos.py
+    grid.py
+    hf.py
+    io.py
+    losses.py
+    meta.py
+    metrics.py
+    nisar_utils.py
+    peorb.py
+    rfigen.py
+    sar_loss.py
+    up.py
+    ... (3 more files)</code></pre>
+
+  <h2 id="core-modules-and-responsibilities">Core Modules and Responsibilities</h2>
+  <table>
+    <thead><tr><th>Namespace</th><th>Modules</th><th>Representative Modules</th></tr></thead>
+    <tbody><tr><td><code>__init__.py</code></td><td>1</td><td>sarpyx.__init__</td></tr><tr><td><code>cli</code></td><td>11</td><td>sarpyx.cli.__init__, sarpyx.cli.algorithms.AdaptiveThresholding, sarpyx.cli.algorithms.__init__ ...</td></tr><tr><td><code>processor</code></td><td>30</td><td>sarpyx.processor.__init__, sarpyx.processor.algorithms.__init__, sarpyx.processor.algorithms.backprojection ...</td></tr><tr><td><code>science</code></td><td>2</td><td>sarpyx.science.__init__, sarpyx.science.indices</td></tr><tr><td><code>sla</code></td><td>6</td><td>sarpyx.sla.__init__, sarpyx.sla.core.__init__, sarpyx.sla.core.meta ...</td></tr><tr><td><code>snapflow</code></td><td>4</td><td>sarpyx.snapflow.__init__, sarpyx.snapflow.engine, sarpyx.snapflow.op ...</td></tr><tr><td><code>utils</code></td><td>19</td><td>sarpyx.utils.__init__, sarpyx.utils.complex_losses-OLD, sarpyx.utils.dem_utils ...</td></tr></tbody>
+  </table>
+
+  <h2 id="data-flow">Data Flow</h2>
+  <ol>
+    <li>Input ingestion (raw products, SAFE archives, or Zarr arrays).</li>
+    <li>Decode/focus transforms in <code>sarpyx.processor.core</code>.</li>
+    <li>Optional SNAP pipeline operations via <code>sarpyx.snapflow.engine.GPT</code>.</li>
+    <li>Persistence via Zarr and export utilities.</li>
+    <li>Metric/analysis stages in <code>sarpyx.sla</code> and <code>sarpyx.science</code>.</li>
+  </ol>
+
+  <h2 id="external-integrations">External Integrations</h2>
+  <ul>
+    <li>ESA SNAP GPT command-line tooling.</li>
+    <li>Hugging Face Hub for upload workflows.</li>
+    <li>Numerical and geospatial stack (NumPy, SciPy, rasterio, geopandas, zarr, dask).</li>
+  </ul>
+
+  <h2 id="design-patterns">Design Patterns</h2>
+  <ul>
+    <li>Command-style CLI dispatch in <code>sarpyx.cli.main</code>.</li>
+    <li>Wrapper abstraction for external GPT execution in <code>sarpyx.snapflow.engine.GPT</code>.</li>
+    <li>Pipeline orchestration helpers in <code>sarpyx.snapflow.snap2stamps_pipelines</code>.</li>
+    <li>Manager-style APIs for structured Zarr data access in <code>sarpyx.utils.zarr_utils</code>.</li>
+  </ul>
+
+  <h2 id="figma-diagram-specifications">Figma Diagram Specifications</h2>
+  <p>The following JSON blocks are export-ready structured specs for recreation in Figma.</p>
+  <h3 id="figma-high-level-system-architecture">High-level system architecture</h3><script type="application/json" id="figma-spec-high-level-system-architecture">{
+  &quot;diagram_name&quot;: &quot;High-level system architecture&quot;,
+  &quot;purpose&quot;: &quot;Show top-level package boundaries and external dependencies.&quot;,
+  &quot;nodes&quot;: [
+    {
+      &quot;id&quot;: &quot;cli&quot;,
+      &quot;label&quot;: &quot;CLI Layer&quot;,
+      &quot;type&quot;: &quot;layer&quot;
+    },
+    {
+      &quot;id&quot;: &quot;core&quot;,
+      &quot;label&quot;: &quot;Processing Core&quot;,
+      &quot;type&quot;: &quot;layer&quot;
+    },
+    {
+      &quot;id&quot;: &quot;utils&quot;,
+      &quot;label&quot;: &quot;Utilities&quot;,
+      &quot;type&quot;: &quot;layer&quot;
+    },
+    {
+      &quot;id&quot;: &quot;science&quot;,
+      &quot;label&quot;: &quot;Science Indices&quot;,
+      &quot;type&quot;: &quot;layer&quot;
+    },
+    {
+      &quot;id&quot;: &quot;sla&quot;,
+      &quot;label&quot;: &quot;Sub-look Analysis&quot;,
+      &quot;type&quot;: &quot;layer&quot;
+    },
+    {
+      &quot;id&quot;: &quot;snapflow&quot;,
+      &quot;label&quot;: &quot;SNAP Flow&quot;,
+      &quot;type&quot;: &quot;integration&quot;
+    },
+    {
+      &quot;id&quot;: &quot;ext_snap&quot;,
+      &quot;label&quot;: &quot;ESA SNAP GPT&quot;,
+      &quot;type&quot;: &quot;external&quot;
+    },
+    {
+      &quot;id&quot;: &quot;ext_hf&quot;,
+      &quot;label&quot;: &quot;Hugging Face Hub&quot;,
+      &quot;type&quot;: &quot;external&quot;
+    },
+    {
+      &quot;id&quot;: &quot;ext_io&quot;,
+      &quot;label&quot;: &quot;Filesystem / Zarr&quot;,
+      &quot;type&quot;: &quot;external&quot;
+    }
+  ],
+  &quot;edges&quot;: [
+    {
+      &quot;source&quot;: &quot;cli&quot;,
+      &quot;target&quot;: &quot;core&quot;,
+      &quot;label&quot;: &quot;decode/focus&quot;
+    },
+    {
+      &quot;source&quot;: &quot;cli&quot;,
+      &quot;target&quot;: &quot;snapflow&quot;,
+      &quot;label&quot;: &quot;shipdet/worldsar&quot;
+    },
+    {
+      &quot;source&quot;: &quot;core&quot;,
+      &quot;target&quot;: &quot;utils&quot;,
+      &quot;label&quot;: &quot;shared helpers&quot;
+    },
+    {
+      &quot;source&quot;: &quot;science&quot;,
+      &quot;target&quot;: &quot;utils&quot;,
+      &quot;label&quot;: &quot;array ops&quot;
+    },
+    {
+      &quot;source&quot;: &quot;sla&quot;,
+      &quot;target&quot;: &quot;utils&quot;,
+      &quot;label&quot;: &quot;metrics/io&quot;
+    },
+    {
+      &quot;source&quot;: &quot;snapflow&quot;,
+      &quot;target&quot;: &quot;ext_snap&quot;,
+      &quot;label&quot;: &quot;subprocess gpt&quot;
+    },
+    {
+      &quot;source&quot;: &quot;cli&quot;,
+      &quot;target&quot;: &quot;ext_hf&quot;,
+      &quot;label&quot;: &quot;upload&quot;
+    },
+    {
+      &quot;source&quot;: &quot;core&quot;,
+      &quot;target&quot;: &quot;ext_io&quot;,
+      &quot;label&quot;: &quot;read/write&quot;
+    }
+  ],
+  &quot;suggested_layout_strategy&quot;: &quot;Layered horizontal swimlanes: interfaces top, internals middle, externals bottom.&quot;,
+  &quot;suggested_dark_theme_colors&quot;: {
+    &quot;background&quot;: &quot;#0f1117&quot;,
+    &quot;surface&quot;: &quot;#171a23&quot;,
+    &quot;layer&quot;: &quot;#273044&quot;,
+    &quot;integration&quot;: &quot;#2f3a56&quot;,
+    &quot;external&quot;: &quot;#3f4b6a&quot;,
+    &quot;edge&quot;: &quot;#7aa2f7&quot;,
+    &quot;text&quot;: &quot;#e6edf3&quot;
+  },
+  &quot;component_grouping_guidance&quot;: &quot;Group package nodes by top-level namespace; keep external nodes visually separated with dashed borders.&quot;
+}</script>
+<h3 id="figma-module-dependency-graph">Module dependency graph</h3><script type="application/json" id="figma-spec-module-dependency-graph">{
+  &quot;diagram_name&quot;: &quot;Module dependency graph&quot;,
+  &quot;purpose&quot;: &quot;Show coupling between high-traffic modules.&quot;,
+  &quot;nodes&quot;: [
+    {
+      &quot;id&quot;: &quot;cli_main&quot;,
+      &quot;label&quot;: &quot;sarpyx.cli.main&quot;,
+      &quot;type&quot;: &quot;module&quot;
+    },
+    {
+      &quot;id&quot;: &quot;cli_worldsar&quot;,
+      &quot;label&quot;: &quot;sarpyx.cli.worldsar&quot;,
+      &quot;type&quot;: &quot;module&quot;
+    },
+    {
+      &quot;id&quot;: &quot;snap_engine&quot;,
+      &quot;label&quot;: &quot;sarpyx.snapflow.engine&quot;,
+      &quot;type&quot;: &quot;module&quot;
+    },
+    {
+      &quot;id&quot;: &quot;focus_core&quot;,
+      &quot;label&quot;: &quot;sarpyx.processor.core.focus&quot;,
+      &quot;type&quot;: &quot;module&quot;
+    },
+    {
+      &quot;id&quot;: &quot;decode_core&quot;,
+      &quot;label&quot;: &quot;sarpyx.processor.core.decode&quot;,
+      &quot;type&quot;: &quot;module&quot;
+    },
+    {
+      &quot;id&quot;: &quot;zarr_utils&quot;,
+      &quot;label&quot;: &quot;sarpyx.utils.zarr_utils&quot;,
+      &quot;type&quot;: &quot;module&quot;
+    },
+    {
+      &quot;id&quot;: &quot;geos&quot;,
+      &quot;label&quot;: &quot;sarpyx.utils.geos&quot;,
+      &quot;type&quot;: &quot;module&quot;
+    }
+  ],
+  &quot;edges&quot;: [
+    {
+      &quot;source&quot;: &quot;cli_main&quot;,
+      &quot;target&quot;: &quot;cli_worldsar&quot;,
+      &quot;label&quot;: &quot;dispatch&quot;
+    },
+    {
+      &quot;source&quot;: &quot;cli_worldsar&quot;,
+      &quot;target&quot;: &quot;snap_engine&quot;,
+      &quot;label&quot;: &quot;GPT wrapper&quot;
+    },
+    {
+      &quot;source&quot;: &quot;cli_worldsar&quot;,
+      &quot;target&quot;: &quot;geos&quot;,
+      &quot;label&quot;: &quot;tiling geometry&quot;
+    },
+    {
+      &quot;source&quot;: &quot;decode_core&quot;,
+      &quot;target&quot;: &quot;zarr_utils&quot;,
+      &quot;label&quot;: &quot;persist decode output&quot;
+    },
+    {
+      &quot;source&quot;: &quot;focus_core&quot;,
+      &quot;target&quot;: &quot;zarr_utils&quot;,
+      &quot;label&quot;: &quot;persist focused slices&quot;
+    }
+  ],
+  &quot;suggested_layout_strategy&quot;: &quot;Force-directed layout with edge labels; place orchestration modules at center.&quot;,
+  &quot;suggested_dark_theme_colors&quot;: {
+    &quot;background&quot;: &quot;#0f1117&quot;,
+    &quot;surface&quot;: &quot;#171a23&quot;,
+    &quot;module&quot;: &quot;#26324c&quot;,
+    &quot;edge&quot;: &quot;#8fb8ff&quot;,
+    &quot;text&quot;: &quot;#e6edf3&quot;
+  },
+  &quot;component_grouping_guidance&quot;: &quot;Color-code nodes by namespace: cli, processor, snapflow, utils.&quot;
+}</script>
+<h3 id="figma-data-flow-diagram">Data flow diagram</h3><script type="application/json" id="figma-spec-data-flow-diagram">{
+  &quot;diagram_name&quot;: &quot;Data flow diagram&quot;,
+  &quot;purpose&quot;: &quot;Describe decode-&gt;focus-&gt;analysis-&gt;export lifecycle.&quot;,
+  &quot;nodes&quot;: [
+    {
+      &quot;id&quot;: &quot;input&quot;,
+      &quot;label&quot;: &quot;Input Product (.SAFE/.dat/.zip)&quot;,
+      &quot;type&quot;: &quot;data&quot;
+    },
+    {
+      &quot;id&quot;: &quot;decode&quot;,
+      &quot;label&quot;: &quot;Decode&quot;,
+      &quot;type&quot;: &quot;process&quot;
+    },
+    {
+      &quot;id&quot;: &quot;zarr&quot;,
+      &quot;label&quot;: &quot;Decoded Zarr&quot;,
+      &quot;type&quot;: &quot;data&quot;
+    },
+    {
+      &quot;id&quot;: &quot;focus&quot;,
+      &quot;label&quot;: &quot;Focus (CoarseRDA)&quot;,
+      &quot;type&quot;: &quot;process&quot;
+    },
+    {
+      &quot;id&quot;: &quot;focused&quot;,
+      &quot;label&quot;: &quot;Focused Arrays&quot;,
+      &quot;type&quot;: &quot;data&quot;
+    },
+    {
+      &quot;id&quot;: &quot;analysis&quot;,
+      &quot;label&quot;: &quot;SLA/Science Metrics&quot;,
+      &quot;type&quot;: &quot;process&quot;
+    },
+    {
+      &quot;id&quot;: &quot;outputs&quot;,
+      &quot;label&quot;: &quot;Exports (GeoTIFF/HDF5/Zarr)&quot;,
+      &quot;type&quot;: &quot;data&quot;
+    }
+  ],
+  &quot;edges&quot;: [
+    {
+      &quot;source&quot;: &quot;input&quot;,
+      &quot;target&quot;: &quot;decode&quot;,
+      &quot;label&quot;: &quot;read&quot;
+    },
+    {
+      &quot;source&quot;: &quot;decode&quot;,
+      &quot;target&quot;: &quot;zarr&quot;,
+      &quot;label&quot;: &quot;write&quot;
+    },
+    {
+      &quot;source&quot;: &quot;zarr&quot;,
+      &quot;target&quot;: &quot;focus&quot;,
+      &quot;label&quot;: &quot;load&quot;
+    },
+    {
+      &quot;source&quot;: &quot;focus&quot;,
+      &quot;target&quot;: &quot;focused&quot;,
+      &quot;label&quot;: &quot;persist&quot;
+    },
+    {
+      &quot;source&quot;: &quot;focused&quot;,
+      &quot;target&quot;: &quot;analysis&quot;,
+      &quot;label&quot;: &quot;compute&quot;
+    },
+    {
+      &quot;source&quot;: &quot;analysis&quot;,
+      &quot;target&quot;: &quot;outputs&quot;,
+      &quot;label&quot;: &quot;export&quot;
+    }
+  ],
+  &quot;suggested_layout_strategy&quot;: &quot;Left-to-right pipeline with process nodes above data nodes.&quot;,
+  &quot;suggested_dark_theme_colors&quot;: {
+    &quot;background&quot;: &quot;#0f1117&quot;,
+    &quot;surface&quot;: &quot;#171a23&quot;,
+    &quot;process&quot;: &quot;#2f3f5f&quot;,
+    &quot;data&quot;: &quot;#3c4f77&quot;,
+    &quot;edge&quot;: &quot;#86a8ff&quot;,
+    &quot;text&quot;: &quot;#e6edf3&quot;
+  },
+  &quot;component_grouping_guidance&quot;: &quot;Group decode/focus as core processing stage; keep analysis/export as downstream stage.&quot;
+}</script>
+<h3 id="figma-request-lifecycle">Request lifecycle</h3><script type="application/json" id="figma-spec-request-lifecycle">{
+  &quot;diagram_name&quot;: &quot;Request lifecycle&quot;,
+  &quot;purpose&quot;: &quot;Model CLI request lifecycle including argument parsing, dispatch, processing, and reporting.&quot;,
+  &quot;nodes&quot;: [
+    {
+      &quot;id&quot;: &quot;argv&quot;,
+      &quot;label&quot;: &quot;CLI Args&quot;,
+      &quot;type&quot;: &quot;event&quot;
+    },
+    {
+      &quot;id&quot;: &quot;parser&quot;,
+      &quot;label&quot;: &quot;Argument Parser&quot;,
+      &quot;type&quot;: &quot;process&quot;
+    },
+    {
+      &quot;id&quot;: &quot;dispatch&quot;,
+      &quot;label&quot;: &quot;Subcommand Dispatch&quot;,
+      &quot;type&quot;: &quot;process&quot;
+    },
+    {
+      &quot;id&quot;: &quot;op&quot;,
+      &quot;label&quot;: &quot;Operation Execution&quot;,
+      &quot;type&quot;: &quot;process&quot;
+    },
+    {
+      &quot;id&quot;: &quot;log&quot;,
+      &quot;label&quot;: &quot;Logs/Status&quot;,
+      &quot;type&quot;: &quot;data&quot;
+    },
+    {
+      &quot;id&quot;: &quot;exit&quot;,
+      &quot;label&quot;: &quot;Exit Code&quot;,
+      &quot;type&quot;: &quot;event&quot;
+    }
+  ],
+  &quot;edges&quot;: [
+    {
+      &quot;source&quot;: &quot;argv&quot;,
+      &quot;target&quot;: &quot;parser&quot;,
+      &quot;label&quot;: &quot;parse&quot;
+    },
+    {
+      &quot;source&quot;: &quot;parser&quot;,
+      &quot;target&quot;: &quot;dispatch&quot;,
+      &quot;label&quot;: &quot;validate&quot;
+    },
+    {
+      &quot;source&quot;: &quot;dispatch&quot;,
+      &quot;target&quot;: &quot;op&quot;,
+      &quot;label&quot;: &quot;run handler&quot;
+    },
+    {
+      &quot;source&quot;: &quot;op&quot;,
+      &quot;target&quot;: &quot;log&quot;,
+      &quot;label&quot;: &quot;emit logs&quot;
+    },
+    {
+      &quot;source&quot;: &quot;op&quot;,
+      &quot;target&quot;: &quot;exit&quot;,
+      &quot;label&quot;: &quot;success/failure&quot;
+    }
+  ],
+  &quot;suggested_layout_strategy&quot;: &quot;Sequence-diagram style horizontal stages.&quot;,
+  &quot;suggested_dark_theme_colors&quot;: {
+    &quot;background&quot;: &quot;#0f1117&quot;,
+    &quot;surface&quot;: &quot;#171a23&quot;,
+    &quot;event&quot;: &quot;#30415f&quot;,
+    &quot;process&quot;: &quot;#2b3955&quot;,
+    &quot;data&quot;: &quot;#40557f&quot;,
+    &quot;edge&quot;: &quot;#90b4ff&quot;,
+    &quot;text&quot;: &quot;#e6edf3&quot;
+  },
+  &quot;component_grouping_guidance&quot;: &quot;Separate validation steps from execution to highlight failure boundaries.&quot;
+}</script>
+<h3 id="figma-deployment-architecture">Deployment architecture</h3><script type="application/json" id="figma-spec-deployment-architecture">{
+  &quot;diagram_name&quot;: &quot;Deployment architecture&quot;,
+  &quot;purpose&quot;: &quot;Show local and container execution topology for GitHub Pages docs and runtime services.&quot;,
+  &quot;nodes&quot;: [
+    {
+      &quot;id&quot;: &quot;dev&quot;,
+      &quot;label&quot;: &quot;Developer Host&quot;,
+      &quot;type&quot;: &quot;environment&quot;
+    },
+    {
+      &quot;id&quot;: &quot;venv&quot;,
+      &quot;label&quot;: &quot;.venv + uv&quot;,
+      &quot;type&quot;: &quot;runtime&quot;
+    },
+    {
+      &quot;id&quot;: &quot;docker&quot;,
+      &quot;label&quot;: &quot;Docker Container&quot;,
+      &quot;type&quot;: &quot;runtime&quot;
+    },
+    {
+      &quot;id&quot;: &quot;snap&quot;,
+      &quot;label&quot;: &quot;SNAP + GPT&quot;,
+      &quot;type&quot;: &quot;dependency&quot;
+    },
+    {
+      &quot;id&quot;: &quot;data&quot;,
+      &quot;label&quot;: &quot;Mounted Data/Output&quot;,
+      &quot;type&quot;: &quot;storage&quot;
+    },
+    {
+      &quot;id&quot;: &quot;pages&quot;,
+      &quot;label&quot;: &quot;GitHub Pages (docs/)&quot;,
+      &quot;type&quot;: &quot;deployment&quot;
+    }
+  ],
+  &quot;edges&quot;: [
+    {
+      &quot;source&quot;: &quot;dev&quot;,
+      &quot;target&quot;: &quot;venv&quot;,
+      &quot;label&quot;: &quot;local runs&quot;
+    },
+    {
+      &quot;source&quot;: &quot;dev&quot;,
+      &quot;target&quot;: &quot;docker&quot;,
+      &quot;label&quot;: &quot;compose&quot;
+    },
+    {
+      &quot;source&quot;: &quot;docker&quot;,
+      &quot;target&quot;: &quot;snap&quot;,
+      &quot;label&quot;: &quot;processing&quot;
+    },
+    {
+      &quot;source&quot;: &quot;docker&quot;,
+      &quot;target&quot;: &quot;data&quot;,
+      &quot;label&quot;: &quot;read/write volumes&quot;
+    },
+    {
+      &quot;source&quot;: &quot;dev&quot;,
+      &quot;target&quot;: &quot;pages&quot;,
+      &quot;label&quot;: &quot;publish static docs&quot;
+    }
+  ],
+  &quot;suggested_layout_strategy&quot;: &quot;Clustered deployment view with host and container zones.&quot;,
+  &quot;suggested_dark_theme_colors&quot;: {
+    &quot;background&quot;: &quot;#0f1117&quot;,
+    &quot;surface&quot;: &quot;#171a23&quot;,
+    &quot;environment&quot;: &quot;#2f3d5a&quot;,
+    &quot;runtime&quot;: &quot;#34476a&quot;,
+    &quot;dependency&quot;: &quot;#40557f&quot;,
+    &quot;storage&quot;: &quot;#315173&quot;,
+    &quot;deployment&quot;: &quot;#2f5b73&quot;,
+    &quot;edge&quot;: &quot;#8ab5ff&quot;,
+    &quot;text&quot;: &quot;#e6edf3&quot;
+  },
+  &quot;component_grouping_guidance&quot;: &quot;Use container boundary frames and separate deployment target frame for GitHub Pages.&quot;
+}</script>
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-02 17:41 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

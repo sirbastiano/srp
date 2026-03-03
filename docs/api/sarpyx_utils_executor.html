@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Exhaustive API reference for sarpyx.utils.executor" />
+  <title>API: sarpyx.utils.executor | SARPyX Documentation</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <script defer src="../assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="../index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">Home</a></li><li><a class="nav-link" href="../installation.html">Installation</a></li><li><a class="nav-link" href="../quickstart.html">Quick Start</a></li><li><a class="nav-link" href="../architecture.html">Architecture</a></li><li><a class="nav-link" href="../api/index.html">API</a></li><li><a class="nav-link" href="../configuration.html">Configuration</a></li><li><a class="nav-link" href="../usage.html">Usage</a></li><li><a class="nav-link" href="../testing.html">Testing</a></li><li><a class="nav-link" href="../contributing.html">Contributing</a></li><li><a class="nav-link" href="../faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="../api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="../api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="../api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="../api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="../api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="../api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link" href="../api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="../api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="../api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link" href="../api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="../api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link" href="../api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link active" href="../api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link" href="../api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link" href="../api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="../api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link" href="../api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link" href="../api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="../api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="../api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="../api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link" href="../api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="../api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="../api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="../api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="../index.html">Home</a></li><li><a href="index.html">API</a></li><li>sarpyx.utils.executor</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="API: sarpyx.utils.executor">
+        
+<section>
+  <h1 id="module-sarpyx_utils_executor">Module: <code>sarpyx.utils.executor</code></h1>
+  <p><strong>File:</strong> <code>sarpyx/utils/executor.py</code></p>
+  <p>No module docstring available; module purpose is inferred from implementation.</p>
+
+  <h2 id="module-exports">Exported Symbols (<code>__all__</code>)</h2>
+  <p>No explicit <code>__all__</code> list. Public symbols inferred from implementation.</p>
+
+  <h2 id="public-functions">Public Functions (0)</h2>
+  <p>No public top-level functions detected.</p>
+
+  <h2 id="public-classes">Public Classes (1)</h2>
+  
+<details class="api-item class-item" id="sarpyx-utils-executor-py-multiprocessexecutor" data-searchable data-search="MultiprocessExecutor class MultiprocessExecutor">
+  <summary><code>MultiprocessExecutor</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>An enhanced multiprocess executor class for parallel task execution.
+
+Features:
+- Context manager support
+- Progress tracking
+- Timeout handling
+- Error recovery
+- Result ordering preservation</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/executor.py:17</code></p>
+    <h3 id="sarpyx-utils-executor-py-multiprocessexecutor-signature">Class Signature</h3>
+    <pre><code class="language-python">class MultiprocessExecutor</code></pre>
+    <h3 id="sarpyx-utils-executor-py-multiprocessexecutor-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-executor-py-multiprocessexecutor-returns">Return Type</h3>
+    <p><code>MultiprocessExecutor</code> instances.</p>
+    <h3 id="sarpyx-utils-executor-py-multiprocessexecutor-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-executor-py-multiprocessexecutor-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-executor-py-multiprocessexecutor-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.executor import MultiprocessExecutor
+
+obj = MultiprocessExecutor(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-executor-py-multiprocessexecutor-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-executor-py-multiprocessexecutor-methods">Public Methods (4)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-executor-py-multiprocessexecutor-shutdown" data-searchable data-search="MultiprocessExecutor shutdown shutdown(self, wait: bool=True, timeout: Optional[float]=None)">
+  <summary><code>MultiprocessExecutor.shutdown</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Gracefully shutdown the executor.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/executor.py:58</code></p>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-shutdown-signature">Signature</h4>
+    <pre><code class="language-python">shutdown(self, wait: bool=True, timeout: Optional[float]=None)</code></pre>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-shutdown-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>wait</code></td><td><code>bool</code></td><td>no</td><td><code>True</code></td><td>inferred from implementation.</td></tr><tr><td><code>timeout</code></td><td><code>Optional[float]</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-shutdown-returns">Return Type</h4>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-shutdown-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-shutdown-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-shutdown-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.executor import MultiprocessExecutor
+
+# Constructor arguments are inferred from implementation.
+obj = MultiprocessExecutor(...)  # inferred from implementation
+result = obj.shutdown()</code></pre>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-shutdown-edge-cases">Edge Cases</h4>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-executor-py-multiprocessexecutor-execute-tasks" data-searchable data-search="MultiprocessExecutor execute_tasks execute_tasks(self, func: Callable, tasks: List[Any], timeout: Optional[float]=None, progress_callback: Optional[Callable[[int, int], None]]=None, preserve_order: bool=True, **kwargs) -&gt; List[Any]">
+  <summary><code>MultiprocessExecutor.execute_tasks</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Execute multiple tasks in parallel with enhanced features.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/executor.py:68</code></p>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-execute-tasks-signature">Signature</h4>
+    <pre><code class="language-python">execute_tasks(self, func: Callable, tasks: List[Any], timeout: Optional[float]=None, progress_callback: Optional[Callable[[int, int], None]]=None, preserve_order: bool=True, **kwargs) -&gt; List[Any]</code></pre>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-execute-tasks-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>func</code></td><td><code>Callable</code></td><td>yes</td><td><code>-</code></td><td>Function to execute for each task</td></tr><tr><td><code>tasks</code></td><td><code>List[Any]</code></td><td>yes</td><td><code>-</code></td><td>List of task arguments</td></tr><tr><td><code>timeout</code></td><td><code>Optional[float]</code></td><td>no</td><td><code>None</code></td><td>Timeout for individual tasks (overrides default)</td></tr><tr><td><code>progress_callback</code></td><td><code>Optional[Callable[[int, int], None]]</code></td><td>no</td><td><code>None</code></td><td>Callback function called with (completed, total)</td></tr><tr><td><code>preserve_order</code></td><td><code>bool</code></td><td>no</td><td><code>True</code></td><td>Whether to preserve the original order of results</td></tr><tr><td><code>**kwargs</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>-</code></td><td>Additional keyword arguments for the function</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-execute-tasks-returns">Return Type</h4>
+    <p><code>List[Any]</code></p>
+    <p>List of results from task execution</p>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-execute-tasks-exceptions">Exceptions</h4>
+    <ul><li><code>RuntimeError</code></li></ul>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-execute-tasks-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-execute-tasks-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.executor import MultiprocessExecutor
+
+# Constructor arguments are inferred from implementation.
+obj = MultiprocessExecutor(...)  # inferred from implementation
+result = obj.execute_tasks(func=&lt;func&gt;, tasks=&lt;tasks&gt;)</code></pre>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-execute-tasks-edge-cases">Edge Cases</h4>
+    <p>May raise: RuntimeError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-executor-py-multiprocessexecutor-map" data-searchable data-search="MultiprocessExecutor map map(self, func: Callable, iterable: List[Any], chunksize: int=1, timeout: Optional[float]=None) -&gt; List[Any]">
+  <summary><code>MultiprocessExecutor.map</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Apply function to every item in iterable in parallel with timeout support.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/executor.py:163</code></p>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-map-signature">Signature</h4>
+    <pre><code class="language-python">map(self, func: Callable, iterable: List[Any], chunksize: int=1, timeout: Optional[float]=None) -&gt; List[Any]</code></pre>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-map-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>func</code></td><td><code>Callable</code></td><td>yes</td><td><code>-</code></td><td>Function to apply</td></tr><tr><td><code>iterable</code></td><td><code>List[Any]</code></td><td>yes</td><td><code>-</code></td><td>Items to process</td></tr><tr><td><code>chunksize</code></td><td><code>int</code></td><td>no</td><td><code>1</code></td><td>Number of items per chunk</td></tr><tr><td><code>timeout</code></td><td><code>Optional[float]</code></td><td>no</td><td><code>None</code></td><td>Timeout for the entire operation</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-map-returns">Return Type</h4>
+    <p><code>List[Any]</code></p>
+    <p>List of results</p>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-map-exceptions">Exceptions</h4>
+    <ul><li><code>RuntimeError</code></li></ul>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-map-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-map-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.executor import MultiprocessExecutor
+
+# Constructor arguments are inferred from implementation.
+obj = MultiprocessExecutor(...)  # inferred from implementation
+result = obj.map(func=&lt;func&gt;, iterable=&lt;iterable&gt;)</code></pre>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-map-edge-cases">Edge Cases</h4>
+    <p>May raise: RuntimeError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-executor-py-multiprocessexecutor-submit-single" data-searchable data-search="MultiprocessExecutor submit_single submit_single(self, func: Callable, *args, timeout: Optional[float]=None, **kwargs) -&gt; Any">
+  <summary><code>MultiprocessExecutor.submit_single</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Submit a single task and wait for result.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/executor.py:210</code></p>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-submit-single-signature">Signature</h4>
+    <pre><code class="language-python">submit_single(self, func: Callable, *args, timeout: Optional[float]=None, **kwargs) -&gt; Any</code></pre>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-submit-single-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>func</code></td><td><code>Callable</code></td><td>yes</td><td><code>-</code></td><td>Function to execute</td></tr><tr><td><code>*args</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>-</code></td><td>Positional arguments</td></tr><tr><td><code>timeout</code></td><td><code>Optional[float]</code></td><td>no</td><td><code>None</code></td><td>Timeout for the task</td></tr><tr><td><code>**kwargs</code></td><td><code>inferred from implementation</code></td><td>no</td><td><code>-</code></td><td>Keyword arguments</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-submit-single-returns">Return Type</h4>
+    <p><code>Any</code></p>
+    <p>Task result</p>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-submit-single-exceptions">Exceptions</h4>
+    <ul><li><code>RuntimeError</code></li></ul>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-submit-single-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-submit-single-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.executor import MultiprocessExecutor
+
+# Constructor arguments are inferred from implementation.
+obj = MultiprocessExecutor(...)  # inferred from implementation
+result = obj.submit_single(func=&lt;func&gt;)</code></pre>
+    <h4 id="sarpyx-utils-executor-py-multiprocessexecutor-submit-single-edge-cases">Edge Cases</h4>
+    <p>May raise: RuntimeError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-02 17:41 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Exhaustive API reference for sarpyx.processor.core.signal" />
+  <title>API: sarpyx.processor.core.signal | SARPyX Documentation</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <script defer src="../assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="../index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">Home</a></li><li><a class="nav-link" href="../installation.html">Installation</a></li><li><a class="nav-link" href="../quickstart.html">Quick Start</a></li><li><a class="nav-link" href="../architecture.html">Architecture</a></li><li><a class="nav-link" href="../api/index.html">API</a></li><li><a class="nav-link" href="../configuration.html">Configuration</a></li><li><a class="nav-link" href="../usage.html">Usage</a></li><li><a class="nav-link" href="../testing.html">Testing</a></li><li><a class="nav-link" href="../contributing.html">Contributing</a></li><li><a class="nav-link" href="../faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="../api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="../api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="../api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="../api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="../api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="../api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link" href="../api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="../api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link active" href="../api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="../api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link" href="../api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="../api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link" href="../api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link" href="../api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link" href="../api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="../api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link" href="../api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link" href="../api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="../api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="../api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="../api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link" href="../api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="../api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="../api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="../api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="../index.html">Home</a></li><li><a href="index.html">API</a></li><li>sarpyx.processor.core.signal</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="API: sarpyx.processor.core.signal">
+        
+<section>
+  <h1 id="module-sarpyx_processor_core_signal">Module: <code>sarpyx.processor.core.signal</code></h1>
+  <p><strong>File:</strong> <code>sarpyx/processor/core/signal.py</code></p>
+  <p>Signal processing functions for Sentinel-1 Level-0 processing.
+
+This module provides signal processing functions including FFT operations,
+filtering, windowing, and other DSP utilities for SAR processing.</p>
+
+  <h2 id="module-exports">Exported Symbols (<code>__all__</code>)</h2>
+  <p>No explicit <code>__all__</code> list. Public symbols inferred from implementation.</p>
+
+  <h2 id="public-functions">Public Functions (23)</h2>
+  
+<details class="api-item" id="sarpyx-processor-core-signal-py-fft-1d" data-searchable data-search="fft_1d fft_1d(data: np.ndarray, axis: int=-1) -&gt; np.ndarray">
+  <summary><code>fft_1d</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute 1D FFT of input data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:17</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-fft-1d-signature">Signature</h3>
+    <pre><code class="language-python">fft_1d(data: np.ndarray, axis: int=-1) -&gt; np.ndarray</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-fft-1d-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Input data array</td></tr><tr><td><code>axis</code></td><td><code>int</code></td><td>no</td><td><code>-1</code></td><td>Axis along which to compute FFT</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-fft-1d-returns">Return Type</h3>
+    <p><code>np.ndarray</code></p>
+    <p>FFT of input data</p>
+    <h3 id="sarpyx-processor-core-signal-py-fft-1d-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-fft-1d-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-fft-1d-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import fft_1d
+
+result = fft_1d(data=&lt;data&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-fft-1d-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-ifft-1d" data-searchable data-search="ifft_1d ifft_1d(data: np.ndarray, axis: int=-1) -&gt; np.ndarray">
+  <summary><code>ifft_1d</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute 1D inverse FFT of input data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:31</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-ifft-1d-signature">Signature</h3>
+    <pre><code class="language-python">ifft_1d(data: np.ndarray, axis: int=-1) -&gt; np.ndarray</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-ifft-1d-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Input data array</td></tr><tr><td><code>axis</code></td><td><code>int</code></td><td>no</td><td><code>-1</code></td><td>Axis along which to compute IFFT</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-ifft-1d-returns">Return Type</h3>
+    <p><code>np.ndarray</code></p>
+    <p>IFFT of input data</p>
+    <h3 id="sarpyx-processor-core-signal-py-ifft-1d-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-ifft-1d-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-ifft-1d-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import ifft_1d
+
+result = ifft_1d(data=&lt;data&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-ifft-1d-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-fft-2d" data-searchable data-search="fft_2d fft_2d(data: np.ndarray) -&gt; np.ndarray">
+  <summary><code>fft_2d</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute 2D FFT of input data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:45</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-fft-2d-signature">Signature</h3>
+    <pre><code class="language-python">fft_2d(data: np.ndarray) -&gt; np.ndarray</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-fft-2d-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Input 2D data array</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-fft-2d-returns">Return Type</h3>
+    <p><code>np.ndarray</code></p>
+    <p>2D FFT of input data</p>
+    <h3 id="sarpyx-processor-core-signal-py-fft-2d-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-fft-2d-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-fft-2d-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import fft_2d
+
+result = fft_2d(data=&lt;data&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-fft-2d-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-ifft-2d" data-searchable data-search="ifft_2d ifft_2d(data: np.ndarray) -&gt; np.ndarray">
+  <summary><code>ifft_2d</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute 2D inverse FFT of input data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:58</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-ifft-2d-signature">Signature</h3>
+    <pre><code class="language-python">ifft_2d(data: np.ndarray) -&gt; np.ndarray</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-ifft-2d-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Input 2D data array</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-ifft-2d-returns">Return Type</h3>
+    <p><code>np.ndarray</code></p>
+    <p>2D IFFT of input data</p>
+    <h3 id="sarpyx-processor-core-signal-py-ifft-2d-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-ifft-2d-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-ifft-2d-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import ifft_2d
+
+result = ifft_2d(data=&lt;data&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-ifft-2d-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-zero-pad" data-searchable data-search="zero_pad zero_pad(data: np.ndarray, new_length: int, axis: int=-1) -&gt; np.ndarray">
+  <summary><code>zero_pad</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Zero-pad data to specified length.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:71</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-zero-pad-signature">Signature</h3>
+    <pre><code class="language-python">zero_pad(data: np.ndarray, new_length: int, axis: int=-1) -&gt; np.ndarray</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-zero-pad-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Input data array</td></tr><tr><td><code>new_length</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>Target length after padding</td></tr><tr><td><code>axis</code></td><td><code>int</code></td><td>no</td><td><code>-1</code></td><td>Axis along which to pad</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-zero-pad-returns">Return Type</h3>
+    <p><code>np.ndarray</code></p>
+    <p>Zero-padded data array</p>
+    <h3 id="sarpyx-processor-core-signal-py-zero-pad-exceptions">Exceptions</h3>
+    <ul><li><code>ValueError</code></li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-zero-pad-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-zero-pad-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import zero_pad
+
+result = zero_pad(data=&lt;data&gt;, new_length=&lt;new_length&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-zero-pad-edge-cases">Edge Cases</h3>
+    <p>May raise: ValueError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-apply-window" data-searchable data-search="apply_window apply_window(data: np.ndarray, window_type: str=&#x27;hamming&#x27;, axis: int=-1, beta: float=8.6) -&gt; np.ndarray">
+  <summary><code>apply_window</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Apply window function to data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:105</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-apply-window-signature">Signature</h3>
+    <pre><code class="language-python">apply_window(data: np.ndarray, window_type: str=&#x27;hamming&#x27;, axis: int=-1, beta: float=8.6) -&gt; np.ndarray</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-apply-window-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Input data array</td></tr><tr><td><code>window_type</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;hamming&#x27;</code></td><td>Type of window (&#x27;hamming&#x27;, &#x27;hanning&#x27;, &#x27;blackman&#x27;, &#x27;kaiser&#x27;)</td></tr><tr><td><code>axis</code></td><td><code>int</code></td><td>no</td><td><code>-1</code></td><td>Axis along which to apply window</td></tr><tr><td><code>beta</code></td><td><code>float</code></td><td>no</td><td><code>8.6</code></td><td>Beta parameter for Kaiser window</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-apply-window-returns">Return Type</h3>
+    <p><code>np.ndarray</code></p>
+    <p>Windowed data array</p>
+    <h3 id="sarpyx-processor-core-signal-py-apply-window-exceptions">Exceptions</h3>
+    <ul><li><code>ValueError</code></li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-apply-window-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-apply-window-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import apply_window
+
+result = apply_window(data=&lt;data&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-apply-window-edge-cases">Edge Cases</h3>
+    <p>May raise: ValueError. Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-bandpass-filter" data-searchable data-search="bandpass_filter bandpass_filter(data: np.ndarray, low_freq: float, high_freq: float, sample_rate: float, order: int=5) -&gt; np.ndarray">
+  <summary><code>bandpass_filter</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Apply bandpass filter to data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:143</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-bandpass-filter-signature">Signature</h3>
+    <pre><code class="language-python">bandpass_filter(data: np.ndarray, low_freq: float, high_freq: float, sample_rate: float, order: int=5) -&gt; np.ndarray</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-bandpass-filter-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Input data array</td></tr><tr><td><code>low_freq</code></td><td><code>float</code></td><td>yes</td><td><code>-</code></td><td>Low cutoff frequency (Hz)</td></tr><tr><td><code>high_freq</code></td><td><code>float</code></td><td>yes</td><td><code>-</code></td><td>High cutoff frequency (Hz)</td></tr><tr><td><code>sample_rate</code></td><td><code>float</code></td><td>yes</td><td><code>-</code></td><td>Sampling rate (Hz)</td></tr><tr><td><code>order</code></td><td><code>int</code></td><td>no</td><td><code>5</code></td><td>Filter order</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-bandpass-filter-returns">Return Type</h3>
+    <p><code>np.ndarray</code></p>
+    <p>Filtered data array</p>
+    <h3 id="sarpyx-processor-core-signal-py-bandpass-filter-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-bandpass-filter-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-bandpass-filter-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import bandpass_filter
+
+result = bandpass_filter(data=&lt;data&gt;, low_freq=&lt;low_freq&gt;, high_freq=&lt;high_freq&gt;, sample_rate=&lt;sample_rate&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-bandpass-filter-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-lowpass-filter" data-searchable data-search="lowpass_filter lowpass_filter(data: np.ndarray, cutoff_freq: float, sample_rate: float, order: int=5) -&gt; np.ndarray">
+  <summary><code>lowpass_filter</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Apply lowpass filter to data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:171</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-lowpass-filter-signature">Signature</h3>
+    <pre><code class="language-python">lowpass_filter(data: np.ndarray, cutoff_freq: float, sample_rate: float, order: int=5) -&gt; np.ndarray</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-lowpass-filter-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Input data array</td></tr><tr><td><code>cutoff_freq</code></td><td><code>float</code></td><td>yes</td><td><code>-</code></td><td>Cutoff frequency (Hz)</td></tr><tr><td><code>sample_rate</code></td><td><code>float</code></td><td>yes</td><td><code>-</code></td><td>Sampling rate (Hz)</td></tr><tr><td><code>order</code></td><td><code>int</code></td><td>no</td><td><code>5</code></td><td>Filter order</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-lowpass-filter-returns">Return Type</h3>
+    <p><code>np.ndarray</code></p>
+    <p>Filtered data array</p>
+    <h3 id="sarpyx-processor-core-signal-py-lowpass-filter-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-lowpass-filter-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-lowpass-filter-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import lowpass_filter
+
+result = lowpass_filter(data=&lt;data&gt;, cutoff_freq=&lt;cutoff_freq&gt;, sample_rate=&lt;sample_rate&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-lowpass-filter-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-highpass-filter" data-searchable data-search="highpass_filter highpass_filter(data: np.ndarray, cutoff_freq: float, sample_rate: float, order: int=5) -&gt; np.ndarray">
+  <summary><code>highpass_filter</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Apply highpass filter to data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:196</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-highpass-filter-signature">Signature</h3>
+    <pre><code class="language-python">highpass_filter(data: np.ndarray, cutoff_freq: float, sample_rate: float, order: int=5) -&gt; np.ndarray</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-highpass-filter-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Input data array</td></tr><tr><td><code>cutoff_freq</code></td><td><code>float</code></td><td>yes</td><td><code>-</code></td><td>Cutoff frequency (Hz)</td></tr><tr><td><code>sample_rate</code></td><td><code>float</code></td><td>yes</td><td><code>-</code></td><td>Sampling rate (Hz)</td></tr><tr><td><code>order</code></td><td><code>int</code></td><td>no</td><td><code>5</code></td><td>Filter order</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-highpass-filter-returns">Return Type</h3>
+    <p><code>np.ndarray</code></p>
+    <p>Filtered data array</p>
+    <h3 id="sarpyx-processor-core-signal-py-highpass-filter-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-highpass-filter-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-highpass-filter-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import highpass_filter
+
+result = highpass_filter(data=&lt;data&gt;, cutoff_freq=&lt;cutoff_freq&gt;, sample_rate=&lt;sample_rate&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-highpass-filter-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-cross-correlate" data-searchable data-search="cross_correlate cross_correlate(signal1: np.ndarray, signal2: np.ndarray, mode: str=&#x27;full&#x27;) -&gt; np.ndarray">
+  <summary><code>cross_correlate</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute cross-correlation between two signals.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:221</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-cross-correlate-signature">Signature</h3>
+    <pre><code class="language-python">cross_correlate(signal1: np.ndarray, signal2: np.ndarray, mode: str=&#x27;full&#x27;) -&gt; np.ndarray</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-cross-correlate-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>signal1</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>First input signal</td></tr><tr><td><code>signal2</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Second input signal</td></tr><tr><td><code>mode</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;full&#x27;</code></td><td>Correlation mode (&#x27;full&#x27;, &#x27;valid&#x27;, &#x27;same&#x27;)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-cross-correlate-returns">Return Type</h3>
+    <p><code>np.ndarray</code></p>
+    <p>Cross-correlation result</p>
+    <h3 id="sarpyx-processor-core-signal-py-cross-correlate-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-cross-correlate-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-cross-correlate-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import cross_correlate
+
+result = cross_correlate(signal1=&lt;signal1&gt;, signal2=&lt;signal2&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-cross-correlate-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-autocorrelate" data-searchable data-search="autocorrelate autocorrelate(signal_data: np.ndarray, max_lag: Optional[int]=None) -&gt; np.ndarray">
+  <summary><code>autocorrelate</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute autocorrelation of a signal.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:237</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-autocorrelate-signature">Signature</h3>
+    <pre><code class="language-python">autocorrelate(signal_data: np.ndarray, max_lag: Optional[int]=None) -&gt; np.ndarray</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-autocorrelate-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>signal_data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Input signal</td></tr><tr><td><code>max_lag</code></td><td><code>Optional[int]</code></td><td>no</td><td><code>None</code></td><td>Maximum lag to compute (None for full)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-autocorrelate-returns">Return Type</h3>
+    <p><code>np.ndarray</code></p>
+    <p>Autocorrelation result</p>
+    <h3 id="sarpyx-processor-core-signal-py-autocorrelate-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-autocorrelate-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-autocorrelate-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import autocorrelate
+
+result = autocorrelate(signal_data=&lt;signal_data&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-autocorrelate-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior. Documented return may be None for some execution paths.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-hilbert-transform" data-searchable data-search="hilbert_transform hilbert_transform(data: np.ndarray, axis: int=-1) -&gt; np.ndarray">
+  <summary><code>hilbert_transform</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute Hilbert transform of data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:259</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-hilbert-transform-signature">Signature</h3>
+    <pre><code class="language-python">hilbert_transform(data: np.ndarray, axis: int=-1) -&gt; np.ndarray</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-hilbert-transform-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Input data array</td></tr><tr><td><code>axis</code></td><td><code>int</code></td><td>no</td><td><code>-1</code></td><td>Axis along which to compute transform</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-hilbert-transform-returns">Return Type</h3>
+    <p><code>np.ndarray</code></p>
+    <p>Hilbert transform result</p>
+    <h3 id="sarpyx-processor-core-signal-py-hilbert-transform-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-hilbert-transform-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-hilbert-transform-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import hilbert_transform
+
+result = hilbert_transform(data=&lt;data&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-hilbert-transform-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-envelope-detection" data-searchable data-search="envelope_detection envelope_detection(data: np.ndarray, axis: int=-1) -&gt; np.ndarray">
+  <summary><code>envelope_detection</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Detect envelope of signal using Hilbert transform.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:273</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-envelope-detection-signature">Signature</h3>
+    <pre><code class="language-python">envelope_detection(data: np.ndarray, axis: int=-1) -&gt; np.ndarray</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-envelope-detection-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Input signal data</td></tr><tr><td><code>axis</code></td><td><code>int</code></td><td>no</td><td><code>-1</code></td><td>Axis along which to compute envelope</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-envelope-detection-returns">Return Type</h3>
+    <p><code>np.ndarray</code></p>
+    <p>Signal envelope</p>
+    <h3 id="sarpyx-processor-core-signal-py-envelope-detection-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-envelope-detection-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-envelope-detection-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import envelope_detection
+
+result = envelope_detection(data=&lt;data&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-envelope-detection-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-phase-unwrap" data-searchable data-search="phase_unwrap phase_unwrap(phase: np.ndarray, axis: int=-1) -&gt; np.ndarray">
+  <summary><code>phase_unwrap</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Unwrap phase discontinuities.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:288</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-phase-unwrap-signature">Signature</h3>
+    <pre><code class="language-python">phase_unwrap(phase: np.ndarray, axis: int=-1) -&gt; np.ndarray</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-phase-unwrap-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>phase</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Input phase array (radians)</td></tr><tr><td><code>axis</code></td><td><code>int</code></td><td>no</td><td><code>-1</code></td><td>Axis along which to unwrap</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-phase-unwrap-returns">Return Type</h3>
+    <p><code>np.ndarray</code></p>
+    <p>Unwrapped phase array</p>
+    <h3 id="sarpyx-processor-core-signal-py-phase-unwrap-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-phase-unwrap-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-phase-unwrap-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import phase_unwrap
+
+result = phase_unwrap(phase=&lt;phase&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-phase-unwrap-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-detrend-linear" data-searchable data-search="detrend_linear detrend_linear(data: np.ndarray, axis: int=-1) -&gt; np.ndarray">
+  <summary><code>detrend_linear</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Remove linear trend from data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:302</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-detrend-linear-signature">Signature</h3>
+    <pre><code class="language-python">detrend_linear(data: np.ndarray, axis: int=-1) -&gt; np.ndarray</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-detrend-linear-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Input data array</td></tr><tr><td><code>axis</code></td><td><code>int</code></td><td>no</td><td><code>-1</code></td><td>Axis along which to detrend</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-detrend-linear-returns">Return Type</h3>
+    <p><code>np.ndarray</code></p>
+    <p>Detrended data array</p>
+    <h3 id="sarpyx-processor-core-signal-py-detrend-linear-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-detrend-linear-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-detrend-linear-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import detrend_linear
+
+result = detrend_linear(data=&lt;data&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-detrend-linear-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-detrend-constant" data-searchable data-search="detrend_constant detrend_constant(data: np.ndarray, axis: int=-1) -&gt; np.ndarray">
+  <summary><code>detrend_constant</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Remove constant (DC) component from data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:316</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-detrend-constant-signature">Signature</h3>
+    <pre><code class="language-python">detrend_constant(data: np.ndarray, axis: int=-1) -&gt; np.ndarray</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-detrend-constant-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Input data array</td></tr><tr><td><code>axis</code></td><td><code>int</code></td><td>no</td><td><code>-1</code></td><td>Axis along which to detrend</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-detrend-constant-returns">Return Type</h3>
+    <p><code>np.ndarray</code></p>
+    <p>Detrended data array</p>
+    <h3 id="sarpyx-processor-core-signal-py-detrend-constant-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-detrend-constant-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-detrend-constant-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import detrend_constant
+
+result = detrend_constant(data=&lt;data&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-detrend-constant-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-upsample" data-searchable data-search="upsample upsample(data: np.ndarray, factor: int, axis: int=-1) -&gt; np.ndarray">
+  <summary><code>upsample</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Upsample data by integer factor using zero-padding in frequency domain.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:330</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-upsample-signature">Signature</h3>
+    <pre><code class="language-python">upsample(data: np.ndarray, factor: int, axis: int=-1) -&gt; np.ndarray</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-upsample-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Input data array</td></tr><tr><td><code>factor</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>Upsampling factor</td></tr><tr><td><code>axis</code></td><td><code>int</code></td><td>no</td><td><code>-1</code></td><td>Axis along which to upsample</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-upsample-returns">Return Type</h3>
+    <p><code>np.ndarray</code></p>
+    <p>Upsampled data array</p>
+    <h3 id="sarpyx-processor-core-signal-py-upsample-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-upsample-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-upsample-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import upsample
+
+result = upsample(data=&lt;data&gt;, factor=&lt;factor&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-upsample-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-downsample" data-searchable data-search="downsample downsample(data: np.ndarray, factor: int, axis: int=-1, anti_alias: bool=True) -&gt; np.ndarray">
+  <summary><code>downsample</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Downsample data by integer factor.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:356</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-downsample-signature">Signature</h3>
+    <pre><code class="language-python">downsample(data: np.ndarray, factor: int, axis: int=-1, anti_alias: bool=True) -&gt; np.ndarray</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-downsample-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Input data array</td></tr><tr><td><code>factor</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>Downsampling factor</td></tr><tr><td><code>axis</code></td><td><code>int</code></td><td>no</td><td><code>-1</code></td><td>Axis along which to downsample</td></tr><tr><td><code>anti_alias</code></td><td><code>bool</code></td><td>no</td><td><code>True</code></td><td>Whether to apply anti-aliasing filter</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-downsample-returns">Return Type</h3>
+    <p><code>np.ndarray</code></p>
+    <p>Downsampled data array</p>
+    <h3 id="sarpyx-processor-core-signal-py-downsample-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-downsample-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-downsample-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import downsample
+
+result = downsample(data=&lt;data&gt;, factor=&lt;factor&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-downsample-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-complex-to-magnitude-phase" data-searchable data-search="complex_to_magnitude_phase complex_to_magnitude_phase(data: np.ndarray) -&gt; Tuple[np.ndarray, np.ndarray]">
+  <summary><code>complex_to_magnitude_phase</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Convert complex data to magnitude and phase.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:388</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-complex-to-magnitude-phase-signature">Signature</h3>
+    <pre><code class="language-python">complex_to_magnitude_phase(data: np.ndarray) -&gt; Tuple[np.ndarray, np.ndarray]</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-complex-to-magnitude-phase-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Complex input data</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-complex-to-magnitude-phase-returns">Return Type</h3>
+    <p><code>Tuple[np.ndarray, np.ndarray]</code></p>
+    <p>Tuple of (magnitude, phase) arrays</p>
+    <h3 id="sarpyx-processor-core-signal-py-complex-to-magnitude-phase-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-complex-to-magnitude-phase-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-complex-to-magnitude-phase-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import complex_to_magnitude_phase
+
+result = complex_to_magnitude_phase(data=&lt;data&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-complex-to-magnitude-phase-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-magnitude-phase-to-complex" data-searchable data-search="magnitude_phase_to_complex magnitude_phase_to_complex(magnitude: np.ndarray, phase: np.ndarray) -&gt; np.ndarray">
+  <summary><code>magnitude_phase_to_complex</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Convert magnitude and phase to complex data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:403</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-magnitude-phase-to-complex-signature">Signature</h3>
+    <pre><code class="language-python">magnitude_phase_to_complex(magnitude: np.ndarray, phase: np.ndarray) -&gt; np.ndarray</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-magnitude-phase-to-complex-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>magnitude</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Magnitude array</td></tr><tr><td><code>phase</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Phase array (radians)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-magnitude-phase-to-complex-returns">Return Type</h3>
+    <p><code>np.ndarray</code></p>
+    <p>Complex data array</p>
+    <h3 id="sarpyx-processor-core-signal-py-magnitude-phase-to-complex-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-magnitude-phase-to-complex-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-magnitude-phase-to-complex-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import magnitude_phase_to_complex
+
+result = magnitude_phase_to_complex(magnitude=&lt;magnitude&gt;, phase=&lt;phase&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-magnitude-phase-to-complex-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-rms" data-searchable data-search="rms rms(data: np.ndarray, axis: Optional[int]=None) -&gt; Union[float, np.ndarray]">
+  <summary><code>rms</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Compute root mean square of data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:418</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-rms-signature">Signature</h3>
+    <pre><code class="language-python">rms(data: np.ndarray, axis: Optional[int]=None) -&gt; Union[float, np.ndarray]</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-rms-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Input data array</td></tr><tr><td><code>axis</code></td><td><code>Optional[int]</code></td><td>no</td><td><code>None</code></td><td>Axis along which to compute RMS (None for all)</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-rms-returns">Return Type</h3>
+    <p><code>Union[float, np.ndarray]</code></p>
+    <p>RMS value(s)</p>
+    <h3 id="sarpyx-processor-core-signal-py-rms-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-rms-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-rms-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import rms
+
+result = rms(data=&lt;data&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-rms-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior. Documented return may be None for some execution paths.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-snr-estimate" data-searchable data-search="snr_estimate snr_estimate(signal_data: np.ndarray, noise_data: np.ndarray) -&gt; float">
+  <summary><code>snr_estimate</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Estimate signal-to-noise ratio.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:432</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-snr-estimate-signature">Signature</h3>
+    <pre><code class="language-python">snr_estimate(signal_data: np.ndarray, noise_data: np.ndarray) -&gt; float</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-snr-estimate-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>signal_data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Signal data array</td></tr><tr><td><code>noise_data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Noise data array</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-snr-estimate-returns">Return Type</h3>
+    <p><code>float</code></p>
+    <p>SNR in dB</p>
+    <h3 id="sarpyx-processor-core-signal-py-snr-estimate-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-snr-estimate-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-snr-estimate-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import snr_estimate
+
+result = snr_estimate(signal_data=&lt;signal_data&gt;, noise_data=&lt;noise_data&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-snr-estimate-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-processor-core-signal-py-frequency-shift" data-searchable data-search="frequency_shift frequency_shift(data: np.ndarray, shift_freq: float, sample_rate: float, axis: int=-1) -&gt; np.ndarray">
+  <summary><code>frequency_shift</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Apply frequency shift to data.</p>
+    <p><strong>File location:</strong> <code>sarpyx/processor/core/signal.py:453</code></p>
+    <h3 id="sarpyx-processor-core-signal-py-frequency-shift-signature">Signature</h3>
+    <pre><code class="language-python">frequency_shift(data: np.ndarray, shift_freq: float, sample_rate: float, axis: int=-1) -&gt; np.ndarray</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-frequency-shift-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>data</code></td><td><code>np.ndarray</code></td><td>yes</td><td><code>-</code></td><td>Input data array</td></tr><tr><td><code>shift_freq</code></td><td><code>float</code></td><td>yes</td><td><code>-</code></td><td>Frequency shift in Hz</td></tr><tr><td><code>sample_rate</code></td><td><code>float</code></td><td>yes</td><td><code>-</code></td><td>Sampling rate in Hz</td></tr><tr><td><code>axis</code></td><td><code>int</code></td><td>no</td><td><code>-1</code></td><td>Axis along which to apply shift</td></tr></tbody></table>
+    <h3 id="sarpyx-processor-core-signal-py-frequency-shift-returns">Return Type</h3>
+    <p><code>np.ndarray</code></p>
+    <p>Frequency-shifted data</p>
+    <h3 id="sarpyx-processor-core-signal-py-frequency-shift-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-processor-core-signal-py-frequency-shift-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-processor-core-signal-py-frequency-shift-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.processor.core.signal import frequency_shift
+
+result = frequency_shift(data=&lt;data&gt;, shift_freq=&lt;shift_freq&gt;, sample_rate=&lt;sample_rate&gt;)</code></pre>
+    <h3 id="sarpyx-processor-core-signal-py-frequency-shift-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+
+  <h2 id="public-classes">Public Classes (0)</h2>
+  <p>No public classes detected.</p>
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-02 17:41 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

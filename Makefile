@@ -31,10 +31,12 @@ SNAP_INSTALL_PARENT ?= $(CURDIR)
 # ---------- Meta ----------
 .PHONY: help \
 	check-docker check-compose check-uv check-wget check-singularity check-hf \
+	check-grid \
 	clean-venv venv install-deps install-phidown setup \
 	install-snap \
 	docker-build docker-test docker-push docker-all prune-docker \
 	recreate up-recreate up down logs ps pull push \
+	push-to-hpc \
 	sif-build sif-push sif-all sifbuid sifpush sifup \
 	clean_venv install_deps install_phidown prune_docker up_recreate
 
@@ -47,6 +49,22 @@ check-docker: ## Verify docker CLI is available
 
 check-compose: check-docker ## Verify docker compose plugin is available
 	@$(DOCKER) compose version >/dev/null 2>&1 || { echo "Error: docker compose plugin not available."; exit 1; }
+
+check-grid: ## Verify a GRID_PATH exists or fallback grid file is present
+	@if [ -n "${GRID_PATH}" ]; then \
+		if [ -f "${GRID_PATH}" ]; then \
+			echo "Using GRID_PATH=${GRID_PATH}"; \
+		else \
+			echo "Error: GRID_PATH is set but file does not exist: ${GRID_PATH}"; \
+			exit 1; \
+		fi; \
+	elif [ -f "./grid/grid_10km.geojson" ]; then \
+		echo "Using default host grid: ./grid/grid_10km.geojson"; \
+	else \
+		echo "Error: GRID_PATH is not set and ./grid/grid_10km.geojson was not found."; \
+		echo "Set GRID_PATH to a prebuilt grid_10km.geojson before running Docker Compose."; \
+		exit 1; \
+	fi
 
 check-uv: ## Verify uv is available
 	@command -v uv >/dev/null 2>&1 || { echo "Error: uv not found in PATH."; exit 1; }
@@ -136,7 +154,8 @@ sif-run:
 	apptainer run --writable-tmpfs sarpyx.sif /bin/bash
 
 
-sif-all: sif-build sif-push ## Build + upload SIF
+# sif-all: sif-build sif-push ## Build + upload SIF
+sif-all: sif-build push-to-hpc ## Build + upload SIF
 
 sifbuid: sif-build
 sifpush: sif-push
@@ -164,13 +183,15 @@ prune-docker: check-docker ## Prune local Docker data
 	$(DOCKER) system prune -a
 
 # ---------- Compose ----------
-recreate: check-compose ## Compose up with build, force recreate, and remove orphans
+compose-precheck: check-compose check-grid ## Validate docker compose and grid prerequisites
+
+recreate: compose-precheck ## Compose up with build, force recreate, and remove orphans
 	$(COMPOSE) up --build --force-recreate --remove-orphans
 
-up-recreate: check-compose ## Compose up with build and force recreate
+up-recreate: compose-precheck ## Compose up with build and force recreate
 	$(COMPOSE) up --build --force-recreate
 
-up: check-compose ## Compose up
+up: compose-precheck ## Compose up
 	$(COMPOSE) up
 
 down: check-compose ## Compose down
@@ -187,6 +208,9 @@ pull: check-compose ## Pull compose service images
 
 push: check-docker recreate ## Push image configured by DOCKER_IMAGE/DOCKER_TAG
 	$(DOCKER) push "$(DOCKER_FULL)"
+
+push-to-hpc: ## Run HPC upload script
+	bash /shared/home/rdelprete/PythonProjects/srp/scripts/upload_sif.sh
 
 
 # ---------- Backward-compatible aliases ----------

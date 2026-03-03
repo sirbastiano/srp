@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Exhaustive API reference for sarpyx.utils.geos" />
+  <title>API: sarpyx.utils.geos | SARPyX Documentation</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <script defer src="../assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="../index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">Home</a></li><li><a class="nav-link" href="../installation.html">Installation</a></li><li><a class="nav-link" href="../quickstart.html">Quick Start</a></li><li><a class="nav-link" href="../architecture.html">Architecture</a></li><li><a class="nav-link" href="../api/index.html">API</a></li><li><a class="nav-link" href="../configuration.html">Configuration</a></li><li><a class="nav-link" href="../usage.html">Usage</a></li><li><a class="nav-link" href="../testing.html">Testing</a></li><li><a class="nav-link" href="../contributing.html">Contributing</a></li><li><a class="nav-link" href="../faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="../api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="../api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="../api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="../api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="../api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="../api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link" href="../api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="../api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="../api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link" href="../api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="../api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link" href="../api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link active" href="../api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link" href="../api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="../api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link" href="../api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link" href="../api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="../api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="../api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="../api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link" href="../api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="../api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="../api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="../api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="../index.html">Home</a></li><li><a href="index.html">API</a></li><li>sarpyx.utils.geos</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="API: sarpyx.utils.geos">
+        
+<section>
+  <h1 id="module-sarpyx_utils_geos">Module: <code>sarpyx.utils.geos</code></h1>
+  <p><strong>File:</strong> <code>sarpyx/utils/geos.py</code></p>
+  <p>Point containment checker for grid points within WKT polygons.</p>
+
+  <h2 id="module-exports">Exported Symbols (<code>__all__</code>)</h2>
+  <p>No explicit <code>__all__</code> list. Public symbols inferred from implementation.</p>
+
+  <h2 id="public-functions">Public Functions (6)</h2>
+  
+<details class="api-item" id="sarpyx-utils-geos-py-check-points-in-polygon" data-searchable data-search="check_points_in_polygon check_points_in_polygon(wkt_polygon: str, geojson_path: str=&#x27;/Data_large/SARGFM/grid_10km.geojson&#x27;) -&gt; List[Dict[str, Any]]">
+  <summary><code>check_points_in_polygon</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Check which points from the GeoJSON file are contained within the given WKT polygon.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/geos.py:11</code></p>
+    <h3 id="sarpyx-utils-geos-py-check-points-in-polygon-signature">Signature</h3>
+    <pre><code class="language-python">check_points_in_polygon(wkt_polygon: str, geojson_path: str=&#x27;/Data_large/SARGFM/grid_10km.geojson&#x27;) -&gt; List[Dict[str, Any]]</code></pre>
+    <h3 id="sarpyx-utils-geos-py-check-points-in-polygon-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>wkt_polygon</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>A WKT (Well-Known Text) string representing a polygon</td></tr><tr><td><code>geojson_path</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;/Data_large/SARGFM/grid_10km.geojson&#x27;</code></td><td>Path to the GeoJSON file containing point features</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-geos-py-check-points-in-polygon-returns">Return Type</h3>
+    <p><code>List[Dict[str, Any]]</code></p>
+    <p>List of feature dictionaries containing points that fall within the polygon.
+    Each feature includes properties (name, row, col, row_idx, col_idx, utm_zone, epsg)
+    and geometry (coordinates).
+
+Example:
+    &gt;&gt;&gt; wkt_poly = &quot;POLYGON((10 10, 10 20, 20 20, 20 10, 10 10))&quot;
+    &gt;&gt;&gt; contained_points = check_points_in_polygon(wkt_poly)
+    &gt;&gt;&gt; print(f&quot;Found {len(contained_points)} points&quot;)</p>
+    <h3 id="sarpyx-utils-geos-py-check-points-in-polygon-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-geos-py-check-points-in-polygon-side-effects">Side Effects</h3>
+    <ul><li>filesystem</li></ul>
+    <h3 id="sarpyx-utils-geos-py-check-points-in-polygon-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.geos import check_points_in_polygon
+
+result = check_points_in_polygon(wkt_polygon=&lt;wkt_polygon&gt;)</code></pre>
+    <h3 id="sarpyx-utils-geos-py-check-points-in-polygon-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-geos-py-get-point-names" data-searchable data-search="get_point_names get_point_names(wkt_polygon: str, geojson_path: str=&#x27;/Data_large/SARGFM/grid_10km.geojson&#x27;) -&gt; List[str]">
+  <summary><code>get_point_names</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Get the names of points contained within the given WKT polygon.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/geos.py:48</code></p>
+    <h3 id="sarpyx-utils-geos-py-get-point-names-signature">Signature</h3>
+    <pre><code class="language-python">get_point_names(wkt_polygon: str, geojson_path: str=&#x27;/Data_large/SARGFM/grid_10km.geojson&#x27;) -&gt; List[str]</code></pre>
+    <h3 id="sarpyx-utils-geos-py-get-point-names-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>wkt_polygon</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>A WKT (Well-Known Text) string representing a polygon</td></tr><tr><td><code>geojson_path</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;/Data_large/SARGFM/grid_10km.geojson&#x27;</code></td><td>Path to the GeoJSON file containing point features</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-geos-py-get-point-names-returns">Return Type</h3>
+    <p><code>List[str]</code></p>
+    <p>List of point names (e.g., [&quot;946D_176L&quot;, &quot;946D_175L&quot;, ...])</p>
+    <h3 id="sarpyx-utils-geos-py-get-point-names-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-geos-py-get-point-names-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-geos-py-get-point-names-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.geos import get_point_names
+
+result = get_point_names(wkt_polygon=&lt;wkt_polygon&gt;)</code></pre>
+    <h3 id="sarpyx-utils-geos-py-get-point-names-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-geos-py-get-point-coordinates" data-searchable data-search="get_point_coordinates get_point_coordinates(wkt_polygon: str, geojson_path: str=&#x27;/Data_large/SARGFM/grid_10km.geojson&#x27;) -&gt; List[tuple]">
+  <summary><code>get_point_coordinates</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Get the coordinates of points contained within the given WKT polygon.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/geos.py:66</code></p>
+    <h3 id="sarpyx-utils-geos-py-get-point-coordinates-signature">Signature</h3>
+    <pre><code class="language-python">get_point_coordinates(wkt_polygon: str, geojson_path: str=&#x27;/Data_large/SARGFM/grid_10km.geojson&#x27;) -&gt; List[tuple]</code></pre>
+    <h3 id="sarpyx-utils-geos-py-get-point-coordinates-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>wkt_polygon</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>A WKT (Well-Known Text) string representing a polygon</td></tr><tr><td><code>geojson_path</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;/Data_large/SARGFM/grid_10km.geojson&#x27;</code></td><td>Path to the GeoJSON file containing point features</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-geos-py-get-point-coordinates-returns">Return Type</h3>
+    <p><code>List[tuple]</code></p>
+    <p>List of coordinate tuples [(lon, lat), ...]</p>
+    <h3 id="sarpyx-utils-geos-py-get-point-coordinates-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-geos-py-get-point-coordinates-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-geos-py-get-point-coordinates-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.geos import get_point_coordinates
+
+result = get_point_coordinates(wkt_polygon=&lt;wkt_polygon&gt;)</code></pre>
+    <h3 id="sarpyx-utils-geos-py-get-point-coordinates-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-geos-py-is-point-in-contained" data-searchable data-search="is_point_in_contained is_point_in_contained(name, contained)">
+  <summary><code>is_point_in_contained</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>inferred from implementation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/geos.py:350</code></p>
+    <h3 id="sarpyx-utils-geos-py-is-point-in-contained-signature">Signature</h3>
+    <pre><code class="language-python">is_point_in_contained(name, contained)</code></pre>
+    <h3 id="sarpyx-utils-geos-py-is-point-in-contained-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>name</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>contained</code></td><td><code>inferred from implementation</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-geos-py-is-point-in-contained-returns">Return Type</h3>
+    <p><code>inferred from implementation</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-utils-geos-py-is-point-in-contained-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-geos-py-is-point-in-contained-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-geos-py-is-point-in-contained-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.geos import is_point_in_contained
+
+result = is_point_in_contained(name=&lt;name&gt;, contained=&lt;contained&gt;)</code></pre>
+    <h3 id="sarpyx-utils-geos-py-is-point-in-contained-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-geos-py-rectangle-to-wkt" data-searchable data-search="rectangle_to_wkt rectangle_to_wkt(rectangle: dict) -&gt; str">
+  <summary><code>rectangle_to_wkt</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Convert a rectangle dictionary to WKT POLYGON format.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/geos.py:358</code></p>
+    <h3 id="sarpyx-utils-geos-py-rectangle-to-wkt-signature">Signature</h3>
+    <pre><code class="language-python">rectangle_to_wkt(rectangle: dict) -&gt; str</code></pre>
+    <h3 id="sarpyx-utils-geos-py-rectangle-to-wkt-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>rectangle</code></td><td><code>dict</code></td><td>yes</td><td><code>-</code></td><td>Dictionary with keys &#x27;TL&#x27;, &#x27;TR&#x27;, &#x27;BR&#x27;, &#x27;BL&#x27;, each containing a GeoJSON Feature with geometry.coordinates [lon, lat].</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-geos-py-rectangle-to-wkt-returns">Return Type</h3>
+    <p><code>str</code></p>
+    <p>WKT POLYGON string in format &#x27;POLYGON ((lon lat, lon lat, ...))&#x27;
+    
+Example:
+    &gt;&gt;&gt; rect = {
+    ...     &#x27;TL&#x27;: {&#x27;geometry&#x27;: {&#x27;coordinates&#x27;: [32.37, -26.68]}},
+    ...     &#x27;TR&#x27;: {&#x27;geometry&#x27;: {&#x27;coordinates&#x27;: [32.47, -26.68]}},
+    ...     &#x27;BR&#x27;: {&#x27;geometry&#x27;: {&#x27;coordinates&#x27;: [32.49, -26.77]}},
+    ...     &#x27;BL&#x27;: {&#x27;geometry&#x27;: {&#x27;coordinates&#x27;: [32.39, -26.77]}}
+    ... }
+    &gt;&gt;&gt; rectangle_to_wkt(rect)
+    &#x27;POLYGON ((32.37 -26.68, 32.47 -26.68, 32.49 -26.77, 32.39 -26.77, 32.37 -26.68))&#x27;</p>
+    <h3 id="sarpyx-utils-geos-py-rectangle-to-wkt-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-geos-py-rectangle-to-wkt-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-utils-geos-py-rectangle-to-wkt-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.geos import rectangle_to_wkt
+
+result = rectangle_to_wkt(rectangle=&lt;rectangle&gt;)</code></pre>
+    <h3 id="sarpyx-utils-geos-py-rectangle-to-wkt-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-utils-geos-py-rectanglify" data-searchable data-search="rectanglify rectanglify(contained: list) -&gt; list | None">
+  <summary><code>rectanglify</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Build rectangles for cutting based on contained points.</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/geos.py:396</code></p>
+    <h3 id="sarpyx-utils-geos-py-rectanglify-signature">Signature</h3>
+    <pre><code class="language-python">rectanglify(contained: list) -&gt; list | None</code></pre>
+    <h3 id="sarpyx-utils-geos-py-rectanglify-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>contained</code></td><td><code>list</code></td><td>yes</td><td><code>-</code></td><td>A list of GeoJSON-like features, where each feature contains properties (e.g., &#x27;row&#x27;, &#x27;col&#x27;, &#x27;name&#x27;) and geometry (e.g., coordinates).</td></tr></tbody></table>
+    <h3 id="sarpyx-utils-geos-py-rectanglify-returns">Return Type</h3>
+    <p><code>list | None</code></p>
+    <p>list | None: A list of rectangles, where each rectangle is represented
+                 as a dictionary with keys &#x27;TL&#x27;, &#x27;TR&#x27;, &#x27;BR&#x27;, &#x27;BL&#x27; (top-left,
+                 top-right, bottom-right, bottom-left). Returns None if no
+                 rectangles are found.
+
+Example:
+    &gt;&gt;&gt; contained_points = [
+    ...     {&#x27;properties&#x27;: {&#x27;name&#x27;: &#x27;1U_1R&#x27;, &#x27;row&#x27;: &#x27;1U&#x27;, &#x27;col&#x27;: &#x27;1R&#x27;}, &#x27;geometry&#x27;: {&#x27;coordinates&#x27;: [0, 0]}},
+    ...     {&#x27;properties&#x27;: {&#x27;name&#x27;: &#x27;1U_2R&#x27;, &#x27;row&#x27;: &#x27;1U&#x27;, &#x27;col&#x27;: &#x27;2R&#x27;}, &#x27;geometry&#x27;: {&#x27;coordinates&#x27;: [1, 0]}},
+    ...     {&#x27;properties&#x27;: {&#x27;name&#x27;: &#x27;2U_1R&#x27;, &#x27;row&#x27;: &#x27;2U&#x27;, &#x27;col&#x27;: &#x27;1R&#x27;}, &#x27;geometry&#x27;: {&#x27;coordinates&#x27;: [0, 1]}},
+    ...     {&#x27;properties&#x27;: {&#x27;name&#x27;: &#x27;2U_2R&#x27;, &#x27;row&#x27;: &#x27;2U&#x27;, &#x27;col&#x27;: &#x27;2R&#x27;}, &#x27;geometry&#x27;: {&#x27;coordinates&#x27;: [1, 1]}}
+    ... ]
+    &gt;&gt;&gt; rectangles = rectanglify(contained_points)
+    &gt;&gt;&gt; print(rectangles)</p>
+    <h3 id="sarpyx-utils-geos-py-rectanglify-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-utils-geos-py-rectanglify-side-effects">Side Effects</h3>
+    <ul><li>io</li></ul>
+    <h3 id="sarpyx-utils-geos-py-rectanglify-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.geos import rectanglify
+
+result = rectanglify(contained=&lt;contained&gt;)</code></pre>
+    <h3 id="sarpyx-utils-geos-py-rectanglify-edge-cases">Edge Cases</h3>
+    <p>Documented return may be None for some execution paths.</p>
+  </div>
+</details>
+
+
+  <h2 id="public-classes">Public Classes (1)</h2>
+  
+<details class="api-item class-item" id="sarpyx-utils-geos-py-gridnavigator" data-searchable data-search="GridNavigator class GridNavigator">
+  <summary><code>GridNavigator</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Grid navigation utilities for moving between adjacent grid points.
+This module provides GridNavigator which navigates using only point names
+without requiring the Grid object.
+
+The grid naming convention:
+- Rows: XD (south of equator), 0U (equator), XU (north of equator)
+- Columns: XL (west of prime meridian), 0R (prime meridian), XR (east of prime meridian)
+
+Navigation:
+- North (up): Row number decreases in D hemisphere, increases in U hemisphere
+- South (down): Row number increases in D hemisphere, decreases in U hemisphere
+- East (right): Column number increases in R hemisphere, decreases in L hemisphere
+- West (left): Column number decreases in R hemisphere, increases in L hemisphere</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/geos.py:86</code></p>
+    <h3 id="sarpyx-utils-geos-py-gridnavigator-signature">Class Signature</h3>
+    <pre><code class="language-python">class GridNavigator</code></pre>
+    <h3 id="sarpyx-utils-geos-py-gridnavigator-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-utils-geos-py-gridnavigator-returns">Return Type</h3>
+    <p><code>GridNavigator</code> instances.</p>
+    <h3 id="sarpyx-utils-geos-py-gridnavigator-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-utils-geos-py-gridnavigator-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-utils-geos-py-gridnavigator-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.utils.geos import GridNavigator
+
+obj = GridNavigator(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-utils-geos-py-gridnavigator-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-utils-geos-py-gridnavigator-methods">Public Methods (8)</h3>
+    
+<details class="api-item method" id="sarpyx-utils-geos-py-gridnavigator-move-up" data-searchable data-search="GridNavigator move_up move_up(self, row: str, col: str) -&gt; str">
+  <summary><code>GridNavigator.move_up</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Get the name of the point immediately above (northward).</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/geos.py:167</code></p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-signature">Signature</h4>
+    <pre><code class="language-python">move_up(self, row: str, col: str) -&gt; str</code></pre>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>row</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Current row (e.g., &#x27;298D&#x27;, &#x27;5U&#x27;)</td></tr><tr><td><code>col</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Current column (e.g., &#x27;323R&#x27;, &#x27;10L&#x27;)</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-returns">Return Type</h4>
+    <p><code>str</code></p>
+    <p>Name of the upper point</p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.geos import GridNavigator
+
+# Constructor arguments are inferred from implementation.
+obj = GridNavigator(...)  # inferred from implementation
+result = obj.move_up(row=&lt;row&gt;, col=&lt;col&gt;)</code></pre>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-geos-py-gridnavigator-move-down" data-searchable data-search="GridNavigator move_down move_down(self, row: str, col: str) -&gt; str">
+  <summary><code>GridNavigator.move_down</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Get the name of the point immediately below (southward).</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/geos.py:197</code></p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-signature">Signature</h4>
+    <pre><code class="language-python">move_down(self, row: str, col: str) -&gt; str</code></pre>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>row</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Current row (e.g., &#x27;298D&#x27;, &#x27;5U&#x27;)</td></tr><tr><td><code>col</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Current column (e.g., &#x27;323R&#x27;, &#x27;10L&#x27;)</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-returns">Return Type</h4>
+    <p><code>str</code></p>
+    <p>Name of the lower point</p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.geos import GridNavigator
+
+# Constructor arguments are inferred from implementation.
+obj = GridNavigator(...)  # inferred from implementation
+result = obj.move_down(row=&lt;row&gt;, col=&lt;col&gt;)</code></pre>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-geos-py-gridnavigator-move-right" data-searchable data-search="GridNavigator move_right move_right(self, row: str, col: str) -&gt; str">
+  <summary><code>GridNavigator.move_right</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Get the name of the point immediately to the right (eastward).</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/geos.py:230</code></p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-right-signature">Signature</h4>
+    <pre><code class="language-python">move_right(self, row: str, col: str) -&gt; str</code></pre>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-right-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>row</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Current row (e.g., &#x27;298D&#x27;, &#x27;5U&#x27;)</td></tr><tr><td><code>col</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Current column (e.g., &#x27;323R&#x27;, &#x27;10L&#x27;)</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-right-returns">Return Type</h4>
+    <p><code>str</code></p>
+    <p>Name of the right point</p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-right-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-right-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-right-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.geos import GridNavigator
+
+# Constructor arguments are inferred from implementation.
+obj = GridNavigator(...)  # inferred from implementation
+result = obj.move_right(row=&lt;row&gt;, col=&lt;col&gt;)</code></pre>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-right-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-geos-py-gridnavigator-move-left" data-searchable data-search="GridNavigator move_left move_left(self, row: str, col: str) -&gt; str">
+  <summary><code>GridNavigator.move_left</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Get the name of the point immediately to the left (westward).</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/geos.py:260</code></p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-left-signature">Signature</h4>
+    <pre><code class="language-python">move_left(self, row: str, col: str) -&gt; str</code></pre>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-left-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>row</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Current row (e.g., &#x27;298D&#x27;, &#x27;5U&#x27;)</td></tr><tr><td><code>col</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Current column (e.g., &#x27;323R&#x27;, &#x27;10L&#x27;)</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-left-returns">Return Type</h4>
+    <p><code>str</code></p>
+    <p>Name of the left point</p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-left-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-left-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-left-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.geos import GridNavigator
+
+# Constructor arguments are inferred from implementation.
+obj = GridNavigator(...)  # inferred from implementation
+result = obj.move_left(row=&lt;row&gt;, col=&lt;col&gt;)</code></pre>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-left-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-geos-py-gridnavigator-move-up-right" data-searchable data-search="GridNavigator move_up_right move_up_right(self, row: str, col: str) -&gt; str">
+  <summary><code>GridNavigator.move_up_right</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Get the name of the point diagonally upper-right (north-east).</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/geos.py:290</code></p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-right-signature">Signature</h4>
+    <pre><code class="language-python">move_up_right(self, row: str, col: str) -&gt; str</code></pre>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-right-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>row</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Current row (e.g., &#x27;298D&#x27;, &#x27;5U&#x27;)</td></tr><tr><td><code>col</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Current column (e.g., &#x27;323R&#x27;, &#x27;10L&#x27;)</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-right-returns">Return Type</h4>
+    <p><code>str</code></p>
+    <p>Name of the upper-right point</p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-right-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-right-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-right-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.geos import GridNavigator
+
+# Constructor arguments are inferred from implementation.
+obj = GridNavigator(...)  # inferred from implementation
+result = obj.move_up_right(row=&lt;row&gt;, col=&lt;col&gt;)</code></pre>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-right-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-geos-py-gridnavigator-move-up-left" data-searchable data-search="GridNavigator move_up_left move_up_left(self, row: str, col: str) -&gt; str">
+  <summary><code>GridNavigator.move_up_left</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Get the name of the point diagonally upper-left (north-west).</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/geos.py:307</code></p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-left-signature">Signature</h4>
+    <pre><code class="language-python">move_up_left(self, row: str, col: str) -&gt; str</code></pre>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-left-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>row</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Current row (e.g., &#x27;298D&#x27;, &#x27;5U&#x27;)</td></tr><tr><td><code>col</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Current column (e.g., &#x27;323R&#x27;, &#x27;10L&#x27;)</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-left-returns">Return Type</h4>
+    <p><code>str</code></p>
+    <p>Name of the upper-left point</p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-left-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-left-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-left-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.geos import GridNavigator
+
+# Constructor arguments are inferred from implementation.
+obj = GridNavigator(...)  # inferred from implementation
+result = obj.move_up_left(row=&lt;row&gt;, col=&lt;col&gt;)</code></pre>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-up-left-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-geos-py-gridnavigator-move-down-right" data-searchable data-search="GridNavigator move_down_right move_down_right(self, row: str, col: str) -&gt; str">
+  <summary><code>GridNavigator.move_down_right</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Get the name of the point diagonally lower-right (south-east).</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/geos.py:321</code></p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-right-signature">Signature</h4>
+    <pre><code class="language-python">move_down_right(self, row: str, col: str) -&gt; str</code></pre>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-right-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>row</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Current row (e.g., &#x27;298D&#x27;, &#x27;5U&#x27;)</td></tr><tr><td><code>col</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Current column (e.g., &#x27;323R&#x27;, &#x27;10L&#x27;)</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-right-returns">Return Type</h4>
+    <p><code>str</code></p>
+    <p>Name of the lower-right point</p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-right-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-right-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-right-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.geos import GridNavigator
+
+# Constructor arguments are inferred from implementation.
+obj = GridNavigator(...)  # inferred from implementation
+result = obj.move_down_right(row=&lt;row&gt;, col=&lt;col&gt;)</code></pre>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-right-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item method" id="sarpyx-utils-geos-py-gridnavigator-move-down-left" data-searchable data-search="GridNavigator move_down_left move_down_left(self, row: str, col: str) -&gt; str">
+  <summary><code>GridNavigator.move_down_left</code> <span class="api-kind">method</span></summary>
+  <div class="api-body">
+    <p>Get the name of the point diagonally lower-left (south-west).</p>
+    <p><strong>File location:</strong> <code>sarpyx/utils/geos.py:335</code></p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-left-signature">Signature</h4>
+    <pre><code class="language-python">move_down_left(self, row: str, col: str) -&gt; str</code></pre>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-left-parameters">Parameters</h4>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>row</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Current row (e.g., &#x27;298D&#x27;, &#x27;5U&#x27;)</td></tr><tr><td><code>col</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>Current column (e.g., &#x27;323R&#x27;, &#x27;10L&#x27;)</td></tr></tbody></table>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-left-returns">Return Type</h4>
+    <p><code>str</code></p>
+    <p>Name of the lower-left point</p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-left-exceptions">Exceptions</h4>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-left-side-effects">Side Effects</h4>
+    <ul><li>inferred from implementation</li></ul>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-left-example">Example Usage</h4>
+    <pre><code class="language-python">from sarpyx.utils.geos import GridNavigator
+
+# Constructor arguments are inferred from implementation.
+obj = GridNavigator(...)  # inferred from implementation
+result = obj.move_down_left(row=&lt;row&gt;, col=&lt;col&gt;)</code></pre>
+    <h4 id="sarpyx-utils-geos-py-gridnavigator-move-down-left-edge-cases">Edge Cases</h4>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+  </div>
+</details>
+
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-02 17:41 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>
