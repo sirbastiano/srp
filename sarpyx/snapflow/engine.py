@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import List, Optional, Union
 from urllib import request
 import json
+from xml.sax.saxutils import escape
 
 warnings.filterwarnings('ignore')
 
@@ -215,21 +216,26 @@ class GPT:
         else:
             return 'gpt'
 
-    def _reset_command(self) -> None:
+    def _reset_command(self, source_param: str = "source") -> None:
         """Reset the command list for a new GPT operation."""
         self.current_cmd = self._base_cmd()
-        self.current_cmd.append(f'-Ssource={self.prod_path.as_posix()}')
+        self.current_cmd.append(f'-S{source_param}={self.prod_path.as_posix()}')
 
     def run_graph(
         self,
         graph_path: str | Path,
         output_path: str | Path,
         delete_graph: bool = False,
+        parameters: Optional[dict[str, str | Path | int | float | bool]] = None,
     ) -> Optional[str]:
         """Execute a standalone GPT XML graph file."""
         graph_path = Path(graph_path)
         output_path = Path(output_path)
         self.current_cmd = self._base_cmd()
+        if parameters:
+            for name, value in parameters.items():
+                rendered = json.dumps(Path(value).as_posix() if isinstance(value, Path) else value)
+                self.current_cmd.append(f"-P{name}={rendered}")
         self.current_cmd.append(graph_path.as_posix())
 
         if self._execute_command():
@@ -238,6 +244,18 @@ class GPT:
                 graph_path.unlink(missing_ok=True)
             return output_path.as_posix()
         return None
+
+    def _write_graph(
+        self,
+        suffix: str,
+        graph_xml: str,
+        output_name: Optional[str] = None,
+    ) -> tuple[Path, Path]:
+        """Persist a temporary XML graph alongside its expected output path."""
+        output_path = self._build_output_path(suffix=suffix, output_name=output_name)
+        graph_path = self.outdir / f"{output_path.stem}_graph.xml"
+        graph_path.write_text(graph_xml, encoding="utf-8")
+        return graph_path, output_path
 
     def _build_output_path(self, suffix: str, output_name: Optional[str] = None) -> Path:
         """Build the output path for a processing step.
@@ -2194,7 +2212,7 @@ class GPT:
         Returns:
             Path to output product with topographic phase removed, or None if failed.
         """
-        self._reset_command()
+        self._reset_command(source_param='sourceProduct')
         
         cmd_params = [
             f'-PorbitDegree={orbit_degree}',
@@ -2963,7 +2981,7 @@ class GPT:
         Returns:
             Path to interferogram output product, or None if failed.
         """
-        self._reset_command()
+        self._reset_command(source_param='sourceProduct')
         
         cmd_params = [
             f'-PsubtractFlatEarthPhase={str(subtract_flat_earth_phase).lower()}',
@@ -3080,6 +3098,335 @@ class GPT:
         
         self.current_cmd.append(f'Back-Geocoding {" ".join(cmd_params)}')
         return self._call(suffix='BGEO', output_name=output_name)
+
+    def topsar_coregistration(
+        self,
+        master_product: str | Path,
+        slave_product: str | Path,
+        use_esd: bool = True,
+        dem_name: str = "SRTM 3Sec",
+        dem_resampling_method: str = "BICUBIC_INTERPOLATION",
+        external_dem_file: Optional[str | Path] = None,
+        external_dem_no_data_value: float = 0.0,
+        resampling_type: str = "BISINC_5_POINT_INTERPOLATION",
+        mask_out_area_without_elevation: bool = True,
+        output_range_azimuth_offset: bool = False,
+        output_deramp_demod_phase: bool = False,
+        disable_reramp: bool = False,
+        fine_win_width_str: str = "512",
+        fine_win_height_str: str = "512",
+        fine_win_acc_azimuth: str = "16",
+        fine_win_acc_range: str = "16",
+        fine_win_oversampling: str = "128",
+        x_corr_threshold: float = 0.1,
+        coh_threshold: float = 0.3,
+        num_blocks_per_overlap: int = 10,
+        esd_estimator: str = "Periodogram",
+        weight_func: str = "Inv Quadratic",
+        temporal_baseline_type: str = "Number of images",
+        max_temporal_baseline: int = 4,
+        integration_method: str = "L1 and L2",
+        do_not_write_target_bands: bool = False,
+        use_supplied_range_shift: bool = False,
+        overall_range_shift: float = 0.0,
+        use_supplied_azimuth_shift: bool = False,
+        overall_azimuth_shift: float = 0.0,
+        output_name: Optional[str] = None,
+        keep_graph: bool = False,
+    ) -> Optional[str]:
+        """Coregister a TOPSAR master/slave pair via a temporary SNAP graph.
+
+        SNAP's Back-Geocoding operator consumes multiple inputs, so pairwise
+        TOPSAR coregistration is expressed as an XML graph with explicit master
+        and slave Read nodes followed by optional Enhanced Spectral Diversity.
+        """
+        master_path = Path(master_product)
+        slave_path = Path(slave_product)
+        if not master_path.exists():
+            raise FileNotFoundError(f"Master product path does not exist: {master_path}")
+        if not slave_path.exists():
+            raise FileNotFoundError(f"Slave product path does not exist: {slave_path}")
+
+        external_dem_value = (
+            Path(external_dem_file).as_posix() if external_dem_file else ""
+        )
+        coreg_source = "EnhancedSpectralDiversity" if use_esd else "BackGeocoding"
+        esd_node = f"""
+  <node id="EnhancedSpectralDiversity">
+    <operator>Enhanced-Spectral-Diversity</operator>
+    <sources>
+      <sourceProduct refid="BackGeocoding"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <fineWinWidthStr>{fine_win_width_str}</fineWinWidthStr>
+      <fineWinHeightStr>{fine_win_height_str}</fineWinHeightStr>
+      <fineWinAccAzimuth>{fine_win_acc_azimuth}</fineWinAccAzimuth>
+      <fineWinAccRange>{fine_win_acc_range}</fineWinAccRange>
+      <fineWinOversampling>{fine_win_oversampling}</fineWinOversampling>
+      <xCorrThreshold>{x_corr_threshold}</xCorrThreshold>
+      <cohThreshold>{coh_threshold}</cohThreshold>
+      <numBlocksPerOverlap>{num_blocks_per_overlap}</numBlocksPerOverlap>
+      <esdEstimator>{escape(esd_estimator)}</esdEstimator>
+      <weightFunc>{escape(weight_func)}</weightFunc>
+      <temporalBaselineType>{escape(temporal_baseline_type)}</temporalBaselineType>
+      <maxTemporalBaseline>{max_temporal_baseline}</maxTemporalBaseline>
+      <integrationMethod>{escape(integration_method)}</integrationMethod>
+      <doNotWriteTargetBands>{str(do_not_write_target_bands).lower()}</doNotWriteTargetBands>
+      <useSuppliedRangeShift>{str(use_supplied_range_shift).lower()}</useSuppliedRangeShift>
+      <overallRangeShift>{overall_range_shift}</overallRangeShift>
+      <useSuppliedAzimuthShift>{str(use_supplied_azimuth_shift).lower()}</useSuppliedAzimuthShift>
+      <overallAzimuthShift>{overall_azimuth_shift}</overallAzimuthShift>
+    </parameters>
+  </node>""" if use_esd else ""
+        graph_xml = f"""<graph id="topsar-coregistration">
+  <version>1.0</version>
+  <node id="ReadMaster">
+    <operator>Read</operator>
+    <sources/>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <file>${{master}}</file>
+    </parameters>
+  </node>
+  <node id="ReadSlave">
+    <operator>Read</operator>
+    <sources/>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <file>${{slave}}</file>
+    </parameters>
+  </node>
+  <node id="BackGeocoding">
+    <operator>Back-Geocoding</operator>
+    <sources>
+      <sourceProduct refid="ReadMaster"/>
+      <sourceProduct.1 refid="ReadSlave"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <demName>{escape(dem_name)}</demName>
+      <demResamplingMethod>{dem_resampling_method}</demResamplingMethod>
+      <externalDEMFile>{escape(external_dem_value)}</externalDEMFile>
+      <externalDEMNoDataValue>{external_dem_no_data_value}</externalDEMNoDataValue>
+      <resamplingType>{resampling_type}</resamplingType>
+      <maskOutAreaWithoutElevation>{str(mask_out_area_without_elevation).lower()}</maskOutAreaWithoutElevation>
+      <outputRangeAzimuthOffset>{str(output_range_azimuth_offset).lower()}</outputRangeAzimuthOffset>
+      <outputDerampDemodPhase>{str(output_deramp_demod_phase).lower()}</outputDerampDemodPhase>
+      <disableReramp>{str(disable_reramp).lower()}</disableReramp>
+    </parameters>
+  </node>
+{esd_node}
+  <node id="Write">
+    <operator>Write</operator>
+    <sources>
+      <sourceProduct refid="{coreg_source}"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <file>${{target}}</file>
+      <formatName>{self.format}</formatName>
+    </parameters>
+  </node>
+</graph>
+"""
+        graph_path, output_path = self._write_graph(
+            suffix="COREG",
+            graph_xml=graph_xml,
+            output_name=output_name,
+        )
+        return self.run_graph(
+            graph_path=graph_path,
+            output_path=output_path,
+            delete_graph=not keep_graph,
+            parameters={
+                "master": master_path,
+                "slave": slave_path,
+                "target": output_path,
+            },
+        )
+
+    def topsar_merge_products(
+        self,
+        source_products: list[str | Path],
+        selected_polarisations: Optional[List[str]] = None,
+        output_name: Optional[str] = None,
+        keep_graph: bool = False,
+    ) -> Optional[str]:
+        """Merge multiple TOPSAR products via ProductSet-Reader and TOPSAR-Merge."""
+        if len(source_products) < 2:
+            raise ValueError("topsar_merge_products requires at least two source products")
+
+        product_list = ",".join(Path(product).as_posix() for product in source_products)
+        polarisations = (
+            f"<selectedPolarisations>{','.join(selected_polarisations)}</selectedPolarisations>"
+            if selected_polarisations else
+            "<selectedPolarisations/>"
+        )
+        graph_xml = f"""<graph id="topsar-merge-products">
+  <version>1.0</version>
+  <node id="ProductSetReader">
+    <operator>ProductSet-Reader</operator>
+    <sources/>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <fileList>{escape(product_list)}</fileList>
+    </parameters>
+  </node>
+  <node id="TOPSARMerge">
+    <operator>TOPSAR-Merge</operator>
+    <sources>
+      <sourceProduct.1 refid="ProductSetReader"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      {polarisations}
+    </parameters>
+  </node>
+  <node id="Write">
+    <operator>Write</operator>
+    <sources>
+      <sourceProduct refid="TOPSARMerge"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <file>${{target}}</file>
+      <formatName>{self.format}</formatName>
+    </parameters>
+  </node>
+</graph>
+"""
+        graph_path, output_path = self._write_graph(
+            suffix="MERGE",
+            graph_xml=graph_xml,
+            output_name=output_name,
+        )
+        return self.run_graph(
+            graph_path=graph_path,
+            output_path=output_path,
+            delete_graph=not keep_graph,
+            parameters={"target": output_path},
+        )
+
+    def dem_assisted_coregistration_pair(
+        self,
+        master_product: str | Path,
+        slave_product: str | Path,
+        dem_name: str = "SRTM 3Sec",
+        dem_resampling_method: str = "BICUBIC_INTERPOLATION",
+        external_dem_file: Optional[str | Path] = None,
+        external_dem_no_data_value: float = 0.0,
+        resampling_type: str = "BISINC_5_POINT_INTERPOLATION",
+        mask_out_area_without_elevation: bool = True,
+        output_name: Optional[str] = None,
+        keep_graph: bool = False,
+    ) -> Optional[str]:
+        """Run DEM-Assisted-Coregistration for a master/slave stripmap pair."""
+        master_path = Path(master_product)
+        slave_path = Path(slave_product)
+        if not master_path.exists():
+            raise FileNotFoundError(f"Master product path does not exist: {master_path}")
+        if not slave_path.exists():
+            raise FileNotFoundError(f"Slave product path does not exist: {slave_path}")
+
+        file_list = f"{master_path.as_posix()},{slave_path.as_posix()}"
+        dem_name_value = "External DEM" if external_dem_file else dem_name
+        external_dem_value = Path(external_dem_file).as_posix() if external_dem_file else ""
+        graph_xml = f"""<graph id="dem-assisted-coregistration-pair">
+  <version>1.0</version>
+  <node id="ProductSetReader">
+    <operator>ProductSet-Reader</operator>
+    <sources/>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <fileList>{escape(file_list)}</fileList>
+    </parameters>
+  </node>
+  <node id="DEMAssistedCoregistration">
+    <operator>DEM-Assisted-Coregistration</operator>
+    <sources>
+      <sourceProduct.2 refid="ProductSetReader"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <demName>{escape(dem_name_value)}</demName>
+      <demResamplingMethod>{dem_resampling_method}</demResamplingMethod>
+      <externalDEMFile>{escape(external_dem_value)}</externalDEMFile>
+      <externalDEMNoDataValue>{external_dem_no_data_value}</externalDEMNoDataValue>
+      <resamplingType>{resampling_type}</resamplingType>
+      <maskOutAreaWithoutElevation>{str(mask_out_area_without_elevation).lower()}</maskOutAreaWithoutElevation>
+    </parameters>
+  </node>
+  <node id="Write">
+    <operator>Write</operator>
+    <sources>
+      <sourceProduct refid="DEMAssistedCoregistration"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <file>${{target}}</file>
+      <formatName>{self.format}</formatName>
+    </parameters>
+  </node>
+</graph>
+"""
+        graph_path, output_path = self._write_graph(
+            suffix="DEMCOREG",
+            graph_xml=graph_xml,
+            output_name=output_name,
+        )
+        return self.run_graph(
+            graph_path=graph_path,
+            output_path=output_path,
+            delete_graph=not keep_graph,
+            parameters={"target": output_path},
+        )
+
+    def stamps_export_pair(
+        self,
+        coreg_product: str | Path,
+        ifg_product: str | Path,
+        target_folder: str | Path,
+        psi_format: bool = True,
+        output_name: Optional[str] = None,
+        keep_graph: bool = False,
+    ) -> Optional[str]:
+        """Run StaMPS export for a coreg/IFG pair using a graph with two inputs."""
+        coreg_path = Path(coreg_product)
+        ifg_path = Path(ifg_product)
+        if not coreg_path.exists():
+            raise FileNotFoundError(f"Coregistered product path does not exist: {coreg_path}")
+        if not ifg_path.exists():
+            raise FileNotFoundError(f"Interferogram product path does not exist: {ifg_path}")
+
+        target_folder_path = Path(target_folder)
+        target_folder_path.mkdir(parents=True, exist_ok=True)
+        graph_xml = f"""<graph id="stamps-export-pair">
+  <version>1.0</version>
+  <node id="ReadCoreg">
+    <operator>Read</operator>
+    <sources/>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <file>{coreg_path.as_posix()}</file>
+    </parameters>
+  </node>
+  <node id="ReadIfg">
+    <operator>Read</operator>
+    <sources/>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <file>{ifg_path.as_posix()}</file>
+    </parameters>
+  </node>
+  <node id="StampsExport">
+    <operator>StampsExport</operator>
+    <sources>
+      <sourceProduct refid="ReadCoreg"/>
+      <sourceProduct.1 refid="ReadIfg"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <targetFolder>{target_folder_path.as_posix()}</targetFolder>
+      <psiFormat>{str(psi_format).lower()}</psiFormat>
+    </parameters>
+  </node>
+</graph>
+"""
+        marker_output = self._build_output_path(suffix="STMP", output_name=output_name)
+        graph_path = self.outdir / f"{marker_output.stem}_graph.xml"
+        graph_path.write_text(graph_xml, encoding="utf-8")
+        return self.run_graph(
+            graph_path=graph_path,
+            output_path=marker_output,
+            delete_graph=not keep_graph,
+        )
 
     def create_stack(
         self,
