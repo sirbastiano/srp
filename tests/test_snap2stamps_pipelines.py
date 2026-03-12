@@ -15,6 +15,7 @@ from sarpyx.snapflow.snap2stamps import (
     PAIRWISE_GRAPH_NAMES,
     PairProducts,
     SNAP2STAMPS_WORKFLOWS,
+    SNAP2STAMPS_WORKFLOW_INPUTS,
     prepare_pair,
     run_graph_pipeline,
     run_pair_graph_pipeline,
@@ -149,7 +150,7 @@ def test_run_pair_graph_pipeline_uses_topsar_coregistration(tmp_path: Path):
     assert calls == [{"master": pair.master, "slave": pair.slave}]
 
 
-def test_prepare_pair_runs_split_and_deburst_for_master_and_slave(
+def test_prepare_pair_defaults_to_split_only_for_master_and_slave(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ):
@@ -175,6 +176,40 @@ def test_prepare_pair_runs_split_and_deburst_for_master_and_slave(
     monkeypatch.setattr("sarpyx.snapflow.snap2stamps.run_graph_pipeline", fake_run_graph_pipeline)
 
     prepared = prepare_pair(pair=pair, outdir=tmp_path / "proc")
+
+    assert calls == [
+        (tmp_path / "proc" / "master", "split_orbit"),
+        (tmp_path / "proc" / "slave", "split_orbit"),
+    ]
+    assert prepared.master.name.endswith("_split_orbit.dim")
+    assert prepared.slave.name.endswith("_split_orbit.dim")
+
+
+def test_prepare_pair_can_opt_in_to_deburst(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    pair = PairProducts(master=_touch(tmp_path / "master.SAFE"), slave=_touch(tmp_path / "slave.SAFE"))
+    calls: list[tuple[Path, str]] = []
+
+    class FakeGPT:
+        def __init__(self, product, outdir, **kwargs):
+            self.prod_path = Path(product)
+            self.outdir = Path(outdir)
+
+    def fake_build_gpt(product, outdir, **kwargs):
+        return FakeGPT(product=product, outdir=outdir)
+
+    def fake_run_graph_pipeline(gpt, graph_name, overrides=None):
+        calls.append((gpt.outdir, graph_name))
+        gpt.prod_path = gpt.outdir / f"{Path(gpt.prod_path).stem}_{graph_name}.dim"
+        return gpt.prod_path.as_posix()
+
+    monkeypatch.setattr("sarpyx.snapflow.snap2stamps.build_gpt", fake_build_gpt)
+    monkeypatch.setattr("sarpyx.snapflow.snap2stamps.run_graph_pipeline", fake_run_graph_pipeline)
+
+    prepared = prepare_pair(
+        pair=pair,
+        outdir=tmp_path / "proc",
+        preprocess_graphs=("split_orbit", "deburst"),
+    )
 
     assert calls == [
         (tmp_path / "proc" / "master", "split_orbit"),
@@ -247,7 +282,16 @@ def test_run_pair_workflow_uses_requested_stamps_chain(
     assert out.endswith("terrain_correction.dim")
 
 
-def test_run_processing_pipeline_dispatches_to_topsar_helper(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+def test_workflow_registry_declares_pair_and_single_inputs():
+    assert SNAP2STAMPS_WORKFLOW_INPUTS["stamps_prep"] == "pair"
+    assert SNAP2STAMPS_WORKFLOW_INPUTS["psi_full"] == "pair"
+    assert SNAP2STAMPS_WORKFLOW_INPUTS["psi_post_unwrap"] == "single"
+
+
+def test_run_processing_pipeline_dispatches_named_topsar_variant(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+):
     pair = PairProducts(master=tmp_path / "master.dim", slave=tmp_path / "slave.dim")
     calls: list[dict[str, object]] = []
 
@@ -269,8 +313,95 @@ def test_run_processing_pipeline_dispatches_to_topsar_helper(monkeypatch: pytest
     assert len(calls) == 1
     assert calls[0]["pair"] == pair
     assert calls[0]["outdir"] == tmp_path / "out"
+    assert calls[0]["pipeline_name"] == "topsar_coreg_ifg_subset"
     assert calls[0]["master_count"] == 1
     assert calls[0]["burst_count"] == 2
+
+
+def test_run_topsar_coreg_ifg_honors_named_no_esd_pipeline(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+):
+    pair = PairProducts(master=tmp_path / "master.dim", slave=tmp_path / "slave.dim")
+    calls: list[tuple[str, dict[str, object]]] = []
+
+    class FakeGPT:
+        def __init__(self, product, outdir, **kwargs):
+            self.prod_path = Path(product)
+            self.outdir = Path(outdir)
+
+        def last_error_summary(self):
+            return "error"
+
+        def topsar_coregistration(self, **kwargs):
+            calls.append(("coregistration", kwargs))
+            self.prod_path = self.outdir / "coreg.dim"
+            return self.prod_path.as_posix()
+
+        def deburst(self, output_name=None):
+            calls.append(("deburst", {"output_name": output_name, "product": self.prod_path}))
+            self.prod_path = self.outdir / f"{output_name}.dim"
+            return self.prod_path.as_posix()
+
+        def interferogram(self, output_name=None):
+            calls.append(("interferogram", {"output_name": output_name}))
+            self.prod_path = self.outdir / f"{output_name}.dim"
+            return self.prod_path.as_posix()
+
+        def subset(self, **kwargs):
+            calls.append(("subset", kwargs))
+            self.prod_path = self.outdir / f"{kwargs['output_name']}.dim"
+            return self.prod_path.as_posix()
+
+        def topo_phase_removal(self, **kwargs):
+            calls.append(("topo_phase_removal", kwargs))
+            self.prod_path = self.outdir / f"{kwargs['output_name']}.dim"
+            return self.prod_path.as_posix()
+
+    monkeypatch.setattr("sarpyx.snapflow.snap2stamps.build_gpt", lambda *args, **kwargs: FakeGPT(*args, **kwargs))
+
+    result = run_processing_pipeline(
+        "topsar_coreg_ifg_no_esd",
+        pair=pair,
+        outdir=tmp_path / "out",
+        burst_count=3,
+        master_count=2,
+    )
+
+    assert result.pipeline_name == "topsar_coreg_ifg_no_esd"
+    assert calls[0][0] == "coregistration"
+    assert calls[0][1]["use_esd"] is False
+    assert all(name != "subset" for name, _ in calls)
+    assert all(name != "topo_phase_removal" for name, _ in calls)
+
+
+def test_run_topsar_coreg_ifg_ext_dem_requires_dem(tmp_path: Path):
+    pair = PairProducts(master=tmp_path / "master.dim", slave=tmp_path / "slave.dim")
+
+    with pytest.raises(ValueError, match="requires external_dem_file"):
+        run_processing_pipeline(
+            "topsar_coreg_ifg_subset_ext_dem",
+            pair=pair,
+            outdir=tmp_path / "out",
+            master_count=1,
+            burst_count=2,
+        )
+
+
+def test_run_workflow_rejects_pair_workflows(tmp_path: Path):
+    gpt = GPT(product=_touch(tmp_path / "input.SAFE"), outdir=tmp_path / "out")
+
+    with pytest.raises(ValueError, match="requires pair inputs"):
+        from sarpyx.snapflow.snap2stamps import run_workflow
+
+        run_workflow(gpt, "psi_full")
+
+
+def test_run_pair_workflow_rejects_single_input_workflows(tmp_path: Path):
+    pair = PairProducts(master=_touch(tmp_path / "master.SAFE"), slave=_touch(tmp_path / "slave.SAFE"))
+
+    with pytest.raises(ValueError, match="not pair-based"):
+        run_pair_workflow(pair=pair, outdir=tmp_path / "proc", workflow="psi_post_unwrap")
 
 
 def test_compatibility_alias_reexports_canonical_types():

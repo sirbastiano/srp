@@ -19,6 +19,7 @@ from sarpyx.snapflow.engine import GPT
 
 BranchName = Literal["topsar", "stripmap", "generic"]
 InputKind = Literal["single", "pair", "multi"]
+WorkflowInputKind = Literal["single", "pair"]
 
 
 @dataclass(frozen=True)
@@ -342,6 +343,14 @@ SNAP2STAMPS_WORKFLOWS: dict[str, tuple[str, ...]] = {
     ),
 }
 
+SNAP2STAMPS_WORKFLOW_INPUTS: dict[str, WorkflowInputKind] = {
+    "stamps_prep": "pair",
+    "psi_prep": "pair",
+    "psi_post_unwrap": "single",
+    "psi_full": "pair",
+    "sbas_full": "pair",
+}
+
 
 def list_pipeline_names(branch: BranchName | None = None) -> tuple[str, ...]:
     """Return known processing pipeline names, optionally filtered by branch."""
@@ -530,7 +539,7 @@ def prepare_pair(
     pair: PairProducts,
     outdir: str | Path,
     *,
-    preprocess_graphs: tuple[str, ...] = ("split_orbit", "deburst"),
+    preprocess_graphs: tuple[str, ...] = ("split_orbit",),
     format: str = "BEAM-DIMAP",
     gpt_path: str = "/usr/local/snap/bin/gpt",
     memory: str | None = None,
@@ -539,7 +548,7 @@ def prepare_pair(
     snap_userdir: str | Path | None = None,
     overrides: dict[str, dict[str, Any]] | None = None,
 ) -> PairProducts:
-    """Prepare master and slave independently before pairwise processing."""
+    """Prepare master and slave independently for pairwise TOPSAR processing."""
     prepared: dict[str, Path] = {}
     for role, product in (("master", pair.master), ("slave", pair.slave)):
         gpt = build_gpt(
@@ -577,11 +586,15 @@ def run_pair_workflow(
     except KeyError as exc:
         available = ", ".join(sorted(SNAP2STAMPS_WORKFLOWS))
         raise KeyError(f"Unknown workflow '{workflow}'. Available: {available}") from exc
+    if SNAP2STAMPS_WORKFLOW_INPUTS.get(workflow) != "pair":
+        raise ValueError(
+            f"Workflow '{workflow}' is not pair-based. "
+            "Use run_workflow() for single-input workflows."
+        )
 
     prepared_pair = prepare_pair(
         pair=pair,
         outdir=outdir,
-        preprocess_graphs=("split_orbit",),
         format=format,
         gpt_path=gpt_path,
         memory=memory,
@@ -628,9 +641,9 @@ def run_workflow(
         available = ", ".join(sorted(SNAP2STAMPS_WORKFLOWS))
         raise KeyError(f"Unknown workflow '{workflow}'. Available: {available}") from exc
 
-    if any(graph_name in PAIRWISE_GRAPH_NAMES for graph_name in graph_names):
+    if SNAP2STAMPS_WORKFLOW_INPUTS.get(workflow) != "single":
         raise ValueError(
-            f"Workflow '{workflow}' contains pairwise steps. "
+            f"Workflow '{workflow}' requires pair inputs. "
             "Use run_pair_workflow() with PairProducts."
         )
 
@@ -733,7 +746,12 @@ def run_processing_pipeline(
     if pipeline_name.startswith("topsar_coreg_ifg"):
         if pair is None:
             raise ValueError(f"{pipeline_name} requires pair=PairProducts(...)")
-        return run_topsar_coreg_ifg(pair=pair, **common, **kwargs)
+        return run_topsar_coreg_ifg(
+            pair=pair,
+            pipeline_name=pipeline_name,
+            **common,
+            **kwargs,
+        )
 
     if pipeline_name.startswith("topsar_export"):
         if target_folder is None:
@@ -786,8 +804,9 @@ def run_topsar_coreg_ifg(
     pair: PairProducts,
     outdir: str | Path,
     *,
-    master_count: int,
-    burst_count: int,
+    master_count: int | None = None,
+    burst_count: int | None = None,
+    pipeline_name: str | None = None,
     polygon_wkt: str | None = None,
     subset_region: str = "0,0,0,0",
     external_dem_file: str | Path | None = None,
@@ -800,13 +819,32 @@ def run_topsar_coreg_ifg(
     output_name_prefix: str = "pair",
 ) -> TopsarCoregIfgResult:
     """Run the upstream-equivalent TOPSAR coregistration/interferogram branch."""
-    pipeline_name = select_topsar_coreg_ifg_pipeline(
-        master_count=master_count,
-        burst_count=burst_count,
-        external_dem_file=external_dem_file,
-    )
-    subset_outputs = "subset" in pipeline_name
-    use_esd = "no_esd" not in pipeline_name
+    if pipeline_name is None:
+        if master_count is None or burst_count is None:
+            raise ValueError("master_count and burst_count are required when pipeline_name is not provided")
+        pipeline_name = select_topsar_coreg_ifg_pipeline(
+            master_count=master_count,
+            burst_count=burst_count,
+            external_dem_file=external_dem_file,
+        )
+
+    definition = get_pipeline_definition(pipeline_name)
+    if definition.branch != "topsar" or not pipeline_name.startswith("topsar_coreg_ifg"):
+        raise ValueError(f"Pipeline '{pipeline_name}' is not a TOPSAR coregistration/interferogram pipeline")
+
+    requires_external_dem = "_ext_dem" in pipeline_name
+    if requires_external_dem and external_dem_file is None:
+        raise ValueError(f"Pipeline '{pipeline_name}' requires external_dem_file")
+    if not requires_external_dem and external_dem_file is not None and pipeline_name.endswith("_ext_dem") is False:
+        # Allow callers to pass an external DEM only when running an ext_dem pipeline.
+        raise ValueError(
+            f"Pipeline '{pipeline_name}' does not use external_dem_file. "
+            "Select an '_ext_dem' variant or omit external_dem_file."
+        )
+
+    stages = set(definition.stages)
+    subset_outputs = "subset" in stages
+    use_esd = "enhanced_spectral_diversity" in stages
     outdir_path = Path(outdir)
 
     gpt = build_gpt(
@@ -1200,6 +1238,7 @@ __all__ = [
     "SNAP2STAMPS_GRAPH_PIPELINES",
     "SNAP2STAMPS_PIPELINES",
     "SNAP2STAMPS_WORKFLOWS",
+    "SNAP2STAMPS_WORKFLOW_INPUTS",
     "TopsarCoregIfgResult",
     "build_gpt",
     "get_pipeline_definition",
