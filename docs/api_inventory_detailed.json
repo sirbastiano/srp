@@ -18242,81 +18242,216 @@
     "all": null
   },
   {
-    "module": "sarpyx/snapflow/snap2stamps_pipelines.py",
-    "description": "snap2stamps-equivalent pipelines implemented with :mod:`sarpyx.snapflow` operators.\n\nThis module captures the operator chains used by the ``snap2stamps`` graph\ncollection (v2.0.1) and exposes them as reusable Python pipelines powered by\n:class:`sarpyx.snapflow.engine.GPT` methods.\n\nDesign goals\n------------\n- Keep each graph-like workflow as a named, composable pipeline.\n- Allow parameter overrides per operator.\n- Provide higher-level StaMPS-ready end-to-end pipelines (PSI/SBAS style).",
+    "module": "sarpyx/snapflow/snap2stamps.py",
+    "description": "Processing-only SNAP2StaMPS workflows implemented on top of :mod:`snapflow`.\n\nThis module covers the upstream SNAP2StaMPS processing branches without\nrecreating the original script/config runner UX. The focus is:\n\n- processing branch selection for TOPSAR and Stripmap data\n- reusable Python-callable helpers for the graph families used upstream\n- backward-compatible access to the narrower workflow helpers that previously\n  lived in ``snap2stamps_pipelines.py``",
     "public_functions": [
       {
-        "name": "run_graph_pipeline",
-        "doc": "Run a single snap2stamps graph-equivalent pipeline.",
-        "signature": "run_graph_pipeline(gpt: GPT, graph_name: str, overrides: dict[str, dict[str, Any]] | None=None) -> str",
+        "name": "list_pipeline_names",
+        "doc": "Return known processing pipeline names, optionally filtered by branch.",
+        "signature": "list_pipeline_names(branch: 'BranchName | None' = None) -> 'tuple[str, ...]' -> tuple[str, ...]",
         "parameters": [],
         "raw_parameters": [
           {
-            "name": "gpt",
-            "annotation": "GPT",
-            "required": true,
-            "default": null
-          },
-          {
-            "name": "graph_name",
-            "annotation": "str",
-            "required": true,
-            "default": null
-          },
-          {
-            "name": "overrides",
-            "annotation": "dict[str, dict[str, Any]] | None",
+            "name": "branch",
+            "annotation": "BranchName | None",
             "required": false,
             "default": "None"
           }
         ],
-        "returns": "str",
-        "exceptions": [
-          "KeyError"
-        ],
+        "returns": "tuple[str, ...]",
+        "exceptions": [],
         "side_effects": [
           "inferred from implementation"
         ],
-        "line": 146
+        "line": 355
       },
       {
-        "name": "run_workflow",
-        "doc": "Run a composed snap2stamps workflow (PSI/SBAS variants).",
-        "signature": "run_workflow(gpt: GPT, workflow: str, overrides: dict[str, dict[str, Any]] | None=None) -> str",
+        "name": "get_pipeline_definition",
+        "doc": "Return a pipeline definition by name.",
+        "signature": "get_pipeline_definition(name: 'str') -> 'PipelineDefinition' -> PipelineDefinition",
         "parameters": [],
         "raw_parameters": [
           {
-            "name": "gpt",
-            "annotation": "GPT",
-            "required": true,
-            "default": null
-          },
-          {
-            "name": "workflow",
+            "name": "name",
             "annotation": "str",
             "required": true,
             "default": null
+          }
+        ],
+        "returns": "PipelineDefinition",
+        "exceptions": [],
+        "side_effects": [
+          "inferred from implementation"
+        ],
+        "line": 365
+      },
+      {
+        "name": "pipeline_requires_pair",
+        "doc": "Return ``True`` when a processing branch requires explicit master/slave inputs.",
+        "signature": "pipeline_requires_pair(name: 'str') -> 'bool' -> bool",
+        "parameters": [],
+        "raw_parameters": [
+          {
+            "name": "name",
+            "annotation": "str",
+            "required": true,
+            "default": null
+          }
+        ],
+        "returns": "bool",
+        "exceptions": [],
+        "side_effects": [
+          "inferred from implementation"
+        ],
+        "line": 374
+      },
+      {
+        "name": "pipeline_requires_multi_input",
+        "doc": "Return ``True`` when a processing branch requires more than one source product.",
+        "signature": "pipeline_requires_multi_input(name: 'str') -> 'bool' -> bool",
+        "parameters": [],
+        "raw_parameters": [
+          {
+            "name": "name",
+            "annotation": "str",
+            "required": true,
+            "default": null
+          }
+        ],
+        "returns": "bool",
+        "exceptions": [],
+        "side_effects": [
+          "inferred from implementation"
+        ],
+        "line": 379
+      },
+      {
+        "name": "select_topsar_split_pipeline",
+        "doc": "Select the upstream-equivalent TOPSAR split/apply-orbit branch.",
+        "signature": "select_topsar_split_pipeline(source_count: 'int') -> 'str' -> str",
+        "parameters": [],
+        "raw_parameters": [
+          {
+            "name": "source_count",
+            "annotation": "int",
+            "required": true,
+            "default": null
+          }
+        ],
+        "returns": "str",
+        "exceptions": [],
+        "side_effects": [
+          "inferred from implementation"
+        ],
+        "line": 384
+      },
+      {
+        "name": "select_topsar_coreg_ifg_pipeline",
+        "doc": "Select the upstream-equivalent TOPSAR coreg/IFG pipeline variant.",
+        "signature": "select_topsar_coreg_ifg_pipeline(*, master_count: 'int', burst_count: 'int', external_dem_file: 'str | Path | None' = None) -> 'str' -> str",
+        "parameters": [],
+        "raw_parameters": [
+          {
+            "name": "master_count",
+            "annotation": "int",
+            "required": true,
+            "default": null,
+            "kind": "kwonly"
           },
           {
-            "name": "overrides",
-            "annotation": "dict[str, dict[str, Any]] | None",
+            "name": "burst_count",
+            "annotation": "int",
+            "required": true,
+            "default": null,
+            "kind": "kwonly"
+          },
+          {
+            "name": "external_dem_file",
+            "annotation": "str | Path | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          }
+        ],
+        "returns": "str",
+        "exceptions": [],
+        "side_effects": [
+          "inferred from implementation"
+        ],
+        "line": 391
+      },
+      {
+        "name": "select_topsar_export_pipeline",
+        "doc": "Select the upstream-equivalent TOPSAR StaMPS export branch.",
+        "signature": "select_topsar_export_pipeline(*, master_count: 'int', external_dem_file: 'str | Path | None' = None) -> 'str' -> str",
+        "parameters": [],
+        "raw_parameters": [
+          {
+            "name": "master_count",
+            "annotation": "int",
+            "required": true,
+            "default": null,
+            "kind": "kwonly"
+          },
+          {
+            "name": "external_dem_file",
+            "annotation": "str | Path | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          }
+        ],
+        "returns": "str",
+        "exceptions": [],
+        "side_effects": [
+          "inferred from implementation"
+        ],
+        "line": 413
+      },
+      {
+        "name": "select_stripmap_coreg_pipeline",
+        "doc": "Select the upstream-equivalent Stripmap coregistration branch.",
+        "signature": "select_stripmap_coreg_pipeline(external_dem_file: 'str | Path | None' = None) -> 'str' -> str",
+        "parameters": [],
+        "raw_parameters": [
+          {
+            "name": "external_dem_file",
+            "annotation": "str | Path | None",
             "required": false,
             "default": "None"
           }
         ],
         "returns": "str",
-        "exceptions": [
-          "KeyError"
-        ],
+        "exceptions": [],
         "side_effects": [
           "inferred from implementation"
         ],
-        "line": 164
+        "line": 430
+      },
+      {
+        "name": "select_stripmap_ifg_pipeline",
+        "doc": "Select the upstream-equivalent Stripmap IFG/topo branch.",
+        "signature": "select_stripmap_ifg_pipeline(external_dem_file: 'str | Path | None' = None) -> 'str' -> str",
+        "parameters": [],
+        "raw_parameters": [
+          {
+            "name": "external_dem_file",
+            "annotation": "str | Path | None",
+            "required": false,
+            "default": "None"
+          }
+        ],
+        "returns": "str",
+        "exceptions": [],
+        "side_effects": [
+          "inferred from implementation"
+        ],
+        "line": 439
       },
       {
         "name": "build_gpt",
-        "doc": "Convenience constructor aligned with snap2stamps-like batch processing.",
-        "signature": "build_gpt(product: str | Path, outdir: str | Path, format: str='BEAM-DIMAP', gpt_path: str='/usr/local/snap/bin/gpt', memory: str | None=None, parallelism: int | None=14, timeout: int | None=7200) -> GPT",
+        "doc": "Convenience constructor aligned with SNAP2StaMPS-like batch processing.",
+        "signature": "build_gpt(product: 'str | Path', outdir: 'str | Path', *, format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None) -> 'GPT' -> GPT",
         "parameters": [],
         "raw_parameters": [
           {
@@ -18365,6 +18500,13 @@
             "required": false,
             "default": "7200",
             "kind": "kwonly"
+          },
+          {
+            "name": "snap_userdir",
+            "annotation": "str | Path | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
           }
         ],
         "returns": "GPT",
@@ -18372,19 +18514,1122 @@
         "side_effects": [
           "inferred from implementation"
         ],
-        "line": 182
+        "line": 469
+      },
+      {
+        "name": "run_graph_pipeline",
+        "doc": "Run a single-input stage from the legacy graph-pipeline catalog.",
+        "signature": "run_graph_pipeline(gpt: 'GPT', graph_name: 'str', overrides: 'dict[str, dict[str, Any]] | None' = None) -> 'str' -> str",
+        "parameters": [],
+        "raw_parameters": [
+          {
+            "name": "gpt",
+            "annotation": "GPT",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "graph_name",
+            "annotation": "str",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "overrides",
+            "annotation": "dict[str, dict[str, Any]] | None",
+            "required": false,
+            "default": "None"
+          }
+        ],
+        "returns": "str",
+        "exceptions": [],
+        "side_effects": [
+          "inferred from implementation"
+        ],
+        "line": 493
+      },
+      {
+        "name": "run_pair_graph_pipeline",
+        "doc": "Run a graph pipeline that consumes explicit master and slave products.",
+        "signature": "run_pair_graph_pipeline(gpt: 'GPT', graph_name: 'str', pair: 'PairProducts', overrides: 'dict[str, dict[str, Any]] | None' = None) -> 'str' -> str",
+        "parameters": [],
+        "raw_parameters": [
+          {
+            "name": "gpt",
+            "annotation": "GPT",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "graph_name",
+            "annotation": "str",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "pair",
+            "annotation": "PairProducts",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "overrides",
+            "annotation": "dict[str, dict[str, Any]] | None",
+            "required": false,
+            "default": "None"
+          }
+        ],
+        "returns": "str",
+        "exceptions": [],
+        "side_effects": [
+          "inferred from implementation"
+        ],
+        "line": 517
+      },
+      {
+        "name": "prepare_pair",
+        "doc": "Prepare master and slave independently for pairwise TOPSAR processing.",
+        "signature": "prepare_pair(pair: 'PairProducts', outdir: 'str | Path', *, preprocess_graphs: 'tuple[str, ...]' = ('split_orbit',), format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None, overrides: 'dict[str, dict[str, Any]] | None' = None) -> 'PairProducts' -> PairProducts",
+        "parameters": [],
+        "raw_parameters": [
+          {
+            "name": "pair",
+            "annotation": "PairProducts",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "outdir",
+            "annotation": "str | Path",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "preprocess_graphs",
+            "annotation": "tuple[str, ...]",
+            "required": false,
+            "default": "('split_orbit',)",
+            "kind": "kwonly"
+          },
+          {
+            "name": "format",
+            "annotation": "str",
+            "required": false,
+            "default": "'BEAM-DIMAP'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "gpt_path",
+            "annotation": "str",
+            "required": false,
+            "default": "'/usr/local/snap/bin/gpt'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "memory",
+            "annotation": "str | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "parallelism",
+            "annotation": "int | None",
+            "required": false,
+            "default": "14",
+            "kind": "kwonly"
+          },
+          {
+            "name": "timeout",
+            "annotation": "int | None",
+            "required": false,
+            "default": "7200",
+            "kind": "kwonly"
+          },
+          {
+            "name": "snap_userdir",
+            "annotation": "str | Path | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "overrides",
+            "annotation": "dict[str, dict[str, Any]] | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          }
+        ],
+        "returns": "PairProducts",
+        "exceptions": [],
+        "side_effects": [
+          "inferred from implementation"
+        ],
+        "line": 538
+      },
+      {
+        "name": "run_pair_workflow",
+        "doc": "Run a pairwise TOPSAR workflow from split/deburst through final output.",
+        "signature": "run_pair_workflow(pair: 'PairProducts', outdir: 'str | Path', workflow: 'str' = 'stamps_prep', *, format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None, overrides: 'dict[str, dict[str, Any]] | None' = None) -> 'str' -> str",
+        "parameters": [],
+        "raw_parameters": [
+          {
+            "name": "pair",
+            "annotation": "PairProducts",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "outdir",
+            "annotation": "str | Path",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "workflow",
+            "annotation": "str",
+            "required": false,
+            "default": "'stamps_prep'"
+          },
+          {
+            "name": "format",
+            "annotation": "str",
+            "required": false,
+            "default": "'BEAM-DIMAP'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "gpt_path",
+            "annotation": "str",
+            "required": false,
+            "default": "'/usr/local/snap/bin/gpt'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "memory",
+            "annotation": "str | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "parallelism",
+            "annotation": "int | None",
+            "required": false,
+            "default": "14",
+            "kind": "kwonly"
+          },
+          {
+            "name": "timeout",
+            "annotation": "int | None",
+            "required": false,
+            "default": "7200",
+            "kind": "kwonly"
+          },
+          {
+            "name": "snap_userdir",
+            "annotation": "str | Path | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "overrides",
+            "annotation": "dict[str, dict[str, Any]] | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          }
+        ],
+        "returns": "str",
+        "exceptions": [],
+        "side_effects": [
+          "inferred from implementation"
+        ],
+        "line": 570
+      },
+      {
+        "name": "run_workflow",
+        "doc": "Run a composed single-input workflow from the convenience catalog.",
+        "signature": "run_workflow(gpt: 'GPT', workflow: 'str', overrides: 'dict[str, dict[str, Any]] | None' = None) -> 'str' -> str",
+        "parameters": [],
+        "raw_parameters": [
+          {
+            "name": "gpt",
+            "annotation": "GPT",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "workflow",
+            "annotation": "str",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "overrides",
+            "annotation": "dict[str, dict[str, Any]] | None",
+            "required": false,
+            "default": "None"
+          }
+        ],
+        "returns": "str",
+        "exceptions": [],
+        "side_effects": [
+          "inferred from implementation"
+        ],
+        "line": 632
+      },
+      {
+        "name": "run_topsar_split_apply_orbit",
+        "doc": "Run the upstream-equivalent TOPSAR split/apply-orbit branch.",
+        "signature": "run_topsar_split_apply_orbit(source_products: 'Iterable[str | Path]', outdir: 'str | Path', *, subswath: 'str', polarisation: 'str | None' = None, polygon_wkt: 'str | None' = None, output_name: 'str | None' = None, format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None, apply_orbit_kwargs: 'dict[str, Any] | None' = None) -> 'str' -> str",
+        "parameters": [],
+        "raw_parameters": [
+          {
+            "name": "source_products",
+            "annotation": "Iterable[str | Path]",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "outdir",
+            "annotation": "str | Path",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "subswath",
+            "annotation": "str",
+            "required": true,
+            "default": null,
+            "kind": "kwonly"
+          },
+          {
+            "name": "polarisation",
+            "annotation": "str | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "polygon_wkt",
+            "annotation": "str | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "output_name",
+            "annotation": "str | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "format",
+            "annotation": "str",
+            "required": false,
+            "default": "'BEAM-DIMAP'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "gpt_path",
+            "annotation": "str",
+            "required": false,
+            "default": "'/usr/local/snap/bin/gpt'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "memory",
+            "annotation": "str | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "parallelism",
+            "annotation": "int | None",
+            "required": false,
+            "default": "14",
+            "kind": "kwonly"
+          },
+          {
+            "name": "timeout",
+            "annotation": "int | None",
+            "required": false,
+            "default": "7200",
+            "kind": "kwonly"
+          },
+          {
+            "name": "snap_userdir",
+            "annotation": "str | Path | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "apply_orbit_kwargs",
+            "annotation": "dict[str, Any] | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          }
+        ],
+        "returns": "str",
+        "exceptions": [],
+        "side_effects": [
+          "inferred from implementation"
+        ],
+        "line": 656
+      },
+      {
+        "name": "run_processing_pipeline",
+        "doc": "Run a named upstream-equivalent processing branch from :data:`SNAP2STAMPS_PIPELINES`.",
+        "signature": "run_processing_pipeline(pipeline_name: 'str', *, outdir: 'str | Path', format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None, source_product: 'str | Path | None' = None, source_products: 'Iterable[str | Path] | None' = None, pair: 'PairProducts | None' = None, target_folder: 'str | Path | None' = None, **kwargs: 'Any') -> 'str | TopsarCoregIfgResult' -> str | TopsarCoregIfgResult",
+        "parameters": [],
+        "raw_parameters": [
+          {
+            "name": "pipeline_name",
+            "annotation": "str",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "outdir",
+            "annotation": "str | Path",
+            "required": true,
+            "default": null,
+            "kind": "kwonly"
+          },
+          {
+            "name": "format",
+            "annotation": "str",
+            "required": false,
+            "default": "'BEAM-DIMAP'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "gpt_path",
+            "annotation": "str",
+            "required": false,
+            "default": "'/usr/local/snap/bin/gpt'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "memory",
+            "annotation": "str | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "parallelism",
+            "annotation": "int | None",
+            "required": false,
+            "default": "14",
+            "kind": "kwonly"
+          },
+          {
+            "name": "timeout",
+            "annotation": "int | None",
+            "required": false,
+            "default": "7200",
+            "kind": "kwonly"
+          },
+          {
+            "name": "snap_userdir",
+            "annotation": "str | Path | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "source_product",
+            "annotation": "str | Path | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "source_products",
+            "annotation": "Iterable[str | Path] | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "pair",
+            "annotation": "PairProducts | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "target_folder",
+            "annotation": "str | Path | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "kwargs",
+            "annotation": "Any",
+            "required": true,
+            "default": null,
+            "kind": "varkw"
+          }
+        ],
+        "returns": "str | TopsarCoregIfgResult",
+        "exceptions": [],
+        "side_effects": [
+          "inferred from implementation"
+        ],
+        "line": 711
+      },
+      {
+        "name": "run_topsar_coreg_ifg",
+        "doc": "Run the upstream-equivalent TOPSAR coregistration/interferogram branch.",
+        "signature": "run_topsar_coreg_ifg(pair: 'PairProducts', outdir: 'str | Path', *, master_count: 'int | None' = None, burst_count: 'int | None' = None, pipeline_name: 'str | None' = None, polygon_wkt: 'str | None' = None, subset_region: 'str' = '0,0,0,0', external_dem_file: 'str | Path | None' = None, format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None, output_name_prefix: 'str' = 'pair') -> 'TopsarCoregIfgResult' -> TopsarCoregIfgResult",
+        "parameters": [],
+        "raw_parameters": [
+          {
+            "name": "pair",
+            "annotation": "PairProducts",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "outdir",
+            "annotation": "str | Path",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "master_count",
+            "annotation": "int | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "burst_count",
+            "annotation": "int | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "pipeline_name",
+            "annotation": "str | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "polygon_wkt",
+            "annotation": "str | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "subset_region",
+            "annotation": "str",
+            "required": false,
+            "default": "'0,0,0,0'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "external_dem_file",
+            "annotation": "str | Path | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "format",
+            "annotation": "str",
+            "required": false,
+            "default": "'BEAM-DIMAP'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "gpt_path",
+            "annotation": "str",
+            "required": false,
+            "default": "'/usr/local/snap/bin/gpt'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "memory",
+            "annotation": "str | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "parallelism",
+            "annotation": "int | None",
+            "required": false,
+            "default": "14",
+            "kind": "kwonly"
+          },
+          {
+            "name": "timeout",
+            "annotation": "int | None",
+            "required": false,
+            "default": "7200",
+            "kind": "kwonly"
+          },
+          {
+            "name": "snap_userdir",
+            "annotation": "str | Path | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "output_name_prefix",
+            "annotation": "str",
+            "required": false,
+            "default": "'pair'",
+            "kind": "kwonly"
+          }
+        ],
+        "returns": "TopsarCoregIfgResult",
+        "exceptions": [],
+        "side_effects": [
+          "inferred from implementation"
+        ],
+        "line": 803
+      },
+      {
+        "name": "run_topsar_export",
+        "doc": "Run the upstream-equivalent TOPSAR StaMPS export branch.",
+        "signature": "run_topsar_export(coreg_products: 'Iterable[str | Path]', ifg_products: 'Iterable[str | Path]', outdir: 'str | Path', *, target_folder: 'str | Path', master_count: 'int', polygon_wkt: 'str | None' = None, subset_region: 'str' = '0,0,0,0', external_dem_file: 'str | Path | None' = None, selected_polarisations: 'list[str] | None' = None, format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None) -> 'str' -> str",
+        "parameters": [],
+        "raw_parameters": [
+          {
+            "name": "coreg_products",
+            "annotation": "Iterable[str | Path]",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "ifg_products",
+            "annotation": "Iterable[str | Path]",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "outdir",
+            "annotation": "str | Path",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "target_folder",
+            "annotation": "str | Path",
+            "required": true,
+            "default": null,
+            "kind": "kwonly"
+          },
+          {
+            "name": "master_count",
+            "annotation": "int",
+            "required": true,
+            "default": null,
+            "kind": "kwonly"
+          },
+          {
+            "name": "polygon_wkt",
+            "annotation": "str | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "subset_region",
+            "annotation": "str",
+            "required": false,
+            "default": "'0,0,0,0'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "external_dem_file",
+            "annotation": "str | Path | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "selected_polarisations",
+            "annotation": "list[str] | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "format",
+            "annotation": "str",
+            "required": false,
+            "default": "'BEAM-DIMAP'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "gpt_path",
+            "annotation": "str",
+            "required": false,
+            "default": "'/usr/local/snap/bin/gpt'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "memory",
+            "annotation": "str | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "parallelism",
+            "annotation": "int | None",
+            "required": false,
+            "default": "14",
+            "kind": "kwonly"
+          },
+          {
+            "name": "timeout",
+            "annotation": "int | None",
+            "required": false,
+            "default": "7200",
+            "kind": "kwonly"
+          },
+          {
+            "name": "snap_userdir",
+            "annotation": "str | Path | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          }
+        ],
+        "returns": "str",
+        "exceptions": [],
+        "side_effects": [
+          "inferred from implementation"
+        ],
+        "line": 957
+      },
+      {
+        "name": "run_stripmap_subset",
+        "doc": "Run the Stripmap subset branch.",
+        "signature": "run_stripmap_subset(product: 'str | Path', outdir: 'str | Path', *, region: 'str | None' = None, polygon_wkt: 'str | None' = None, output_name: 'str | None' = None, format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None) -> 'str' -> str",
+        "parameters": [],
+        "raw_parameters": [
+          {
+            "name": "product",
+            "annotation": "str | Path",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "outdir",
+            "annotation": "str | Path",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "region",
+            "annotation": "str | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "polygon_wkt",
+            "annotation": "str | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "output_name",
+            "annotation": "str | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "format",
+            "annotation": "str",
+            "required": false,
+            "default": "'BEAM-DIMAP'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "gpt_path",
+            "annotation": "str",
+            "required": false,
+            "default": "'/usr/local/snap/bin/gpt'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "memory",
+            "annotation": "str | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "parallelism",
+            "annotation": "int | None",
+            "required": false,
+            "default": "14",
+            "kind": "kwonly"
+          },
+          {
+            "name": "timeout",
+            "annotation": "int | None",
+            "required": false,
+            "default": "7200",
+            "kind": "kwonly"
+          },
+          {
+            "name": "snap_userdir",
+            "annotation": "str | Path | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          }
+        ],
+        "returns": "str",
+        "exceptions": [],
+        "side_effects": [
+          "inferred from implementation"
+        ],
+        "line": 1086
+      },
+      {
+        "name": "run_stripmap_coreg",
+        "doc": "Run the Stripmap DEM-assisted coregistration branch.",
+        "signature": "run_stripmap_coreg(pair: 'PairProducts', outdir: 'str | Path', *, external_dem_file: 'str | Path | None' = None, output_name: 'str | None' = None, format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None) -> 'str' -> str",
+        "parameters": [],
+        "raw_parameters": [
+          {
+            "name": "pair",
+            "annotation": "PairProducts",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "outdir",
+            "annotation": "str | Path",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "external_dem_file",
+            "annotation": "str | Path | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "output_name",
+            "annotation": "str | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "format",
+            "annotation": "str",
+            "required": false,
+            "default": "'BEAM-DIMAP'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "gpt_path",
+            "annotation": "str",
+            "required": false,
+            "default": "'/usr/local/snap/bin/gpt'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "memory",
+            "annotation": "str | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "parallelism",
+            "annotation": "int | None",
+            "required": false,
+            "default": "14",
+            "kind": "kwonly"
+          },
+          {
+            "name": "timeout",
+            "annotation": "int | None",
+            "required": false,
+            "default": "7200",
+            "kind": "kwonly"
+          },
+          {
+            "name": "snap_userdir",
+            "annotation": "str | Path | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          }
+        ],
+        "returns": "str",
+        "exceptions": [],
+        "side_effects": [
+          "inferred from implementation"
+        ],
+        "line": 1122
+      },
+      {
+        "name": "run_stripmap_ifg",
+        "doc": "Run the Stripmap interferogram/topographic-phase branch.",
+        "signature": "run_stripmap_ifg(coreg_product: 'str | Path', outdir: 'str | Path', *, external_dem_file: 'str | Path | None' = None, output_name_prefix: 'str' = 'stripmap', format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None) -> 'str' -> str",
+        "parameters": [],
+        "raw_parameters": [
+          {
+            "name": "coreg_product",
+            "annotation": "str | Path",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "outdir",
+            "annotation": "str | Path",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "external_dem_file",
+            "annotation": "str | Path | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "output_name_prefix",
+            "annotation": "str",
+            "required": false,
+            "default": "'stripmap'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "format",
+            "annotation": "str",
+            "required": false,
+            "default": "'BEAM-DIMAP'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "gpt_path",
+            "annotation": "str",
+            "required": false,
+            "default": "'/usr/local/snap/bin/gpt'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "memory",
+            "annotation": "str | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "parallelism",
+            "annotation": "int | None",
+            "required": false,
+            "default": "14",
+            "kind": "kwonly"
+          },
+          {
+            "name": "timeout",
+            "annotation": "int | None",
+            "required": false,
+            "default": "7200",
+            "kind": "kwonly"
+          },
+          {
+            "name": "snap_userdir",
+            "annotation": "str | Path | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          }
+        ],
+        "returns": "str",
+        "exceptions": [],
+        "side_effects": [
+          "inferred from implementation"
+        ],
+        "line": 1158
+      },
+      {
+        "name": "run_stripmap_export",
+        "doc": "Run the Stripmap StaMPS export branch.",
+        "signature": "run_stripmap_export(coreg_product: 'str | Path', ifg_product: 'str | Path', outdir: 'str | Path', *, target_folder: 'str | Path', format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None) -> 'str' -> str",
+        "parameters": [],
+        "raw_parameters": [
+          {
+            "name": "coreg_product",
+            "annotation": "str | Path",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "ifg_product",
+            "annotation": "str | Path",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "outdir",
+            "annotation": "str | Path",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "target_folder",
+            "annotation": "str | Path",
+            "required": true,
+            "default": null,
+            "kind": "kwonly"
+          },
+          {
+            "name": "format",
+            "annotation": "str",
+            "required": false,
+            "default": "'BEAM-DIMAP'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "gpt_path",
+            "annotation": "str",
+            "required": false,
+            "default": "'/usr/local/snap/bin/gpt'",
+            "kind": "kwonly"
+          },
+          {
+            "name": "memory",
+            "annotation": "str | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          },
+          {
+            "name": "parallelism",
+            "annotation": "int | None",
+            "required": false,
+            "default": "14",
+            "kind": "kwonly"
+          },
+          {
+            "name": "timeout",
+            "annotation": "int | None",
+            "required": false,
+            "default": "7200",
+            "kind": "kwonly"
+          },
+          {
+            "name": "snap_userdir",
+            "annotation": "str | Path | None",
+            "required": false,
+            "default": "None",
+            "kind": "kwonly"
+          }
+        ],
+        "returns": "str",
+        "exceptions": [],
+        "side_effects": [
+          "inferred from implementation"
+        ],
+        "line": 1198
       }
     ],
     "public_classes": [
       {
         "name": "PipelineStep",
-        "line": 24,
+        "line": 25,
         "doc": "Single operator call in a SNAP pipeline.",
-        "signature": "class PipelineStep",
+        "signature": "class PipelineStep(method: 'str', kwargs: 'dict[str, Any]' = <factory>) -> None",
+        "methods": [],
+        "raw_parameters": []
+      },
+      {
+        "name": "PairProducts",
+        "line": 33,
+        "doc": "Master/slave product pair used for pairwise InSAR preparation.",
+        "signature": "class PairProducts(master: 'str | Path', slave: 'str | Path') -> None",
+        "methods": [],
+        "raw_parameters": []
+      },
+      {
+        "name": "PipelineDefinition",
+        "line": 45,
+        "doc": "Description of an upstream-equivalent processing pipeline variant.",
+        "signature": "class PipelineDefinition(name: 'str', branch: 'BranchName', input_kind: 'InputKind', stages: 'tuple[str, ...]', upstream_graph: 'str | None' = None, description: 'str' = '') -> None",
+        "methods": [],
+        "raw_parameters": []
+      },
+      {
+        "name": "TopsarCoregIfgResult",
+        "line": 57,
+        "doc": "Outputs of the TOPSAR coregistration/interferogram branch.",
+        "signature": "class TopsarCoregIfgResult(coreg_path: 'str', ifg_path: 'str', pipeline_name: 'str') -> None",
         "methods": [],
         "raw_parameters": []
       }
     ],
+    "all": [
+      "PAIRWISE_GRAPH_NAMES",
+      "PairProducts",
+      "PipelineDefinition",
+      "PipelineStep",
+      "SNAP2STAMPS_GRAPH_PIPELINES",
+      "SNAP2STAMPS_PIPELINES",
+      "SNAP2STAMPS_WORKFLOWS",
+      "SNAP2STAMPS_WORKFLOW_INPUTS",
+      "TopsarCoregIfgResult",
+      "build_gpt",
+      "get_pipeline_definition",
+      "list_pipeline_names",
+      "pipeline_requires_multi_input",
+      "pipeline_requires_pair",
+      "prepare_pair",
+      "run_graph_pipeline",
+      "run_pair_graph_pipeline",
+      "run_pair_workflow",
+      "run_processing_pipeline",
+      "run_stripmap_coreg",
+      "run_stripmap_export",
+      "run_stripmap_ifg",
+      "run_stripmap_subset",
+      "run_topsar_coreg_ifg",
+      "run_topsar_export",
+      "run_topsar_split_apply_orbit",
+      "run_workflow",
+      "select_stripmap_coreg_pipeline",
+      "select_stripmap_ifg_pipeline",
+      "select_topsar_coreg_ifg_pipeline",
+      "select_topsar_export_pipeline",
+      "select_topsar_split_pipeline"
+    ]
+  },
+  {
+    "module": "sarpyx/snapflow/snap2stamps_pipelines.py",
+    "description": "Deprecated compatibility shim that re-exports :mod:`sarpyx.snapflow.snap2stamps`.",
+    "public_functions": [],
+    "public_classes": [],
     "all": null
   },
   {

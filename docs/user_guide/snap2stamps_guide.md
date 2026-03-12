@@ -1,107 +1,86 @@
 # SNAP2StaMPS Guide
 
-This guide explains how to run SNAP2StaMPS-like workflows in `sarpyx` using the `snapflow` engine.
+This guide explains the processing-only `snap2stamps` implementation in `sarpyx.snapflow`.
 
 ## Scope
 
-The implementation is provided by:
+The canonical module is:
 
-- `sarpyx.snapflow.snap2stamps_pipelines.Snap2StampsRunner`
+- `sarpyx.snapflow.snap2stamps`
 
-It supports:
+It implements the upstream processing branches as Python helpers and branch selectors:
 
-- Sentinel-1 TOPSAR flow (prepare, split, coreg/ifg, plotting, export)
-- TerraSAR-X/TanDEM-X stripmap flow (unpack, subset, coreg, ifg, plotting, export)
-- Graph-template execution from `snap2stamps/graphs/*.xml`
+- Sentinel-1 TOPSAR split/apply-orbit, coregistration/interferogram, and export variants
+- TerraSAR-X/TanDEM-X Stripmap subset, coregistration, interferogram/topo-phase, and export variants
+- Legacy pair-workflow helpers kept for notebook and test compatibility
 
-## Prerequisites
-
-- SNAP installed with `gpt` available
-- Project config file (`project_topsar.conf` or `project_stripmap.conf`) with required sections
-- Optional: `asf_search` if you use Sentinel auto-download (`autoDownload=Y`)
+It does not recreate the upstream CLI/config runner, plotting scripts, or download automation.
 
 ## Quick Start
 
 ```python
-from sarpyx.snapflow.snap2stamps_pipelines import Snap2StampsRunner
-
-runner = Snap2StampsRunner.from_project_file(
-    "snap2stamps/bin/project_topsar.conf",
-    gpt_path="/usr/local/snap/bin/gpt",
-    memory="16G",
-    parallelism=8,
-    timeout=7200,
+from sarpyx.snapflow.snap2stamps import (
+    PairProducts,
+    list_pipeline_names,
+    run_processing_pipeline,
 )
 
-# Full automatic run based on SENSOR in config
-runner.run_auto()
+print(list_pipeline_names("topsar"))
+
+pair = PairProducts("master_orbit.dim", "slave_orbit.dim")
+result = run_processing_pipeline(
+    "topsar_coreg_ifg_subset",
+    pair=pair,
+    outdir="data/output/insar",
+    master_count=1,
+    burst_count=3,
+    subset_region="0,0,1024,1024",
+)
+
+print(result.pipeline_name, result.coreg_path, result.ifg_path)
 ```
 
-## TOPSAR Usage
+## TOPSAR Branches
 
-### Full automatic run
+Branch selection follows the upstream behavior:
 
-```python
-runner.run_topsar_auto()
-```
+- `select_topsar_split_pipeline(source_count)` chooses single-slice vs assemble+split
+- `select_topsar_coreg_ifg_pipeline(master_count, burst_count, external_dem_file=...)` chooses subset, no-ESD, and external-DEM variants
+- `select_topsar_export_pipeline(master_count, external_dem_file=...)` chooses direct export vs merge-IW export
 
-### Step-by-step run
+Main helpers:
 
-```python
-runner.prepare_topsar_secondaries()
-runner.select_topsar_master(mode="AUTO")  # AUTO/FIRST/LAST/MANUAL or numeric index
-runner.run_topsar_split_master()
-runner.run_topsar_split_secondaries()
-runner.run_topsar_coreg_ifg()
-runner.run_topsar_plotting("ifg")         # optional
-runner.run_topsar_plotting("coreg")       # optional
-runner.run_topsar_export()
-```
+- `run_topsar_split_apply_orbit(...)`
+- `run_topsar_coreg_ifg(...)`
+- `run_topsar_export(...)`
 
-### Optional ASF download
+## Stripmap Branches
 
-If `autoDownload=Y` in config:
+Stripmap processing is exposed through:
 
-```python
-count = runner.download_asf_s1()
-print("Downloaded scenes:", count)
-```
+- `run_stripmap_subset(...)`
+- `run_stripmap_coreg(...)`
+- `run_stripmap_ifg(...)`
+- `run_stripmap_export(...)`
 
-## Stripmap Usage
+Selectors:
 
-### Full automatic run
+- `select_stripmap_coreg_pipeline(external_dem_file=...)`
+- `select_stripmap_ifg_pipeline(external_dem_file=...)`
 
-```python
-runner.run_stripmap_auto(master_date="20200101")  # optional master date
-```
+## Legacy Pair Workflows
 
-### Step-by-step run
+The older convenience workflow helpers remain available:
 
-```python
-runner.run_stripmap_unpack()
-runner.run_stripmap_prepare_secondaries()
-runner.run_stripmap_subset()
-runner.run_stripmap_manual_master_selection("20200101")  # optional
-runner.run_stripmap_coreg()
-runner.run_stripmap_ifg()
-runner.run_stripmap_plotting("split")  # optional
-runner.run_stripmap_plotting("ifg")    # optional
-runner.run_stripmap_plotting("coreg")  # optional
-runner.run_stripmap_export()
-```
+- `prepare_pair(...)`
+- `run_pair_workflow(...)`
+- `run_graph_pipeline(...)`
+- `run_pair_graph_pipeline(...)`
 
-## Graph Coverage Check
-
-Use this to verify all XML templates are mapped:
-
-```python
-from sarpyx.snapflow.snap2stamps_pipelines import verify_graph_coverage
-report = verify_graph_coverage("snap2stamps/graphs")
-print(report["ok"], report["graph_count"])
-```
+The deprecated import path `sarpyx.snapflow.snap2stamps_pipelines` re-exports the same API.
 
 ## Notes
 
-- This workflow module is currently not wired into `worldsar` CLI by default.
-- You can run all operations directly from Python with `Snap2StampsRunner`.
-- For reproducibility, keep project config and graph templates versioned with your data run.
+- Use `list_pipeline_names()` and `get_pipeline_definition()` to inspect available branches.
+- Use `pipeline_requires_pair()` and `pipeline_requires_multi_input()` to validate caller inputs before dispatch.
+- SNAP `gpt` and any DEM inputs must still be provided by the runtime environment.

@@ -3668,41 +3668,243 @@
     "imports": []
   },
   {
-    "module": "sarpyx/snapflow/snap2stamps_pipelines.py",
-    "all": null,
+    "module": "sarpyx/snapflow/snap2stamps.py",
+    "all": [
+      "PAIRWISE_GRAPH_NAMES",
+      "PairProducts",
+      "PipelineDefinition",
+      "PipelineStep",
+      "SNAP2STAMPS_GRAPH_PIPELINES",
+      "SNAP2STAMPS_PIPELINES",
+      "SNAP2STAMPS_WORKFLOWS",
+      "SNAP2STAMPS_WORKFLOW_INPUTS",
+      "TopsarCoregIfgResult",
+      "build_gpt",
+      "get_pipeline_definition",
+      "list_pipeline_names",
+      "pipeline_requires_multi_input",
+      "pipeline_requires_pair",
+      "prepare_pair",
+      "run_graph_pipeline",
+      "run_pair_graph_pipeline",
+      "run_pair_workflow",
+      "run_processing_pipeline",
+      "run_stripmap_coreg",
+      "run_stripmap_export",
+      "run_stripmap_ifg",
+      "run_stripmap_subset",
+      "run_topsar_coreg_ifg",
+      "run_topsar_export",
+      "run_topsar_split_apply_orbit",
+      "run_workflow",
+      "select_stripmap_coreg_pipeline",
+      "select_stripmap_ifg_pipeline",
+      "select_topsar_coreg_ifg_pipeline",
+      "select_topsar_export_pipeline",
+      "select_topsar_split_pipeline"
+    ],
     "public_functions": [
       {
-        "name": "run_graph_pipeline",
-        "signature": "run_graph_pipeline(gpt: GPT, graph_name: str, overrides: dict[str, dict[str, Any]] | None=None)",
-        "line": 146,
-        "doc": "Run a single snap2stamps graph-equivalent pipeline.",
+        "name": "list_pipeline_names",
+        "signature": "list_pipeline_names(branch: 'BranchName | None' = None) -> 'tuple[str, ...]'",
+        "line": 355,
+        "doc": "Return known processing pipeline names, optionally filtered by branch.",
+        "returns": "tuple[str, ...]"
+      },
+      {
+        "name": "get_pipeline_definition",
+        "signature": "get_pipeline_definition(name: 'str') -> 'PipelineDefinition'",
+        "line": 365,
+        "doc": "Return a pipeline definition by name.",
+        "returns": "PipelineDefinition"
+      },
+      {
+        "name": "pipeline_requires_pair",
+        "signature": "pipeline_requires_pair(name: 'str') -> 'bool'",
+        "line": 374,
+        "doc": "Return ``True`` when a processing branch requires explicit master/slave inputs.",
+        "returns": "bool"
+      },
+      {
+        "name": "pipeline_requires_multi_input",
+        "signature": "pipeline_requires_multi_input(name: 'str') -> 'bool'",
+        "line": 379,
+        "doc": "Return ``True`` when a processing branch requires more than one source product.",
+        "returns": "bool"
+      },
+      {
+        "name": "select_topsar_split_pipeline",
+        "signature": "select_topsar_split_pipeline(source_count: 'int') -> 'str'",
+        "line": 384,
+        "doc": "Select the upstream-equivalent TOPSAR split/apply-orbit branch.",
         "returns": "str"
       },
       {
-        "name": "run_workflow",
-        "signature": "run_workflow(gpt: GPT, workflow: str, overrides: dict[str, dict[str, Any]] | None=None)",
-        "line": 164,
-        "doc": "Run a composed snap2stamps workflow (PSI/SBAS variants).",
+        "name": "select_topsar_coreg_ifg_pipeline",
+        "signature": "select_topsar_coreg_ifg_pipeline(*, master_count: 'int', burst_count: 'int', external_dem_file: 'str | Path | None' = None) -> 'str'",
+        "line": 391,
+        "doc": "Select the upstream-equivalent TOPSAR coreg/IFG pipeline variant.",
+        "returns": "str"
+      },
+      {
+        "name": "select_topsar_export_pipeline",
+        "signature": "select_topsar_export_pipeline(*, master_count: 'int', external_dem_file: 'str | Path | None' = None) -> 'str'",
+        "line": 413,
+        "doc": "Select the upstream-equivalent TOPSAR StaMPS export branch.",
+        "returns": "str"
+      },
+      {
+        "name": "select_stripmap_coreg_pipeline",
+        "signature": "select_stripmap_coreg_pipeline(external_dem_file: 'str | Path | None' = None) -> 'str'",
+        "line": 430,
+        "doc": "Select the upstream-equivalent Stripmap coregistration branch.",
+        "returns": "str"
+      },
+      {
+        "name": "select_stripmap_ifg_pipeline",
+        "signature": "select_stripmap_ifg_pipeline(external_dem_file: 'str | Path | None' = None) -> 'str'",
+        "line": 439,
+        "doc": "Select the upstream-equivalent Stripmap IFG/topo branch.",
         "returns": "str"
       },
       {
         "name": "build_gpt",
-        "signature": "build_gpt(product: str | Path, outdir: str | Path, format: str='BEAM-DIMAP', gpt_path: str='/usr/local/snap/bin/gpt', memory: str | None=None, parallelism: int | None=14, timeout: int | None=7200)",
-        "line": 182,
-        "doc": "Convenience constructor aligned with snap2stamps-like batch processing.",
+        "signature": "build_gpt(product: 'str | Path', outdir: 'str | Path', *, format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None) -> 'GPT'",
+        "line": 469,
+        "doc": "Convenience constructor aligned with SNAP2StaMPS-like batch processing.",
         "returns": "GPT"
+      },
+      {
+        "name": "run_graph_pipeline",
+        "signature": "run_graph_pipeline(gpt: 'GPT', graph_name: 'str', overrides: 'dict[str, dict[str, Any]] | None' = None) -> 'str'",
+        "line": 493,
+        "doc": "Run a single-input stage from the legacy graph-pipeline catalog.",
+        "returns": "str"
+      },
+      {
+        "name": "run_pair_graph_pipeline",
+        "signature": "run_pair_graph_pipeline(gpt: 'GPT', graph_name: 'str', pair: 'PairProducts', overrides: 'dict[str, dict[str, Any]] | None' = None) -> 'str'",
+        "line": 517,
+        "doc": "Run a graph pipeline that consumes explicit master and slave products.",
+        "returns": "str"
+      },
+      {
+        "name": "prepare_pair",
+        "signature": "prepare_pair(pair: 'PairProducts', outdir: 'str | Path', *, preprocess_graphs: 'tuple[str, ...]' = ('split_orbit',), format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None, overrides: 'dict[str, dict[str, Any]] | None' = None) -> 'PairProducts'",
+        "line": 538,
+        "doc": "Prepare master and slave independently for pairwise TOPSAR processing.",
+        "returns": "PairProducts"
+      },
+      {
+        "name": "run_pair_workflow",
+        "signature": "run_pair_workflow(pair: 'PairProducts', outdir: 'str | Path', workflow: 'str' = 'stamps_prep', *, format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None, overrides: 'dict[str, dict[str, Any]] | None' = None) -> 'str'",
+        "line": 570,
+        "doc": "Run a pairwise TOPSAR workflow from split/deburst through final output.",
+        "returns": "str"
+      },
+      {
+        "name": "run_workflow",
+        "signature": "run_workflow(gpt: 'GPT', workflow: 'str', overrides: 'dict[str, dict[str, Any]] | None' = None) -> 'str'",
+        "line": 632,
+        "doc": "Run a composed single-input workflow from the convenience catalog.",
+        "returns": "str"
+      },
+      {
+        "name": "run_topsar_split_apply_orbit",
+        "signature": "run_topsar_split_apply_orbit(source_products: 'Iterable[str | Path]', outdir: 'str | Path', *, subswath: 'str', polarisation: 'str | None' = None, polygon_wkt: 'str | None' = None, output_name: 'str | None' = None, format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None, apply_orbit_kwargs: 'dict[str, Any] | None' = None) -> 'str'",
+        "line": 656,
+        "doc": "Run the upstream-equivalent TOPSAR split/apply-orbit branch.",
+        "returns": "str"
+      },
+      {
+        "name": "run_processing_pipeline",
+        "signature": "run_processing_pipeline(pipeline_name: 'str', *, outdir: 'str | Path', format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None, source_product: 'str | Path | None' = None, source_products: 'Iterable[str | Path] | None' = None, pair: 'PairProducts | None' = None, target_folder: 'str | Path | None' = None, **kwargs: 'Any') -> 'str | TopsarCoregIfgResult'",
+        "line": 711,
+        "doc": "Run a named upstream-equivalent processing branch from :data:`SNAP2STAMPS_PIPELINES`.",
+        "returns": "str | TopsarCoregIfgResult"
+      },
+      {
+        "name": "run_topsar_coreg_ifg",
+        "signature": "run_topsar_coreg_ifg(pair: 'PairProducts', outdir: 'str | Path', *, master_count: 'int | None' = None, burst_count: 'int | None' = None, pipeline_name: 'str | None' = None, polygon_wkt: 'str | None' = None, subset_region: 'str' = '0,0,0,0', external_dem_file: 'str | Path | None' = None, format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None, output_name_prefix: 'str' = 'pair') -> 'TopsarCoregIfgResult'",
+        "line": 803,
+        "doc": "Run the upstream-equivalent TOPSAR coregistration/interferogram branch.",
+        "returns": "TopsarCoregIfgResult"
+      },
+      {
+        "name": "run_topsar_export",
+        "signature": "run_topsar_export(coreg_products: 'Iterable[str | Path]', ifg_products: 'Iterable[str | Path]', outdir: 'str | Path', *, target_folder: 'str | Path', master_count: 'int', polygon_wkt: 'str | None' = None, subset_region: 'str' = '0,0,0,0', external_dem_file: 'str | Path | None' = None, selected_polarisations: 'list[str] | None' = None, format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None) -> 'str'",
+        "line": 957,
+        "doc": "Run the upstream-equivalent TOPSAR StaMPS export branch.",
+        "returns": "str"
+      },
+      {
+        "name": "run_stripmap_subset",
+        "signature": "run_stripmap_subset(product: 'str | Path', outdir: 'str | Path', *, region: 'str | None' = None, polygon_wkt: 'str | None' = None, output_name: 'str | None' = None, format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None) -> 'str'",
+        "line": 1086,
+        "doc": "Run the Stripmap subset branch.",
+        "returns": "str"
+      },
+      {
+        "name": "run_stripmap_coreg",
+        "signature": "run_stripmap_coreg(pair: 'PairProducts', outdir: 'str | Path', *, external_dem_file: 'str | Path | None' = None, output_name: 'str | None' = None, format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None) -> 'str'",
+        "line": 1122,
+        "doc": "Run the Stripmap DEM-assisted coregistration branch.",
+        "returns": "str"
+      },
+      {
+        "name": "run_stripmap_ifg",
+        "signature": "run_stripmap_ifg(coreg_product: 'str | Path', outdir: 'str | Path', *, external_dem_file: 'str | Path | None' = None, output_name_prefix: 'str' = 'stripmap', format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None) -> 'str'",
+        "line": 1158,
+        "doc": "Run the Stripmap interferogram/topographic-phase branch.",
+        "returns": "str"
+      },
+      {
+        "name": "run_stripmap_export",
+        "signature": "run_stripmap_export(coreg_product: 'str | Path', ifg_product: 'str | Path', outdir: 'str | Path', *, target_folder: 'str | Path', format: 'str' = 'BEAM-DIMAP', gpt_path: 'str' = '/usr/local/snap/bin/gpt', memory: 'str | None' = None, parallelism: 'int | None' = 14, timeout: 'int | None' = 7200, snap_userdir: 'str | Path | None' = None) -> 'str'",
+        "line": 1198,
+        "doc": "Run the Stripmap StaMPS export branch.",
+        "returns": "str"
       }
     ],
     "public_classes": [
       {
         "name": "PipelineStep",
-        "line": 24,
+        "line": 25,
         "doc": "Single operator call in a SNAP pipeline.",
-        "signature": "class PipelineStep",
+        "signature": "class PipelineStep(method: 'str', kwargs: 'dict[str, Any]' = <factory>) -> None",
+        "methods": []
+      },
+      {
+        "name": "PairProducts",
+        "line": 33,
+        "doc": "Master/slave product pair used for pairwise InSAR preparation.",
+        "signature": "class PairProducts(master: 'str | Path', slave: 'str | Path') -> None",
+        "methods": []
+      },
+      {
+        "name": "PipelineDefinition",
+        "line": 45,
+        "doc": "Description of an upstream-equivalent processing pipeline variant.",
+        "signature": "class PipelineDefinition(name: 'str', branch: 'BranchName', input_kind: 'InputKind', stages: 'tuple[str, ...]', upstream_graph: 'str | None' = None, description: 'str' = '') -> None",
+        "methods": []
+      },
+      {
+        "name": "TopsarCoregIfgResult",
+        "line": 57,
+        "doc": "Outputs of the TOPSAR coregistration/interferogram branch.",
+        "signature": "class TopsarCoregIfgResult(coreg_path: 'str', ifg_path: 'str', pipeline_name: 'str') -> None",
         "methods": []
       }
     ],
     "imports": []
+  },
+  {
+    "module": "sarpyx/snapflow/snap2stamps_pipelines.py",
+    "all": null,
+    "public_functions": [],
+    "public_classes": [],
+    "imports": [],
+    "description": "Deprecated compatibility shim that re-exports :mod:`sarpyx.snapflow.snap2stamps`."
   },
   {
     "module": "sarpyx/utils/__init__.py",

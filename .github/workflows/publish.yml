@@ -1,13 +1,16 @@
-# GitHub Actions workflow for publishing a Python package to PyPI upon release.
-name: Publish Python Package to PyPI on Release
+# GitHub Actions workflow for publishing a Python package from main only.
+name: Publish Python Package to PyPI
 
 on:
+    push:
+        branches: [main]
     workflow_dispatch:
 
 jobs:
     pypi-publish:
         name: PyPI Release Publication
         runs-on: ubuntu-latest
+        if: github.ref == 'refs/heads/main'
         permissions:
             id-token: write # Required for trusted publishing
         steps:

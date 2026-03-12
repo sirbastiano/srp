@@ -1025,7 +1025,7 @@ def make_architecture_page(module_items: list[dict[str, Any]], specs: list[dict[
   <ul>
     <li>Command-style CLI dispatch in <code>sarpyx.cli.main</code>.</li>
     <li>Wrapper abstraction for external GPT execution in <code>sarpyx.snapflow.engine.GPT</code>.</li>
-    <li>Pipeline orchestration helpers in <code>sarpyx.snapflow.snap2stamps_pipelines</code>.</li>
+    <li>Pipeline orchestration helpers in <code>sarpyx.snapflow.snap2stamps</code> with a deprecated compatibility alias at <code>sarpyx.snapflow.snap2stamps_pipelines</code>.</li>
     <li>Manager-style APIs for structured Zarr data access in <code>sarpyx.utils.zarr_utils</code>.</li>
   </ul>
 
