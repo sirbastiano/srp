@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import pickle
+import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union, Optional
 import json
@@ -40,15 +41,18 @@ logger = logging.getLogger(__name__)
 
 
 def _check_s1isp_available():
-    """Check if s1isp is available and raise informative error if not."""
+    """Warn about missing s1isp and raise an informative error if decode is requested."""
     if not S1ISP_AVAILABLE:
         error_msg = (
             f"s1isp package is not available: {_IMPORT_ERROR}\n"
             f"SAR decoding functionality requires s1isp to be installed.\n"
             f"Please install it separately using:\n"
+            f"  uv pip install git+https://github.com/avalentino/s1isp.git\n"
+            f"or\n"
             f"  pip install git+https://github.com/avalentino/s1isp.git\n"
             f"Or see docs/user_guide/INSTALL_S1ISP.md for detailed instructions."
         )
+        warnings.warn(error_msg, RuntimeWarning, stacklevel=2)
         raise ImportError(error_msg)
 
 
