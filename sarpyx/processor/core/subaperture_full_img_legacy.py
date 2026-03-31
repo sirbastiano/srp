@@ -108,93 +108,6 @@ def estimate_central_freq_from_spectrum(
     idx = int(np.argmax(E[lo:hi])) + lo
     return float(freq_vect[idx])
 
-
-def estimate_iw_tops_support_from_spectrum(
-    spectrum_az_fft: Union[np.ndarray, "da.Array"],
-    smooth_win: int = 33,
-    power_threshold_db: float = -25.0,
-    min_support_frac: float = 0.15,
-):
-    """
-    Estimate the effective azimuth spectral support for IW-TOPS directly from
-    the observed shifted azimuth spectrum.
-
-    Returns
-    -------
-    center_idx_raw : int
-        Index of the support center in the original shifted spectrum.
-    support_start_rolled : int
-        Start index of the effective support after rolling the spectrum so the
-        center lies at n//2.
-    support_end_rolled : int
-        End index of the effective support after rolling the spectrum so the
-        center lies at n//2.
-    roll_shift : int
-        Shift applied to move the observed support center to n//2.
-    profile : np.ndarray
-        Smoothed mean power profile used for the estimate.
-    """
-    if "dask.array" in str(type(spectrum_az_fft)):
-        E = da.mean(da.absolute(spectrum_az_fft) ** 2, axis=1).astype(np.float64).compute()
-    else:
-        E = np.mean(np.abs(spectrum_az_fft) ** 2, axis=1).astype(np.float64)
-
-    n = int(E.size)
-    if n == 0:
-        raise ValueError("Empty spectrum profile for IW-TOPS support estimation.")
-
-    w = int(smooth_win) if smooth_win else 0
-    if w > 1:
-        if w % 2 == 0:
-            w += 1
-        kernel = np.ones(w, dtype=np.float64) / w
-        E = np.convolve(E, kernel, mode="same")
-
-    peak_idx = int(np.argmax(E))
-    center_target = n // 2
-    roll_shift = center_target - peak_idx
-    E_roll = np.roll(E, roll_shift)
-
-    Emax = float(np.max(E_roll))
-    if not np.isfinite(Emax) or Emax <= 0.0:
-        support_len = max(2, int(round(min_support_frac * n)))
-        if support_len % 2 != 0:
-            support_len += 1
-        ss = max(0, center_target - support_len // 2)
-        ee = min(n - 1, ss + support_len - 1)
-        return peak_idx, ss, ee, roll_shift, E
-
-    prof_db = 10.0 * np.log10(np.maximum(E_roll / Emax, 1e-12))
-    mask = prof_db >= float(power_threshold_db)
-
-    if not bool(mask[center_target]):
-        mask[center_target] = True
-
-    left = center_target
-    while left > 0 and mask[left - 1]:
-        left -= 1
-
-    right = center_target
-    while right < n - 1 and mask[right + 1]:
-        right += 1
-
-    support_len = right - left + 1
-    min_len = max(2, int(round(float(min_support_frac) * n)))
-    if min_len % 2 != 0:
-        min_len += 1
-
-    if support_len < min_len:
-        left = max(0, center_target - min_len // 2)
-        right = min(n - 1, left + min_len - 1)
-
-    if (right - left + 1) % 2 != 0:
-        if right < n - 1:
-            right += 1
-        elif left > 0:
-            left -= 1
-
-    return peak_idx, int(left), int(right), int(roll_shift), E
-
 def find_base_iq_pairs_in_dim_data(data_dir: str):
     """
     Detect base complex i/q pairs from a DIM ``.data`` folder.
@@ -448,22 +361,6 @@ class CombinedSublooking:
         estimate_center_from_spectrum: bool = True,
         center_valid_frac: float = 0.8,
         center_smooth_win: int = 9,
-        tops_iw_mode: bool = False,
-        iw_support_smooth_win: int = 33,
-        iw_support_threshold_db: float = -25.0,
-        iw_min_support_frac: float = 0.15,
-        iw_apply_spectrum_normalization: bool = False,
-        iw_energy_compensation: bool = True,
-        iw_flip_output: bool = True,
-        iw_row_equalization: bool = True,
-        iw_row_equalization_smooth_win: int = 129,
-        iw_row_equalization_clip: float = 2.5,
-        iw_doppler_centroid_correction: bool = True,
-        iw_dc_smooth_win: int = 129,
-        iw_equal_energy_split: bool = True,
-        iw_crosslook_row_balance: bool = True,
-        iw_crosslook_row_balance_smooth_win: int = 257,
-        iw_crosslook_row_balance_clip: float = 1.5,
     ):
         # ---- tunable knobs ----
         self.choice = 1  # Range == 0 | Azimuth == 1
@@ -473,27 +370,6 @@ class CombinedSublooking:
         self.estimate_center_from_spectrum = bool(estimate_center_from_spectrum)
         self.center_valid_frac = float(center_valid_frac)
         self.center_smooth_win = int(center_smooth_win)
-        self.tops_iw_mode = bool(tops_iw_mode)
-        self.iw_support_smooth_win = int(iw_support_smooth_win)
-        self.iw_support_threshold_db = float(iw_support_threshold_db)
-        self.iw_min_support_frac = float(iw_min_support_frac)
-        self.iw_apply_spectrum_normalization = bool(iw_apply_spectrum_normalization)
-        self.iw_energy_compensation = bool(iw_energy_compensation)
-        self.iw_flip_output = bool(iw_flip_output)
-        self.iw_row_equalization = bool(iw_row_equalization)
-        self.iw_row_equalization_smooth_win = int(iw_row_equalization_smooth_win)
-        self.iw_row_equalization_clip = float(iw_row_equalization_clip)
-        self.iw_doppler_centroid_correction = bool(iw_doppler_centroid_correction)
-        self.iw_dc_smooth_win = int(iw_dc_smooth_win)
-        self.iw_equal_energy_split = bool(iw_equal_energy_split)
-        self.iw_crosslook_row_balance = bool(iw_crosslook_row_balance)
-        self.iw_crosslook_row_balance_smooth_win = int(iw_crosslook_row_balance_smooth_win)
-        self.iw_crosslook_row_balance_clip = float(iw_crosslook_row_balance_clip)
-        self.iw_ref_row_rms = None
-        self.iw_center_idx_raw = None
-        self.iw_support_start_rolled = None
-        self.iw_support_end_rolled = None
-        self.iw_roll_shift = 0
         self.CentralFreqRange = 0
         self.CentralFreqAzim = 0
         self.AzimRes = 5
@@ -660,15 +536,6 @@ class CombinedSublooking:
             raw = np.fft.fft(self.Box, axis=axis)
             self.SpectrumOneDim = np.fft.fftshift(raw, axes=axis).astype(np.complex64)
 
-        # For IW-TOPS only, store a smooth azimuth-wise reference power profile
-        # from the original full-aperture complex image before freeing it.
-        if self._is_iw_tops_mode():
-            if isinstance(self.Box, da.Array):
-                ref_row_rms = da.sqrt(da.mean(da.absolute(self.Box) ** 2, axis=1)).astype(np.float32).compute()
-            else:
-                ref_row_rms = np.sqrt(np.mean(np.abs(self.Box) ** 2, axis=1)).astype(np.float32)
-            self.iw_ref_row_rms = ref_row_rms
-
         # Free the raw image — no longer needed
         del self.Box
 
@@ -680,207 +547,6 @@ class CombinedSublooking:
             plt.plot(_spec[:, col])
             plt.title("Spectrum Computed in " + ("Range" if self.choice == 0 else "Azimuth"))
             plt.show()
-
-    def _is_iw_tops_mode(self):
-        return bool(self.choice == 1 and getattr(self, "tops_iw_mode", False))
-
-    def _prepare_iw_tops_support(self, spectrum_az_fft):
-        center_idx_raw, ss, ee, roll_shift, _ = estimate_iw_tops_support_from_spectrum(
-            spectrum_az_fft=spectrum_az_fft,
-            smooth_win=getattr(self, "iw_support_smooth_win", 33),
-            power_threshold_db=getattr(self, "iw_support_threshold_db", -25.0),
-            min_support_frac=getattr(self, "iw_min_support_frac", 0.15),
-        )
-        self.iw_center_idx_raw = int(center_idx_raw)
-        self.iw_support_start_rolled = int(ss)
-        self.iw_support_end_rolled = int(ee)
-        self.iw_roll_shift = int(roll_shift)
-
-        logger.info(
-            "IW-TOPS support estimated from observed azimuth spectrum: "
-            "center_idx_raw=%d, roll_shift=%d, support=[%d, %d], support_len=%d",
-            self.iw_center_idx_raw,
-            self.iw_roll_shift,
-            self.iw_support_start_rolled,
-            self.iw_support_end_rolled,
-            self.iw_support_end_rolled - self.iw_support_start_rolled + 1,
-        )
-
-    def _roll_freq_axis(self, arr, shift):
-        if isinstance(arr, da.Array):
-            return da.roll(arr, int(shift), axis=0)
-        return np.roll(arr, int(shift), axis=0)
-
-    def _ifftshift_freq_axis(self, arr):
-        if isinstance(arr, da.Array):
-            return arr.map_blocks(
-                lambda block: np.fft.ifftshift(block, axes=0),
-                dtype=np.complex64,
-            )
-        return np.fft.ifftshift(arr, axes=0)
-    def _smooth_1d(self, x, win):
-        x = np.asarray(x, dtype=np.float32)
-        w = int(win) if win else 0
-        if w <= 1:
-            return x
-        if w % 2 == 0:
-            w += 1
-        kernel = np.ones(w, dtype=np.float32) / np.float32(w)
-        return np.convolve(x, kernel, mode="same").astype(np.float32)
-
-    def _compute_iw_row_gain(self, look):
-        if self.iw_ref_row_rms is None:
-            return None
-        ref = np.asarray(self.iw_ref_row_rms, dtype=np.float32)
-        cur = np.sqrt(np.mean(np.abs(look) ** 2, axis=1)).astype(np.float32)
-        eps = np.float32(1e-6)
-        raw_gain = ref / np.maximum(cur, eps)
-        gain = self._smooth_1d(raw_gain, getattr(self, "iw_row_equalization_smooth_win", 129))
-        clipv = max(1.0, float(getattr(self, "iw_row_equalization_clip", 2.5)))
-        gain = np.clip(gain, 1.0 / clipv, clipv).astype(np.float32)
-        return gain
-
-    def _apply_iw_post_image_corrections_numpy(self, look):
-        out = np.asarray(look, dtype=np.complex64)
-        if getattr(self, "iw_row_equalization", False):
-            gain = self._compute_iw_row_gain(out)
-            if gain is not None:
-                out = (out * gain[:, None]).astype(np.complex64)
-        if getattr(self, "iw_flip_output", False):
-            out = np.flip(out, axis=0).astype(np.complex64)
-        return out
-
-    def _apply_iw_post_image_corrections_dask(self, look):
-        out = look
-        if getattr(self, "iw_row_equalization", False):
-            cur = da.sqrt(da.mean(da.absolute(out) ** 2, axis=1)).astype(np.float32).compute()
-            ref = np.asarray(self.iw_ref_row_rms, dtype=np.float32) if self.iw_ref_row_rms is not None else None
-            if ref is not None:
-                eps = np.float32(1e-6)
-                raw_gain = ref / np.maximum(cur, eps)
-                gain = self._smooth_1d(raw_gain, getattr(self, "iw_row_equalization_smooth_win", 129))
-                clipv = max(1.0, float(getattr(self, "iw_row_equalization_clip", 2.5)))
-                gain = np.clip(gain, 1.0 / clipv, clipv).astype(np.float32)
-                gain_da = da.from_array(gain[:, None], chunks=(self.nRows, 1))
-                out = (out * gain_da).astype(np.complex64)
-        if getattr(self, "iw_flip_output", False):
-            out = da.flip(out, axis=0).astype(np.complex64)
-        return out
-
-
-
-    def _estimate_iw_dc_shift_from_rolled_support(self, S_roll, ss: int, ee: int) -> int:
-        if not getattr(self, "iw_doppler_centroid_correction", False):
-            return 0
-        if ee < ss:
-            return 0
-        support = S_roll[ss:ee + 1, :]
-        if isinstance(support, da.Array):
-            prof = da.mean(da.absolute(support) ** 2, axis=1).astype(np.float64).compute()
-        else:
-            prof = np.mean(np.abs(support) ** 2, axis=1).astype(np.float64)
-        if prof.size == 0 or not np.isfinite(prof).any():
-            return 0
-        prof = self._smooth_1d(prof, getattr(self, "iw_dc_smooth_win", 129)).astype(np.float64)
-        peak_rel = int(np.argmax(prof))
-        target_rel = int((ee - ss) // 2)
-        return int(target_rel - peak_rel)
-
-    def _compute_iw_subband_edges(self, S_roll, ss: int, ee: int) -> np.ndarray:
-        if ee < ss:
-            return np.array([ss, ee + 1], dtype=int)
-        if not getattr(self, "iw_equal_energy_split", False):
-            return np.linspace(ss, ee + 1, self.numberOfLooks + 1).astype(int)
-
-        support = S_roll[ss:ee + 1, :]
-        if isinstance(support, da.Array):
-            prof = da.mean(da.absolute(support) ** 2, axis=1).astype(np.float64).compute()
-        else:
-            prof = np.mean(np.abs(support) ** 2, axis=1).astype(np.float64)
-
-        if prof.size == 0 or not np.isfinite(prof).any():
-            return np.linspace(ss, ee + 1, self.numberOfLooks + 1).astype(int)
-
-        prof = np.maximum(prof, 1e-12)
-        cdf = np.cumsum(prof)
-        total = float(cdf[-1])
-        if not np.isfinite(total) or total <= 0.0:
-            return np.linspace(ss, ee + 1, self.numberOfLooks + 1).astype(int)
-
-        targets = np.linspace(0.0, total, self.numberOfLooks + 1)
-        edges = np.empty(self.numberOfLooks + 1, dtype=int)
-        edges[0] = ss
-        edges[-1] = ee + 1
-        for k in range(1, self.numberOfLooks):
-            rel = int(np.searchsorted(cdf, targets[k], side="left"))
-            edges[k] = ss + rel
-
-        # enforce strictly increasing edges with at least one bin per band
-        for k in range(1, len(edges)):
-            if edges[k] <= edges[k - 1]:
-                edges[k] = edges[k - 1] + 1
-        if edges[-1] > ee + 1:
-            edges[-1] = ee + 1
-        for k in range(len(edges) - 2, -1, -1):
-            if edges[k] >= edges[k + 1]:
-                edges[k] = edges[k + 1] - 1
-        if np.any(np.diff(edges) <= 0):
-            return np.linspace(ss, ee + 1, self.numberOfLooks + 1).astype(int)
-        return edges.astype(int)
-
-    def _iw_energy_scale(self, full_len: int, sub_len: int) -> np.float32:
-        if not getattr(self, "iw_energy_compensation", True):
-            return np.float32(1.0)
-        full_len = float(full_len)
-        sub_len = float(sub_len)
-        if full_len <= 0.0 or sub_len <= 0.0:
-            return np.float32(1.0)
-        return np.float32(np.sqrt(full_len / sub_len))
-
-    def _row_rms_from_look(self, look):
-        if isinstance(look, da.Array):
-            return da.sqrt(da.mean(da.absolute(look) ** 2, axis=1)).astype(np.float32).compute()
-        return np.sqrt(np.mean(np.abs(look) ** 2, axis=1)).astype(np.float32)
-
-    def _apply_iw_crosslook_row_balance(self):
-        """
-        Reduce residual row-wise tonal inversions between IW subapertures.
-
-        This is a post-image mitigation step, not a substitute for a fully
-        burst-wise TOPS decomposition. It computes a common smooth row-RMS
-        reference across the generated sublooks and softly matches each look
-        to that reference.
-        """
-        if not getattr(self, "iw_crosslook_row_balance", False):
-            return
-        if not hasattr(self, "Looks") or len(self.Looks) < 2:
-            return
-
-        profiles = [self._row_rms_from_look(look) for look in self.Looks]
-        prof_stack = np.stack(profiles, axis=0).astype(np.float32)
-        ref = np.median(prof_stack, axis=0).astype(np.float32)
-
-        if getattr(self, "iw_ref_row_rms", None) is not None:
-            full_ref = np.asarray(self.iw_ref_row_rms, dtype=np.float32)
-            if full_ref.shape == ref.shape:
-                ref = np.sqrt(np.maximum(ref, 1e-6) * np.maximum(full_ref, 1e-6)).astype(np.float32)
-
-        ref = self._smooth_1d(ref, getattr(self, "iw_crosslook_row_balance_smooth_win", 257)).astype(np.float32)
-        eps = np.float32(1e-6)
-        clipv = max(1.0, float(getattr(self, "iw_crosslook_row_balance_clip", 1.5)))
-
-        new_looks = []
-        for look, cur in zip(self.Looks, profiles):
-            gain = ref / np.maximum(cur, eps)
-            gain = self._smooth_1d(gain, getattr(self, "iw_crosslook_row_balance_smooth_win", 257)).astype(np.float32)
-            gain = np.clip(gain, 1.0 / clipv, clipv).astype(np.float32)
-            if isinstance(look, da.Array):
-                gain_da = da.from_array(gain[:, None], chunks=(self.nRows, 1))
-                look = (look * gain_da).astype(np.complex64)
-            else:
-                look = (np.asarray(look) * gain[:, None]).astype(np.complex64)
-            new_looks.append(look)
-        self.Looks = new_looks
 
     # ------------------------------------------------------------------
     # Spectrum normalisation
@@ -895,28 +561,18 @@ class CombinedSublooking:
             dim_average_int = xp.mean(xp.abs(S), axis=1).astype(np.float32)
             self.SpectrumOneDimNorm = (S / dim_average_int[:, None] * target_average).astype(np.complex64)
         else:  # AZIMUTH
-            if self._is_iw_tops_mode() and not getattr(self, "iw_apply_spectrum_normalization", False):
-                self.SpectrumOneDimNorm = S.astype(np.complex64)
+            dim_average_int = xp.mean(xp.abs(S), axis=1).astype(np.float32)
+            if self._use_dask:
+                # Compute median explicitly to match numpy path exactly
+                dim_average_int = da.where(dim_average_int == 0, np.float32(1e-6), dim_average_int)
+                med = da.percentile(dim_average_int, 50)
             else:
-                dim_average_int = xp.mean(xp.abs(S), axis=1).astype(np.float32)
-                if self._use_dask:
-                    # Compute median explicitly to match numpy path exactly
-                    dim_average_int = da.where(dim_average_int == 0, np.float32(1e-6), dim_average_int)
-                    med = da.percentile(dim_average_int, 50)
-                else:
-                    dim_average_int[dim_average_int == 0] = np.float32(1e-6)
-                    med = np.float32(np.median(dim_average_int))
-                self.SpectrumOneDimNorm = ((S / dim_average_int[:, None]) * med).astype(np.complex64)
+                dim_average_int[dim_average_int == 0] = np.float32(1e-6)
+                med = np.float32(np.median(dim_average_int))
+            self.SpectrumOneDimNorm = ((S / dim_average_int[:, None]) * med).astype(np.complex64)
 
-        # For SM, keep the original spectrum-based central-frequency estimate untouched.
-        # For IW-TOPS, use support estimation directly on the observed shifted spectrum,
-        # without assuming a zero-centered physical azimuth axis.
-        if self._is_iw_tops_mode():
-            try:
-                self._prepare_iw_tops_support(S)
-            except Exception as exc:
-                logger.warning("IW-TOPS support estimation skipped: %s", exc)
-        elif self.choice != 0 and getattr(self, "estimate_center_from_spectrum", False):
+        # Optionally re-center using a spectrum-based estimate (useful for IW/TOPS variability)
+        if self.choice != 0 and getattr(self, "estimate_center_from_spectrum", False):
             try:
                 _meta = float(self.centralFreq)
                 _est = estimate_central_freq_from_spectrum(
@@ -951,9 +607,7 @@ class CombinedSublooking:
     # De-weighting
     # ------------------------------------------------------------------
     def SpectrumDeWeighting(self):
-        if self._is_iw_tops_mode():
-            self.AncillaryDeWeIW()
-        elif self.choiceDeWe == 0:
+        if self.choiceDeWe == 0:
             self.AncillaryDeWe()
         else:
             self.AverageDeWe()
@@ -1076,54 +730,6 @@ class CombinedSublooking:
         else:
             self._ancillary_dewe_numpy()
 
-    def AncillaryDeWeIW(self, VERBOSE=False):
-        """
-        IW-TOPS-specific ancillary de-weighting.
-
-        This branch does not rely on a physical zero-centered azimuth frequency
-        vector or on a metadata central frequency. Instead, it:
-          1. estimates the effective support from the observed shifted spectrum,
-          2. rolls the support to the center only for processing,
-          3. applies Hamming de-weighting on the effective support,
-          4. rolls the result back to the original shifted-spectrum geometry.
-
-        SM behaviour remains unchanged because this method is called only when
-        ``tops_iw_mode=True`` and ``choice==1``.
-        """
-        if self.iw_support_start_rolled is None or self.iw_support_end_rolled is None:
-            self._prepare_iw_tops_support(self.SpectrumOneDimNorm)
-
-        coeff = self.WeightFunctAzimParams
-        ss = int(self.iw_support_start_rolled)
-        ee = int(self.iw_support_end_rolled)
-
-        S_roll = self._roll_freq_axis(self.SpectrumOneDimNorm, self.iw_roll_shift)
-        support = S_roll[ss:ee + 1, :]
-
-        if isinstance(support, da.Array):
-            dehamm = support.map_blocks(
-                lambda block: DeHammWin_2d(block, coeff),
-                dtype=np.complex64,
-            )
-            top = da.zeros((ss, self.nCols), chunks=(ss if ss > 0 else 1, self._chunk_cols), dtype=np.complex64)
-            bot_len = self.nRows - (ee + 1)
-            bottom = da.zeros((bot_len, self.nCols), chunks=(bot_len if bot_len > 0 else 1, self._chunk_cols), dtype=np.complex64)
-            parts = []
-            if ss > 0:
-                parts.append(top)
-            parts.append(dehamm)
-            if bot_len > 0:
-                parts.append(bottom)
-            out_roll = da.concatenate(parts, axis=0).astype(np.complex64)
-        else:
-            dehamm = DeHammWin_2d(np.asarray(support), coeff)
-            out_roll = np.zeros((self.nRows, self.nCols), dtype=np.complex64)
-            out_roll[ss:ee + 1, :] = dehamm
-
-        self.SpectrumOneDimNormDeWe = self._roll_freq_axis(out_roll, -self.iw_roll_shift).astype(np.complex64)
-
-        del self.SpectrumOneDimNorm
-
     # ------------------------------------------------------------------
     # Sublook generation
     # ------------------------------------------------------------------
@@ -1205,121 +811,11 @@ class CombinedSublooking:
         if VERBOSE:
             print(f"{self.numberOfLooks} sublooks created (lazy dask graphs).")
 
-    def _generation_numpy_iw(self, VERBOSE=False):
-        """
-        IW-TOPS-specific sublook generation.
-
-        The de-weighted spectrum is already in shifted-frequency coordinates.
-        For each sublook, this method preserves the selected subband in its
-        coherent shifted position, then applies ``ifftshift`` and ``ifft`` along
-        azimuth. This avoids the old reversed-slice reconstruction that can
-        introduce deterministic modulation in IW-TOPS.
-        """
-        if self.iw_support_start_rolled is None or self.iw_support_end_rolled is None:
-            self._prepare_iw_tops_support(self.SpectrumOneDimNormDeWe)
-
-        ss = int(self.iw_support_start_rolled)
-        ee = int(self.iw_support_end_rolled)
-
-        S_roll = self._roll_freq_axis(self.SpectrumOneDimNormDeWe, self.iw_roll_shift)
-
-        local_shift = self._estimate_iw_dc_shift_from_rolled_support(S_roll, ss, ee)
-        if local_shift != 0:
-            S_roll = self._roll_freq_axis(S_roll, local_shift)
-
-        support_len = ee - ss + 1
-        edges = self._compute_iw_subband_edges(S_roll, ss, ee)
-        self.Looks = []
-
-        for it in range(self.numberOfLooks):
-            si = int(edges[it])
-            ei = int(edges[it + 1])
-            if ei <= si:
-                continue
-
-            padded_roll = np.zeros((self.nRows, self.nCols), dtype=np.complex64)
-            padded_roll[si:ei, :] = S_roll[si:ei, :]
-            padded = self._roll_freq_axis(padded_roll, -self.iw_roll_shift)
-            padded = self._ifftshift_freq_axis(padded)
-            look = np.fft.ifft(padded, axis=0).astype(np.complex64)
-
-            scale = self._iw_energy_scale(full_len=support_len, sub_len=ei - si)
-            if scale != np.float32(1.0):
-                look *= scale
-
-            look = self._apply_iw_post_image_corrections_numpy(look)
-
-            self.Looks.append(look)
-
-        del self.SpectrumOneDimNormDeWe
-
-        if VERBOSE:
-            print(f"{len(self.Looks)} IW-TOPS sublooks created successfully.")
-
-    def _generation_dask_iw(self, VERBOSE=False):
-        if self.iw_support_start_rolled is None or self.iw_support_end_rolled is None:
-            self._prepare_iw_tops_support(self.SpectrumOneDimNormDeWe)
-
-        ss = int(self.iw_support_start_rolled)
-        ee = int(self.iw_support_end_rolled)
-
-        S_roll = self._roll_freq_axis(self.SpectrumOneDimNormDeWe, self.iw_roll_shift)
-
-        local_shift = self._estimate_iw_dc_shift_from_rolled_support(S_roll, ss, ee)
-        if local_shift != 0:
-            S_roll = self._roll_freq_axis(S_roll, local_shift)
-
-        support_len = ee - ss + 1
-        edges = self._compute_iw_subband_edges(S_roll, ss, ee)
-        self.Looks = []
-
-        for it in range(self.numberOfLooks):
-            si = int(edges[it])
-            ei = int(edges[it + 1])
-            if ei <= si:
-                continue
-
-            top_len = si
-            mid_len = ei - si
-            bot_len = self.nRows - ei
-
-            parts = []
-            if top_len > 0:
-                parts.append(da.zeros((top_len, self.nCols), chunks=(top_len, self._chunk_cols), dtype=np.complex64))
-            parts.append(S_roll[si:ei, :].astype(np.complex64))
-            if bot_len > 0:
-                parts.append(da.zeros((bot_len, self.nCols), chunks=(bot_len, self._chunk_cols), dtype=np.complex64))
-
-            padded_roll = da.concatenate(parts, axis=0).astype(np.complex64)
-            padded = self._roll_freq_axis(padded_roll, -self.iw_roll_shift)
-            padded = self._ifftshift_freq_axis(padded)
-            look = dafft.ifft(padded, axis=0).astype(np.complex64)
-
-            scale = self._iw_energy_scale(full_len=support_len, sub_len=ei - si)
-            if scale != np.float32(1.0):
-                look = (look * scale).astype(np.complex64)
-
-            look = self._apply_iw_post_image_corrections_dask(look)
-
-            self.Looks.append(look)
-
-        del self.SpectrumOneDimNormDeWe
-
-        if VERBOSE:
-            print(f"{len(self.Looks)} IW-TOPS sublooks created (lazy dask graphs).")
-
     def Generation(self, VERBOSE=False):
-        if self._is_iw_tops_mode():
-            if self._use_dask:
-                self._generation_dask_iw(VERBOSE=VERBOSE)
-            else:
-                self._generation_numpy_iw(VERBOSE=VERBOSE)
-            self._apply_iw_crosslook_row_balance()
+        if self._use_dask:
+            self._generation_dask(VERBOSE=VERBOSE)
         else:
-            if self._use_dask:
-                self._generation_dask(VERBOSE=VERBOSE)
-            else:
-                self._generation_numpy(VERBOSE=VERBOSE)
+            self._generation_numpy(VERBOSE=VERBOSE)
 
     # ------------------------------------------------------------------
     # Save sublooks
@@ -1403,19 +899,6 @@ def do_subaps(
     VERBOSE: bool = False,
     force_dask: Optional[bool] = None,
     chunk_cols: Optional[int] = None,
-    tops_iw_mode: Optional[bool] = None,
-    iw_apply_spectrum_normalization: bool = False,
-    iw_energy_compensation: bool = True,
-    iw_flip_output: bool = True,
-    iw_row_equalization: bool = True,
-    iw_row_equalization_smooth_win: int = 129,
-    iw_row_equalization_clip: float = 2.5,
-    iw_doppler_centroid_correction: bool = True,
-    iw_dc_smooth_win: int = 129,
-    iw_equal_energy_split: bool = True,
-    iw_crosslook_row_balance: bool = True,
-    iw_crosslook_row_balance_smooth_win: int = 257,
-    iw_crosslook_row_balance_clip: float = 1.5,
 ):
     """
     Orchestrator:
@@ -1511,15 +994,9 @@ def do_subaps(
                 print(f"\nProcessing subapertures for POL={pol} (N={nlooks})")
                 print(f"  i: {i_fp}")
                 print(f"  q: {q_fp}")
-                print(f"  IW-TOPS mode: {bool(tops_iw_mode) if tops_iw_mode is not None else str(pol).upper().startswith('IW')}")
 
-            if tops_iw_mode is None:
-                _tops_iw_mode = str(pol).upper().startswith("IW")
-            else:
-                _tops_iw_mode = bool(tops_iw_mode)
-            
             sub = CombinedSublooking(
-                metadata_pointer_safe=safe_path,
+                metadata_pointer_safe=safe_path,  # SAFE used for metadata
                 numberofLooks=nlooks,
                 i_image=i_fp,
                 q_image=q_fp,
@@ -1527,19 +1004,6 @@ def do_subaps(
                 assetMetadata=None,
                 force_dask=force_dask,
                 chunk_cols=chunk_cols,
-                tops_iw_mode=_tops_iw_mode,
-                iw_apply_spectrum_normalization=iw_apply_spectrum_normalization,
-                iw_energy_compensation=iw_energy_compensation,
-                iw_flip_output=iw_flip_output,
-                iw_row_equalization=iw_row_equalization,
-                iw_row_equalization_smooth_win=iw_row_equalization_smooth_win,
-                iw_row_equalization_clip=iw_row_equalization_clip,
-                iw_doppler_centroid_correction=iw_doppler_centroid_correction,
-                iw_dc_smooth_win=iw_dc_smooth_win,
-                iw_equal_energy_split=iw_equal_energy_split,
-                iw_crosslook_row_balance=iw_crosslook_row_balance,
-                iw_crosslook_row_balance_smooth_win=iw_crosslook_row_balance_smooth_win,
-                iw_crosslook_row_balance_clip=iw_crosslook_row_balance_clip,
             )
 
             sub.run_and_save(
