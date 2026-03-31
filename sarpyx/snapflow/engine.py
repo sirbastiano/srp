@@ -2540,6 +2540,77 @@ class GPT:
         self.current_cmd.append(f'SAR-Mosaic {" ".join(cmd_params)}')
         return self._call(suffix='SMOS', output_name=output_name)
 
+    # def do_subaps(
+    #     self,
+    #     dim_path: Optional[Union[str, Path]] = None,
+    #     safe_path: Optional[Union[str, Path]] = None,
+    #     numberofLooks: int = 3,
+    #     n_decompositions: Optional[Union[int, List[int]]] = None,
+    #     DownSample: bool = True,
+    #     byte_order: int = 1,
+    #     prefix: str = "",
+    #     VERBOSE: bool = False,
+    #     chunk_cols: Optional[int] = None,
+    # ) -> Path:
+    #     """
+    #     Run sub-aperture decomposition on a SNAP DIM product.
+
+    #     Parameters
+    #     ----------
+    #     dim_path : Path or str, optional
+    #         Path to the DIM product to process.
+    #         If None, self.prod_path is used.
+    #     safe_path : Path or str
+    #         Path to the original SAFE product (required by sub-aperture processing).
+    #     numberofLooks : int
+    #         Number of looks used for azimuth bandwidth estimation.
+    #     n_decompositions : int or list[int], optional
+    #         Sub-aperture decomposition scheme (e.g. [2, 3]).
+    #     DownSample : bool
+    #         Whether to downsample the output images.
+    #     byte_order : int
+    #         Byte order of output ENVI files (0=little endian, 1=big endian).
+    #     prefix : str
+    #         Prefix for generated band names.
+    #     VERBOSE : bool
+    #         Verbose mode.
+
+    #     Returns
+    #     -------
+    #     Path
+    #         Path to the processed DIM product.
+    #     """
+
+    #     # Local import to avoid circular dependencies
+    #     from sarpyx.processor.core.subaperture_full_img import do_subaps as _do_subaps
+
+    #     # Use current product if dim_path is not provided
+    #     dim_path = Path(dim_path) if dim_path is not None else Path(self.prod_path)
+
+    #     if dim_path.suffix.lower() != ".dim":
+    #         raise ValueError(
+    #             f"do_subaps expects a DIM product, got: {dim_path}"
+    #         )
+
+    #     if safe_path is None:
+    #         raise ValueError(
+    #             "safe_path must be provided (path to original SAFE product)"
+    #         )
+
+    #     _do_subaps(
+    #         dim_path=str(dim_path),
+    #         safe_path=str(safe_path),
+    #         numberofLooks=numberofLooks,
+    #         n_decompositions=n_decompositions,
+    #         DownSample=DownSample,
+    #         byte_order=byte_order,
+    #         prefix=prefix,
+    #         VERBOSE=VERBOSE,
+    #         chunk_cols=chunk_cols
+    #     )
+
+    #     return dim_path
+
     def do_subaps(
         self,
         dim_path: Optional[Union[str, Path]] = None,
@@ -2551,52 +2622,52 @@ class GPT:
         prefix: str = "",
         VERBOSE: bool = False,
         chunk_cols: Optional[int] = None,
+        **kwargs,
     ) -> Path:
         """
         Run sub-aperture decomposition on a SNAP DIM product.
-
+    
         Parameters
         ----------
         dim_path : Path or str, optional
             Path to the DIM product to process.
             If None, self.prod_path is used.
         safe_path : Path or str
-            Path to the original SAFE product (required by sub-aperture processing).
+            Path to the original SAFE product.
         numberofLooks : int
             Number of looks used for azimuth bandwidth estimation.
         n_decompositions : int or list[int], optional
-            Sub-aperture decomposition scheme (e.g. [2, 3]).
+            Sub-aperture decomposition scheme.
         DownSample : bool
             Whether to downsample the output images.
         byte_order : int
-            Byte order of output ENVI files (0=little endian, 1=big endian).
+            Byte order of output ENVI files.
         prefix : str
             Prefix for generated band names.
         VERBOSE : bool
             Verbose mode.
-
+        chunk_cols : int, optional
+            Chunk size along columns.
+        **kwargs
+            Additional arguments forwarded to
+            sarpyx.processor.core.subaperture_full_img.do_subaps.
+    
         Returns
         -------
         Path
             Path to the processed DIM product.
         """
-
-        # Local import to avoid circular dependencies
+    
         from sarpyx.processor.core.subaperture_full_img import do_subaps as _do_subaps
-
-        # Use current product if dim_path is not provided
+    
         dim_path = Path(dim_path) if dim_path is not None else Path(self.prod_path)
-
+    
         if dim_path.suffix.lower() != ".dim":
-            raise ValueError(
-                f"do_subaps expects a DIM product, got: {dim_path}"
-            )
-
+            raise ValueError(f"do_subaps expects a DIM product, got: {dim_path}")
+    
         if safe_path is None:
-            raise ValueError(
-                "safe_path must be provided (path to original SAFE product)"
-            )
-
+            raise ValueError("safe_path must be provided (path to original SAFE product)")
+    
         _do_subaps(
             dim_path=str(dim_path),
             safe_path=str(safe_path),
@@ -2606,9 +2677,10 @@ class GPT:
             byte_order=byte_order,
             prefix=prefix,
             VERBOSE=VERBOSE,
-            chunk_cols=chunk_cols
+            chunk_cols=chunk_cols,
+            **kwargs,
         )
-
+    
         return dim_path
         
     def demodulate(self, output_name: Optional[str] = None) -> Optional[str]:
