@@ -1,25 +1,43 @@
-"""Utilities module for sarpyx package.
+"""Utilities package with lazy exports.
 
-This module provides helper functions and classes for the sarpyx package,
-including visualization tools and image processing utilities.
+Importing ``sarpyx.utils`` should not eagerly load visualization helpers that
+pull optional heavy dependencies.
 """
 
-# Import key functions and classes to make them available at the package level
-from .viz import show_image, image_histogram_equalization, show_histogram, show_histogram_equalization
-from .dem_utils import download_tiles_for_wkt, tiles_from_wkt, tile_name, tile_url, build_vrt
+import importlib
 
-# Define __all__ to explicitly specify what should be exported when using "from utils import *"
-__all__ = [
-    'show_image',
-    'image_histogram_equalization',
-    'show_histogram',
-    'show_histogram_equalization',
-    'download_tiles_for_wkt',
-    'tiles_from_wkt',
-    'tile_name',
-    'tile_url',
-    'build_vrt',
-]
+_EXPORT_MAP = {
+    'show_image': 'viz',
+    'image_histogram_equalization': 'viz',
+    'show_histogram': 'viz',
+    'show_histogram_equalization': 'viz',
+    'download_tiles_for_wkt': 'dem_utils',
+    'tiles_from_wkt': 'dem_utils',
+    'tile_name': 'dem_utils',
+    'tile_url': 'dem_utils',
+    'build_vrt': 'dem_utils',
+}
 
-# Version information
+__all__ = list(_EXPORT_MAP)
 __version__ = '0.1.5'
+
+_module_cache = {}
+_value_cache = {}
+
+
+def __getattr__(name):
+    if name in _value_cache:
+        return _value_cache[name]
+
+    module_name = _EXPORT_MAP.get(name)
+    if module_name is None:
+        raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+    module = _module_cache.get(module_name)
+    if module is None:
+        module = importlib.import_module(f'.{module_name}', __name__)
+        _module_cache[module_name] = module
+
+    value = getattr(module, name)
+    _value_cache[name] = value
+    return value

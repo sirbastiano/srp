@@ -4,8 +4,7 @@ the Copernicus Data Search API and from Terrasar-X product XML files.
 """
 
 from pathlib import Path
-from phidown.search import CopernicusDataSearcher
-from shapely.geometry import shape, MultiPolygon, Polygon
+from shapely.geometry import shape, MultiPoint, MultiPolygon, Polygon
 import xml.etree.ElementTree as ET
 
 def _parse_gml_coordinates(text: str, axis_order: str) -> list[tuple[float, float]]:
@@ -137,6 +136,8 @@ def sentinel1_wkt_extractor_cdse(product_name: str, display_results: bool = Fals
     Returns:
         str | None: WKT representation of the product footprint polygon, or None if not found.
     """
+    from phidown.search import CopernicusDataSearcher
+
     searcher = CopernicusDataSearcher()
     if verbose:
         print(f"Searching for product with exact name: {product_name}\n")
@@ -196,6 +197,79 @@ def terrasar_wkt_extractor(product_path: Path) -> str:
 
     # Create WKT polygon string
     return f"POLYGON(({', '.join(f'{lon} {lat}' for lon, lat in corners)}))"
+def _safe_dir_from_product_path(product_path: str | Path) -> Path:
+    if isinstance(product_path, str):
+        product_path = Path(product_path)
+
+    if product_path.is_dir() and product_path.suffix.upper() == '.SAFE':
+        return product_path
+    if product_path.name.lower() == 'manifest.safe':
+        return product_path.parent
+    if product_path.parent.suffix.upper() == '.SAFE':
+        return product_path.parent
+    return product_path
+
+
+def sentinel1_swath_wkt_extractor_safe(
+    product_path: str | Path,
+    swath: str,
+    display_results: bool = False,
+    verbose: bool = False,
+) -> str | None:
+    """
+    Extract a swath-specific WKT footprint from Sentinel-1 SAFE annotation XMLs.
+
+    The function collects geolocation grid points from annotation XML files that
+    belong to the requested swath (for example ``IW1``) and returns the convex
+    hull of those geographic points as a lon/lat WKT polygon.
+    """
+    safe_dir = _safe_dir_from_product_path(product_path)
+    annotation_dir = safe_dir / 'annotation'
+    if not annotation_dir.exists():
+        if verbose:
+            print(f'Annotation directory not found: {annotation_dir}')
+        return None
+
+    swath_norm = swath.upper()
+    annotation_paths = sorted(
+        path for path in annotation_dir.glob('*.xml')
+        if swath_norm.lower() in path.name.lower()
+    )
+    if not annotation_paths:
+        if verbose:
+            print(f'No annotation XMLs found for swath {swath_norm} in {annotation_dir}')
+        return None
+
+    points: list[tuple[float, float]] = []
+    for xml_path in annotation_paths:
+        try:
+            tree = ET.parse(xml_path)
+            root = tree.getroot()
+            for point_el in root.findall('.//geolocationGridPoint'):
+                lat_text = point_el.findtext('latitude')
+                lon_text = point_el.findtext('longitude')
+                if lat_text is None or lon_text is None:
+                    continue
+                points.append((float(lon_text), float(lat_text)))
+        except Exception as exc:
+            if verbose:
+                print(f'Skipping {xml_path}: {type(exc).__name__}: {exc}')
+
+    if len(points) < 3:
+        if verbose:
+            print(f'Not enough geolocation points for swath {swath_norm}')
+        return None
+
+    polygon = MultiPoint(points).convex_hull
+    if polygon.is_empty:
+        return None
+
+    wkt_polygon = polygon.wkt
+    if display_results:
+        print(wkt_polygon)
+    if verbose:
+        print(f'Swath WKT Polygon ({swath_norm}): {wkt_polygon}')
+    return wkt_polygon
 
 
 

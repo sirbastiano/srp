@@ -1293,6 +1293,8 @@ class CombinedSublooking:
             padded_roll = da.concatenate(parts, axis=0).astype(np.complex64)
             padded = self._roll_freq_axis(padded_roll, -self.iw_roll_shift)
             padded = self._ifftshift_freq_axis(padded)
+            # Dask FFT requires a single chunk along the transform axis.
+            padded = padded.rechunk((self.nRows, self._chunk_cols))
             look = dafft.ifft(padded, axis=0).astype(np.complex64)
 
             scale = self._iw_energy_scale(full_len=support_len, sub_len=ei - si)
@@ -1403,6 +1405,7 @@ def do_subaps(
     VERBOSE: bool = False,
     force_dask: Optional[bool] = None,
     chunk_cols: Optional[int] = None,
+    update_dim: bool = True,
     tops_iw_mode: Optional[bool] = None,
     iw_apply_spectrum_normalization: bool = False,
     iw_energy_compensation: bool = True,
@@ -1436,6 +1439,10 @@ def do_subaps(
         ``None`` (default) → auto-detect based on image size vs available RAM.
     chunk_cols : int | None
         Column-chunk width for dask.  ``None`` → auto-computed.
+    update_dim : bool
+        ``True`` (default) updates the source DIM metadata after generating
+        subaperture files. ``False`` leaves the DIM untouched and only writes
+        the new ENVI files into the existing ``.data`` directory.
     """
 
     # -------------------------
@@ -1551,21 +1558,22 @@ def do_subaps(
             )
 
     # -------------------------
-    # Update the .dim ONCE at the end
-    # (at this point all new bands exist in .data)
+    # Optionally update the .dim once all new bands exist in .data
     # -------------------------
-    try:
-        dim_updated = update_dim_add_bands_from_data_dir(
-            dim_in=dim_path,
-            dim_out=None,  # writes "<original>_subaps.dim"
-            verbose=VERBOSE,
-        )
-        if VERBOSE:
-            print(f"\nDIM updated: {dim_updated}")
-    except Exception as e:
-        # Do not fail the pipeline if the DIM update fails
-        if VERBOSE:
-            print(f"\nWARNING: could not auto-update the .dim file: {e}")
+    if update_dim:
+        try:
+            dim_updated = update_dim_add_bands_from_data_dir(
+                dim_in=dim_path,
+                dim_out=None,
+                verbose=VERBOSE,
+            )
+            if VERBOSE:
+                print(f"\nDIM updated: {dim_updated}")
+        except Exception as e:
+            # Do not fail the pipeline if the DIM update fails
+            if VERBOSE:
+                print(f"\nWARNING: could not auto-update the .dim file: {e}")
+    elif VERBOSE:
+        print("\nSkipping DIM update after subaperture generation (update_dim=False).")
 
     # return pols
-

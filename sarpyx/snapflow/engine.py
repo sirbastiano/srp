@@ -227,11 +227,16 @@ class GPT:
         output_path: str | Path,
         delete_graph: bool = False,
         parameters: Optional[dict[str, str | Path | int | float | bool]] = None,
+        source_parameters: Optional[dict[str, str | Path]] = None,
     ) -> Optional[str]:
         """Execute a standalone GPT XML graph file."""
         graph_path = Path(graph_path)
         output_path = Path(output_path)
         self.current_cmd = self._base_cmd()
+        if source_parameters:
+            for name, value in source_parameters.items():
+                rendered = Path(value).as_posix() if isinstance(value, Path) else str(value)
+                self.current_cmd.append(f"-S{name}={rendered}")
         if parameters:
             for name, value in parameters.items():
                 rendered = json.dumps(Path(value).as_posix() if isinstance(value, Path) else value)
@@ -2622,6 +2627,7 @@ class GPT:
         prefix: str = "",
         VERBOSE: bool = False,
         chunk_cols: Optional[int] = None,
+        update_dim: bool = True,
         **kwargs,
     ) -> Path:
         """
@@ -2648,6 +2654,9 @@ class GPT:
             Verbose mode.
         chunk_cols : int, optional
             Chunk size along columns.
+        update_dim : bool
+            Whether to update the source DIM metadata after generating the
+            subaperture ENVI files.
         **kwargs
             Additional arguments forwarded to
             sarpyx.processor.core.subaperture_full_img.do_subaps.
@@ -2678,6 +2687,7 @@ class GPT:
             prefix=prefix,
             VERBOSE=VERBOSE,
             chunk_cols=chunk_cols,
+            update_dim=update_dim,
             **kwargs,
         )
     
@@ -2920,15 +2930,63 @@ class GPT:
         Returns:
             Path to merged output product, or None if failed.
         """
-        self._reset_command()
-        
-        cmd_params = [f'-PgeographicError={geographic_error}']
-        
-        if source_bands:
-            cmd_params.append(f'-PsourceBands={",".join(source_bands)}')
-        
-        self.current_cmd.append(f'BandMerge {" ".join(cmd_params)}')
-        return self._call(suffix='BMRG', output_name=output_name)
+        products = source_products or [self.prod_path]
+        if not products:
+            raise ValueError('source_products must contain at least one product path')
+
+        source_bands_xml = (
+            f'<sourceBands>{escape(",".join(source_bands))}</sourceBands>'
+            if source_bands else
+            '<sourceBands/>'
+        )
+        output_path = self._build_output_path(suffix='BMRG', output_name=output_name)
+        graph_path = self.outdir / f"{output_path.stem}_graph.xml"
+        read_nodes = []
+        source_refs = []
+        for i, product in enumerate(products):
+            read_id = f'ReadSource{i}'
+            source_tag = 'sourceProduct' if i == 0 else f'sourceProduct.{i}'
+            product_path = escape(Path(product).as_posix())
+            read_nodes.append(
+                f"""  <node id="{read_id}">
+    <operator>Read</operator>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <file>{product_path}</file>
+    </parameters>
+  </node>"""
+            )
+            source_refs.append(f'      <{source_tag} refid="{read_id}"/>')
+        graph_xml = f"""<graph id="band-merge-products">
+  <version>1.0</version>
+{chr(10).join(read_nodes)}
+  <node id="BandMerge">
+    <operator>BandMerge</operator>
+    <sources>
+{chr(10).join(source_refs)}
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      {source_bands_xml}
+      <geographicError>{geographic_error}</geographicError>
+    </parameters>
+  </node>
+  <node id="Write">
+    <operator>Write</operator>
+    <sources>
+      <sourceProduct refid="BandMerge"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <file>{escape(output_path.as_posix())}</file>
+      <formatName>{self.format}</formatName>
+    </parameters>
+  </node>
+</graph>
+"""
+        graph_path.write_text(graph_xml, encoding="utf-8")
+        return self.run_graph(
+            graph_path=graph_path,
+            output_path=output_path,
+            delete_graph=True,
+        )
 
     def coherence(
         self,

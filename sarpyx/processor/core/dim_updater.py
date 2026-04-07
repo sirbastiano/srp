@@ -126,7 +126,14 @@ def _build_existing_band_maps(root: ET.Element) -> Tuple[Dict[str, int], int]:
         max_idx = max(max_idx, idx)
     return name_to_idx, max_idx
 
-def _ensure_sbi(template_sbi: ET.Element, band_name: str, band_desc: str, unit: str, idx: int) -> ET.Element:
+def _ensure_sbi(
+    template_sbi: ET.Element,
+    band_name: str,
+    band_desc: str,
+    unit: str,
+    idx: int,
+    expression: Optional[str] = None,
+) -> ET.Element:
     sbi = copy.deepcopy(template_sbi)
 
     bi = sbi.find("BAND_INDEX")
@@ -146,6 +153,12 @@ def _ensure_sbi(template_sbi: ET.Element, band_name: str, band_desc: str, unit: 
     bu = sbi.find("BAND_UNIT")
     if bu is not None:
         bu.text = unit
+
+    expr = sbi.find("EXPRESSION")
+    if expression is not None:
+        if expr is None:
+            expr = ET.SubElement(sbi, "EXPRESSION")
+        expr.text = expression
 
     return sbi
 
@@ -353,6 +366,7 @@ def update_dim_add_bands_from_data_dir(dim_in: str, dim_out: str = None, verbose
         idx_i = get_or_add(b_i)
         idx_q = get_or_add(b_q)
         idx_int = get_or_add(b_int)
+        int_expr = f"{b_i} == 0.0 ? 0.0 : {b_i} * {b_i} + {b_q} * {b_q}"
 
         xml_band_names = set(
             (x.findtext("BAND_NAME") or "").strip()
@@ -364,7 +378,16 @@ def update_dim_add_bands_from_data_dir(dim_in: str, dim_out: str = None, verbose
         if b_q not in xml_band_names:
             img_interp.append(_ensure_sbi(template_sbi_q, b_q, f"Imag part ({token})", "imag", idx_q))
         if b_int not in xml_band_names:
-            img_interp.append(_ensure_sbi(template_sbi_int, b_int, f"Intensity ({token})", "intensity", idx_int))
+            img_interp.append(
+                _ensure_sbi(
+                    template_sbi_int,
+                    b_int,
+                    f"Intensity ({token})",
+                    "intensity",
+                    idx_int,
+                    expression=int_expr,
+                )
+            )
 
         df_idxs = _existing_df_indices()
         if idx_i not in df_idxs:
@@ -386,6 +409,17 @@ def update_dim_add_bands_from_data_dir(dim_in: str, dim_out: str = None, verbose
 
     for (Lpref, swath, pol, sa) in groups:
         ensure_triplet(Lpref, swath, pol, sa)
+
+    # If the product is switched to band-indexed geocoding, every indexed band
+    # must have a matching Geoposition/CRS pair. Auxiliary bands such as
+    # derampDemodPhase are not part of the i/q group scan and must be backfilled.
+    geo_idxs = _existing_geo_indices()
+    for sbi in root.findall(".//Image_Interpretation/Spectral_Band_Info"):
+        band_index = _safe_int(sbi.findtext("BAND_INDEX"))
+        if band_index is None or band_index in geo_idxs:
+            continue
+        _append_georef_pair(georef_parent, template_crs, template_geo, band_index)
+        geo_idxs.add(band_index)
 
     nbands_el.text = str(len(root.findall(".//Image_Interpretation/Spectral_Band_Info")))
 
