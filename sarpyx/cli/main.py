@@ -399,15 +399,17 @@ def _add_worldsar_arguments(parser: argparse.ArgumentParser) -> None:
         '-o',
         dest='output_dir',
         type=str,
-        required=True,
-        help='Directory to save the processed output.'
+        required=False,
+        default=None,
+        help='Processed output directory, or target .zarr path in --h5-to-zarr-only mode.'
     )
     parser.add_argument(
         '--cuts-outdir',
         '--cuts_outdir',
         dest='cuts_outdir',
         type=str,
-        required=True,
+        required=False,
+        default=None,
         help='Where to store the tiles after extraction.'
     )
     parser.add_argument(
@@ -418,6 +420,27 @@ def _add_worldsar_arguments(parser: argparse.ArgumentParser) -> None:
         required=False,
         default=None,
         help='WKT string defining the product region of interest.'
+    )
+    parser.add_argument(
+        '--h5-to-zarr-only',
+        dest='h5_to_zarr_only',
+        action='store_true',
+        help='Skip preprocessing/tiling and convert an existing .h5 tile into a Zarr v3 store.'
+    )
+    parser.add_argument(
+        '--zarr-chunk-size',
+        dest='zarr_chunk_size',
+        type=int,
+        nargs=2,
+        metavar=('ROWS', 'COLS'),
+        default=(32, 32),
+        help='Chunk size for H5-to-Zarr conversion (default: 32 32).'
+    )
+    parser.add_argument(
+        '--overwrite-zarr',
+        dest='overwrite_zarr',
+        action='store_true',
+        help='Replace an existing output Zarr store when converting H5 tiles.'
     )
     parser.add_argument(
         '--gpt-path',

@@ -65,14 +65,13 @@ GPT = ENGINE_MOD.GPT
 update_dim_add_bands_from_data_dir = DIM_UPDATER_MOD.update_dim_add_bands_from_data_dir
 sentinel1_swath_wkt_extractor_safe = WKT_UTILS_MOD.sentinel1_swath_wkt_extractor_safe
 
-[_sentinel_post_chain, pipeline_sentinel, _resolve_tiling_wkt, _run_tops_swath_tiling], _WORLDSAR_NS = _load_functions_from_file(
+[_apply_sentinel_orbit_file, _sentinel_post_chain, pipeline_sentinel, _resolve_tiling_wkt, _run_tops_swath_tiling], _WORLDSAR_NS = _load_functions_from_file(
     REPO_ROOT / "pyscripts" / "worldsar.py",
-    ["_sentinel_post_chain", "pipeline_sentinel", "_resolve_tiling_wkt", "_run_tops_swath_tiling"],
+    ["_apply_sentinel_orbit_file", "_sentinel_post_chain", "pipeline_sentinel", "_resolve_tiling_wkt", "_run_tops_swath_tiling"],
 )
 [merge_iq_into_pdec], _MERGE_NS = _load_functions_from_file(
-    REPO_ROOT / "pyscripts" / "merge_iq_into_pdec.py",
+    REPO_ROOT / "pyscripts" / "worldsar.py",
     ["merge_iq_into_pdec"],
-    extra_globals={"Path": Path},
 )
 
 
@@ -247,7 +246,7 @@ def test_sentinel_post_chain_fails_fast_before_merge_and_tc(tmp_path: Path):
             self.do_subaps_kwargs: dict[str, object] | None = None
             self.tc_called = False
 
-        def ApplyOrbitFile(self):
+        def ApplyOrbitFile(self, **_kwargs):
             return str(tmp_path / "orb.dim")
 
         def Calibration(self, **_kwargs):
@@ -298,7 +297,7 @@ def test_sentinel_post_chain_fails_fast_on_deburst_before_subaps(tmp_path: Path)
             self.do_subaps_called = False
             self.tc_called = False
 
-        def ApplyOrbitFile(self):
+        def ApplyOrbitFile(self, **_kwargs):
             self.prod_path = tmp_path / "orb.dim"
             return str(self.prod_path)
 
@@ -351,7 +350,7 @@ def test_pipeline_sentinel_strip_uses_update_dim_false_and_real_pdec_path(
             self.prod_path = tmp_path / "input.dim"
             self.do_subaps_kwargs: dict[str, object] | None = None
 
-        def ApplyOrbitFile(self):
+        def ApplyOrbitFile(self, **_kwargs):
             self.prod_path = tmp_path / "orb.dim"
             return str(self.prod_path)
 
@@ -402,7 +401,149 @@ def test_pipeline_sentinel_strip_uses_update_dim_false_and_real_pdec_path(
     assert merge_calls[0]["backup"] is False
 
 
+def test_sentinel_post_chain_continues_on_offline_orbit_download_failure(tmp_path: Path):
+    merge_calls: list[dict[str, object]] = []
+
+    class FakeOp:
+        def __init__(self):
+            self.prod_path = tmp_path / "initial.dim"
+            self.apply_orbit_kwargs: dict[str, object] | None = None
+
+        def ApplyOrbitFile(self, **kwargs):
+            self.apply_orbit_kwargs = kwargs
+            return None
+
+        def Calibration(self, **_kwargs):
+            self.prod_path = tmp_path / "cal.dim"
+            return str(self.prod_path)
+
+        def TopsarDerampDemod(self):
+            self.prod_path = tmp_path / "deramp.dim"
+            return str(self.prod_path)
+
+        def Deburst(self):
+            self.prod_path = tmp_path / "deb.dim"
+            return str(self.prod_path)
+
+        def do_subaps(self, **_kwargs):
+            return None
+
+        def polarimetric_decomposition(self, **_kwargs):
+            self.prod_path = tmp_path / "pdec.dim"
+            return str(self.prod_path)
+
+        def TerrainCorrection(self, **_kwargs):
+            self.prod_path = tmp_path / "tc.dim"
+            return str(self.prod_path)
+
+        def last_error_summary(self):
+            return (
+                "returncode=1; stderr=WARNING: OrbitFileScraper: Unable to connect to "
+                "http://step.esa.int/auxdata/orbits/Sentinel-1/POEORB/S1C/2026/01/: Network is unreachable "
+                "WARNING: ApplyOrbitFileOp: No valid orbit file found "
+                "Orbit files may be downloaded from Copernicus Dataspaces"
+            )
+
+    def fake_merge(**kwargs):
+        merge_calls.append(kwargs)
+
+    _sentinel_post_chain.__globals__["merge_iq_into_pdec"] = fake_merge
+
+    op = FakeOp()
+    result = _sentinel_post_chain(op=op, product_path=str(tmp_path / "input.SAFE"))
+
+    assert Path(result) == tmp_path / "tc.dim"
+    assert op.apply_orbit_kwargs == {
+        "orbit_type": "Sentinel Precise (Auto Download)",
+        "continue_on_fail": False,
+    }
+    assert len(merge_calls) == 1
+    assert Path(merge_calls[0]["src_dim"]) == tmp_path / "deb.dim"
+
+
+def test_sentinel_post_chain_raises_on_nonrecoverable_orbit_failure(tmp_path: Path):
+    class FakeOp:
+        def __init__(self):
+            self.prod_path = tmp_path / "initial.dim"
+
+        def ApplyOrbitFile(self, **_kwargs):
+            return None
+
+        def Calibration(self, **_kwargs):
+            raise AssertionError("Calibration should not be called")
+
+        def last_error_summary(self):
+            return "forced orbit failure"
+
+    with pytest.raises(RuntimeError, match="Apply-Orbit-File failed: forced orbit failure"):
+        _sentinel_post_chain(op=FakeOp(), product_path=str(tmp_path / "input.SAFE"))
+
+
+def test_pipeline_sentinel_strip_forwards_orbit_settings(tmp_path: Path):
+    merge_calls: list[dict[str, object]] = []
+
+    class FakeOp:
+        def __init__(self):
+            self.prod_path = tmp_path / "input.dim"
+            self.apply_orbit_kwargs: dict[str, object] | None = None
+
+        def ApplyOrbitFile(self, **kwargs):
+            self.apply_orbit_kwargs = kwargs
+            self.prod_path = tmp_path / "orb.dim"
+            return str(self.prod_path)
+
+        def Calibration(self, **_kwargs):
+            self.prod_path = tmp_path / "cal.dim"
+            return str(self.prod_path)
+
+        def do_subaps(self, **_kwargs):
+            return None
+
+        def polarimetric_decomposition(self, **_kwargs):
+            self.prod_path = tmp_path / "pdec.dim"
+            return str(self.prod_path)
+
+        def TerrainCorrection(self, **_kwargs):
+            self.prod_path = tmp_path / "tc.dim"
+            return str(self.prod_path)
+
+        def last_error_summary(self):
+            return "unused"
+
+    fake_op = FakeOp()
+
+    def fake_create_gpt_operator(*_args, **_kwargs):
+        return fake_op
+
+    def fake_merge(**kwargs):
+        merge_calls.append(kwargs)
+
+    pipeline_sentinel.__globals__["_create_gpt_operator"] = fake_create_gpt_operator
+    pipeline_sentinel.__globals__["merge_iq_into_pdec"] = fake_merge
+    pipeline_sentinel.__globals__["_sentinel_post_chain"] = _sentinel_post_chain
+
+    result = pipeline_sentinel(
+        product_path=str(tmp_path / "input.SAFE"),
+        output_dir=tmp_path / "out",
+        is_TOPS=False,
+        orbit_type="Sentinel Restituted (Auto Download)",
+        orbit_continue_on_fail=True,
+    )
+
+    assert Path(result) == tmp_path / "tc.dim"
+    assert fake_op.apply_orbit_kwargs == {
+        "orbit_type": "Sentinel Restituted (Auto Download)",
+        "continue_on_fail": True,
+    }
+    assert len(merge_calls) == 1
+
+
+@pytest.mark.skipif(
+    not (REPO_ROOT / "pyscripts" / "merge_iq_into_pdec.py").exists(),
+    reason="merge_iq_into_pdec implementation is not present in this checkout",
+)
 def test_merge_iq_into_pdec_rejects_same_dim_product(tmp_path: Path):
+    pytest.importorskip("merge_iq_into_pdec")
     dim_path = _touch(tmp_path / "same.dim")
 
     with pytest.raises(ValueError, match="resolve to the same DIM product"):
@@ -505,10 +646,23 @@ def test_run_tops_swath_tiling_uses_swath_specific_wkt(tmp_path: Path):
 
     def fake_run_tiling(product_wkt, _grid_path, _source_product, intermediate_product, _cuts_outdir, _product_mode, **_kwargs):
         calls.append((product_wkt, Path(intermediate_product)))
-        return Path(intermediate_product).stem
+        return {
+            "name": Path(intermediate_product).stem,
+            "cut_failed": False,
+            "report_path": _cuts_outdir / "cut_report.json",
+            "cuts_dir": _cuts_outdir / Path(intermediate_product).stem,
+        }
 
-    def fake_run_db_indexing(cuts_outdir, name):
-        db_calls.append((Path(cuts_outdir), name))
+    def fake_validate_tile_group(_cuts_dir, swath_product, swath=None, tiling_result=None):
+        assert tiling_result is not None
+        return {
+            "name": Path(swath_product).stem,
+            "rows": [f"row::{swath}"],
+            "results": [{"status": "success"}],
+        }
+
+    def fake_run_db_indexing(validation_rows, name, swath=None):
+        db_calls.append((tuple(validation_rows), name, swath))
 
     def fake_verify(product_wkt, _grid_path, cuts_outdir, intermediate, swath_wkts=None):
         verify_calls.append(
@@ -524,8 +678,10 @@ def test_run_tops_swath_tiling_uses_swath_specific_wkt(tmp_path: Path):
     _run_tops_swath_tiling.__globals__["extract_product_id"] = lambda path: Path(path).stem
     _run_tops_swath_tiling.__globals__["_resolve_tiling_wkt"] = fake_resolve
     _run_tops_swath_tiling.__globals__["_run_tiling"] = fake_run_tiling
+    _run_tops_swath_tiling.__globals__["_validate_tile_group"] = fake_validate_tile_group
     _run_tops_swath_tiling.__globals__["_run_db_indexing"] = fake_run_db_indexing
     _run_tops_swath_tiling.__globals__["_verify_tops_tile_coverage"] = fake_verify
+    _run_tops_swath_tiling.__globals__["_write_h5_validation_report_pdf"] = lambda *_args, **_kwargs: None
 
     _run_tops_swath_tiling(
         product_wkt="FULL_WKT",
@@ -542,7 +698,126 @@ def test_run_tops_swath_tiling_uses_swath_specific_wkt(tmp_path: Path):
         ("WKT::IW2", swath_products["IW2"]),
     ]
     assert db_calls == [
-        (tmp_path / "cuts" / "IW1", "IW1"),
-        (tmp_path / "cuts" / "IW2", "IW2"),
+        (("row::IW1",), "IW1", "IW1"),
+        (("row::IW2",), "IW2", "IW2"),
     ]
     assert verify_calls == []
+
+
+def test_run_tops_swath_tiling_validates_existing_tiles_when_tiling_disabled(tmp_path: Path):
+    validate_calls: list[tuple[Path, Path, str | None]] = []
+    db_calls: list[tuple[tuple[str, ...], str, str | None]] = []
+    swath_products = {
+        "IW1": _touch(tmp_path / "IW1.dim"),
+        "IW2": _touch(tmp_path / "IW2.dim"),
+    }
+
+    def fake_validate_tile_group(cuts_dir, swath_product, swath=None, tiling_result=None):
+        assert tiling_result is None
+        validate_calls.append((Path(cuts_dir), Path(swath_product), swath))
+        return {
+            "name": Path(swath_product).stem,
+            "rows": [f"row::{swath}"],
+            "results": [{"status": "success"}],
+        }
+
+    def fake_run_db_indexing(validation_rows, name, swath=None):
+        db_calls.append((tuple(validation_rows), name, swath))
+
+    _run_tops_swath_tiling.__globals__["tiling"] = False
+    _run_tops_swath_tiling.__globals__["_resolve_tiling_wkt"] = lambda full_wkt, *_args, **_kwargs: full_wkt
+    _run_tops_swath_tiling.__globals__["_validate_tile_group"] = fake_validate_tile_group
+    _run_tops_swath_tiling.__globals__["_run_db_indexing"] = fake_run_db_indexing
+    _run_tops_swath_tiling.__globals__["_write_h5_validation_report_pdf"] = lambda *_args, **_kwargs: None
+    _run_tops_swath_tiling.__globals__["_run_tiling"] = lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("_run_tiling should not be called when tiling is disabled"))
+
+    _run_tops_swath_tiling(
+        product_wkt="FULL_WKT",
+        grid_geoj_path=tmp_path / "grid.geojson",
+        product_path=tmp_path / "source.SAFE",
+        intermediate=swath_products,
+        cuts_outdir=tmp_path / "cuts",
+        product_mode="S1TOPS",
+        gpt_kwargs={"gpt_memory": None, "gpt_parallelism": None, "gpt_timeout": None},
+    )
+
+    assert validate_calls == [
+        (tmp_path / "cuts" / "IW1" / "IW1", swath_products["IW1"], "IW1"),
+        (tmp_path / "cuts" / "IW2" / "IW2", swath_products["IW2"], "IW2"),
+    ]
+    assert db_calls == [
+        (("row::IW1",), "IW1", "IW1"),
+        (("row::IW2",), "IW2", "IW2"),
+    ]
+
+
+def test_run_tops_swath_tiling_raises_on_validation_failure(tmp_path: Path):
+    swath_products = {"IW1": _touch(tmp_path / "IW1.dim")}
+
+    def fake_run_tiling(*_args, **_kwargs):
+        return {
+            "name": "IW1",
+            "cut_failed": False,
+            "report_path": tmp_path / "cuts" / "cut_report.json",
+            "cuts_dir": tmp_path / "cuts" / "IW1" / "IW1",
+            "expected_tiles": ["tile-a"],
+            "actual_tiles": ["tile-a"],
+        }
+
+    def fake_validate_tile_group(*_args, **_kwargs):
+        return {
+            "name": "IW1",
+            "rows": [{"ID": "tile-a"}],
+            "results": [{"status": "failed"}],
+        }
+
+    _run_tops_swath_tiling.__globals__["tiling"] = True
+    _run_tops_swath_tiling.__globals__["_resolve_tiling_wkt"] = lambda full_wkt, *_args, **_kwargs: full_wkt
+    _run_tops_swath_tiling.__globals__["_run_tiling"] = fake_run_tiling
+    _run_tops_swath_tiling.__globals__["_validate_tile_group"] = fake_validate_tile_group
+    _run_tops_swath_tiling.__globals__["_run_db_indexing"] = lambda *_args, **_kwargs: None
+    _run_tops_swath_tiling.__globals__["_write_h5_validation_report_pdf"] = lambda *_args, **_kwargs: None
+
+    with pytest.raises(RuntimeError, match="H5 validation failed; report:"):
+        _run_tops_swath_tiling(
+            product_wkt="FULL_WKT",
+            grid_geoj_path=tmp_path / "grid.geojson",
+            product_path=tmp_path / "source.SAFE",
+            intermediate=swath_products,
+            cuts_outdir=tmp_path / "cuts",
+            product_mode="S1TOPS",
+            gpt_kwargs={"gpt_memory": None, "gpt_parallelism": None, "gpt_timeout": None},
+        )
+
+
+def test_pipeline_sentinel_tops_raises_when_split_output_is_missing(tmp_path: Path):
+    class FakeBaseOp:
+        def __init__(self):
+            self.prod_path = tmp_path / "input.dim"
+
+    class FakeSwathOp:
+        def __init__(self, outdir: Path):
+            self.outdir = outdir
+            self.prod_path = tmp_path / "input.dim"
+
+        def TopsarSplit(self, **_kwargs):
+            return str(self.outdir / "missing_split.dim")
+
+        def last_error_summary(self):
+            return "unused"
+
+    def fake_create_gpt_operator(_product_path, output_dir, *_args, **_kwargs):
+        if Path(output_dir) == tmp_path / "out":
+            return FakeBaseOp()
+        return FakeSwathOp(Path(output_dir))
+
+    pipeline_sentinel.__globals__["Path"] = Path
+    pipeline_sentinel.__globals__["_create_gpt_operator"] = fake_create_gpt_operator
+    pipeline_sentinel.__globals__["_sentinel_post_chain"] = lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("_sentinel_post_chain should not run after a split failure"))
+
+    with pytest.raises(FileNotFoundError, match="TOPSAR-Split output missing for IW1:"):
+        pipeline_sentinel(
+            product_path=str(tmp_path / "input.SAFE"),
+            output_dir=tmp_path / "out",
+            is_TOPS=True,
+        )

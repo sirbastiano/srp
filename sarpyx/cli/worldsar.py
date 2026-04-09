@@ -7,6 +7,7 @@ TODO: InSAR support.
 """
 
 import argparse
+import json
 import os
 import re
 import subprocess
@@ -19,6 +20,13 @@ from dotenv import load_dotenv
 
 from sarpyx.processor.core.dim_updater import update_dim_add_bands_from_data_dir
 from sarpyx.snapflow.engine import GPT
+from sarpyx.utils.worldsar_h5 import (
+    DEFAULT_ZARR_CHUNK_SIZE,
+    convert_tile_h5_to_zarr,
+    enrich_validation_results_with_h5_structure,
+    validate_h5_tile as _shared_validate_h5_tile,
+    write_h5_validation_report_pdf as _shared_write_h5_validation_report_pdf,
+)
 
 load_dotenv()
 
@@ -118,11 +126,52 @@ REQUIRED_BAND_ATTRS = (
 #  Pipelines  –  one per mission family, dispatched via ROUTER[mode]
 # ══════════════════════════════════════════════════════════════════════════════
 
-def _sentinel_post_chain(op, product_path):
+def _apply_sentinel_orbit_file(
+    op,
+    orbit_type='Sentinel Precise (Auto Download)',
+    orbit_continue_on_fail=False,
+):
+    orbit_product = op.ApplyOrbitFile(
+        orbit_type=orbit_type,
+        continue_on_fail=orbit_continue_on_fail,
+    )
+    if orbit_product is not None:
+        return orbit_product
+
+    error_summary = op.last_error_summary()
+    normalized_error = error_summary.lower()
+    offline_orbit_failure_markers = (
+        'network is unreachable',
+        'unable to connect to http://step.esa.int/auxdata/orbits/',
+        'unable to connect to https://step.esa.int/auxdata/orbits/',
+    )
+    missing_orbit_file_markers = (
+        'no valid orbit file found',
+        'orbit files may be downloaded from copernicus dataspaces',
+    )
+    recoverable_offline_failure = (
+        any(marker in normalized_error for marker in offline_orbit_failure_markers)
+        or all(marker in normalized_error for marker in missing_orbit_file_markers)
+    )
+    if orbit_continue_on_fail or recoverable_offline_failure:
+        print(f'WARNING: Apply-Orbit-File failed but continuing without orbit correction: {error_summary}')
+        return op.prod_path
+
+    raise RuntimeError(f'Apply-Orbit-File failed: {error_summary}')
+
+
+def _sentinel_post_chain(
+    op,
+    product_path,
+    orbit_type='Sentinel Precise (Auto Download)',
+    orbit_continue_on_fail=False,
+):
     """Calibration → DerampDemod → Deburst → PolDecomp → TC  (shared by each swath)."""
-    fp_orb = op.ApplyOrbitFile()
-    if fp_orb is None:
-        raise RuntimeError(f'Apply-Orbit-File failed: {op.last_error_summary()}')
+    fp_orb = _apply_sentinel_orbit_file(
+        op,
+        orbit_type=orbit_type,
+        orbit_continue_on_fail=orbit_continue_on_fail,
+    )
     fp_cal = op.Calibration(output_complex=True)
     if fp_cal is None:
         raise RuntimeError(f'Calibration failed: {op.last_error_summary()}')
@@ -174,7 +223,9 @@ def _sentinel_post_chain(op, product_path):
 
 def pipeline_sentinel(
     product_path, output_dir, is_TOPS=False,
-    gpt_memory=None, gpt_parallelism=None, gpt_timeout=None, **_,
+    gpt_memory=None, gpt_parallelism=None, gpt_timeout=None,
+    orbit_type='Sentinel Precise (Auto Download)',
+    orbit_continue_on_fail=False, **_,
 ):
     """Sentinel-1 pipeline.
 
@@ -192,13 +243,17 @@ def pipeline_sentinel(
             results[swath] = _sentinel_post_chain(
                 op=sw_op,
                 product_path=product_path,
+                orbit_type=orbit_type,
+                orbit_continue_on_fail=orbit_continue_on_fail,
             )
         return results                    # {IW1: path, IW2: path, IW3: path}
     
     # STRIP mode – no split / deburst needed
-    orbit_product = op.ApplyOrbitFile()
-    if orbit_product is None:
-        raise RuntimeError(f'Apply-Orbit-File failed: {op.last_error_summary()}')
+    orbit_product = _apply_sentinel_orbit_file(
+        op,
+        orbit_type=orbit_type,
+        orbit_continue_on_fail=orbit_continue_on_fail,
+    )
     fp_cal = op.Calibration(output_complex=True)
     if fp_cal is None:
         raise RuntimeError(f'Calibration failed: {op.last_error_summary()}')
@@ -272,9 +327,12 @@ ROUTER = {
 
 _PARSER_ARGS = [
     (['--input', '-i'],                dict(dest='product_path', type=str, required=True, help='Path to the input SAR product.')),
-    (['--output', '-o'],               dict(dest='output_dir', type=str, required=True, help='Directory to save the processed output.')),
+    (['--output', '-o'],               dict(dest='output_dir', type=str, default=None, help='Processed output directory, or target .zarr path in --h5-to-zarr-only mode.')),
     (['--cuts-outdir', '--cuts_outdir'], dict(dest='cuts_outdir', type=str, default=None, help='Where to store the tiles after extraction.')),
     (['--product-wkt', '--product_wkt'], dict(dest='product_wkt', type=str, default=None, help='WKT string defining the product region of interest.')),
+    (['--h5-to-zarr-only'],            dict(dest='h5_to_zarr_only', action='store_true', help='Skip preprocessing/tiling and convert an existing .h5 tile into a Zarr v3 store.')),
+    (['--zarr-chunk-size'],            dict(dest='zarr_chunk_size', type=int, nargs=2, metavar=('ROWS', 'COLS'), default=DEFAULT_ZARR_CHUNK_SIZE, help='Chunk size for H5-to-Zarr conversion. Defaults to 32 32.')),
+    (['--overwrite-zarr'],             dict(dest='overwrite_zarr', action='store_true', help='Replace an existing output Zarr store when converting H5 tiles.')),
     (['--gpt-path'],                   dict(dest='gpt_path', type=str, default=None, help='Override GPT executable path.')),
     (['--grid-path'],                  dict(dest='grid_path', type=str, default=None, help='Override grid GeoJSON path.')),
     (['--db-dir'],                     dict(dest='db_dir', type=str, default=None, help='Override database output directory.')),
@@ -512,118 +570,7 @@ def _format_issue_map(issue_map):
 
 
 def _validate_h5_tile(tile_path, expected_bands, swath=None):
-    import h5py
-
-    from sarpyx.utils.meta import extract_core_metadata_sentinel
-
-    tile_path = Path(tile_path)
-    actual_bands = []
-    missing_bands = []
-    extra_bands = []
-    empty_metadata_fields = []
-    missing_core_metadata_fields = []
-    empty_core_metadata_fields = []
-    band_attr_issues = {}
-    shape_summary = []
-    quickinfo = {}
-    missing_metadata_section = False
-
-    with h5py.File(tile_path, 'r') as h5_file:
-        bands_group = h5_file.get('bands')
-        if bands_group is not None:
-            actual_bands = sorted(
-                name for name, obj in bands_group.items()
-                if isinstance(obj, h5py.Dataset)
-            )
-
-        missing_bands = sorted(set(expected_bands) - set(actual_bands))
-        extra_bands = sorted(set(actual_bands) - set(expected_bands))
-
-        abstract_group = h5_file.get('metadata/Abstracted_Metadata')
-        if abstract_group is None:
-            missing_metadata_section = True
-            abstract_metadata = {}
-        else:
-            abstract_metadata = {
-                key: _normalize_attr_value(value)
-                for key, value in abstract_group.attrs.items()
-            }
-
-        quickinfo = extract_core_metadata_sentinel(abstract_metadata)
-        empty_metadata_fields = sorted(
-            key for key, value in abstract_metadata.items()
-            if _is_blank_attr_value(value)
-        )
-        missing_core_metadata_fields = sorted(
-            key for key in CORE_METADATA_KEYS
-            if key not in abstract_metadata
-        )
-        empty_core_metadata_fields = sorted(
-            key for key in CORE_METADATA_KEYS
-            if key in abstract_metadata and _is_blank_attr_value(abstract_metadata[key])
-        )
-
-        band_shapes = {}
-        for band_name in actual_bands:
-            dataset = bands_group[band_name]
-            attrs = {
-                key: _normalize_attr_value(value)
-                for key, value in dataset.attrs.items()
-            }
-            missing_attrs = sorted(key for key in REQUIRED_BAND_ATTRS if key not in attrs)
-            empty_attrs = sorted(
-                key for key in REQUIRED_BAND_ATTRS
-                if key in attrs and _is_blank_attr_value(attrs[key])
-            )
-            shape = tuple(int(dim) for dim in dataset.shape)
-            invalid_shape = len(shape) < 2 or any(dim <= 0 for dim in shape)
-            band_shapes[band_name] = shape
-            if missing_attrs or empty_attrs or invalid_shape:
-                band_attr_issues[band_name] = {
-                    'missing_attrs': missing_attrs,
-                    'empty_attrs': empty_attrs,
-                    'invalid_shape': invalid_shape,
-                    'shape': shape,
-                }
-
-        unique_shapes = sorted({shape for shape in band_shapes.values()})
-        if len(unique_shapes) > 1:
-            shape_summary = [str(shape) for shape in unique_shapes]
-
-    metadata_ok = (
-        not missing_metadata_section
-        and not empty_metadata_fields
-        and not missing_core_metadata_fields
-        and not empty_core_metadata_fields
-    )
-    bands_ok = not missing_bands and not extra_bands
-    band_attrs_ok = not band_attr_issues and not shape_summary
-    status = 'success' if bands_ok and metadata_ok and band_attrs_ok else 'failed'
-
-    quickinfo_row = {key: quickinfo.get(key) for key in quickinfo}
-    quickinfo_row['ID'] = tile_path.stem
-    if swath is not None:
-        quickinfo_row['SWATH'] = swath
-
-    return {
-        'tile': tile_path.stem,
-        'swath': swath,
-        'output_path': str(tile_path),
-        'status': status,
-        'bands_ok': bands_ok,
-        'metadata_ok': metadata_ok,
-        'band_attrs_ok': band_attrs_ok,
-        'missing_bands': missing_bands,
-        'extra_bands': extra_bands,
-        'actual_bands': actual_bands,
-        'missing_metadata_section': missing_metadata_section,
-        'empty_metadata_fields': empty_metadata_fields,
-        'missing_core_metadata_fields': missing_core_metadata_fields,
-        'empty_core_metadata_fields': empty_core_metadata_fields,
-        'band_attr_issues': band_attr_issues,
-        'shape_summary': shape_summary,
-        'quickinfo_row': quickinfo_row,
-    }
+    return _shared_validate_h5_tile(tile_path, expected_bands, swath=swath)
 
 
 def _validate_tile_group(cuts_dir, intermediate_product, swath=None, tiling_result=None):
@@ -631,6 +578,7 @@ def _validate_tile_group(cuts_dir, intermediate_product, swath=None, tiling_resu
     expected_bands = _expected_band_names_from_dim(intermediate_product)
     tile_files = sorted(cuts_dir.glob('*.h5'))
     results = [_validate_h5_tile(tile_file, expected_bands, swath=swath) for tile_file in tile_files]
+    structure_summary = enrich_validation_results_with_h5_structure(results)
     rows = [result['quickinfo_row'] for result in results]
     group = {
         'name': cuts_dir.name,
@@ -641,6 +589,7 @@ def _validate_tile_group(cuts_dir, intermediate_product, swath=None, tiling_resu
         'results': results,
         'rows': rows,
     }
+    group.update(structure_summary)
     if tiling_result is not None:
         group.update({
             'expected_tile_count': len(tiling_result['expected_tiles']),
@@ -667,93 +616,7 @@ def _write_pdf_text_page(pdf, title, lines):
 
 
 def _write_h5_validation_report_pdf(report_path, product_name, validation_groups):
-    from datetime import datetime as _datetime
-    from textwrap import wrap
-
-    from matplotlib.backends.backend_pdf import PdfPages
-
-    report_path = Path(report_path)
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-
-    all_results = []
-    for group in validation_groups:
-        all_results.extend(group['results'])
-
-    passed = sum(1 for result in all_results if result['status'] == 'success')
-    failed = len(all_results) - passed
-    total_expected_tiles = sum(group.get('expected_tile_count', 0) for group in validation_groups)
-    total_actual_tiles = sum(group.get('actual_tile_count', len(group['results'])) for group in validation_groups)
-
-    summary_lines = [
-        f'Timestamp (UTC): {_datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}',
-        f'Product name: {product_name}',
-        f'Validated tile groups: {len(validation_groups)}',
-        f'Expected tiles: {total_expected_tiles}',
-        f'Actual tiles: {total_actual_tiles}',
-        f'Validated H5 files: {len(all_results)}',
-        f'Passed tiles: {passed}',
-        f'Failed tiles: {failed}',
-        '',
-        'Group summary:',
-    ]
-    for group in validation_groups:
-        group_failed = sum(1 for result in group['results'] if result['status'] != 'success')
-        label = group['swath'] or 'single-product'
-        summary_lines.append(
-            f"- {label}: expected={group.get('expected_tile_count', len(group['results']))} "
-            f"actual={group.get('actual_tile_count', len(group['results']))} "
-            f"failed={group_failed} intermediate={group['intermediate_product']}"
-        )
-        summary_lines.append(f"  cuts={group['cuts_dir']}")
-        if group.get('cut_report_path'):
-            summary_lines.append(f"  cut_report={group['cut_report_path']}")
-        summary_lines.append('  expected bands:')
-        for line in wrap(', '.join(group['expected_bands']), width=110):
-            summary_lines.append(f'    {line}')
-
-    table_lines = [
-        'tile                 swath      bands  metadata  attrs  overall',
-        '-------------------  ---------  -----  --------  -----  -------',
-    ]
-    for result in sorted(all_results, key=lambda item: ((item.get('swath') or ''), item['tile'])):
-        table_lines.append(
-            f"{result['tile'][:19]:19}  "
-            f"{(result.get('swath') or '-'):9}  "
-            f"{'PASS' if result['bands_ok'] else 'FAIL':5}  "
-            f"{'PASS' if result['metadata_ok'] else 'FAIL':8}  "
-            f"{'PASS' if result['band_attrs_ok'] else 'FAIL':5}  "
-            f"{'PASS' if result['status'] == 'success' else 'FAIL'}"
-        )
-
-    failure_lines = ['No failing tiles.'] if failed == 0 else []
-    if failed:
-        for result in sorted((item for item in all_results if item['status'] != 'success'), key=lambda item: ((item.get('swath') or ''), item['tile'])):
-            failure_lines.extend([
-                f"Tile: {result['tile']}  Swath: {result.get('swath') or '-'}",
-                f"  Missing bands: {result['missing_bands'] or '[]'}",
-                f"  Extra bands: {result['extra_bands'] or '[]'}",
-                f"  Missing metadata section: {result['missing_metadata_section']}",
-                f"  Empty metadata fields: {result['empty_metadata_fields'] or '[]'}",
-                f"  Missing core metadata: {result['missing_core_metadata_fields'] or '[]'}",
-                f"  Empty core metadata: {result['empty_core_metadata_fields'] or '[]'}",
-            ])
-            if result['shape_summary']:
-                failure_lines.append(f"  Shape mismatch: {result['shape_summary']}")
-            issue_lines = _format_issue_map(result['band_attr_issues'])
-            if issue_lines:
-                failure_lines.append('  Band attribute issues:')
-                failure_lines.extend(f'    - {line}' for line in issue_lines)
-            failure_lines.append('')
-
-    with PdfPages(report_path) as pdf:
-        for page_lines in _chunked(summary_lines, 42):
-            _write_pdf_text_page(pdf, 'WorldSAR H5 validation summary', page_lines)
-        for index, page_lines in enumerate(_chunked(table_lines, 44), start=1):
-            _write_pdf_text_page(pdf, f'WorldSAR H5 validation table (page {index})', page_lines)
-        for index, page_lines in enumerate(_chunked(failure_lines, 40), start=1):
-            _write_pdf_text_page(pdf, f'WorldSAR H5 validation failures (page {index})', page_lines)
-
-    return report_path
+    return _shared_write_h5_validation_report_pdf(report_path, product_name, validation_groups)
 
 
 def create_tile_database_from_rows(rows, output_db_folder, output_name):
@@ -1007,6 +870,23 @@ def _run_db_indexing(validation_rows, name, swath=None):
     print('Database created successfully.')
 
 
+def _run_h5_to_zarr_only(product_path, output_path, chunk_size, overwrite):
+    converted = convert_tile_h5_to_zarr(
+        input_path=product_path,
+        output_path=output_path,
+        chunk_size=tuple(chunk_size),
+        overwrite=overwrite,
+    )
+    summary = {
+        'input': str(Path(product_path).expanduser().absolute()),
+        'output': str(converted),
+        'chunk_size': list(chunk_size),
+        'zarr_format': 3,
+    }
+    print(json.dumps(summary, indent=2))
+    return converted
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 #  Main
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1016,7 +896,18 @@ def main():
     _apply_runtime_overrides(args)
 
     product_path = Path(args.product_path)
-    output_dir   = Path(args.output_dir)
+    if args.h5_to_zarr_only:
+        _run_h5_to_zarr_only(
+            product_path=product_path,
+            output_path=args.output_dir,
+            chunk_size=args.zarr_chunk_size,
+            overwrite=args.overwrite_zarr,
+        )
+        sys.exit(0)
+
+    if not args.output_dir:
+        raise ValueError('--output is required unless --h5-to-zarr-only is set.')
+    output_dir = Path(args.output_dir)
 
     if CUTS_OUTDIR is None:
         print('Warning: cuts_outdir env var not found. Set cuts_outdir to avoid passing --cuts-outdir each run.')
