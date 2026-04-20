@@ -262,6 +262,7 @@ def page_template(
         ("Installation", "installation.html"),
         ("Quick Start", "quickstart.html"),
         ("Architecture", "architecture.html"),
+        ("Results", "results/snapflow_v2/index.html"),
         ("API", "api/index.html"),
         ("Configuration", "configuration.html"),
         ("Usage", "usage.html"),
@@ -851,6 +852,11 @@ def make_index_page(project: dict[str, Any], highlights: list[str], module_items
       <h3 id=\"dependencies\">Core Dependencies</h3>
       <p>{h(top_deps)}</p>
     </section>
+    <section class=\"card\" data-searchable data-search=\"results snapflow insar report notebook outputs\">
+      <h3 id=\"results\">Latest Results</h3>
+      <p>Review the latest burst-based SNAPflow v2 run as a static HTML report with summary tables, separated plots, and the embedded burst map.</p>
+      <p><a href=\"results/snapflow_v2/index.html\">Open the SNAPflow v2 results page</a></p>
+    </section>
   </div>
   <h2 id=\"module-distribution\">Module Distribution</h2>
   <table>
@@ -1025,7 +1031,7 @@ def make_architecture_page(module_items: list[dict[str, Any]], specs: list[dict[
   <ul>
     <li>Command-style CLI dispatch in <code>sarpyx.cli.main</code>.</li>
     <li>Wrapper abstraction for external GPT execution in <code>sarpyx.snapflow.engine.GPT</code>.</li>
-    <li>Pipeline orchestration helpers in <code>sarpyx.snapflow.snap2stamps_pipelines</code>.</li>
+    <li>Pipeline orchestration helpers in <code>sarpyx.snapflow.snap2stamps</code> with a deprecated compatibility alias at <code>sarpyx.snapflow.snap2stamps_pipelines</code>.</li>
     <li>Manager-style APIs for structured Zarr data access in <code>sarpyx.utils.zarr_utils</code>.</li>
   </ul>
 

@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Exhaustive API reference for sarpyx.snapflow.snap2stamps" />
+  <title>API: sarpyx.snapflow.snap2stamps | SARPyX Documentation</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <script defer src="../assets/scripts.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar" role="banner">
+    <button class="sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="../index.html">SARPyX Docs</a>
+    <label class="search-wrap" for="site-search">
+      <span class="visually-hidden">Filter this page</span>
+      <input id="site-search" type="search" placeholder="Filter current page sections" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+      <nav>
+        <h2 class="nav-title">Documentation</h2>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">Home</a></li><li><a class="nav-link" href="../installation.html">Installation</a></li><li><a class="nav-link" href="../quickstart.html">Quick Start</a></li><li><a class="nav-link" href="../architecture.html">Architecture</a></li><li><a class="nav-link" href="../api/index.html">API</a></li><li><a class="nav-link" href="../configuration.html">Configuration</a></li><li><a class="nav-link" href="../usage.html">Usage</a></li><li><a class="nav-link" href="../testing.html">Testing</a></li><li><a class="nav-link" href="../contributing.html">Contributing</a></li><li><a class="nav-link" href="../faq.html">FAQ</a></li>
+        </ul>
+        <h2 class="nav-title">API Modules</h2>
+        <details class="nav-group"><summary>__init__.py</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx___init__.html">sarpyx.__init__</a></li></ul></details><details class="nav-group"><summary>cli</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_cli___init__.html">sarpyx.cli.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms_AdaptiveThresholding.html">sarpyx.cli.algorithms.AdaptiveThresholding</a></li><li><a class="api-link" href="../api/sarpyx_cli_algorithms___init__.html">sarpyx.cli.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_cli_decode.html">sarpyx.cli.decode</a></li><li><a class="api-link" href="../api/sarpyx_cli_focus.html">sarpyx.cli.focus</a></li><li><a class="api-link" href="../api/sarpyx_cli_main.html">sarpyx.cli.main</a></li><li><a class="api-link" href="../api/sarpyx_cli_shipdet.html">sarpyx.cli.shipdet</a></li><li><a class="api-link" href="../api/sarpyx_cli_unzip.html">sarpyx.cli.unzip</a></li><li><a class="api-link" href="../api/sarpyx_cli_upload.html">sarpyx.cli.upload</a></li><li><a class="api-link" href="../api/sarpyx_cli_utils.html">sarpyx.cli.utils</a></li><li><a class="api-link" href="../api/sarpyx_cli_worldsar.html">sarpyx.cli.worldsar</a></li></ul></details><details class="nav-group"><summary>processor</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_processor___init__.html">sarpyx.processor.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms___init__.html">sarpyx.processor.algorithms.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_backprojection.html">sarpyx.processor.algorithms.backprojection</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_constants.html">sarpyx.processor.algorithms.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_mbautofocus.html">sarpyx.processor.algorithms.mbautofocus</a></li><li><a class="api-link" href="../api/sarpyx_processor_algorithms_rda.html">sarpyx.processor.algorithms.rda</a></li><li><a class="api-link" href="../api/sarpyx_processor_core___init__.html">sarpyx.processor.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_aux.html">sarpyx.processor.core.aux</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_code2physical.html">sarpyx.processor.core.code2physical</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_constants.html">sarpyx.processor.core.constants</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_decode.html">sarpyx.processor.core.decode</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_dim_updater.html">sarpyx.processor.core.dim_updater</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_focus.html">sarpyx.processor.core.focus</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_meta.html">sarpyx.processor.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_signal.html">sarpyx.processor.core.signal</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_spectrum.html">sarpyx.processor.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture.html">sarpyx.processor.core.subaperture</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_subaperture_full_img.html">sarpyx.processor.core.subaperture_full_img</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_transforms.html">sarpyx.processor.core.transforms</a></li><li><a class="api-link" href="../api/sarpyx_processor_core_utilis.html">sarpyx.processor.core.utilis</a></li><li><a class="api-link" href="../api/sarpyx_processor_data___init__.html">sarpyx.processor.data.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_formatters.html">sarpyx.processor.data.formatters</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_readers.html">sarpyx.processor.data.readers</a></li><li><a class="api-link" href="../api/sarpyx_processor_data_writers.html">sarpyx.processor.data.writers</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils___init__.html">sarpyx.processor.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_mem.html">sarpyx.processor.utils.mem</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_metrics.html">sarpyx.processor.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_summary.html">sarpyx.processor.utils.summary</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_unzip.html">sarpyx.processor.utils.unzip</a></li><li><a class="api-link" href="../api/sarpyx_processor_utils_viz.html">sarpyx.processor.utils.viz</a></li></ul></details><details class="nav-group"><summary>science</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_science___init__.html">sarpyx.science.__init__</a></li><li><a class="api-link" href="../api/sarpyx_science_indices.html">sarpyx.science.indices</a></li></ul></details><details class="nav-group"><summary>sla</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_sla___init__.html">sarpyx.sla.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core___init__.html">sarpyx.sla.core.__init__</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_meta.html">sarpyx.sla.core.meta</a></li><li><a class="api-link" href="../api/sarpyx_sla_core_spectrum.html">sarpyx.sla.core.spectrum</a></li><li><a class="api-link" href="../api/sarpyx_sla_metrics.html">sarpyx.sla.metrics</a></li><li><a class="api-link" href="../api/sarpyx_sla_utilis.html">sarpyx.sla.utilis</a></li></ul></details><details class="nav-group"><summary>snapflow</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_snapflow___init__.html">sarpyx.snapflow.__init__</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_engine.html">sarpyx.snapflow.engine</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_op.html">sarpyx.snapflow.op</a></li><li><a class="api-link active" href="../api/sarpyx_snapflow_snap2stamps.html">sarpyx.snapflow.snap2stamps</a></li><li><a class="api-link" href="../api/sarpyx_snapflow_snap2stamps_pipelines.html">sarpyx.snapflow.snap2stamps_pipelines</a></li></ul></details><details class="nav-group"><summary>utils</summary><ul class="api-links"><li><a class="api-link" href="../api/sarpyx_utils___init__.html">sarpyx.utils.__init__</a></li><li><a class="api-link" href="../api/sarpyx_utils_complex_losses-OLD.html">sarpyx.utils.complex_losses-OLD</a></li><li><a class="api-link" href="../api/sarpyx_utils_dem_utils.html">sarpyx.utils.dem_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_executor.html">sarpyx.utils.executor</a></li><li><a class="api-link" href="../api/sarpyx_utils_geos.html">sarpyx.utils.geos</a></li><li><a class="api-link" href="../api/sarpyx_utils_grid.html">sarpyx.utils.grid</a></li><li><a class="api-link" href="../api/sarpyx_utils_hf.html">sarpyx.utils.hf</a></li><li><a class="api-link" href="../api/sarpyx_utils_io.html">sarpyx.utils.io</a></li><li><a class="api-link" href="../api/sarpyx_utils_losses.html">sarpyx.utils.losses</a></li><li><a class="api-link" href="../api/sarpyx_utils_meta.html">sarpyx.utils.meta</a></li><li><a class="api-link" href="../api/sarpyx_utils_metrics.html">sarpyx.utils.metrics</a></li><li><a class="api-link" href="../api/sarpyx_utils_nisar_utils.html">sarpyx.utils.nisar_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_peorb.html">sarpyx.utils.peorb</a></li><li><a class="api-link" href="../api/sarpyx_utils_rfigen.html">sarpyx.utils.rfigen</a></li><li><a class="api-link" href="../api/sarpyx_utils_sar_loss.html">sarpyx.utils.sar_loss</a></li><li><a class="api-link" href="../api/sarpyx_utils_up.html">sarpyx.utils.up</a></li><li><a class="api-link" href="../api/sarpyx_utils_viz.html">sarpyx.utils.viz</a></li><li><a class="api-link" href="../api/sarpyx_utils_wkt_utils.html">sarpyx.utils.wkt_utils</a></li><li><a class="api-link" href="../api/sarpyx_utils_zarr_utils.html">sarpyx.utils.zarr_utils</a></li></ul></details>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="content" role="main">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol><li><a href="../index.html">Home</a></li><li><a href="index.html">API</a></li><li>sarpyx.snapflow.snap2stamps</li></ol>
+      </nav>
+      <article class="doc-page" data-searchable data-search="API: sarpyx.snapflow.snap2stamps">
+        
+<section>
+  <h1 id="module-sarpyx_snapflow_snap2stamps">Module: <code>sarpyx.snapflow.snap2stamps</code></h1>
+  <p><strong>File:</strong> <code>sarpyx/snapflow/snap2stamps.py</code></p>
+  <p>Processing-only SNAP2StaMPS workflows implemented on top of :mod:`snapflow`.
+
+This module covers the upstream SNAP2StaMPS processing branches without
+recreating the original script/config runner UX. The focus is:
+
+- processing branch selection for TOPSAR and Stripmap data
+- reusable Python-callable helpers for the graph families used upstream
+- backward-compatible access to the narrower workflow helpers that previously
+  lived in ``snap2stamps_pipelines.py``</p>
+
+  <h2 id="module-exports">Exported Symbols (<code>__all__</code>)</h2>
+  <ul><li><code>PAIRWISE_GRAPH_NAMES</code></li><li><code>PairProducts</code></li><li><code>PipelineDefinition</code></li><li><code>PipelineStep</code></li><li><code>SNAP2STAMPS_GRAPH_PIPELINES</code></li><li><code>SNAP2STAMPS_PIPELINES</code></li><li><code>SNAP2STAMPS_WORKFLOWS</code></li><li><code>SNAP2STAMPS_WORKFLOW_INPUTS</code></li><li><code>TopsarCoregIfgResult</code></li><li><code>build_gpt</code></li><li><code>get_pipeline_definition</code></li><li><code>list_pipeline_names</code></li><li><code>pipeline_requires_multi_input</code></li><li><code>pipeline_requires_pair</code></li><li><code>prepare_pair</code></li><li><code>run_graph_pipeline</code></li><li><code>run_pair_graph_pipeline</code></li><li><code>run_pair_workflow</code></li><li><code>run_processing_pipeline</code></li><li><code>run_stripmap_coreg</code></li><li><code>run_stripmap_export</code></li><li><code>run_stripmap_ifg</code></li><li><code>run_stripmap_subset</code></li><li><code>run_topsar_coreg_ifg</code></li><li><code>run_topsar_export</code></li><li><code>run_topsar_split_apply_orbit</code></li><li><code>run_workflow</code></li><li><code>select_stripmap_coreg_pipeline</code></li><li><code>select_stripmap_ifg_pipeline</code></li><li><code>select_topsar_coreg_ifg_pipeline</code></li><li><code>select_topsar_export_pipeline</code></li><li><code>select_topsar_split_pipeline</code></li></ul>
+
+  <h2 id="public-functions">Public Functions (23)</h2>
+  
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-list-pipeline-names" data-searchable data-search="list_pipeline_names list_pipeline_names(branch: &#x27;BranchName | None&#x27; = None) -&gt; &#x27;tuple[str, ...]&#x27; -&gt; tuple[str, ...]">
+  <summary><code>list_pipeline_names</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Return known processing pipeline names, optionally filtered by branch.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:355</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-list-pipeline-names-signature">Signature</h3>
+    <pre><code class="language-python">list_pipeline_names(branch: &#x27;BranchName | None&#x27; = None) -&gt; &#x27;tuple[str, ...]&#x27; -&gt; tuple[str, ...]</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-list-pipeline-names-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>branch</code></td><td><code>BranchName | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-list-pipeline-names-returns">Return Type</h3>
+    <p><code>tuple[str, ...]</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-list-pipeline-names-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-list-pipeline-names-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-list-pipeline-names-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import list_pipeline_names
+
+result = list_pipeline_names()</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-list-pipeline-names-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-get-pipeline-definition" data-searchable data-search="get_pipeline_definition get_pipeline_definition(name: &#x27;str&#x27;) -&gt; &#x27;PipelineDefinition&#x27; -&gt; PipelineDefinition">
+  <summary><code>get_pipeline_definition</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Return a pipeline definition by name.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:365</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-get-pipeline-definition-signature">Signature</h3>
+    <pre><code class="language-python">get_pipeline_definition(name: &#x27;str&#x27;) -&gt; &#x27;PipelineDefinition&#x27; -&gt; PipelineDefinition</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-get-pipeline-definition-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>name</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-get-pipeline-definition-returns">Return Type</h3>
+    <p><code>PipelineDefinition</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-get-pipeline-definition-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-get-pipeline-definition-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-get-pipeline-definition-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import get_pipeline_definition
+
+result = get_pipeline_definition(name=&lt;name&gt;)</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-get-pipeline-definition-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-pipeline-requires-pair" data-searchable data-search="pipeline_requires_pair pipeline_requires_pair(name: &#x27;str&#x27;) -&gt; &#x27;bool&#x27; -&gt; bool">
+  <summary><code>pipeline_requires_pair</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Return ``True`` when a processing branch requires explicit master/slave inputs.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:374</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipeline-requires-pair-signature">Signature</h3>
+    <pre><code class="language-python">pipeline_requires_pair(name: &#x27;str&#x27;) -&gt; &#x27;bool&#x27; -&gt; bool</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipeline-requires-pair-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>name</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipeline-requires-pair-returns">Return Type</h3>
+    <p><code>bool</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipeline-requires-pair-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipeline-requires-pair-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipeline-requires-pair-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import pipeline_requires_pair
+
+result = pipeline_requires_pair(name=&lt;name&gt;)</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipeline-requires-pair-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-pipeline-requires-multi-input" data-searchable data-search="pipeline_requires_multi_input pipeline_requires_multi_input(name: &#x27;str&#x27;) -&gt; &#x27;bool&#x27; -&gt; bool">
+  <summary><code>pipeline_requires_multi_input</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Return ``True`` when a processing branch requires more than one source product.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:379</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipeline-requires-multi-input-signature">Signature</h3>
+    <pre><code class="language-python">pipeline_requires_multi_input(name: &#x27;str&#x27;) -&gt; &#x27;bool&#x27; -&gt; bool</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipeline-requires-multi-input-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>name</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipeline-requires-multi-input-returns">Return Type</h3>
+    <p><code>bool</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipeline-requires-multi-input-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipeline-requires-multi-input-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipeline-requires-multi-input-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import pipeline_requires_multi_input
+
+result = pipeline_requires_multi_input(name=&lt;name&gt;)</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipeline-requires-multi-input-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-select-topsar-split-pipeline" data-searchable data-search="select_topsar_split_pipeline select_topsar_split_pipeline(source_count: &#x27;int&#x27;) -&gt; &#x27;str&#x27; -&gt; str">
+  <summary><code>select_topsar_split_pipeline</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Select the upstream-equivalent TOPSAR split/apply-orbit branch.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:384</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-split-pipeline-signature">Signature</h3>
+    <pre><code class="language-python">select_topsar_split_pipeline(source_count: &#x27;int&#x27;) -&gt; &#x27;str&#x27; -&gt; str</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-split-pipeline-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>source_count</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-split-pipeline-returns">Return Type</h3>
+    <p><code>str</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-split-pipeline-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-split-pipeline-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-split-pipeline-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import select_topsar_split_pipeline
+
+result = select_topsar_split_pipeline(source_count=&lt;source_count&gt;)</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-split-pipeline-edge-cases">Edge Cases</h3>
+    <p>No explicit edge-case section found; behavior is inferred from implementation.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-select-topsar-coreg-ifg-pipeline" data-searchable data-search="select_topsar_coreg_ifg_pipeline select_topsar_coreg_ifg_pipeline(*, master_count: &#x27;int&#x27;, burst_count: &#x27;int&#x27;, external_dem_file: &#x27;str | Path | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str">
+  <summary><code>select_topsar_coreg_ifg_pipeline</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Select the upstream-equivalent TOPSAR coreg/IFG pipeline variant.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:391</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-coreg-ifg-pipeline-signature">Signature</h3>
+    <pre><code class="language-python">select_topsar_coreg_ifg_pipeline(*, master_count: &#x27;int&#x27;, burst_count: &#x27;int&#x27;, external_dem_file: &#x27;str | Path | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-coreg-ifg-pipeline-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>master_count</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>burst_count</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>external_dem_file</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-coreg-ifg-pipeline-returns">Return Type</h3>
+    <p><code>str</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-coreg-ifg-pipeline-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-coreg-ifg-pipeline-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-coreg-ifg-pipeline-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import select_topsar_coreg_ifg_pipeline
+
+result = select_topsar_coreg_ifg_pipeline(master_count=&lt;master_count&gt;, burst_count=&lt;burst_count&gt;)</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-coreg-ifg-pipeline-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-select-topsar-export-pipeline" data-searchable data-search="select_topsar_export_pipeline select_topsar_export_pipeline(*, master_count: &#x27;int&#x27;, external_dem_file: &#x27;str | Path | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str">
+  <summary><code>select_topsar_export_pipeline</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Select the upstream-equivalent TOPSAR StaMPS export branch.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:413</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-export-pipeline-signature">Signature</h3>
+    <pre><code class="language-python">select_topsar_export_pipeline(*, master_count: &#x27;int&#x27;, external_dem_file: &#x27;str | Path | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-export-pipeline-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>master_count</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>external_dem_file</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-export-pipeline-returns">Return Type</h3>
+    <p><code>str</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-export-pipeline-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-export-pipeline-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-export-pipeline-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import select_topsar_export_pipeline
+
+result = select_topsar_export_pipeline(master_count=&lt;master_count&gt;)</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-topsar-export-pipeline-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-select-stripmap-coreg-pipeline" data-searchable data-search="select_stripmap_coreg_pipeline select_stripmap_coreg_pipeline(external_dem_file: &#x27;str | Path | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str">
+  <summary><code>select_stripmap_coreg_pipeline</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Select the upstream-equivalent Stripmap coregistration branch.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:430</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-stripmap-coreg-pipeline-signature">Signature</h3>
+    <pre><code class="language-python">select_stripmap_coreg_pipeline(external_dem_file: &#x27;str | Path | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-stripmap-coreg-pipeline-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>external_dem_file</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-stripmap-coreg-pipeline-returns">Return Type</h3>
+    <p><code>str</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-stripmap-coreg-pipeline-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-stripmap-coreg-pipeline-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-stripmap-coreg-pipeline-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import select_stripmap_coreg_pipeline
+
+result = select_stripmap_coreg_pipeline()</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-stripmap-coreg-pipeline-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-select-stripmap-ifg-pipeline" data-searchable data-search="select_stripmap_ifg_pipeline select_stripmap_ifg_pipeline(external_dem_file: &#x27;str | Path | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str">
+  <summary><code>select_stripmap_ifg_pipeline</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Select the upstream-equivalent Stripmap IFG/topo branch.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:439</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-stripmap-ifg-pipeline-signature">Signature</h3>
+    <pre><code class="language-python">select_stripmap_ifg_pipeline(external_dem_file: &#x27;str | Path | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-stripmap-ifg-pipeline-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>external_dem_file</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-stripmap-ifg-pipeline-returns">Return Type</h3>
+    <p><code>str</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-stripmap-ifg-pipeline-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-stripmap-ifg-pipeline-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-stripmap-ifg-pipeline-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import select_stripmap_ifg_pipeline
+
+result = select_stripmap_ifg_pipeline()</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-select-stripmap-ifg-pipeline-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-build-gpt" data-searchable data-search="build_gpt build_gpt(product: &#x27;str | Path&#x27;, outdir: &#x27;str | Path&#x27;, *, format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None) -&gt; &#x27;GPT&#x27; -&gt; GPT">
+  <summary><code>build_gpt</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Convenience constructor aligned with SNAP2StaMPS-like batch processing.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:469</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-build-gpt-signature">Signature</h3>
+    <pre><code class="language-python">build_gpt(product: &#x27;str | Path&#x27;, outdir: &#x27;str | Path&#x27;, *, format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None) -&gt; &#x27;GPT&#x27; -&gt; GPT</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-build-gpt-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>product</code></td><td><code>str | Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>outdir</code></td><td><code>str | Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>format</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;BEAM-DIMAP&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_path</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;/usr/local/snap/bin/gpt&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>memory</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>parallelism</code></td><td><code>int | None</code></td><td>no</td><td><code>14</code></td><td>inferred from implementation.</td></tr><tr><td><code>timeout</code></td><td><code>int | None</code></td><td>no</td><td><code>7200</code></td><td>inferred from implementation.</td></tr><tr><td><code>snap_userdir</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-build-gpt-returns">Return Type</h3>
+    <p><code>GPT</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-build-gpt-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-build-gpt-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-build-gpt-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import build_gpt
+
+result = build_gpt(product=&lt;product&gt;, outdir=&lt;outdir&gt;)</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-build-gpt-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-run-graph-pipeline" data-searchable data-search="run_graph_pipeline run_graph_pipeline(gpt: &#x27;GPT&#x27;, graph_name: &#x27;str&#x27;, overrides: &#x27;dict[str, dict[str, Any]] | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str">
+  <summary><code>run_graph_pipeline</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Run a single-input stage from the legacy graph-pipeline catalog.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:493</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-graph-pipeline-signature">Signature</h3>
+    <pre><code class="language-python">run_graph_pipeline(gpt: &#x27;GPT&#x27;, graph_name: &#x27;str&#x27;, overrides: &#x27;dict[str, dict[str, Any]] | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-graph-pipeline-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>gpt</code></td><td><code>GPT</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>graph_name</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>overrides</code></td><td><code>dict[str, dict[str, Any]] | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-graph-pipeline-returns">Return Type</h3>
+    <p><code>str</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-graph-pipeline-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-graph-pipeline-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-graph-pipeline-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import run_graph_pipeline
+
+result = run_graph_pipeline(gpt=&lt;gpt&gt;, graph_name=&lt;graph_name&gt;)</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-graph-pipeline-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-run-pair-graph-pipeline" data-searchable data-search="run_pair_graph_pipeline run_pair_graph_pipeline(gpt: &#x27;GPT&#x27;, graph_name: &#x27;str&#x27;, pair: &#x27;PairProducts&#x27;, overrides: &#x27;dict[str, dict[str, Any]] | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str">
+  <summary><code>run_pair_graph_pipeline</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Run a graph pipeline that consumes explicit master and slave products.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:517</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-pair-graph-pipeline-signature">Signature</h3>
+    <pre><code class="language-python">run_pair_graph_pipeline(gpt: &#x27;GPT&#x27;, graph_name: &#x27;str&#x27;, pair: &#x27;PairProducts&#x27;, overrides: &#x27;dict[str, dict[str, Any]] | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-pair-graph-pipeline-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>gpt</code></td><td><code>GPT</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>graph_name</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>pair</code></td><td><code>PairProducts</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>overrides</code></td><td><code>dict[str, dict[str, Any]] | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-pair-graph-pipeline-returns">Return Type</h3>
+    <p><code>str</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-pair-graph-pipeline-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-pair-graph-pipeline-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-pair-graph-pipeline-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import run_pair_graph_pipeline
+
+result = run_pair_graph_pipeline(gpt=&lt;gpt&gt;, graph_name=&lt;graph_name&gt;, pair=&lt;pair&gt;)</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-pair-graph-pipeline-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-prepare-pair" data-searchable data-search="prepare_pair prepare_pair(pair: &#x27;PairProducts&#x27;, outdir: &#x27;str | Path&#x27;, *, preprocess_graphs: &#x27;tuple[str, ...]&#x27; = (&#x27;split_orbit&#x27;,), format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None, overrides: &#x27;dict[str, dict[str, Any]] | None&#x27; = None) -&gt; &#x27;PairProducts&#x27; -&gt; PairProducts">
+  <summary><code>prepare_pair</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Prepare master and slave independently for pairwise TOPSAR processing.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:538</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-prepare-pair-signature">Signature</h3>
+    <pre><code class="language-python">prepare_pair(pair: &#x27;PairProducts&#x27;, outdir: &#x27;str | Path&#x27;, *, preprocess_graphs: &#x27;tuple[str, ...]&#x27; = (&#x27;split_orbit&#x27;,), format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None, overrides: &#x27;dict[str, dict[str, Any]] | None&#x27; = None) -&gt; &#x27;PairProducts&#x27; -&gt; PairProducts</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-prepare-pair-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pair</code></td><td><code>PairProducts</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>outdir</code></td><td><code>str | Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>preprocess_graphs</code></td><td><code>tuple[str, ...]</code></td><td>no</td><td><code>(&#x27;split_orbit&#x27;,)</code></td><td>inferred from implementation.</td></tr><tr><td><code>format</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;BEAM-DIMAP&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_path</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;/usr/local/snap/bin/gpt&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>memory</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>parallelism</code></td><td><code>int | None</code></td><td>no</td><td><code>14</code></td><td>inferred from implementation.</td></tr><tr><td><code>timeout</code></td><td><code>int | None</code></td><td>no</td><td><code>7200</code></td><td>inferred from implementation.</td></tr><tr><td><code>snap_userdir</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>overrides</code></td><td><code>dict[str, dict[str, Any]] | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-prepare-pair-returns">Return Type</h3>
+    <p><code>PairProducts</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-prepare-pair-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-prepare-pair-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-prepare-pair-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import prepare_pair
+
+result = prepare_pair(pair=&lt;pair&gt;, outdir=&lt;outdir&gt;)</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-prepare-pair-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-run-pair-workflow" data-searchable data-search="run_pair_workflow run_pair_workflow(pair: &#x27;PairProducts&#x27;, outdir: &#x27;str | Path&#x27;, workflow: &#x27;str&#x27; = &#x27;stamps_prep&#x27;, *, format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None, overrides: &#x27;dict[str, dict[str, Any]] | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str">
+  <summary><code>run_pair_workflow</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Run a pairwise TOPSAR workflow from split/deburst through final output.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:570</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-pair-workflow-signature">Signature</h3>
+    <pre><code class="language-python">run_pair_workflow(pair: &#x27;PairProducts&#x27;, outdir: &#x27;str | Path&#x27;, workflow: &#x27;str&#x27; = &#x27;stamps_prep&#x27;, *, format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None, overrides: &#x27;dict[str, dict[str, Any]] | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-pair-workflow-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pair</code></td><td><code>PairProducts</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>outdir</code></td><td><code>str | Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>workflow</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;stamps_prep&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>format</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;BEAM-DIMAP&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_path</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;/usr/local/snap/bin/gpt&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>memory</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>parallelism</code></td><td><code>int | None</code></td><td>no</td><td><code>14</code></td><td>inferred from implementation.</td></tr><tr><td><code>timeout</code></td><td><code>int | None</code></td><td>no</td><td><code>7200</code></td><td>inferred from implementation.</td></tr><tr><td><code>snap_userdir</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>overrides</code></td><td><code>dict[str, dict[str, Any]] | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-pair-workflow-returns">Return Type</h3>
+    <p><code>str</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-pair-workflow-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-pair-workflow-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-pair-workflow-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import run_pair_workflow
+
+result = run_pair_workflow(pair=&lt;pair&gt;, outdir=&lt;outdir&gt;)</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-pair-workflow-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-run-workflow" data-searchable data-search="run_workflow run_workflow(gpt: &#x27;GPT&#x27;, workflow: &#x27;str&#x27;, overrides: &#x27;dict[str, dict[str, Any]] | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str">
+  <summary><code>run_workflow</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Run a composed single-input workflow from the convenience catalog.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:632</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-workflow-signature">Signature</h3>
+    <pre><code class="language-python">run_workflow(gpt: &#x27;GPT&#x27;, workflow: &#x27;str&#x27;, overrides: &#x27;dict[str, dict[str, Any]] | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-workflow-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>gpt</code></td><td><code>GPT</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>workflow</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>overrides</code></td><td><code>dict[str, dict[str, Any]] | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-workflow-returns">Return Type</h3>
+    <p><code>str</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-workflow-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-workflow-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-workflow-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import run_workflow
+
+result = run_workflow(gpt=&lt;gpt&gt;, workflow=&lt;workflow&gt;)</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-workflow-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-run-topsar-split-apply-orbit" data-searchable data-search="run_topsar_split_apply_orbit run_topsar_split_apply_orbit(source_products: &#x27;Iterable[str | Path]&#x27;, outdir: &#x27;str | Path&#x27;, *, subswath: &#x27;str&#x27;, polarisation: &#x27;str | None&#x27; = None, polygon_wkt: &#x27;str | None&#x27; = None, output_name: &#x27;str | None&#x27; = None, format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None, apply_orbit_kwargs: &#x27;dict[str, Any] | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str">
+  <summary><code>run_topsar_split_apply_orbit</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Run the upstream-equivalent TOPSAR split/apply-orbit branch.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:656</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-split-apply-orbit-signature">Signature</h3>
+    <pre><code class="language-python">run_topsar_split_apply_orbit(source_products: &#x27;Iterable[str | Path]&#x27;, outdir: &#x27;str | Path&#x27;, *, subswath: &#x27;str&#x27;, polarisation: &#x27;str | None&#x27; = None, polygon_wkt: &#x27;str | None&#x27; = None, output_name: &#x27;str | None&#x27; = None, format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None, apply_orbit_kwargs: &#x27;dict[str, Any] | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-split-apply-orbit-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>source_products</code></td><td><code>Iterable[str | Path]</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>outdir</code></td><td><code>str | Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>subswath</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>polarisation</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>polygon_wkt</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>output_name</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>format</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;BEAM-DIMAP&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_path</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;/usr/local/snap/bin/gpt&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>memory</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>parallelism</code></td><td><code>int | None</code></td><td>no</td><td><code>14</code></td><td>inferred from implementation.</td></tr><tr><td><code>timeout</code></td><td><code>int | None</code></td><td>no</td><td><code>7200</code></td><td>inferred from implementation.</td></tr><tr><td><code>snap_userdir</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>apply_orbit_kwargs</code></td><td><code>dict[str, Any] | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-split-apply-orbit-returns">Return Type</h3>
+    <p><code>str</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-split-apply-orbit-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-split-apply-orbit-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-split-apply-orbit-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import run_topsar_split_apply_orbit
+
+result = run_topsar_split_apply_orbit(source_products=&lt;source_products&gt;, outdir=&lt;outdir&gt;, subswath=&lt;subswath&gt;)</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-split-apply-orbit-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-run-processing-pipeline" data-searchable data-search="run_processing_pipeline run_processing_pipeline(pipeline_name: &#x27;str&#x27;, *, outdir: &#x27;str | Path&#x27;, format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None, source_product: &#x27;str | Path | None&#x27; = None, source_products: &#x27;Iterable[str | Path] | None&#x27; = None, pair: &#x27;PairProducts | None&#x27; = None, target_folder: &#x27;str | Path | None&#x27; = None, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;str | TopsarCoregIfgResult&#x27; -&gt; str | TopsarCoregIfgResult">
+  <summary><code>run_processing_pipeline</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Run a named upstream-equivalent processing branch from :data:`SNAP2STAMPS_PIPELINES`.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:711</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-processing-pipeline-signature">Signature</h3>
+    <pre><code class="language-python">run_processing_pipeline(pipeline_name: &#x27;str&#x27;, *, outdir: &#x27;str | Path&#x27;, format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None, source_product: &#x27;str | Path | None&#x27; = None, source_products: &#x27;Iterable[str | Path] | None&#x27; = None, pair: &#x27;PairProducts | None&#x27; = None, target_folder: &#x27;str | Path | None&#x27; = None, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;str | TopsarCoregIfgResult&#x27; -&gt; str | TopsarCoregIfgResult</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-processing-pipeline-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pipeline_name</code></td><td><code>str</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>outdir</code></td><td><code>str | Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>format</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;BEAM-DIMAP&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_path</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;/usr/local/snap/bin/gpt&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>memory</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>parallelism</code></td><td><code>int | None</code></td><td>no</td><td><code>14</code></td><td>inferred from implementation.</td></tr><tr><td><code>timeout</code></td><td><code>int | None</code></td><td>no</td><td><code>7200</code></td><td>inferred from implementation.</td></tr><tr><td><code>snap_userdir</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>source_product</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>source_products</code></td><td><code>Iterable[str | Path] | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>pair</code></td><td><code>PairProducts | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>target_folder</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>kwargs</code></td><td><code>Any</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-processing-pipeline-returns">Return Type</h3>
+    <p><code>str | TopsarCoregIfgResult</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-processing-pipeline-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-processing-pipeline-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-processing-pipeline-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import run_processing_pipeline
+
+result = run_processing_pipeline(pipeline_name=&lt;pipeline_name&gt;, outdir=&lt;outdir&gt;, kwargs=&lt;kwargs&gt;)</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-processing-pipeline-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-run-topsar-coreg-ifg" data-searchable data-search="run_topsar_coreg_ifg run_topsar_coreg_ifg(pair: &#x27;PairProducts&#x27;, outdir: &#x27;str | Path&#x27;, *, master_count: &#x27;int | None&#x27; = None, burst_count: &#x27;int | None&#x27; = None, pipeline_name: &#x27;str | None&#x27; = None, polygon_wkt: &#x27;str | None&#x27; = None, subset_region: &#x27;str&#x27; = &#x27;0,0,0,0&#x27;, external_dem_file: &#x27;str | Path | None&#x27; = None, format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None, output_name_prefix: &#x27;str&#x27; = &#x27;pair&#x27;) -&gt; &#x27;TopsarCoregIfgResult&#x27; -&gt; TopsarCoregIfgResult">
+  <summary><code>run_topsar_coreg_ifg</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Run the upstream-equivalent TOPSAR coregistration/interferogram branch.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:803</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-coreg-ifg-signature">Signature</h3>
+    <pre><code class="language-python">run_topsar_coreg_ifg(pair: &#x27;PairProducts&#x27;, outdir: &#x27;str | Path&#x27;, *, master_count: &#x27;int | None&#x27; = None, burst_count: &#x27;int | None&#x27; = None, pipeline_name: &#x27;str | None&#x27; = None, polygon_wkt: &#x27;str | None&#x27; = None, subset_region: &#x27;str&#x27; = &#x27;0,0,0,0&#x27;, external_dem_file: &#x27;str | Path | None&#x27; = None, format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None, output_name_prefix: &#x27;str&#x27; = &#x27;pair&#x27;) -&gt; &#x27;TopsarCoregIfgResult&#x27; -&gt; TopsarCoregIfgResult</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-coreg-ifg-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pair</code></td><td><code>PairProducts</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>outdir</code></td><td><code>str | Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>master_count</code></td><td><code>int | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>burst_count</code></td><td><code>int | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>pipeline_name</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>polygon_wkt</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>subset_region</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;0,0,0,0&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>external_dem_file</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>format</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;BEAM-DIMAP&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_path</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;/usr/local/snap/bin/gpt&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>memory</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>parallelism</code></td><td><code>int | None</code></td><td>no</td><td><code>14</code></td><td>inferred from implementation.</td></tr><tr><td><code>timeout</code></td><td><code>int | None</code></td><td>no</td><td><code>7200</code></td><td>inferred from implementation.</td></tr><tr><td><code>snap_userdir</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>output_name_prefix</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;pair&#x27;</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-coreg-ifg-returns">Return Type</h3>
+    <p><code>TopsarCoregIfgResult</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-coreg-ifg-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-coreg-ifg-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-coreg-ifg-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import run_topsar_coreg_ifg
+
+result = run_topsar_coreg_ifg(pair=&lt;pair&gt;, outdir=&lt;outdir&gt;)</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-coreg-ifg-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-run-topsar-export" data-searchable data-search="run_topsar_export run_topsar_export(coreg_products: &#x27;Iterable[str | Path]&#x27;, ifg_products: &#x27;Iterable[str | Path]&#x27;, outdir: &#x27;str | Path&#x27;, *, target_folder: &#x27;str | Path&#x27;, master_count: &#x27;int&#x27;, polygon_wkt: &#x27;str | None&#x27; = None, subset_region: &#x27;str&#x27; = &#x27;0,0,0,0&#x27;, external_dem_file: &#x27;str | Path | None&#x27; = None, selected_polarisations: &#x27;list[str] | None&#x27; = None, format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str">
+  <summary><code>run_topsar_export</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Run the upstream-equivalent TOPSAR StaMPS export branch.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:957</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-export-signature">Signature</h3>
+    <pre><code class="language-python">run_topsar_export(coreg_products: &#x27;Iterable[str | Path]&#x27;, ifg_products: &#x27;Iterable[str | Path]&#x27;, outdir: &#x27;str | Path&#x27;, *, target_folder: &#x27;str | Path&#x27;, master_count: &#x27;int&#x27;, polygon_wkt: &#x27;str | None&#x27; = None, subset_region: &#x27;str&#x27; = &#x27;0,0,0,0&#x27;, external_dem_file: &#x27;str | Path | None&#x27; = None, selected_polarisations: &#x27;list[str] | None&#x27; = None, format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-export-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>coreg_products</code></td><td><code>Iterable[str | Path]</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>ifg_products</code></td><td><code>Iterable[str | Path]</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>outdir</code></td><td><code>str | Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target_folder</code></td><td><code>str | Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>master_count</code></td><td><code>int</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>polygon_wkt</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>subset_region</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;0,0,0,0&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>external_dem_file</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>selected_polarisations</code></td><td><code>list[str] | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>format</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;BEAM-DIMAP&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_path</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;/usr/local/snap/bin/gpt&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>memory</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>parallelism</code></td><td><code>int | None</code></td><td>no</td><td><code>14</code></td><td>inferred from implementation.</td></tr><tr><td><code>timeout</code></td><td><code>int | None</code></td><td>no</td><td><code>7200</code></td><td>inferred from implementation.</td></tr><tr><td><code>snap_userdir</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-export-returns">Return Type</h3>
+    <p><code>str</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-export-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-export-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-export-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import run_topsar_export
+
+result = run_topsar_export(coreg_products=&lt;coreg_products&gt;, ifg_products=&lt;ifg_products&gt;, outdir=&lt;outdir&gt;, target_folder=&lt;target_folder&gt;, master_count=&lt;master_count&gt;)</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-topsar-export-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-run-stripmap-subset" data-searchable data-search="run_stripmap_subset run_stripmap_subset(product: &#x27;str | Path&#x27;, outdir: &#x27;str | Path&#x27;, *, region: &#x27;str | None&#x27; = None, polygon_wkt: &#x27;str | None&#x27; = None, output_name: &#x27;str | None&#x27; = None, format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str">
+  <summary><code>run_stripmap_subset</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Run the Stripmap subset branch.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:1086</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-subset-signature">Signature</h3>
+    <pre><code class="language-python">run_stripmap_subset(product: &#x27;str | Path&#x27;, outdir: &#x27;str | Path&#x27;, *, region: &#x27;str | None&#x27; = None, polygon_wkt: &#x27;str | None&#x27; = None, output_name: &#x27;str | None&#x27; = None, format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-subset-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>product</code></td><td><code>str | Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>outdir</code></td><td><code>str | Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>region</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>polygon_wkt</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>output_name</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>format</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;BEAM-DIMAP&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_path</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;/usr/local/snap/bin/gpt&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>memory</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>parallelism</code></td><td><code>int | None</code></td><td>no</td><td><code>14</code></td><td>inferred from implementation.</td></tr><tr><td><code>timeout</code></td><td><code>int | None</code></td><td>no</td><td><code>7200</code></td><td>inferred from implementation.</td></tr><tr><td><code>snap_userdir</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-subset-returns">Return Type</h3>
+    <p><code>str</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-subset-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-subset-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-subset-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import run_stripmap_subset
+
+result = run_stripmap_subset(product=&lt;product&gt;, outdir=&lt;outdir&gt;)</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-subset-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-run-stripmap-coreg" data-searchable data-search="run_stripmap_coreg run_stripmap_coreg(pair: &#x27;PairProducts&#x27;, outdir: &#x27;str | Path&#x27;, *, external_dem_file: &#x27;str | Path | None&#x27; = None, output_name: &#x27;str | None&#x27; = None, format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str">
+  <summary><code>run_stripmap_coreg</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Run the Stripmap DEM-assisted coregistration branch.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:1122</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-coreg-signature">Signature</h3>
+    <pre><code class="language-python">run_stripmap_coreg(pair: &#x27;PairProducts&#x27;, outdir: &#x27;str | Path&#x27;, *, external_dem_file: &#x27;str | Path | None&#x27; = None, output_name: &#x27;str | None&#x27; = None, format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-coreg-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>pair</code></td><td><code>PairProducts</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>outdir</code></td><td><code>str | Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>external_dem_file</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>output_name</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>format</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;BEAM-DIMAP&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_path</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;/usr/local/snap/bin/gpt&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>memory</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>parallelism</code></td><td><code>int | None</code></td><td>no</td><td><code>14</code></td><td>inferred from implementation.</td></tr><tr><td><code>timeout</code></td><td><code>int | None</code></td><td>no</td><td><code>7200</code></td><td>inferred from implementation.</td></tr><tr><td><code>snap_userdir</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-coreg-returns">Return Type</h3>
+    <p><code>str</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-coreg-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-coreg-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-coreg-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import run_stripmap_coreg
+
+result = run_stripmap_coreg(pair=&lt;pair&gt;, outdir=&lt;outdir&gt;)</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-coreg-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-run-stripmap-ifg" data-searchable data-search="run_stripmap_ifg run_stripmap_ifg(coreg_product: &#x27;str | Path&#x27;, outdir: &#x27;str | Path&#x27;, *, external_dem_file: &#x27;str | Path | None&#x27; = None, output_name_prefix: &#x27;str&#x27; = &#x27;stripmap&#x27;, format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str">
+  <summary><code>run_stripmap_ifg</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Run the Stripmap interferogram/topographic-phase branch.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:1158</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-ifg-signature">Signature</h3>
+    <pre><code class="language-python">run_stripmap_ifg(coreg_product: &#x27;str | Path&#x27;, outdir: &#x27;str | Path&#x27;, *, external_dem_file: &#x27;str | Path | None&#x27; = None, output_name_prefix: &#x27;str&#x27; = &#x27;stripmap&#x27;, format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-ifg-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>coreg_product</code></td><td><code>str | Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>outdir</code></td><td><code>str | Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>external_dem_file</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>output_name_prefix</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;stripmap&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>format</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;BEAM-DIMAP&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_path</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;/usr/local/snap/bin/gpt&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>memory</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>parallelism</code></td><td><code>int | None</code></td><td>no</td><td><code>14</code></td><td>inferred from implementation.</td></tr><tr><td><code>timeout</code></td><td><code>int | None</code></td><td>no</td><td><code>7200</code></td><td>inferred from implementation.</td></tr><tr><td><code>snap_userdir</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-ifg-returns">Return Type</h3>
+    <p><code>str</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-ifg-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-ifg-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-ifg-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import run_stripmap_ifg
+
+result = run_stripmap_ifg(coreg_product=&lt;coreg_product&gt;, outdir=&lt;outdir&gt;)</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-ifg-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+<details class="api-item" id="sarpyx-snapflow-snap2stamps-py-run-stripmap-export" data-searchable data-search="run_stripmap_export run_stripmap_export(coreg_product: &#x27;str | Path&#x27;, ifg_product: &#x27;str | Path&#x27;, outdir: &#x27;str | Path&#x27;, *, target_folder: &#x27;str | Path&#x27;, format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str">
+  <summary><code>run_stripmap_export</code> <span class="api-kind">function</span></summary>
+  <div class="api-body">
+    <p>Run the Stripmap StaMPS export branch.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:1198</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-export-signature">Signature</h3>
+    <pre><code class="language-python">run_stripmap_export(coreg_product: &#x27;str | Path&#x27;, ifg_product: &#x27;str | Path&#x27;, outdir: &#x27;str | Path&#x27;, *, target_folder: &#x27;str | Path&#x27;, format: &#x27;str&#x27; = &#x27;BEAM-DIMAP&#x27;, gpt_path: &#x27;str&#x27; = &#x27;/usr/local/snap/bin/gpt&#x27;, memory: &#x27;str | None&#x27; = None, parallelism: &#x27;int | None&#x27; = 14, timeout: &#x27;int | None&#x27; = 7200, snap_userdir: &#x27;str | Path | None&#x27; = None) -&gt; &#x27;str&#x27; -&gt; str</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-export-parameters">Parameters</h3>
+    <table class="api-table"><thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody><tr><td><code>coreg_product</code></td><td><code>str | Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>ifg_product</code></td><td><code>str | Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>outdir</code></td><td><code>str | Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>target_folder</code></td><td><code>str | Path</code></td><td>yes</td><td><code>-</code></td><td>inferred from implementation.</td></tr><tr><td><code>format</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;BEAM-DIMAP&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>gpt_path</code></td><td><code>str</code></td><td>no</td><td><code>&#x27;/usr/local/snap/bin/gpt&#x27;</code></td><td>inferred from implementation.</td></tr><tr><td><code>memory</code></td><td><code>str | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr><tr><td><code>parallelism</code></td><td><code>int | None</code></td><td>no</td><td><code>14</code></td><td>inferred from implementation.</td></tr><tr><td><code>timeout</code></td><td><code>int | None</code></td><td>no</td><td><code>7200</code></td><td>inferred from implementation.</td></tr><tr><td><code>snap_userdir</code></td><td><code>str | Path | None</code></td><td>no</td><td><code>None</code></td><td>inferred from implementation.</td></tr></tbody></table>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-export-returns">Return Type</h3>
+    <p><code>str</code></p>
+    <p>inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-export-exceptions">Exceptions</h3>
+    <p>None explicitly documented; inferred from implementation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-export-side-effects">Side Effects</h3>
+    <ul><li>inferred from implementation</li></ul>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-export-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import run_stripmap_export
+
+result = run_stripmap_export(coreg_product=&lt;coreg_product&gt;, ifg_product=&lt;ifg_product&gt;, outdir=&lt;outdir&gt;, target_folder=&lt;target_folder&gt;)</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-run-stripmap-export-edge-cases">Edge Cases</h3>
+    <p>Includes optional parameters with implementation-defined fallback behavior.</p>
+  </div>
+</details>
+
+
+  <h2 id="public-classes">Public Classes (4)</h2>
+  
+<details class="api-item class-item" id="sarpyx-snapflow-snap2stamps-py-pipelinestep" data-searchable data-search="PipelineStep class PipelineStep(method: &#x27;str&#x27;, kwargs: &#x27;dict[str, Any]&#x27; = &lt;factory&gt;) -&gt; None">
+  <summary><code>PipelineStep</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Single operator call in a SNAP pipeline.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:25</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipelinestep-signature">Class Signature</h3>
+    <pre><code class="language-python">class PipelineStep(method: &#x27;str&#x27;, kwargs: &#x27;dict[str, Any]&#x27; = &lt;factory&gt;) -&gt; None</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipelinestep-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipelinestep-returns">Return Type</h3>
+    <p><code>PipelineStep</code> instances.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipelinestep-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipelinestep-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipelinestep-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import PipelineStep
+
+obj = PipelineStep(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipelinestep-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipelinestep-methods">Public Methods (0)</h3>
+    <p>No public methods detected.</p>
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-snapflow-snap2stamps-py-pairproducts" data-searchable data-search="PairProducts class PairProducts(master: &#x27;str | Path&#x27;, slave: &#x27;str | Path&#x27;) -&gt; None">
+  <summary><code>PairProducts</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Master/slave product pair used for pairwise InSAR preparation.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:33</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pairproducts-signature">Class Signature</h3>
+    <pre><code class="language-python">class PairProducts(master: &#x27;str | Path&#x27;, slave: &#x27;str | Path&#x27;) -&gt; None</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pairproducts-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pairproducts-returns">Return Type</h3>
+    <p><code>PairProducts</code> instances.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pairproducts-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pairproducts-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pairproducts-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import PairProducts
+
+obj = PairProducts(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pairproducts-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pairproducts-methods">Public Methods (0)</h3>
+    <p>No public methods detected.</p>
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-snapflow-snap2stamps-py-pipelinedefinition" data-searchable data-search="PipelineDefinition class PipelineDefinition(name: &#x27;str&#x27;, branch: &#x27;BranchName&#x27;, input_kind: &#x27;InputKind&#x27;, stages: &#x27;tuple[str, ...]&#x27;, upstream_graph: &#x27;str | None&#x27; = None, description: &#x27;str&#x27; = &#x27;&#x27;) -&gt; None">
+  <summary><code>PipelineDefinition</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Description of an upstream-equivalent processing pipeline variant.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:45</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipelinedefinition-signature">Class Signature</h3>
+    <pre><code class="language-python">class PipelineDefinition(name: &#x27;str&#x27;, branch: &#x27;BranchName&#x27;, input_kind: &#x27;InputKind&#x27;, stages: &#x27;tuple[str, ...]&#x27;, upstream_graph: &#x27;str | None&#x27; = None, description: &#x27;str&#x27; = &#x27;&#x27;) -&gt; None</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipelinedefinition-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipelinedefinition-returns">Return Type</h3>
+    <p><code>PipelineDefinition</code> instances.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipelinedefinition-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipelinedefinition-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipelinedefinition-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import PipelineDefinition
+
+obj = PipelineDefinition(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipelinedefinition-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-pipelinedefinition-methods">Public Methods (0)</h3>
+    <p>No public methods detected.</p>
+  </div>
+</details>
+
+<details class="api-item class-item" id="sarpyx-snapflow-snap2stamps-py-topsarcoregifgresult" data-searchable data-search="TopsarCoregIfgResult class TopsarCoregIfgResult(coreg_path: &#x27;str&#x27;, ifg_path: &#x27;str&#x27;, pipeline_name: &#x27;str&#x27;) -&gt; None">
+  <summary><code>TopsarCoregIfgResult</code> <span class="api-kind">class</span></summary>
+  <div class="api-body">
+    <p>Outputs of the TOPSAR coregistration/interferogram branch.</p>
+    <p><strong>File location:</strong> <code>sarpyx/snapflow/snap2stamps.py:57</code></p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-topsarcoregifgresult-signature">Class Signature</h3>
+    <pre><code class="language-python">class TopsarCoregIfgResult(coreg_path: &#x27;str&#x27;, ifg_path: &#x27;str&#x27;, pipeline_name: &#x27;str&#x27;) -&gt; None</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-topsarcoregifgresult-parameters">Constructor Parameters</h3>
+    <aside class="callout info"><p>Constructor parameters are inferred from non-public __init__ implementation.</p></aside>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-topsarcoregifgresult-returns">Return Type</h3>
+    <p><code>TopsarCoregIfgResult</code> instances.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-topsarcoregifgresult-exceptions">Exceptions</h3>
+    <p>Construction/runtime exceptions are inferred from implementation and method-level documentation.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-topsarcoregifgresult-side-effects">Side Effects</h3>
+    <p>See method-level side effects below.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-topsarcoregifgresult-example">Example Usage</h3>
+    <pre><code class="language-python">from sarpyx.snapflow.snap2stamps import TopsarCoregIfgResult
+
+obj = TopsarCoregIfgResult(...)  # inferred from implementation
+</code></pre>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-topsarcoregifgresult-edge-cases">Edge Cases</h3>
+    <p>No class-level edge-case section is explicitly documented; rely on method-level checks and raised exceptions.</p>
+    <h3 id="sarpyx-snapflow-snap2stamps-py-topsarcoregifgresult-methods">Public Methods (0)</h3>
+    <p>No public methods detected.</p>
+  </div>
+</details>
+
+</section>
+
+      </article>
+      <footer class="page-footer">
+        <p>Generated from repository sources on 2026-03-12 13:39 UTC.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

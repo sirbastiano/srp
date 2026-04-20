@@ -27,6 +27,10 @@ AGENTS.md
 hparams.yaml
 metrics_*.json
 results/
+!docs/results/
+!docs/results/**
+!docs/_site/results/
+!docs/_site/results/**
 # Dataset
 SSM4SAR/maya4_data/
 SSM4SAR/src/
