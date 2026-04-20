@@ -434,4 +434,15 @@ def update_dim_add_bands_from_data_dir(dim_in: str, dim_out: str = None, verbose
         print(f"  grupos detected: {groups}")
         print(f"  NBANDS: {nbands_el.text}")
 
+    # If the product is switched to band-indexed geocoding, every indexed band
+    # must have a matching Geoposition/CRS pair. Auxiliary bands such as
+    # derampDemodPhase are not part of the i/q group scan and must be backfilled.
+    geo_idxs = _existing_geo_indices()
+    for sbi in root.findall(".//Image_Interpretation/Spectral_Band_Info"):
+        band_index = _safe_int(sbi.findtext("BAND_INDEX"))
+        if band_index is None or band_index in geo_idxs:
+            continue
+        _append_georef_pair(georef_parent, template_crs, template_geo, band_index)
+        geo_idxs.add(band_index)
+
     return dim_out

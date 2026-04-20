@@ -484,6 +484,27 @@ def _add_worldsar_arguments(parser: argparse.ArgumentParser) -> None:
         default=None,
         help='Override GPT timeout in seconds for a single invocation.'
     )
+    parser.add_argument(
+        '--h5-to-zarr-only',
+        dest='h5_to_zarr_only',
+        action='store_true',
+        help='Skip preprocessing/tiling and convert an existing .h5 tile into a Zarr v3 store.'
+    )
+    parser.add_argument(
+        '--zarr-chunk-size',
+        dest='zarr_chunk_size',
+        type=int,
+        nargs=2,
+        metavar=('ROWS', 'COLS'),
+        default=(32, 32),
+        help='Chunk size for H5-to-Zarr conversion (default: 32 32).'
+    )
+    parser.add_argument(
+        '--overwrite-zarr',
+        dest='overwrite_zarr',
+        action='store_true',
+        help='Replace an existing output Zarr store when converting H5 tiles.'
+    )
 
 
 def main() -> None:

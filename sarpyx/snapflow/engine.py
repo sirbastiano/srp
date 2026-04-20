@@ -12,6 +12,7 @@ import zipfile
 from pathlib import Path
 from typing import List, Optional, Union
 from urllib import request
+from xml.sax.saxutils import escape
 import json
 from xml.sax.saxutils import escape
 

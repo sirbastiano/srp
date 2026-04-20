@@ -109,7 +109,7 @@ def cleanup_variables(*variables: Any) -> None:
     gc.collect()
 
 def initialize_params(
-    device: Optional[torch.device] = None,
+    device: Optional["torch.device"] = None,
     slant_range_vec: Optional[np.ndarray] = None,
     D: Optional[np.ndarray] = None,
     c: Optional[float] = None,
@@ -134,9 +134,9 @@ def initialize_params(
     return {key: value for key, value in locals().items()}
 
 def multiply_inplace(
-    a: Union[np.ndarray, torch.Tensor], 
-    b: Union[np.ndarray, torch.Tensor]
-) -> Union[np.ndarray, torch.Tensor]:
+    a: Union[np.ndarray, "torch.Tensor"],
+    b: Union[np.ndarray, "torch.Tensor"]
+) -> Union[np.ndarray, "torch.Tensor"]:
     """Multiply two arrays element-wise in-place with broadcasting support.
     
     Args:
@@ -175,10 +175,10 @@ def multiply_inplace(
                        f'Original error: {str(e)}') from e
 
 def multiply(
-    a: Union[np.ndarray, torch.Tensor], 
-    b: Union[np.ndarray, torch.Tensor],
+    a: Union[np.ndarray, "torch.Tensor"],
+    b: Union[np.ndarray, "torch.Tensor"],
     debug: bool = False,
-) -> Union[np.ndarray, torch.Tensor]:
+) -> Union[np.ndarray, "torch.Tensor"]:
     """Multiply two arrays element-wise with broadcasting support.
     
     Args:
@@ -224,7 +224,7 @@ def multiply(
 
 @flush_mem
 @timing_decorator
-def ifft2d(radar_data: Union[np.ndarray, torch.Tensor], backend: str = 'numpy', verbose: bool = False) -> Union[np.ndarray, torch.Tensor]:
+def ifft2d(radar_data: Union[np.ndarray, "torch.Tensor"], backend: str = 'numpy', verbose: bool = False) -> Union[np.ndarray, "torch.Tensor"]:
     """Perform memory-efficient 2D inverse FFT on radar data.
     
     Args:
@@ -267,10 +267,10 @@ def ifft2d(radar_data: Union[np.ndarray, torch.Tensor], backend: str = 'numpy', 
 @flush_mem
 @timing_decorator
 def iff_azimuth(
-    radar_data: Union[np.ndarray, torch.Tensor], 
-    backend: str = 'numpy', 
+    radar_data: Union[np.ndarray, "torch.Tensor"],
+    backend: str = 'numpy',
     verbose: bool = False
-) -> Union[np.ndarray, torch.Tensor]:
+) -> Union[np.ndarray, "torch.Tensor"]:
     """Perform memory-efficient inverse FFT along azimuth dimension.
     
     Args:

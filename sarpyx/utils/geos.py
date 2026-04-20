@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import List, Dict, Any
 
+import pyproj
 from shapely import wkt
 from shapely.geometry import Point, Polygon
 
@@ -345,6 +346,31 @@ class GridNavigator:
         lower_name = self.move_down(row, col)
         lower_row, lower_col = lower_name.split('_')
         return self.move_left(lower_row, lower_col)
+
+
+def grid_cell_utm_bbox(rect: dict, epsg: int, cell_size_m: float = 10000.0) -> tuple[float, float, float, float]:
+    """Return a UTM-aligned bounding box for a grid cell anchored at the BL corner.
+
+    The MajorTOM grid is defined in WGS84 (rows at constant latitude, columns at
+    constant longitude per row), so cells are parallelograms in UTM.  Taking the
+    4-corner UTM bounding box produces oversized tiles.  Instead, anchor at the
+    BL corner and extend exactly cell_size_m in each UTM axis — this gives a
+    rectangle that produces exactly cell_size_m/pixel_spacing pixels per side
+    and matches the actual grid column spacing to within a few metres.
+
+    Args:
+        rect: dict with keys 'BL' (and optionally 'TL', 'TR', 'BR'), each a
+              GeoJSON feature whose geometry.coordinates is [lon, lat].
+        epsg: integer EPSG code of the target UTM zone (e.g. 32637).
+        cell_size_m: cell width and height in metres (default 10 000).
+
+    Returns:
+        (x_min, y_min, x_max, y_max) in the given UTM projection (metres).
+    """
+    transformer = pyproj.Transformer.from_crs(4326, epsg, always_xy=True)
+    lon, lat = rect['BL']['geometry']['coordinates']
+    x_min, y_min = transformer.transform(lon, lat)
+    return x_min, y_min, x_min + cell_size_m, y_min + cell_size_m
 
 
 def is_point_in_contained(name, contained):
