@@ -1,11 +1,29 @@
 """SARPyX: SAR Processing library in Python.
 
-This package provides tools and utilities for SAR (Synthetic Aperture Radar) 
+This package provides tools and utilities for SAR (Synthetic Aperture Radar)
 data processing, including sub-look analysis, visualization, and integration
 with processing frameworks.
 """
 
-__version__ = '0.1.5'
+from importlib.metadata import PackageNotFoundError, version
+from pathlib import Path
+
+
+def _resolve_version() -> str:
+    try:
+        return version('sarpyx')
+    except PackageNotFoundError:
+        try:
+            import tomllib
+
+            pyproject = Path(__file__).resolve().parents[1] / 'pyproject.toml'
+            with pyproject.open('rb') as handle:
+                return tomllib.load(handle)['project']['version']
+        except Exception:
+            return '0+unknown'
+
+
+__version__ = _resolve_version()
 __author__ = 'ESA Phi-Lab'
 
 __all__ = [

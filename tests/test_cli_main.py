@@ -1,6 +1,14 @@
 from sarpyx.cli.main import create_main_parser
 
 
+def test_create_main_parser_formats_help_with_worldsar_subcommand() -> None:
+    parser = create_main_parser()
+    help_text = parser.format_help()
+
+    assert 'worldsar' in help_text
+    assert '--version' in help_text
+
+
 def test_create_main_parser_includes_worldsar_subcommand() -> None:
     parser = create_main_parser()
 
@@ -15,13 +23,10 @@ def test_create_main_parser_includes_worldsar_subcommand() -> None:
             '/tmp/cuts',
             '--db-dir',
             '/tmp/db',
-            '--tops-swaths',
-            'IW1',
-            '--polarizations',
-            'VV',
-            '--skip-subaperture',
-            '--skip-polarimetric-decomposition',
-            '--single-band',
+            '--h5-to-zarr-only',
+            '--zarr-chunk-size',
+            '64',
+            '64',
             '--orbit-continue-on-fail',
         ]
     )
@@ -31,9 +36,6 @@ def test_create_main_parser_includes_worldsar_subcommand() -> None:
     assert args.output_dir == '/tmp/output'
     assert args.cuts_outdir == '/tmp/cuts'
     assert args.db_dir == '/tmp/db'
-    assert args.tops_swaths == ['IW1']
-    assert args.polarizations == ['VV']
-    assert args.skip_subaperture is True
-    assert args.skip_polarimetric_decomposition is True
-    assert args.single_band is True
+    assert args.h5_to_zarr_only is True
+    assert args.zarr_chunk_size == [64, 64]
     assert args.orbit_continue_on_fail is True

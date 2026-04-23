@@ -9,6 +9,8 @@ import argparse
 import sys
 from typing import List
 
+from sarpyx import __version__ as SARPYX_VERSION
+
 
 def create_main_parser() -> argparse.ArgumentParser:
     """
@@ -47,7 +49,7 @@ For command-specific help:
     parser.add_argument(
         '--version',
         action='version',
-        version='sarpyx-cli 0.1.6'
+        version=f'sarpyx-cli {SARPYX_VERSION}'
     )
     
     # Create subparsers for different commands
@@ -485,10 +487,30 @@ def _add_worldsar_arguments(parser: argparse.ArgumentParser) -> None:
         help='Override GPT timeout in seconds for a single invocation.'
     )
     parser.add_argument(
-        '--overwrite-zarr',
-        dest='overwrite_zarr',
+        '--snap-userdir',
+        dest='snap_userdir',
+        type=str,
+        default=None,
+        help='Override SNAP user directory.'
+    )
+    parser.add_argument(
+        '--orbit-type',
+        dest='orbit_type',
+        type=str,
+        default='Sentinel Precise (Auto Download)',
+        help='SNAP Apply-Orbit-File orbitType.'
+    )
+    parser.add_argument(
+        '--orbit-continue-on-fail',
+        dest='orbit_continue_on_fail',
         action='store_true',
-        help='Replace an existing output Zarr store when converting H5 tiles.'
+        help='Continue if orbit file cannot be applied.'
+    )
+    parser.add_argument(
+        '--skip-preprocessing',
+        dest='skip_preprocessing',
+        action='store_true',
+        help='Skip TC preprocessing and reuse existing BEAM-DIMAP intermediate products for tiling.'
     )
 
 

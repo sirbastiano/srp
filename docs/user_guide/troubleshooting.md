@@ -17,9 +17,9 @@ import sarpyx  # Fails
 
 1. **Verify Installation**:
    ```bash
-   pip show sarpyx
-   # or
-   pdm list | grep sarpyx
+   python -m pip show sarpyx
+   # or, inside the managed environment
+   uv run python -c "import sarpyx; print(sarpyx.__version__)"
    ```
 
 2. **Check Python Environment**:
@@ -53,11 +53,10 @@ ERROR: pip's dependency resolver does not currently have a workaround for this e
    pip install sarpyx
    ```
 
-2. **Use PDM for Better Dependency Management**:
+2. **Use uv for Better Dependency Management**:
    ```bash
-   pdm init
-   pdm add sarpyx
-   pdm install
+   uv sync
+   uv sync --group dev
    ```
 
 3. **Check Conflicting Packages**:

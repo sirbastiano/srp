@@ -81,15 +81,15 @@
 <pre class="codehilite"><code>pip<span class="w"> </span>install<span class="w"> </span>sarpyx
 </code></pre>
 <p>For specific versions:</p>
-<pre class="codehilite"><code>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">sarpyx</span><span class="o">==</span><span class="m">0</span>.1.5
+<pre class="codehilite"><code>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">sarpyx</span><span class="o">==</span>&lt;version&gt;
 </code></pre>
-<h3 id="2-using-pdm-recommended-for-development">2. Using PDM (Recommended for Development)</h3>
-<p>PDM (Python Dependency Management) is the preferred tool for development:</p>
+<h3 id="2-using-uv-recommended-for-development-and-ci">2. Using uv (Recommended for Development and CI)</h3>
+<p><code>uv</code> is the canonical tool for local installation, testing, and builds:</p>
 <ol>
 <li>
-<p><strong>Install PDM:</strong>
+<p><strong>Install uv:</strong>
    <code>bash
-   pip install pdm</code></p>
+   pip install uv</code></p>
 </li>
 <li>
 <p><strong>Clone the repository:</strong>
@@ -100,19 +100,20 @@
 <li>
 <p><strong>Install dependencies:</strong>
    <code>bash
-   pdm install</code></p>
+   uv sync</code></p>
 </li>
 <li>
-<p><strong>For development with extras:</strong>
+<p><strong>For development and optional Copernicus tooling:</strong>
    <code>bash
-   pdm install -G dev -G test -G docs</code></p>
+   uv sync --group dev
+   uv sync --group dev --extra copernicus</code></p>
 </li>
 </ol>
 <h3 id="3-development-installation">3. Development Installation</h3>
 <p>For contributors or advanced users who want the latest features:</p>
 <pre class="codehilite"><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/ESA-PhiLab/sarpyx.git
 <span class="nb">cd</span><span class="w"> </span>sarpyx
-pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+uv<span class="w"> </span>sync<span class="w"> </span>--group<span class="w"> </span>dev
 </code></pre>
 <p>This creates an editable installation that reflects code changes immediately.</p>
 <h2 id="verifying-installation">Verifying Installation</h2>

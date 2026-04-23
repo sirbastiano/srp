@@ -2,18 +2,29 @@
 # CI/CD – Docker build, test, and publish
 # ──────────────────────────────────────────────────────────────
 # Triggers:
-#   • Pushes to main that touch Docker-related files      → build + test + push :latest
-#   • Manual dispatch from main                           → build + test + optional push
+#   • Pull requests touching Docker/runtime files         → build + smoke test
+#   • Pushes to main touching Docker/runtime files        → build + smoke test + push
+#   • Manual dispatch                                     → build + smoke test + optional push
 # ──────────────────────────────────────────────────────────────
 
 name: Docker Build & Publish
 
 on:
+  pull_request:
+    paths:
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - "entrypoint.sh"
+      - "pyproject.toml"
+      - "sarpyx/**"
+      - "tests/**"
+      - "support/**"
   push:
     branches: [main]
     paths:
       - "Dockerfile"
       - "docker-compose.yml"
+      - "entrypoint.sh"
       - "sarpyx/**"
       - "tests/**"
       - "pyproject.toml"
@@ -32,7 +43,6 @@ jobs:
   # ────────────────────  Build & Test  ────────────────────────
   build-and-test:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
     timeout-minutes: 260
 
     steps:
@@ -62,11 +72,11 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
 
-      # - name: Run Docker build tests (disabled)
-      #   run: |
-      #     docker run --rm ${{ env.DOCKER_IMAGE }}:ci sh -c "\
-      #       python3.11 -m pip install pytest && \
-      #       python3.11 -m pytest /workspace/tests/test_docker.py -v --tb=short"
+      - name: Run Docker smoke tests
+        run: |
+          docker run --rm ${{ env.DOCKER_IMAGE }}:ci sh -lc "\
+            python3.11 -m pip install --no-cache-dir pytest==8.4.0 && \
+            python3.11 -m pytest /workspace/tests/test_docker.py -q --tb=short"
 
       - name: Move cache  # prevents ever-growing cache
         run: |
@@ -78,9 +88,8 @@ jobs:
     needs: build-and-test
     runs-on: ubuntu-latest
     if: >-
-      github.ref == 'refs/heads/main' &&
       (
-        github.event_name == 'push' ||
+        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
         (github.event_name == 'workflow_dispatch' && github.event.inputs.push_image == 'true')
       )
     timeout-minutes: 60

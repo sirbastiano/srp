@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import shutil
+import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 import h5py
 import numpy as np
@@ -40,6 +41,19 @@ REQUIRED_BAND_ATTRS = (
     'scaling_factor',
     'scaling_offset',
     'unit',
+)
+
+MATERIALIZED_BAND_SUFFIXES = frozenset({'.hdr', '.img'})
+
+VALIDATION_CHECKS = (
+    ('band inventory', lambda result: result.get('bands_ok', False)),
+    ('metadata completeness', lambda result: result.get('metadata_ok', False)),
+    ('band attrs', lambda result: not result.get('band_attr_issues')),
+    ('raster shape consistency', lambda result: not result.get('shape_summary')),
+    ('non-band rasters', lambda result: not result.get('missing_array_paths')),
+    ('metadata paths', lambda result: not result.get('missing_metadata_paths')),
+    ('metadata attrs', lambda result: not result.get('missing_metadata_attrs')),
+    ('overall', lambda result: result.get('status') == 'success'),
 )
 
 
@@ -80,6 +94,72 @@ def resolve_output_path(input_path: Path, output_path: Path | None) -> Path:
     if output_path is not None:
         return output_path
     return input_path.with_suffix('.zarr')
+
+
+def _read_dim_declared_band_names(dim_path: Path) -> list[str]:
+    root = ET.parse(dim_path).getroot()
+    band_names = []
+    for spectral_band in root.findall('./Image_Interpretation/Spectral_Band_Info'):
+        band_name = (spectral_band.findtext('BAND_NAME') or '').strip()
+        if band_name:
+            band_names.append(band_name)
+    return sorted(set(band_names))
+
+
+def _read_dim_materialized_band_names(dim_path: Path) -> list[str]:
+    root = ET.parse(dim_path).getroot()
+    band_names = []
+    for data_file in root.findall('.//Data_File'):
+        href = data_file.find('DATA_FILE_PATH')
+        if href is None:
+            continue
+        band_name = Path(href.get('href', '')).name
+        if not band_name:
+            continue
+        stem = Path(band_name).stem.strip()
+        if stem:
+            band_names.append(stem)
+    return sorted(set(band_names))
+
+
+def _discover_data_dir_band_names(dim_path: Path, known_band_names: set[str]) -> list[str]:
+    data_dir = dim_path.with_suffix('.data')
+    if not data_dir.is_dir():
+        return []
+
+    discovered = sorted({
+        child.stem
+        for child in data_dir.iterdir()
+        if child.is_file()
+        and child.suffix.lower() in MATERIALIZED_BAND_SUFFIXES
+        and child.stem
+    })
+    if not discovered:
+        return []
+
+    filtered = sorted(name for name in discovered if name in known_band_names)
+    return filtered or discovered
+
+
+def resolve_expected_band_names_from_dim_product(dim_path: Path | str) -> list[str]:
+    """Resolve expected H5 band names for a DIM product.
+
+    Prefer the sibling ``.data`` directory when it exposes materialized raster names,
+    then fall back to the declared spectral-band metadata in the DIM file itself.
+    This avoids treating virtual bands such as ``Intensity_*`` as mandatory H5 exports.
+    """
+
+    dim_path = Path(dim_path)
+    declared_band_names = _read_dim_declared_band_names(dim_path)
+    materialized_band_names = _read_dim_materialized_band_names(dim_path)
+    known_band_names = set(declared_band_names) | set(materialized_band_names)
+
+    discovered_band_names = _discover_data_dir_band_names(dim_path, known_band_names)
+    if discovered_band_names:
+        return discovered_band_names
+    if declared_band_names:
+        return declared_band_names
+    raise RuntimeError(f'No band names found in {dim_path}')
 
 
 def _copy_dataset(source: h5py.Dataset, target_parent: zarr.Group, chunk_size: tuple[int, int]) -> None:
@@ -203,6 +283,63 @@ def format_issue_map(issue_map: dict[str, dict[str, Any]]) -> list[str]:
     return lines
 
 
+def _coerce_float(value: Any) -> float | None:
+    normalized = normalize_attribute_value(value)
+    if normalized is None:
+        return None
+    try:
+        number = float(normalized)
+    except (TypeError, ValueError):
+        return None
+    if not np.isfinite(number):
+        return None
+    return number
+
+
+def _extract_metadata_coord(abstract_metadata: Mapping[str, Any], stem: str) -> tuple[float, float] | None:
+    lat = _coerce_float(abstract_metadata.get(f'{stem}_lat'))
+    lon = _coerce_float(abstract_metadata.get(f'{stem}_lon'))
+    if lon is None:
+        lon = _coerce_float(abstract_metadata.get(f'{stem}_long'))
+    if lat is None or lon is None:
+        return None
+    return (lon, lat)
+
+
+def extract_tile_geometry_from_abstract_metadata(abstract_metadata: Mapping[str, Any]) -> dict[str, Any]:
+    corner_names = ('first_near', 'first_far', 'last_far', 'last_near')
+    corners = [_extract_metadata_coord(abstract_metadata, corner_name) for corner_name in corner_names]
+
+    polygon_coords: list[tuple[float, float]] | None = None
+    if all(corner is not None for corner in corners):
+        polygon_coords = [corner for corner in corners if corner is not None]
+        if polygon_coords[0] != polygon_coords[-1]:
+            polygon_coords.append(polygon_coords[0])
+
+    center_coords = _extract_metadata_coord(abstract_metadata, 'centre')
+    if center_coords is None:
+        center_coords = _extract_metadata_coord(abstract_metadata, 'center')
+
+    return {
+        'tile_polygon_coords': polygon_coords,
+        'tile_center_coords': center_coords,
+    }
+
+
+def normalize_expected_tile_geometries(rectangles: list[dict[str, Any]] | None) -> dict[str, list[tuple[float, float]]]:
+    normalized: dict[str, list[tuple[float, float]]] = {}
+    for rectangle in rectangles or []:
+        tile_name = rectangle['BL']['properties']['name']
+        polygon_coords = [
+            tuple(float(value) for value in rectangle[corner]['geometry']['coordinates'])
+            for corner in ('TL', 'TR', 'BR', 'BL')
+        ]
+        if polygon_coords[0] != polygon_coords[-1]:
+            polygon_coords.append(polygon_coords[0])
+        normalized[tile_name] = polygon_coords
+    return normalized
+
+
 def validate_h5_tile(tile_path: Path | str, expected_bands: list[str], swath: str | None = None) -> dict[str, Any]:
     tile_path = Path(tile_path)
     actual_bands: list[str] = []
@@ -244,6 +381,7 @@ def validate_h5_tile(tile_path: Path | str, expected_bands: list[str], swath: st
             key for key, value in abstract_metadata.items()
             if _is_blank_attr_value(value)
         )
+        geometry_summary = extract_tile_geometry_from_abstract_metadata(abstract_metadata)
         missing_core_metadata_fields = sorted(
             key for key in CORE_METADATA_KEYS
             if key not in abstract_metadata
@@ -321,6 +459,8 @@ def validate_h5_tile(tile_path: Path | str, expected_bands: list[str], swath: st
         'missing_metadata_paths': [],
         'missing_metadata_attrs': [],
         'quickinfo_row': quickinfo_row,
+        'tile_polygon_coords': geometry_summary['tile_polygon_coords'],
+        'tile_center_coords': geometry_summary['tile_center_coords'],
     }
 
 
@@ -379,123 +519,640 @@ def _chunked(lines: list[str], size: int):
         yield lines[index:index + size]
 
 
-def _write_pdf_text_page(pdf, title: str, lines: list[str]) -> None:
+def _group_label(group: Mapping[str, Any]) -> str:
+    if group.get('swath'):
+        return str(group['swath'])
+    return str(group.get('name') or 'single-product')
+
+
+def _group_expected_tiles(group: Mapping[str, Any]) -> list[str]:
+    if group.get('expected_tiles'):
+        return sorted(str(tile) for tile in group.get('expected_tiles', []))
+    return sorted(str(tile) for tile in (group.get('expected_tile_geometries') or {}).keys())
+
+
+def _group_actual_tiles(group: Mapping[str, Any]) -> list[str]:
+    if group.get('actual_tiles'):
+        return sorted(str(tile) for tile in group.get('actual_tiles', []))
+    return sorted({str(result['tile']) for result in group.get('results', [])})
+
+
+def _group_missing_tiles(group: Mapping[str, Any]) -> list[str]:
+    return sorted(str(tile) for tile in group.get('missing_tiles', []))
+
+
+def _group_extra_tiles(group: Mapping[str, Any]) -> list[str]:
+    return sorted(str(tile) for tile in group.get('extra_tiles', []))
+
+
+def _group_skipped_tiles(group: Mapping[str, Any]) -> list[str]:
+    return sorted(str(tile) for tile in group.get('skipped_tiles', []))
+
+
+def _group_failed_tiles(group: Mapping[str, Any]) -> list[str]:
+    failed_tiles = {str(tile) for tile in group.get('failed_tiles', [])}
+    failed_tiles.update(
+        str(result['tile'])
+        for result in group.get('results', [])
+        if result.get('status') != 'success'
+    )
+    return sorted(failed_tiles)
+
+
+def _group_expected_tile_count(group: Mapping[str, Any]) -> int:
+    if group.get('expected_tile_count') is not None:
+        return int(group['expected_tile_count'])
+    return len(_group_expected_tiles(group))
+
+
+def _group_actual_tile_count(group: Mapping[str, Any]) -> int:
+    if group.get('actual_tile_count') is not None:
+        return int(group['actual_tile_count'])
+    return len(_group_actual_tiles(group))
+
+
+def build_validation_group_summary_rows(validation_groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for group in validation_groups:
+        results = group.get('results', [])
+        passed_tiles = sorted(str(result['tile']) for result in results if result.get('status') == 'success')
+        failed_tiles = _group_failed_tiles(group)
+        missing_tiles = _group_missing_tiles(group)
+        extra_tiles = _group_extra_tiles(group)
+        skipped_tiles = _group_skipped_tiles(group)
+        overall_status = 'PASS'
+        if failed_tiles or missing_tiles or extra_tiles or group.get('cut_failed'):
+            overall_status = 'FAIL'
+        rows.append({
+            'group': _group_label(group),
+            'expected': _group_expected_tile_count(group),
+            'actual': _group_actual_tile_count(group),
+            'passed': len(set(passed_tiles)),
+            'failed': len(set(failed_tiles)),
+            'skipped': len(set(skipped_tiles)),
+            'missing': len(set(missing_tiles)),
+            'extra': len(set(extra_tiles)),
+            'overall_status': overall_status,
+        })
+    return rows
+
+
+def build_validation_headline_counts(validation_groups: list[dict[str, Any]]) -> dict[str, int]:
+    summary_rows = build_validation_group_summary_rows(validation_groups)
+    return {
+        'expected_tiles': sum(row['expected'] for row in summary_rows),
+        'actual_tiles': sum(row['actual'] for row in summary_rows),
+        'passed_tiles': sum(row['passed'] for row in summary_rows),
+        'failed_tiles': sum(row['failed'] for row in summary_rows),
+        'skipped_tiles': sum(row['skipped'] for row in summary_rows),
+        'missing_tiles': sum(row['missing'] for row in summary_rows),
+        'extra_tiles': sum(row['extra'] for row in summary_rows),
+    }
+
+
+def build_validation_inventory_summary(group: Mapping[str, Any]) -> dict[str, int]:
+    return {
+        'expected_bands': len(group.get('expected_bands', [])),
+        'expected_non_band_rasters': len(group.get('expected_array_paths', [])),
+        'expected_metadata_paths': len(group.get('expected_metadata_paths', [])),
+        'expected_metadata_attrs': len(group.get('expected_metadata_attr_paths', [])),
+    }
+
+
+def build_validation_dashboard_rows(group: Mapping[str, Any]) -> list[dict[str, Any]]:
+    results = group.get('results', [])
+    total = len(results)
+    rows: list[dict[str, Any]] = []
+    for label, predicate in VALIDATION_CHECKS:
+        passed = sum(1 for result in results if predicate(result))
+        failed = max(total - passed, 0)
+        rows.append({
+            'check': label,
+            'passed': passed,
+            'failed': failed,
+            'pass_pct': round((passed / total) * 100.0, 1) if total else 100.0,
+        })
+    return rows
+
+
+def _wkt_to_rings(source_wkt: str | None) -> list[list[tuple[float, float]]]:
+    if not source_wkt:
+        return []
+    from shapely import wkt as shapely_wkt
+
+    geometry = shapely_wkt.loads(source_wkt)
+    if geometry.geom_type == 'Polygon':
+        polygons = [geometry]
+    elif geometry.geom_type == 'MultiPolygon':
+        polygons = list(geometry.geoms)
+    else:
+        return []
+    return [
+        [(float(x), float(y)) for x, y in polygon.exterior.coords]
+        for polygon in polygons
+    ]
+
+
+def build_validation_map_layers(validation_groups: list[dict[str, Any]]) -> dict[str, Any]:
+    report_source_outlines: list[dict[str, Any]] = []
+    swath_source_outlines: list[dict[str, Any]] = []
+    expected_tiles: dict[str, list[tuple[float, float]]] = {}
+    missing_tiles: set[str] = set()
+    skipped_tiles: set[str] = set()
+    extra_tiles: set[str] = set()
+    actual_status: dict[str, str] = {}
+    actual_polygons: dict[str, list[tuple[float, float]]] = {}
+    actual_points: dict[str, tuple[float, float]] = {}
+    tiles_without_geometry: set[str] = set()
+    tiles_with_center_only: set[str] = set()
+
+    report_outline_keys: set[tuple[tuple[float, float], ...]] = set()
+
+    for group in validation_groups:
+        group_label = _group_label(group)
+        report_source_wkt = group.get('report_source_wkt') or group.get('source_wkt')
+        for ring in _wkt_to_rings(report_source_wkt):
+            key = tuple(ring)
+            if key in report_outline_keys:
+                continue
+            report_outline_keys.add(key)
+            report_source_outlines.append({'label': group_label, 'coords': ring})
+
+        if group.get('source_wkt') and len(validation_groups) > 1:
+            for ring in _wkt_to_rings(group['source_wkt']):
+                swath_source_outlines.append({'label': group_label, 'coords': ring})
+
+        expected_tiles.update(group.get('expected_tile_geometries', {}) or {})
+        missing_tiles.update(_group_missing_tiles(group))
+        skipped_tiles.update(_group_skipped_tiles(group))
+        extra_tiles.update(_group_extra_tiles(group))
+
+        for result in group.get('results', []):
+            tile_name = str(result['tile'])
+            status_bucket = 'failed' if result.get('status') != 'success' else 'passed'
+            if tile_name in extra_tiles:
+                status_bucket = 'extra'
+            current_bucket = actual_status.get(tile_name)
+            priority = {'passed': 1, 'failed': 2, 'extra': 3}
+            if current_bucket is None or priority[status_bucket] >= priority[current_bucket]:
+                actual_status[tile_name] = status_bucket
+
+            polygon_coords = result.get('tile_polygon_coords')
+            center_coords = result.get('tile_center_coords')
+            if polygon_coords:
+                actual_polygons[tile_name] = [tuple(coord) for coord in polygon_coords]
+                tiles_with_center_only.discard(tile_name)
+                tiles_without_geometry.discard(tile_name)
+            elif center_coords:
+                actual_points[tile_name] = tuple(center_coords)
+                if tile_name not in actual_polygons:
+                    tiles_with_center_only.add(tile_name)
+                    tiles_without_geometry.discard(tile_name)
+            elif tile_name not in actual_polygons and tile_name not in actual_points:
+                tiles_without_geometry.add(tile_name)
+
+    def _items_for_status(status: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        polygon_items = [
+            {'tile': tile_name, 'coords': actual_polygons[tile_name]}
+            for tile_name, bucket in sorted(actual_status.items())
+            if bucket == status and tile_name in actual_polygons
+        ]
+        point_items = [
+            {'tile': tile_name, 'coords': actual_points[tile_name]}
+            for tile_name, bucket in sorted(actual_status.items())
+            if bucket == status and tile_name in actual_points and tile_name not in actual_polygons
+        ]
+        return polygon_items, point_items
+
+    passed_polygons, passed_points = _items_for_status('passed')
+    failed_polygons, failed_points = _items_for_status('failed')
+    extra_polygons, extra_points = _items_for_status('extra')
+
+    missing_polygons = [
+        {'tile': tile_name, 'coords': expected_tiles[tile_name]}
+        for tile_name in sorted(missing_tiles)
+        if tile_name in expected_tiles
+    ]
+    expected_polygons = [
+        {'tile': tile_name, 'coords': coords}
+        for tile_name, coords in sorted(expected_tiles.items())
+    ]
+
+    return {
+        'report_source_outlines': report_source_outlines,
+        'swath_source_outlines': swath_source_outlines,
+        'expected_polygons': expected_polygons,
+        'missing_polygons': missing_polygons,
+        'passed_polygons': passed_polygons,
+        'failed_polygons': failed_polygons,
+        'extra_polygons': extra_polygons,
+        'passed_points': passed_points,
+        'failed_points': failed_points,
+        'extra_points': extra_points,
+        'counts': {
+            'expected': len(expected_polygons),
+            'passed': len({item['tile'] for item in passed_polygons + passed_points}),
+            'failed': len({item['tile'] for item in failed_polygons + failed_points}),
+            'skipped': len(skipped_tiles),
+            'missing': len(missing_tiles),
+            'extra': len(extra_tiles),
+        },
+        'tiles_with_center_only_count': len(tiles_with_center_only),
+        'tiles_without_geometry_count': len(tiles_without_geometry),
+    }
+
+
+def build_failure_appendix_rows(validation_groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    appendix_rows: list[dict[str, Any]] = []
+    for group in validation_groups:
+        group_label = _group_label(group)
+        swath = group.get('swath')
+        actual_results = {str(result['tile']): result for result in group.get('results', [])}
+
+        for tile_name in sorted(set(_group_missing_tiles(group)) - set(actual_results)):
+            appendix_rows.append({
+                'tile': tile_name,
+                'group': group_label,
+                'swath': swath,
+                'issues': ['tile output missing from expected coverage'],
+            })
+
+        for tile_name in sorted(set(group.get('failed_tiles', [])) - set(actual_results)):
+            appendix_rows.append({
+                'tile': tile_name,
+                'group': group_label,
+                'swath': swath,
+                'issues': ['tile cutting failed before H5 validation'],
+            })
+
+        extra_tiles = set(_group_extra_tiles(group))
+        for tile_name in sorted(actual_results):
+            result = actual_results[tile_name]
+            issues: list[str] = []
+            if tile_name in extra_tiles:
+                issues.append('unexpected extra tile output')
+            if result.get('missing_bands'):
+                issues.append('missing bands: ' + ', '.join(result['missing_bands']))
+            if result.get('extra_bands'):
+                issues.append('extra bands: ' + ', '.join(result['extra_bands']))
+            if result.get('missing_array_paths'):
+                issues.append('missing arrays: ' + ', '.join(result['missing_array_paths']))
+            if result.get('missing_metadata_paths'):
+                issues.append('missing metadata paths: ' + ', '.join(result['missing_metadata_paths']))
+            if result.get('missing_metadata_attrs'):
+                issues.append('missing metadata attrs: ' + ', '.join(result['missing_metadata_attrs']))
+            if result.get('missing_metadata_section'):
+                issues.append('missing metadata/Abstracted_Metadata section')
+            if result.get('empty_metadata_fields'):
+                issues.append('empty metadata fields: ' + ', '.join(result['empty_metadata_fields']))
+            if result.get('missing_core_metadata_fields'):
+                issues.append('missing core metadata: ' + ', '.join(result['missing_core_metadata_fields']))
+            if result.get('empty_core_metadata_fields'):
+                issues.append('empty core metadata: ' + ', '.join(result['empty_core_metadata_fields']))
+            if result.get('shape_summary'):
+                issues.append('shape mismatch: ' + ', '.join(result['shape_summary']))
+            issue_lines = format_issue_map(result.get('band_attr_issues', {}))
+            if issue_lines:
+                issues.append('band attr issues: ' + ' | '.join(issue_lines))
+            if result.get('status') == 'success' and tile_name not in extra_tiles:
+                continue
+            appendix_rows.append({
+                'tile': tile_name,
+                'group': group_label,
+                'swath': swath,
+                'issues': issues or ['validation failed'],
+            })
+
+    appendix_rows.sort(key=lambda item: ((item.get('swath') or ''), item['group'], item['tile']))
+    return appendix_rows
+
+
+def _write_table(ax, col_labels: list[str], row_values: list[list[str]], *, font_size: int = 8, scale_y: float = 1.4) -> None:
+    ax.axis('off')
+    table = ax.table(cellText=row_values, colLabels=col_labels, cellLoc='center', loc='center')
+    table.auto_set_font_size(False)
+    table.set_fontsize(font_size)
+    table.scale(1, scale_y)
+    for (row_index, _col_index), cell in table.get_celld().items():
+        if row_index == 0:
+            cell.set_text_props(weight='bold')
+            cell.set_facecolor('#E9ECEF')
+
+
+def _write_summary_page(pdf, product_name: str, validation_groups: list[dict[str, Any]]) -> None:
     import matplotlib.pyplot as plt
 
+    from datetime import datetime as _datetime, timezone as _timezone
+
+    summary_rows = build_validation_group_summary_rows(validation_groups)
+    headline_counts = build_validation_headline_counts(validation_groups)
+
     fig = plt.figure(figsize=(11.69, 8.27))
-    fig.text(0.03, 0.97, title, va='top', ha='left', fontsize=14, fontweight='bold', family='monospace')
-    fig.text(0.03, 0.93, '\n'.join(lines), va='top', ha='left', fontsize=8, family='monospace')
-    pdf.savefig(fig, bbox_inches='tight')
+    fig.suptitle('WorldSAR H5 Validation Report', x=0.03, y=0.98, ha='left', fontsize=16, fontweight='bold')
+    fig.text(0.03, 0.94, f'Product: {product_name}', ha='left', fontsize=11)
+    fig.text(0.03, 0.91, f'Timestamp (UTC): {_datetime.now(_timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}', ha='left', fontsize=10)
+
+    headline_labels = (
+        ('Expected', headline_counts['expected_tiles']),
+        ('Actual', headline_counts['actual_tiles']),
+        ('Passed', headline_counts['passed_tiles']),
+        ('Failed', headline_counts['failed_tiles']),
+        ('Skipped', headline_counts['skipped_tiles']),
+        ('Missing', headline_counts['missing_tiles']),
+        ('Extra', headline_counts['extra_tiles']),
+    )
+    x_positions = np.linspace(0.06, 0.94, num=len(headline_labels))
+    for x_pos, (label, value) in zip(x_positions, headline_labels, strict=False):
+        fig.text(x_pos, 0.83, label, ha='center', va='bottom', fontsize=10, color='#495057')
+        fig.text(x_pos, 0.79, str(value), ha='center', va='top', fontsize=17, fontweight='bold')
+
+    fig.text(0.03, 0.73, 'Group Summary', ha='left', fontsize=12, fontweight='bold')
+    summary_ax = fig.add_axes([0.03, 0.14, 0.94, 0.56])
+    _write_table(
+        summary_ax,
+        ['Group', 'Expected', 'Actual', 'Passed', 'Failed', 'Skipped', 'Missing', 'Extra', 'Status'],
+        [
+            [
+                row['group'],
+                str(row['expected']),
+                str(row['actual']),
+                str(row['passed']),
+                str(row['failed']),
+                str(row['skipped']),
+                str(row['missing']),
+                str(row['extra']),
+                row['overall_status'],
+            ]
+            for row in summary_rows
+        ] or [['-', '0', '0', '0', '0', '0', '0', '0', 'PASS']],
+        font_size=9,
+        scale_y=1.6,
+    )
+    fig.text(
+        0.03,
+        0.06,
+        'Sections: executive summary, geographic coverage map, validation dashboards, failures-only appendix.',
+        ha='left',
+        fontsize=9,
+        color='#495057',
+    )
+    pdf.savefig(fig)
     plt.close(fig)
 
 
-def write_h5_validation_report_pdf(report_path: Path | str, product_name: str, validation_groups: list[dict[str, Any]]) -> Path:
-    from datetime import datetime as _datetime
-    from textwrap import wrap
+def _plot_polygon_items(ax, items: list[dict[str, Any]], *, edgecolor: str, facecolor: str = 'none', linewidth: float = 1.2, linestyle: str = '-', alpha: float = 1.0, hatch: str | None = None) -> None:
+    from matplotlib.patches import Polygon as MplPolygon
 
+    for item in items:
+        ax.add_patch(
+            MplPolygon(
+                item['coords'],
+                closed=True,
+                fill=facecolor != 'none' or hatch is not None,
+                facecolor=facecolor if facecolor != 'none' else 'none',
+                edgecolor=edgecolor,
+                linewidth=linewidth,
+                linestyle=linestyle,
+                alpha=alpha,
+                hatch=hatch,
+            )
+        )
+
+
+def _write_map_page(pdf, product_name: str, validation_groups: list[dict[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
+
+    layers = build_validation_map_layers(validation_groups)
+
+    fig = plt.figure(figsize=(11.69, 8.27))
+    fig.suptitle('Coverage Map', x=0.03, y=0.98, ha='left', fontsize=16, fontweight='bold')
+    fig.text(0.03, 0.94, f'Product: {product_name}', ha='left', fontsize=11)
+
+    map_ax = fig.add_axes([0.06, 0.12, 0.66, 0.76])
+    info_ax = fig.add_axes([0.76, 0.12, 0.20, 0.76])
+    info_ax.axis('off')
+
+    _plot_polygon_items(map_ax, layers['expected_polygons'], edgecolor='#C7CED6', linewidth=0.8)
+    _plot_polygon_items(map_ax, layers['missing_polygons'], edgecolor='#F59F00', linewidth=1.3, hatch='////')
+    _plot_polygon_items(map_ax, layers['passed_polygons'], edgecolor='#2B8A3E', facecolor='#D3F9D8', linewidth=1.2, alpha=0.75)
+    _plot_polygon_items(map_ax, layers['failed_polygons'], edgecolor='#C92A2A', facecolor='#FFE3E3', linewidth=1.2, alpha=0.8)
+    _plot_polygon_items(map_ax, layers['extra_polygons'], edgecolor='#862E9C', facecolor='#F3D9FA', linewidth=1.2, alpha=0.8)
+    _plot_polygon_items(map_ax, layers['swath_source_outlines'], edgecolor='#6C757D', linewidth=1.0, linestyle='--')
+    _plot_polygon_items(map_ax, layers['report_source_outlines'], edgecolor='#000000', linewidth=1.4)
+
+    if layers['passed_points']:
+        map_ax.scatter(
+            [point['coords'][0] for point in layers['passed_points']],
+            [point['coords'][1] for point in layers['passed_points']],
+            color='#2B8A3E',
+            s=18,
+            marker='o',
+            label='passed centre',
+            zorder=5,
+        )
+    if layers['failed_points']:
+        map_ax.scatter(
+            [point['coords'][0] for point in layers['failed_points']],
+            [point['coords'][1] for point in layers['failed_points']],
+            color='#C92A2A',
+            s=22,
+            marker='x',
+            label='failed centre',
+            zorder=5,
+        )
+    if layers['extra_points']:
+        map_ax.scatter(
+            [point['coords'][0] for point in layers['extra_points']],
+            [point['coords'][1] for point in layers['extra_points']],
+            color='#862E9C',
+            s=20,
+            marker='D',
+            label='extra centre',
+            zorder=5,
+        )
+
+    all_coords: list[tuple[float, float]] = []
+    for layer_name in ('report_source_outlines', 'swath_source_outlines', 'expected_polygons', 'missing_polygons', 'passed_polygons', 'failed_polygons', 'extra_polygons'):
+        for item in layers[layer_name]:
+            all_coords.extend(item['coords'])
+    for layer_name in ('passed_points', 'failed_points', 'extra_points'):
+        all_coords.extend(point['coords'] for point in layers[layer_name])
+
+    if all_coords:
+        xs = [coord[0] for coord in all_coords]
+        ys = [coord[1] for coord in all_coords]
+        x_margin = max((max(xs) - min(xs)) * 0.05, 0.01)
+        y_margin = max((max(ys) - min(ys)) * 0.05, 0.01)
+        map_ax.set_xlim(min(xs) - x_margin, max(xs) + x_margin)
+        map_ax.set_ylim(min(ys) - y_margin, max(ys) + y_margin)
+    else:
+        map_ax.text(0.5, 0.5, 'No geographic geometry available for this report.', ha='center', va='center', transform=map_ax.transAxes)
+
+    map_ax.set_xlabel('Longitude')
+    map_ax.set_ylabel('Latitude')
+    map_ax.set_aspect('equal', adjustable='box')
+    map_ax.grid(True, linewidth=0.4, alpha=0.3)
+
+    legend_handles = [
+        Patch(facecolor='none', edgecolor='#000000', linewidth=1.4, label='product footprint'),
+        Patch(facecolor='none', edgecolor='#C7CED6', linewidth=0.8, label='expected tiles'),
+        Patch(facecolor='#D3F9D8', edgecolor='#2B8A3E', linewidth=1.2, label='passed tiles'),
+        Patch(facecolor='#FFE3E3', edgecolor='#C92A2A', linewidth=1.2, label='failed tiles'),
+        Patch(facecolor='none', edgecolor='#F59F00', linewidth=1.3, hatch='////', label='missing tiles'),
+        Patch(facecolor='#F3D9FA', edgecolor='#862E9C', linewidth=1.2, label='extra tiles'),
+    ]
+    if len(validation_groups) > 1:
+        legend_handles.insert(1, Line2D([0], [0], color='#6C757D', linestyle='--', linewidth=1.0, label='swath footprint'))
+    if layers['passed_points'] or layers['failed_points'] or layers['extra_points']:
+        legend_handles.append(Line2D([0], [0], color='#495057', marker='o', linestyle='None', label='centre-only tile'))
+
+    info_ax.legend(handles=legend_handles, loc='upper left', frameon=False, fontsize=9)
+    counts = layers['counts']
+    info_ax.text(
+        0.0,
+        0.46,
+        '\n'.join([
+            'Counts',
+            f"Expected: {counts['expected']}",
+            f"Passed: {counts['passed']}",
+            f"Failed: {counts['failed']}",
+            f"Skipped: {counts['skipped']}",
+            f"Missing: {counts['missing']}",
+            f"Extra: {counts['extra']}",
+        ]),
+        ha='left',
+        va='top',
+        fontsize=10,
+    )
+
+    notes = []
+    if layers['tiles_with_center_only_count']:
+        notes.append(f"Centre-only tiles: {layers['tiles_with_center_only_count']}")
+    if layers['tiles_without_geometry_count']:
+        notes.append(f"Tiles without geometry: {layers['tiles_without_geometry_count']}")
+    if notes:
+        info_ax.text(0.0, 0.18, '\n'.join(notes), ha='left', va='top', fontsize=9, color='#495057')
+
+    pdf.savefig(fig)
+    plt.close(fig)
+
+
+def _write_dashboard_pages(pdf, validation_groups: list[dict[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+
+    for group in validation_groups:
+        inventory = build_validation_inventory_summary(group)
+        dashboard_rows = build_validation_dashboard_rows(group)
+        summary_rows = build_validation_group_summary_rows([group])
+        summary_row = summary_rows[0]
+
+        fig = plt.figure(figsize=(11.69, 8.27))
+        fig.suptitle(f"Validation Dashboard: {_group_label(group)}", x=0.03, y=0.98, ha='left', fontsize=16, fontweight='bold')
+        fig.text(
+            0.03,
+            0.94,
+            f"Intermediate: {group.get('intermediate_product', '-')} | Cuts: {group.get('cuts_dir', '-')}",
+            ha='left',
+            fontsize=9,
+        )
+        if group.get('cut_report_path'):
+            fig.text(0.03, 0.91, f"Cut report: {group['cut_report_path']}", ha='left', fontsize=9)
+
+        fig.text(0.03, 0.86, 'Inventory', ha='left', fontsize=12, fontweight='bold')
+        inventory_ax = fig.add_axes([0.03, 0.59, 0.42, 0.22])
+        _write_table(
+            inventory_ax,
+            ['Metric', 'Count'],
+            [
+                ['Expected bands', str(inventory['expected_bands'])],
+                ['Expected non-band rasters', str(inventory['expected_non_band_rasters'])],
+                ['Expected metadata paths', str(inventory['expected_metadata_paths'])],
+                ['Expected metadata attrs', str(inventory['expected_metadata_attrs'])],
+            ],
+            font_size=9,
+            scale_y=1.6,
+        )
+
+        fig.text(0.52, 0.86, 'Tile Status', ha='left', fontsize=12, fontweight='bold')
+        status_ax = fig.add_axes([0.52, 0.59, 0.45, 0.22])
+        _write_table(
+            status_ax,
+            ['Expected', 'Actual', 'Passed', 'Failed', 'Skipped', 'Missing', 'Extra', 'Status'],
+            [[
+                str(summary_row['expected']),
+                str(summary_row['actual']),
+                str(summary_row['passed']),
+                str(summary_row['failed']),
+                str(summary_row['skipped']),
+                str(summary_row['missing']),
+                str(summary_row['extra']),
+                summary_row['overall_status'],
+            ]],
+            font_size=9,
+            scale_y=1.8,
+        )
+
+        fig.text(0.03, 0.49, 'Checklist', ha='left', fontsize=12, fontweight='bold')
+        checklist_ax = fig.add_axes([0.03, 0.11, 0.94, 0.33])
+        _write_table(
+            checklist_ax,
+            ['Check', 'Pass', 'Fail', 'Pass %'],
+            [
+                [
+                    row['check'],
+                    str(row['passed']),
+                    str(row['failed']),
+                    f"{row['pass_pct']:.1f}",
+                ]
+                for row in dashboard_rows
+            ] or [['overall', '0', '0', '100.0']],
+            font_size=9,
+            scale_y=1.55,
+        )
+        pdf.savefig(fig)
+        plt.close(fig)
+
+
+def _format_failure_block(block: Mapping[str, Any]) -> list[str]:
+    swath = block.get('swath') or '-'
+    lines = [f"Tile: {block['tile']} | Group: {block['group']} | Swath: {swath}"]
+    for issue in block.get('issues', []):
+        lines.append(f'  - {issue}')
+    lines.append('')
+    return lines
+
+
+def _write_failure_appendix(pdf, validation_groups: list[dict[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+
+    appendix_rows = build_failure_appendix_rows(validation_groups)
+    if not appendix_rows:
+        appendix_rows = [{'tile': '-', 'group': 'all', 'swath': None, 'issues': ['No failing tiles.']}]
+
+    failure_lines: list[str] = []
+    for block in appendix_rows:
+        failure_lines.extend(_format_failure_block(block))
+
+    for index, page_lines in enumerate(_chunked(failure_lines, 34), start=1):
+        fig = plt.figure(figsize=(11.69, 8.27))
+        fig.suptitle(f'Failures Appendix (page {index})', x=0.03, y=0.98, ha='left', fontsize=16, fontweight='bold')
+        fig.text(0.03, 0.93, '\n'.join(page_lines), va='top', ha='left', fontsize=9, family='monospace')
+        pdf.savefig(fig)
+        plt.close(fig)
+
+
+def write_h5_validation_report_pdf(report_path: Path | str, product_name: str, validation_groups: list[dict[str, Any]]) -> Path:
     from matplotlib.backends.backend_pdf import PdfPages
 
     report_path = Path(report_path)
     report_path.parent.mkdir(parents=True, exist_ok=True)
 
-    all_results: list[dict[str, Any]] = []
-    for group in validation_groups:
-        all_results.extend(group['results'])
-
-    passed = sum(1 for result in all_results if result['status'] == 'success')
-    failed = len(all_results) - passed
-    total_expected_tiles = sum(group.get('expected_tile_count', 0) for group in validation_groups)
-    total_actual_tiles = sum(group.get('actual_tile_count', len(group['results'])) for group in validation_groups)
-    tiles_with_missing_arrays = sum(1 for result in all_results if result.get('missing_array_paths'))
-    tiles_with_missing_metadata_paths = sum(1 for result in all_results if result.get('missing_metadata_paths'))
-    tiles_with_missing_metadata_attrs = sum(1 for result in all_results if result.get('missing_metadata_attrs'))
-
-    summary_lines = [
-        f'Timestamp (UTC): {_datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}',
-        f'Product name: {product_name}',
-        f'Validated tile groups: {len(validation_groups)}',
-        f'Expected tiles: {total_expected_tiles}',
-        f'Actual tiles: {total_actual_tiles}',
-        f'Validated H5 files: {len(all_results)}',
-        f'Passed tiles: {passed}',
-        f'Failed tiles: {failed}',
-        f'Tiles with missing non-band arrays: {tiles_with_missing_arrays}',
-        f'Tiles with missing metadata paths: {tiles_with_missing_metadata_paths}',
-        f'Tiles with missing metadata attrs: {tiles_with_missing_metadata_attrs}',
-        '',
-        'Group summary:',
-    ]
-    for group in validation_groups:
-        group_failed = sum(1 for result in group['results'] if result['status'] != 'success')
-        label = group['swath'] or 'single-product'
-        summary_lines.append(
-            f"- {label}: expected={group.get('expected_tile_count', len(group['results']))} "
-            f"actual={group.get('actual_tile_count', len(group['results']))} "
-            f"failed={group_failed} intermediate={group['intermediate_product']}"
-        )
-        summary_lines.append(f"  cuts={group['cuts_dir']}")
-        if group.get('cut_report_path'):
-            summary_lines.append(f"  cut_report={group['cut_report_path']}")
-        summary_lines.append('  expected bands:')
-        for line in wrap(', '.join(group['expected_bands']), width=110):
-            summary_lines.append(f'    {line}')
-        if group.get('expected_array_paths'):
-            summary_lines.append('  expected non-band arrays:')
-            for line in wrap(', '.join(group['expected_array_paths']), width=110):
-                summary_lines.append(f'    {line}')
-        if group.get('expected_metadata_paths'):
-            summary_lines.append('  expected metadata paths:')
-            for line in wrap(', '.join(group['expected_metadata_paths']), width=110):
-                summary_lines.append(f'    {line}')
-        if group.get('expected_metadata_attr_paths'):
-            summary_lines.append('  expected metadata attrs:')
-            for line in wrap(', '.join(group['expected_metadata_attr_paths']), width=110):
-                summary_lines.append(f'    {line}')
-
-    table_lines = [
-        'tile                 swath      bands  metadata  attrs  struct  overall',
-        '-------------------  ---------  -----  --------  -----  ------  -------',
-    ]
-    for result in sorted(all_results, key=lambda item: ((item.get('swath') or ''), item['tile'])):
-        table_lines.append(
-            f"{result['tile'][:19]:19}  "
-            f"{(result.get('swath') or '-'):9}  "
-            f"{'PASS' if result['bands_ok'] else 'FAIL':5}  "
-            f"{'PASS' if result['metadata_ok'] else 'FAIL':8}  "
-            f"{'PASS' if result['band_attrs_ok'] else 'FAIL':5}  "
-            f"{'PASS' if result['structure_ok'] else 'FAIL':6}  "
-            f"{'PASS' if result['status'] == 'success' else 'FAIL'}"
-        )
-
-    failure_lines = ['No failing tiles.'] if failed == 0 else []
-    if failed:
-        for result in sorted((item for item in all_results if item['status'] != 'success'), key=lambda item: ((item.get('swath') or ''), item['tile'])):
-            failure_lines.extend([
-                f"Tile: {result['tile']}  Swath: {result.get('swath') or '-'}",
-                f"  Missing bands: {result['missing_bands'] or '[]'}",
-                f"  Extra bands: {result['extra_bands'] or '[]'}",
-                f"  Missing arrays: {result.get('missing_array_paths') or '[]'}",
-                f"  Missing metadata paths: {result.get('missing_metadata_paths') or '[]'}",
-                f"  Missing metadata attrs: {result.get('missing_metadata_attrs') or '[]'}",
-                f"  Missing metadata section: {result['missing_metadata_section']}",
-                f"  Empty metadata fields: {result['empty_metadata_fields'] or '[]'}",
-                f"  Missing core metadata: {result['missing_core_metadata_fields'] or '[]'}",
-                f"  Empty core metadata: {result['empty_core_metadata_fields'] or '[]'}",
-            ])
-            if result['shape_summary']:
-                failure_lines.append(f"  Shape mismatch: {result['shape_summary']}")
-            issue_lines = format_issue_map(result['band_attr_issues'])
-            if issue_lines:
-                failure_lines.append('  Band attribute issues:')
-                failure_lines.extend(f'    - {line}' for line in issue_lines)
-            failure_lines.append('')
-
     with PdfPages(report_path) as pdf:
-        for page_lines in _chunked(summary_lines, 42):
-            _write_pdf_text_page(pdf, 'WorldSAR H5 validation summary', page_lines)
-        for index, page_lines in enumerate(_chunked(table_lines, 44), start=1):
-            _write_pdf_text_page(pdf, f'WorldSAR H5 validation table (page {index})', page_lines)
-        for index, page_lines in enumerate(_chunked(failure_lines, 40), start=1):
-            _write_pdf_text_page(pdf, f'WorldSAR H5 validation failures (page {index})', page_lines)
+        _write_summary_page(pdf, product_name, validation_groups)
+        _write_map_page(pdf, product_name, validation_groups)
+        _write_dashboard_pages(pdf, validation_groups)
+        _write_failure_appendix(pdf, validation_groups)
 
     return report_path

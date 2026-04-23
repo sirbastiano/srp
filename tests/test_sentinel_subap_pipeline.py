@@ -705,7 +705,7 @@ def test_run_tops_swath_tiling_uses_swath_specific_wkt(tmp_path: Path):
 
 
 def test_run_tops_swath_tiling_validates_existing_tiles_when_tiling_disabled(tmp_path: Path):
-    validate_calls: list[tuple[Path, Path, str | None]] = []
+    validate_calls: list[tuple[Path, Path, str | None, dict | None]] = []
     db_calls: list[tuple[tuple[str, ...], str, str | None]] = []
     swath_products = {
         "IW1": _touch(tmp_path / "IW1.dim"),
@@ -713,8 +713,7 @@ def test_run_tops_swath_tiling_validates_existing_tiles_when_tiling_disabled(tmp
     }
 
     def fake_validate_tile_group(cuts_dir, swath_product, swath=None, tiling_result=None):
-        assert tiling_result is None
-        validate_calls.append((Path(cuts_dir), Path(swath_product), swath))
+        validate_calls.append((Path(cuts_dir), Path(swath_product), swath, tiling_result))
         return {
             "name": Path(swath_product).stem,
             "rows": [f"row::{swath}"],
@@ -742,8 +741,18 @@ def test_run_tops_swath_tiling_validates_existing_tiles_when_tiling_disabled(tmp
     )
 
     assert validate_calls == [
-        (tmp_path / "cuts" / "IW1" / "IW1", swath_products["IW1"], "IW1"),
-        (tmp_path / "cuts" / "IW2" / "IW2", swath_products["IW2"], "IW2"),
+        (
+            tmp_path / "cuts" / "IW1" / "IW1",
+            swath_products["IW1"],
+            "IW1",
+            {"source_wkt": "FULL_WKT", "report_source_wkt": "FULL_WKT"},
+        ),
+        (
+            tmp_path / "cuts" / "IW2" / "IW2",
+            swath_products["IW2"],
+            "IW2",
+            {"source_wkt": "FULL_WKT", "report_source_wkt": "FULL_WKT"},
+        ),
     ]
     assert db_calls == [
         (("row::IW1",), "IW1", "IW1"),

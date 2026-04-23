@@ -1058,7 +1058,6 @@ def make_configuration_page() -> str:
     config_files = [
         "pyproject.toml",
         "uv.lock",
-        "pdm.lock",
         "docker-compose.yml",
         "Dockerfile",
         "Makefile",

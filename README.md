@@ -4,10 +4,10 @@
 
 <br />
 
-<a href="docs/user_manual.md">
+<a href="docs/user_guide/README.md">
   <img alt="User Manual" src="https://img.shields.io/badge/Read-User%20Manual-111827?style=for-the-badge" />
 </a>
-<a href="docs/user_manual.md#quick-start">
+<a href="docs/user_guide/getting_started.md">
   <img alt="Quick Start" src="https://img.shields.io/badge/Start-Quick%20Start-0f766e?style=for-the-badge" />
 </a>
 <a href="LICENSE">
@@ -40,13 +40,16 @@ make recreate
 <summary><strong>Using uv (recommended)</strong></summary>
 
 ```bash
-uv sync --extra copernicus
+uv sync
 ```
 
-For development installation with extras:
+For development, testing, and optional Copernicus tooling:
 
 ```bash
-uv sync --extra copernicus --extra dev --extra test --extra docs
+uv sync --group dev
+uv sync --group dev --extra copernicus
+uv run pytest -q
+uv build
 ```
 </details>
 
@@ -61,7 +64,7 @@ python -m pip install -e .
 
 ## Docs
 
-See `docs/user_manual.md` for full CLI usage and end-to-end workflows.
+See [docs/user_guide/README.md](docs/user_guide/README.md) for usage and workflows, and [docs/developer_guide/contributing.md](docs/developer_guide/contributing.md) for contributor commands.
 
 ## Container grid configuration
 

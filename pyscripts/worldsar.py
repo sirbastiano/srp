@@ -36,6 +36,8 @@ from sarpyx.utils.worldsar_h5 import (
     DEFAULT_ZARR_CHUNK_SIZE,
     convert_tile_h5_to_zarr,
     enrich_validation_results_with_h5_structure,
+    normalize_expected_tile_geometries as _shared_normalize_expected_tile_geometries,
+    resolve_expected_band_names_from_dim_product as _shared_resolve_expected_band_names,
     validate_h5_tile as _shared_validate_h5_tile,
     write_h5_validation_report_pdf as _shared_write_h5_validation_report_pdf,
 )
@@ -716,17 +718,7 @@ def _write_cut_report(
 
 
 def _expected_band_names_from_dim(dim_path):
-    import xml.etree.ElementTree as ET
-
-    root = ET.parse(dim_path).getroot()
-    band_names = []
-    for spectral_band in root.findall('./Image_Interpretation/Spectral_Band_Info'):
-        band_name = (spectral_band.findtext('BAND_NAME') or '').strip()
-        if band_name:
-            band_names.append(band_name)
-    if not band_names:
-        raise RuntimeError(f'No band names found in {dim_path}')
-    return sorted(band_names)
+    return _shared_resolve_expected_band_names(dim_path)
 
 
 def _normalize_attr_value(value):
@@ -787,11 +779,26 @@ def _validate_tile_group(cuts_dir, intermediate_product, swath=None, tiling_resu
     }
     group.update(structure_summary)
     if tiling_result is not None:
+        expected_tiles = sorted(tiling_result.get('expected_tiles', tiling_result.get('expected_tile_geometries', {}).keys()))
+        actual_tiles = sorted(tiling_result.get('actual_tiles', [result['tile'] for result in results]))
+        missing_tiles = sorted(tiling_result.get('missing_tiles', []))
+        extra_tiles = sorted(tiling_result.get('extra_tiles', []))
+        skipped_tiles = sorted(tiling_result.get('skipped_tiles', []))
+        failed_tiles = sorted(set(tiling_result.get('failed_tiles', [])) | {result['tile'] for result in results if result['status'] != 'success'})
         group.update({
-            'expected_tile_count': len(tiling_result['expected_tiles']),
-            'actual_tile_count': len(tiling_result['actual_tiles']),
-            'cut_failed': tiling_result['cut_failed'],
-            'cut_report_path': str(tiling_result['report_path']),
+            'expected_tiles': expected_tiles,
+            'actual_tiles': actual_tiles,
+            'expected_tile_count': len(expected_tiles),
+            'actual_tile_count': len(actual_tiles),
+            'missing_tiles': missing_tiles,
+            'extra_tiles': extra_tiles,
+            'skipped_tiles': skipped_tiles,
+            'failed_tiles': failed_tiles,
+            'source_wkt': tiling_result.get('source_wkt'),
+            'report_source_wkt': tiling_result.get('report_source_wkt') or tiling_result.get('source_wkt'),
+            'expected_tile_geometries': tiling_result.get('expected_tile_geometries', {}),
+            'cut_failed': tiling_result.get('cut_failed', False),
+            'cut_report_path': str(tiling_result['report_path']) if tiling_result.get('report_path') else None,
         })
     return group
 
@@ -987,11 +994,13 @@ def _run_tiling(product_wkt, grid_geoj_path, source_product, intermediate_produc
     ]
 
     expected_tiles = sorted({rect['BL']['properties']['name'] for rect in rectangles})
-    skipped_tiles  = {r['tile'] for r in results if r.get('status') == 'skipped'}
+    expected_tile_geometries = _shared_normalize_expected_tile_geometries(rectangles)
+    skipped_tiles = sorted({r['tile'] for r in results if r.get('status') == 'skipped'})
+    failed_tiles = sorted({r['tile'] for r in results if r.get('status') == 'failed'})
     required_tiles = sorted(set(expected_tiles) - skipped_tiles)
-    actual_tiles   = sorted({p.stem for p in cuts_dir.glob('*.h5')})
-    missing_tiles  = sorted(set(required_tiles) - set(actual_tiles))
-    extra_tiles    = sorted(set(actual_tiles) - set(expected_tiles))
+    actual_tiles = sorted({p.stem for p in cuts_dir.glob('*.h5')})
+    missing_tiles = sorted(set(required_tiles) - set(actual_tiles))
+    extra_tiles = sorted(set(actual_tiles) - set(expected_tiles))
 
     report_path = _write_cut_report(
         cuts_dir, name, source_product, intermediate_product, product_wkt,
@@ -1006,14 +1015,18 @@ def _run_tiling(product_wkt, grid_geoj_path, source_product, intermediate_produc
         else:
             print(f"Failed tile {res.get('tile', 'UNKNOWN')}: {res.get('reason', '?')}")
 
-    cut_failed = bool(missing_tiles or any(r.get('status') != 'success' for r in results))
+    cut_failed = bool(missing_tiles or failed_tiles)
     return {
         'name': name,
         'cuts_dir': cuts_dir,
         'report_path': report_path,
         'cut_failed': cut_failed,
+        'source_wkt': product_wkt,
+        'expected_tile_geometries': expected_tile_geometries,
         'expected_tiles': expected_tiles,
         'actual_tiles': actual_tiles,
+        'skipped_tiles': skipped_tiles,
+        'failed_tiles': failed_tiles,
         'missing_tiles': missing_tiles,
         'extra_tiles': extra_tiles,
     }
@@ -1044,6 +1057,7 @@ def _run_tops_swath_tiling(product_wkt, grid_geoj_path, product_path, intermedia
                 swath_wkt, grid_geoj_path, product_path,
                 swath_product, cuts_outdir / swath, product_mode, **gpt_kwargs,
             )
+            tiling_result['report_source_wkt'] = product_wkt
             name = tiling_result['name']
             report_name = report_name or name
             if tiling_result['cut_failed']:
@@ -1058,7 +1072,15 @@ def _run_tops_swath_tiling(product_wkt, grid_geoj_path, product_path, intermedia
             if validation_group['rows']:
                 _run_db_indexing(validation_group['rows'], name, swath=swath)
         else:
-            validation_group = _validate_tile_group(cuts_outdir / swath / name, swath_product, swath=swath)
+            validation_group = _validate_tile_group(
+                cuts_outdir / swath / name,
+                swath_product,
+                swath=swath,
+                tiling_result={
+                    'source_wkt': swath_wkt,
+                    'report_source_wkt': product_wkt,
+                },
+            )
             validation_groups.append(validation_group)
             if validation_group['rows']:
                 _run_db_indexing(validation_group['rows'], name, swath=swath)
@@ -1234,6 +1256,7 @@ def main():
                 product_wkt, grid_geoj_path, product_path,
                 intermediate, cuts_outdir, product_mode, **gpt_kwargs,
             )
+            tiling_result['report_source_wkt'] = product_wkt
             name = tiling_result['name']
             validation_group = _validate_tile_group(
                 tiling_result['cuts_dir'],
@@ -1249,7 +1272,14 @@ def main():
             if any(result['status'] != 'success' for result in validation_group['results']):
                 raise RuntimeError(f'H5 validation failed; report: {pdf_path}')
         else:
-            validation_group = _validate_tile_group(cuts_outdir / name, intermediate)
+            validation_group = _validate_tile_group(
+                cuts_outdir / name,
+                intermediate,
+                tiling_result={
+                    'source_wkt': product_wkt,
+                    'report_source_wkt': product_wkt,
+                },
+            )
             pdf_path = cuts_outdir / f'{name}_h5_validation_report.pdf'
             _write_h5_validation_report_pdf(pdf_path, name, [validation_group])
             if validation_group['rows']:
