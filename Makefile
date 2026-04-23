@@ -5,7 +5,7 @@ SHELL := /bin/bash
 
 # ---------- Config ----------
 SUDO ?= sudo
-DOCKER ?= $(SUDO) docker
+DOCKER ?= docker
 COMPOSE_BAKE ?= false
 COMPOSE_FILE ?= docker-compose.yml
 COMPOSE ?= COMPOSE_BAKE=$(COMPOSE_BAKE) $(DOCKER) compose -f $(COMPOSE_FILE)
