@@ -5,10 +5,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-ARG SNAP_VERSION=12.0.0
+ARG SNAP_VERSION=13.0.0
 ARG SNAP_SKIP_UPDATES=1
 ENV JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"
-ENV SNAP_HOME="/snap12"
+ENV SNAP_HOME="/snap13"
 ENV SNAP_SKIP_UPDATES="${SNAP_SKIP_UPDATES}"
 ENV PATH="${PATH}:${SNAP_HOME}/bin"
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -42,7 +42,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install SNAP
 COPY support/snap-install.sh /tmp/snap-install.sh
 COPY support/snap.varfile /tmp/snap.varfile
-RUN sed -i "s|^sys.installationDir=.*|sys.installationDir=${SNAP_HOME}|" /tmp/snap.varfile \
+RUN SNAP_MAJOR="${SNAP_VERSION%%.*}" \
+    && sed -i "s/^VERSION=.*/VERSION=${SNAP_MAJOR}/" /tmp/snap-install.sh \
+    && sed -i "s|^sys.installationDir=.*|sys.installationDir=${SNAP_HOME}|" /tmp/snap.varfile \
     && chmod +x /tmp/snap-install.sh \
     && /tmp/snap-install.sh -v \
     && rm -f /tmp/snap-install.sh /tmp/snap.varfile \
@@ -73,7 +75,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ARG SNAP_SKIP_UPDATES=1
 ENV JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"
-ENV SNAP_HOME="/workspace/snap12"
+ENV SNAP_HOME="/workspace/snap13"
 ENV SNAP_SKIP_UPDATES="${SNAP_SKIP_UPDATES}"
 ENV PATH="${PATH}:${SNAP_HOME}/bin"
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -106,9 +108,9 @@ RUN curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && \
 WORKDIR /workspace
 
 # Bring SNAP installation from builder stage into final image.
-COPY --from=builder /snap12 /workspace/snap12
-RUN ln -sf /workspace/snap12/bin/snap /usr/local/bin/snap && \
-    ln -sf /workspace/snap12/bin/gpt /usr/local/bin/gpt
+COPY --from=builder /snap13 /workspace/snap13
+RUN ln -sf /workspace/snap13/bin/snap /usr/local/bin/snap && \
+    ln -sf /workspace/snap13/bin/gpt /usr/local/bin/gpt
 
 # Copy only essential files
 COPY pyproject.toml ./

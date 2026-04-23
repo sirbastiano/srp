@@ -20,7 +20,7 @@ services:
       - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
       - LD_LIBRARY_PATH=.:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server/
       - LC_ALL=en_US.UTF-8
-      - PATH=/workspace/snap12/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      - PATH=/workspace/snap13/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       # Optional: set GRID_PATH to select a specific mounted *.geojson
       # - GRID_PATH=/workspace/grid/my_region.geojson
       - JUPYTER_ENABLE_LAB=yes
