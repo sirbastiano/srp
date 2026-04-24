@@ -52,7 +52,7 @@
   <p>Set <code>--gpt-path</code> or ensure <code>gpt</code> is on <code>PATH</code> and SNAP is installed.</p>
 
   <h3 id="issue-grid-missing">Grid file missing</h3>
-  <p>Set <code>GRID_PATH</code> or provide <code>./grid/grid_10km.geojson</code> before running compose targets.</p>
+  <p>Set <code>GRID_PATH</code> or provide a <code>*.geojson</code> file under <code>./grid/</code> before running compose targets. The container does not generate grids automatically.</p>
 
   <h3 id="issue-upload-auth">Upload authentication failure</h3>
   <p>Set <code>HF_TOKEN</code> or run Hugging Face CLI login before <code>sarpyx upload</code>.</p>
@@ -74,7 +74,7 @@ sarpyx --help
 
       </article>
       <footer class="page-footer">
-        <p>Generated from repository sources on 2026-04-23 09:49 UTC.</p>
+        <p>Generated from repository sources on 2026-04-23 15:44 UTC.</p>
       </footer>
     </main>
   </div>

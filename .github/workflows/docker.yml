@@ -3,8 +3,8 @@
 # ──────────────────────────────────────────────────────────────
 # Triggers:
 #   • Pull requests touching Docker/runtime files         → build + smoke test
-#   • Pushes to main touching Docker/runtime files        → build + smoke test + push
-#   • Manual dispatch                                     → build + smoke test + optional push
+#   • Pushes to main touching Docker/runtime files        → build + smoke test + push tested image
+#   • Manual dispatch                                     → build + smoke test + optional push of tested image
 # ──────────────────────────────────────────────────────────────
 
 name: Docker Build & Publish
@@ -14,21 +14,27 @@ on:
     paths:
       - "Dockerfile"
       - "docker-compose.yml"
+      - ".dockerignore"
       - "entrypoint.sh"
+      - "start-jupyter.sh"
       - "pyproject.toml"
       - "sarpyx/**"
       - "tests/**"
       - "support/**"
+      - ".github/workflows/docker.yml"
   push:
     branches: [main]
     paths:
       - "Dockerfile"
       - "docker-compose.yml"
+      - ".dockerignore"
       - "entrypoint.sh"
+      - "start-jupyter.sh"
       - "sarpyx/**"
       - "tests/**"
       - "pyproject.toml"
       - "support/**"
+      - ".github/workflows/docker.yml"
   workflow_dispatch:
     inputs:
       push_image:
@@ -36,14 +42,18 @@ on:
         required: false
         default: "false"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   DOCKER_IMAGE: sirbastiano94/sarpyx
+  DOCKER_TEST_GRID: /workspace/grid/grid_smoke.geojson
 
 jobs:
-  # ────────────────────  Build & Test  ────────────────────────
-  build-and-test:
+  docker:
     runs-on: ubuntu-latest
-    timeout-minutes: 260
+    timeout-minutes: 180
 
     steps:
       - name: Checkout repository
@@ -53,14 +63,6 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           version: v0.11.2
-
-      - name: Cache Docker layers
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ hashFiles('Dockerfile', 'pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
 
       - name: Build Docker image
         uses: docker/build-push-action@v6
@@ -68,69 +70,80 @@ jobs:
           context: .
           file: Dockerfile
           load: true
+          platforms: linux/amd64
           tags: ${{ env.DOCKER_IMAGE }}:ci
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          cache-from: type=gha,scope=sarpyx-docker
+          cache-to: type=gha,mode=max,scope=sarpyx-docker
 
-      - name: Run Docker smoke tests
+      - name: Run mounted Docker smoke tests
         run: |
-          docker run --rm ${{ env.DOCKER_IMAGE }}:ci sh -lc "\
-            python3.11 -m pip install --no-cache-dir pytest==8.4.0 && \
-            python3.11 -m pytest /workspace/tests/test_docker.py -q --tb=short"
+          docker run --rm \
+            -e GRID_PATH="${GRID_PATH}" \
+            -v "${GITHUB_WORKSPACE}/tests:/opt/smoke-tests:ro" \
+            -v "${GITHUB_WORKSPACE}/tests/fixtures:/workspace/grid:ro" \
+            ${{ env.DOCKER_IMAGE }}:ci \
+            sh -lc "python3.11 -m pip install --no-cache-dir pytest==8.4.0 && python3.11 -m pytest /opt/smoke-tests/test_docker.py -q --tb=short"
+        env:
+          GRID_PATH: ${{ env.DOCKER_TEST_GRID }}
+        shell: bash
 
-      - name: Move cache  # prevents ever-growing cache
+      - name: Start Jupyter smoke container
         run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+          docker run -d --rm \
+            --name sarpyx-jupyter-smoke \
+            -p 127.0.0.1:8888:8888 \
+            -e GRID_PATH="${GRID_PATH}" \
+            -e JUPYTER_TOKEN=ci-smoke-token \
+            -v "${GITHUB_WORKSPACE}/tests/fixtures:/workspace/grid:ro" \
+            ${{ env.DOCKER_IMAGE }}:ci \
+            /usr/local/bin/start-jupyter.sh
+        env:
+          GRID_PATH: ${{ env.DOCKER_TEST_GRID }}
+        shell: bash
 
-  # ────────────────────  Publish  ─────────────────────────────
-  publish:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    if: >-
-      (
-        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-        (github.event_name == 'workflow_dispatch' && github.event.inputs.push_image == 'true')
-      )
-    timeout-minutes: 60
+      - name: Wait for Jupyter health check
+        run: |
+          for attempt in {1..30}; do
+            if curl -fsS "http://127.0.0.1:8888/lab?token=ci-smoke-token" >/dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          docker logs sarpyx-jupyter-smoke
+          exit 1
+        shell: bash
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Dump Jupyter smoke logs
+        if: always()
+        run: docker logs sarpyx-jupyter-smoke || true
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          version: v0.11.2
+      - name: Remove Jupyter smoke container
+        if: always()
+        run: docker rm -f sarpyx-jupyter-smoke || true
 
       - name: Log in to Docker Hub
+        if: >-
+          (
+            github.event_name == 'push' ||
+            (github.event_name == 'workflow_dispatch' && github.event.inputs.push_image == 'true')
+          )
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.DOCKER_IMAGE }}
-          tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,prefix=
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: Dockerfile
-          push: true
-          platforms: linux/amd64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
-
-      - name: Move cache
+      - name: Tag and push tested Docker image
+        if: >-
+          (
+            github.event_name == 'push' ||
+            (github.event_name == 'workflow_dispatch' && github.event.inputs.push_image == 'true')
+          )
         run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+          docker tag "${{ env.DOCKER_IMAGE }}:ci" "${{ env.DOCKER_IMAGE }}:${GITHUB_SHA}"
+          docker push "${{ env.DOCKER_IMAGE }}:${GITHUB_SHA}"
+
+          if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+            docker tag "${{ env.DOCKER_IMAGE }}:ci" "${{ env.DOCKER_IMAGE }}:latest"
+            docker push "${{ env.DOCKER_IMAGE }}:latest"
+          fi
+        shell: bash

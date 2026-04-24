@@ -92,7 +92,7 @@ make recreate
   <h2 id="troubleshooting">Troubleshooting</h2>
   <ul>
     <li>SNAP missing: verify <code>SNAP_HOME</code> and <code>gpt</code> in <code>PATH</code>.</li>
-    <li>Grid errors: set <code>GRID_PATH</code> or provide <code>./grid/grid_10km.geojson</code>.</li>
+    <li>Grid errors: set <code>GRID_PATH</code> or provide a mounted <code>*.geojson</code> file under <code>./grid/</code>. The container no longer generates grids automatically.</li>
     <li>Upload auth failures: set <code>HF_TOKEN</code> or run Hugging Face CLI login.</li>
   </ul>
 
@@ -121,7 +121,7 @@ make recreate
 
       </article>
       <footer class="page-footer">
-        <p>Generated from repository sources on 2026-04-23 09:49 UTC.</p>
+        <p>Generated from repository sources on 2026-04-23 15:44 UTC.</p>
       </footer>
     </main>
   </div>

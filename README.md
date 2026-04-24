@@ -70,9 +70,11 @@ See [docs/user_guide/README.md](docs/user_guide/README.md) for usage and workflo
 
 At startup the container checks for grid files in this order:
 
-1. `GRID_PATH` (or `grid_path`) if it points to an existing `*.geojson`
+1. `GRID_PATH` (or `grid_path`) if it points to an existing in-container `*.geojson`
 2. First `*.geojson` found in `/workspace/grid`
-3. Generate a grid on startup only if no `*.geojson` is available
+
+If neither exists, the container exits with an error. Automatic grid generation
+on startup has been removed.
 
 To use a mounted grid:
 
@@ -85,8 +87,11 @@ docker compose up
 For direct `docker run`, pass an explicit in-container path when needed:
 
 ```bash
-export GRID_PATH=/workspace/grid/my_region.geojson
-docker run --rm -e GRID_PATH=$GRID_PATH ...
+docker run --rm \
+  -v "$PWD/grid:/workspace/grid:ro" \
+  -e GRID_PATH=/workspace/grid/my_region.geojson \
+  sirbastiano94/sarpyx:latest \
+  /usr/local/bin/start-jupyter.sh
 ```
 
 You can also pass `--grid-path` to the `worldsar` CLI command.

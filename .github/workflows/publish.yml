@@ -1,13 +1,20 @@
 name: Publish Python Package to PyPI
 
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   pypi-publish:
     name: PyPI Release Publication
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       id-token: write # Required for trusted publishing
     steps:
       - name: Checkout Repository
@@ -21,8 +28,38 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v4
 
+      - name: Sync environment
+        run: uv sync --group dev
+
+      - name: Run tests
+        run: uv run pytest -q
+
       - name: Build Python Package
         run: uv build
+
+      - name: Audit built wheel contents
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import zipfile
+
+          wheels = sorted(Path("dist").glob("*.whl"))
+          if not wheels:
+              raise SystemExit("No wheel produced in dist/")
+
+          forbidden_roots = {"docs", "tests", "outputs", "pyscripts"}
+          with zipfile.ZipFile(wheels[0]) as wheel:
+              offenders = sorted(
+                  name for name in wheel.namelist()
+                  if name.split("/", 1)[0] in forbidden_roots
+              )
+
+          if offenders:
+              print("Forbidden wheel entries detected:")
+              for name in offenders:
+                  print(name)
+              raise SystemExit(1)
+          PY
 
       - name: Validate distributions
         run: uvx twine check dist/*

@@ -14,6 +14,9 @@ DOCKER_IMAGE ?= sirbastiano94/sarpyx
 DOCKER_TAG ?= latest
 DOCKER_FULL := $(DOCKER_IMAGE):$(DOCKER_TAG)
 PLATFORM ?= linux/amd64
+SMOKE_TEST_GRID ?= $(CURDIR)/tests/fixtures/grid_smoke.geojson
+SMOKE_TEST_GRID_CONTAINER ?= /workspace/grid/grid_smoke.geojson
+SMOKE_TESTS_DIR ?= /opt/smoke-tests
 
 SIF ?= sarpyx.sif
 SIF_TMPDIR ?= $(CURDIR)/.singularity/tmp
@@ -59,19 +62,20 @@ check-docker: ## Verify docker CLI is available
 check-compose: check-docker ## Verify docker compose plugin is available
 	@$(DOCKER) compose version >/dev/null 2>&1 || { echo "Error: docker compose plugin not available."; exit 1; }
 
-check-grid: ## Verify a GRID_PATH exists or fallback grid file is present
+check-grid: ## Verify an external GRID_PATH or a host grid file exists
 	@if [ -n "${GRID_PATH}" ]; then \
-		if [ -f "${GRID_PATH}" ]; then \
+		if [ -f "${GRID_PATH}" ] && [[ "${GRID_PATH}" == *.geojson ]]; then \
 			echo "Using GRID_PATH=${GRID_PATH}"; \
 		else \
-			echo "Error: GRID_PATH is set but file does not exist: ${GRID_PATH}"; \
+			echo "Error: GRID_PATH must point to an existing .geojson file: ${GRID_PATH}"; \
 			exit 1; \
 		fi; \
-	elif [ -f "./grid/grid_10km.geojson" ]; then \
-		echo "Using default host grid: ./grid/grid_10km.geojson"; \
+	elif compgen -G "./grid/*.geojson" > /dev/null; then \
+		echo "Using host grid directory ./grid"; \
 	else \
-		echo "Grid file not found. Generating it now..."; \
-		$(MAKE) generate-grid; \
+		echo "Error: no host grid file found in ./grid and GRID_PATH is unset."; \
+		echo "Hint: run 'make generate-grid' to create ./grid/grid_10km.geojson manually."; \
+		exit 1; \
 	fi
 
 check-uv: ## Verify uv is available
@@ -176,9 +180,14 @@ docker-build: check-docker ## Build Docker image
 
 docker-test: docker-build ## Run containerized Docker tests
 	@echo "Running Docker build tests..."
-	$(DOCKER) run --rm "$(DOCKER_FULL)" sh -c "\
-		python3 -m pip install pytest && \
-		python3 -m pytest /workspace/tests/test_docker.py -v --tb=short"
+	@test -f "$(SMOKE_TEST_GRID)" || { echo "Error: smoke test grid missing at $(SMOKE_TEST_GRID)"; exit 1; }
+	$(DOCKER) run --rm \
+		-e GRID_PATH="$(SMOKE_TEST_GRID_CONTAINER)" \
+		-v "$(CURDIR)/tests:$(SMOKE_TESTS_DIR):ro" \
+		-v "$(CURDIR)/tests/fixtures:/workspace/grid:ro" \
+		"$(DOCKER_FULL)" sh -lc "\
+			python3.11 -m pip install --no-cache-dir pytest==8.4.0 && \
+			python3.11 -m pytest $(SMOKE_TESTS_DIR)/test_docker.py -v --tb=short"
 
 docker-push: docker-build ## Push Docker image
 	@echo "Pushing $(DOCKER_FULL)..."

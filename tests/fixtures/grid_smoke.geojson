@@ -1,0 +1,18 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "smoke-grid-cell"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          12.4924,
+          41.8902
+        ]
+      }
+    }
+  ]
+}

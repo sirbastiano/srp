@@ -10,8 +10,7 @@ services:
     volumes:
       - ./data:/workspace/data
       - ./output:/workspace/output
-      # Optional: mount a directory containing one or more *.geojson grids
-      # - ./grid:/workspace/grid
+      - ./grid:/workspace/grid:ro
       - ./notebooks:/workspace/notebooks
       - ./src:/workspace/src
       - ./examples:/workspace/examples

@@ -21,6 +21,7 @@ snap12/
 *.csv
 *.txt
 *.geojson
+!tests/fixtures/grid_smoke.geojson
 
 
 AGENTS.md

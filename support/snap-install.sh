@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # DISCLAIMER: This script is provided as-is without any guarantees or warranty.
 # The user assumes all responsibility and risk for the use of this script.
 # The authors are not liable for any damage or data loss arising from its use.
@@ -47,21 +47,32 @@ if [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null 2>&1; then
     USE_SUDO="sudo"
 fi
 
+run_as_root() {
+    if [ -n "$USE_SUDO" ]; then
+        "$USE_SUDO" "$@"
+    else
+        "$@"
+    fi
+}
+
 echo "Installing SNAP version $VERSION..."
-# Install required packages
-echo 'Installing packages for S1 data processing...'
-sudo apt-get update
-sudo apt-get install -y --no-install-recommends \
-    libfftw3-dev \
-    libtiff5-dev \
-    gdal-bin \
-    gfortran \
-    libgfortran5 \
-    jblas \
-    git \
-    curl \
-    --fix-missing
-sudo rm -rf /var/lib/apt/lists/*
+if [ -n "${SNAP_SKIP_SYSTEM_PACKAGES:-}" ]; then
+    echo 'Skipping SNAP system package installation (SNAP_SKIP_SYSTEM_PACKAGES set).'
+else
+    echo 'Installing packages for S1 data processing...'
+    run_as_root apt-get update
+    run_as_root apt-get install -y --no-install-recommends \
+        libfftw3-dev \
+        libtiff5-dev \
+        gdal-bin \
+        gfortran \
+        libgfortran5 \
+        jblas \
+        git \
+        curl \
+        --fix-missing
+    run_as_root rm -rf /var/lib/apt/lists/*
+fi
 
 if [ "$VERSION" = "12" ]; then
     # VERSION 12 installation
