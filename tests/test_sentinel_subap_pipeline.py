@@ -3,13 +3,13 @@ from __future__ import annotations
 import ast
 import copy
 import importlib.util
+import re
 import sys
 import types
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import pytest
-from shapely import wkt as shapely_wkt
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -58,7 +58,7 @@ def _load_functions_from_file(path: Path, names: list[str], extra_globals: dict[
 ENGINE_MOD = _load_module_from_path("_engine_for_tests", REPO_ROOT / "sarpyx" / "snapflow" / "engine.py")
 DIM_UPDATER_MOD = _load_module_from_path(
     "_dim_updater_for_tests",
-    REPO_ROOT / "sarpyx" / "processor" / "core" / "dim_updater.py",
+    REPO_ROOT / "sarpyx" / "snapflow" / "dim_updater.py",
 )
 WKT_UTILS_MOD = _load_module_from_path("_wkt_utils_for_tests", REPO_ROOT / "sarpyx" / "utils" / "wkt_utils.py")
 GPT = ENGINE_MOD.GPT
@@ -203,6 +203,14 @@ def _spectral_band_map(root: ET.Element) -> dict[str, ET.Element]:
         (sbi.findtext("BAND_NAME") or "").strip(): sbi
         for sbi in root.findall(".//Image_Interpretation/Spectral_Band_Info")
     }
+
+
+def _wkt_bounds(wkt: str) -> tuple[float, float, float, float]:
+    values = [float(value) for value in re.findall(r"-?\d+(?:\.\d+)?", wkt)]
+    coords = list(zip(values[0::2], values[1::2], strict=True))
+    xs = [x for x, _ in coords]
+    ys = [y for _, y in coords]
+    return min(xs), min(ys), max(xs), max(ys)
 
 
 def test_gpt_do_subaps_forwards_update_dim(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -538,12 +546,7 @@ def test_pipeline_sentinel_strip_forwards_orbit_settings(tmp_path: Path):
     assert len(merge_calls) == 1
 
 
-@pytest.mark.skipif(
-    not (REPO_ROOT / "pyscripts" / "merge_iq_into_pdec.py").exists(),
-    reason="merge_iq_into_pdec implementation is not present in this checkout",
-)
 def test_merge_iq_into_pdec_rejects_same_dim_product(tmp_path: Path):
-    pytest.importorskip("merge_iq_into_pdec")
     dim_path = _touch(tmp_path / "same.dim")
 
     with pytest.raises(ValueError, match="resolve to the same DIM product"):
@@ -608,11 +611,9 @@ def test_sentinel1_swath_wkt_extractor_safe_reads_annotation_geolocation_points(
         ],
     )
 
-    polygon = shapely_wkt.loads(
-        sentinel1_swath_wkt_extractor_safe(safe_dir, "IW1")
+    assert _wkt_bounds(sentinel1_swath_wkt_extractor_safe(safe_dir, "IW1")) == pytest.approx(
+        (12.0, 45.6, 12.4, 46.0)
     )
-
-    assert polygon.bounds == pytest.approx((12.0, 45.6, 12.4, 46.0))
 
 
 def test_resolve_tiling_wkt_prefers_swath_dim_footprint_and_falls_back(tmp_path: Path):
@@ -705,7 +706,7 @@ def test_run_tops_swath_tiling_uses_swath_specific_wkt(tmp_path: Path):
 
 
 def test_run_tops_swath_tiling_validates_existing_tiles_when_tiling_disabled(tmp_path: Path):
-    validate_calls: list[tuple[Path, Path, str | None]] = []
+    validate_calls: list[tuple[Path, Path, str | None, dict | None]] = []
     db_calls: list[tuple[tuple[str, ...], str, str | None]] = []
     swath_products = {
         "IW1": _touch(tmp_path / "IW1.dim"),
@@ -713,8 +714,7 @@ def test_run_tops_swath_tiling_validates_existing_tiles_when_tiling_disabled(tmp
     }
 
     def fake_validate_tile_group(cuts_dir, swath_product, swath=None, tiling_result=None):
-        assert tiling_result is None
-        validate_calls.append((Path(cuts_dir), Path(swath_product), swath))
+        validate_calls.append((Path(cuts_dir), Path(swath_product), swath, tiling_result))
         return {
             "name": Path(swath_product).stem,
             "rows": [f"row::{swath}"],
@@ -742,8 +742,18 @@ def test_run_tops_swath_tiling_validates_existing_tiles_when_tiling_disabled(tmp
     )
 
     assert validate_calls == [
-        (tmp_path / "cuts" / "IW1" / "IW1", swath_products["IW1"], "IW1"),
-        (tmp_path / "cuts" / "IW2" / "IW2", swath_products["IW2"], "IW2"),
+        (
+            tmp_path / "cuts" / "IW1" / "IW1",
+            swath_products["IW1"],
+            "IW1",
+            {"source_wkt": "FULL_WKT", "report_source_wkt": "FULL_WKT"},
+        ),
+        (
+            tmp_path / "cuts" / "IW2" / "IW2",
+            swath_products["IW2"],
+            "IW2",
+            {"source_wkt": "FULL_WKT", "report_source_wkt": "FULL_WKT"},
+        ),
     ]
     assert db_calls == [
         (("row::IW1",), "IW1", "IW1"),
@@ -821,3 +831,63 @@ def test_pipeline_sentinel_tops_raises_when_split_output_is_missing(tmp_path: Pa
             output_dir=tmp_path / "out",
             is_TOPS=True,
         )
+
+
+def test_pipeline_sentinel_tops_can_limit_swath_and_burst(tmp_path: Path):
+    split_calls: list[tuple[Path, dict[str, object]]] = []
+    post_calls: list[tuple[Path, str]] = []
+
+    class FakeBaseOp:
+        def __init__(self):
+            self.prod_path = tmp_path / "input.dim"
+
+    class FakeSwathOp:
+        def __init__(self, outdir: Path):
+            self.outdir = outdir
+            self.prod_path = tmp_path / "input.dim"
+
+        def TopsarSplit(self, **kwargs):
+            split_calls.append((self.outdir, kwargs))
+            split_path = self.outdir / "split.dim"
+            split_path.parent.mkdir(parents=True, exist_ok=True)
+            split_path.write_text("split", encoding="utf-8")
+            self.prod_path = split_path
+            return str(split_path)
+
+        def last_error_summary(self):
+            return "unused"
+
+    def fake_create_gpt_operator(_product_path, output_dir, *_args, **_kwargs):
+        if Path(output_dir) == tmp_path / "out":
+            return FakeBaseOp()
+        return FakeSwathOp(Path(output_dir))
+
+    def fake_post_chain(op, product_path, **_kwargs):
+        post_calls.append((Path(op.prod_path), product_path))
+        return op.prod_path
+
+    pipeline_sentinel.__globals__["Path"] = Path
+    pipeline_sentinel.__globals__["_create_gpt_operator"] = fake_create_gpt_operator
+    pipeline_sentinel.__globals__["_sentinel_post_chain"] = fake_post_chain
+
+    result = pipeline_sentinel(
+        product_path=str(tmp_path / "input.SAFE"),
+        output_dir=tmp_path / "out",
+        is_TOPS=True,
+        sentinel_swath="IW2",
+        sentinel_first_burst=3,
+        sentinel_last_burst=3,
+    )
+
+    assert list(result) == ["IW2"]
+    assert split_calls == [
+        (
+            tmp_path / "out" / "IW2",
+            {
+                "subswath": "IW2",
+                "first_burst_index": 3,
+                "last_burst_index": 3,
+            },
+        )
+    ]
+    assert post_calls == [(tmp_path / "out" / "IW2" / "split.dim", str(tmp_path / "input.SAFE"))]

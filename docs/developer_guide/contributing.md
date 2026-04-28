@@ -11,15 +11,14 @@ Thank you for your interest in contributing to sarpyx! This guide will help you 
 git clone https://github.com/ESA-sarpyx/sarpyx.git
 cd sarpyx
 
-# Create a virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Sync the local environment
+uv sync --group dev
 
-# Install in development mode
-pip install -e ".[dev]"
+# Run the test suite
+uv run pytest -q
 
-# Install pre-commit hooks
-pre-commit install
+# Build release artifacts
+uv build
 ```
 
 ### 2. Development Workflow
@@ -185,37 +184,24 @@ class TestSubLookAnalyzer:
 
 ```bash
 # Run all tests
-pytest
+uv run pytest -q
 
-# Run specific test file
-pytest tests/test_sla/test_decomposition.py
+# Run a focused regression
+uv run pytest tests/test_worldsar_h5.py -q
 
-# Run with coverage
-pytest --cov=sarpyx --cov-report=html
-
-# Run with verbose output
-pytest -v
-
-# Run tests for specific module
-pytest tests/test_sla/
+# Run a subset by keyword
+uv run pytest -k worldsar -q
 ```
 
 ## Documentation
 
 ### Building Documentation
 
-We use Sphinx for documentation generation:
+The checked-in source docs live under `docs/`. To refresh the static site:
 
 ```bash
-# Install documentation dependencies
-pip install -e ".[docs]"
-
-# Build documentation
-cd docs
-make html
-
-# Serve documentation locally
-python -m http.server 8000 -d _build/html
+python docs/generate_static_site.py
+python -m http.server 8000 -d docs/_site
 ```
 
 ### Documentation Guidelines

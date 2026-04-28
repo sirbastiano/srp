@@ -1,37 +1,68 @@
-# GitHub Actions workflow for publishing a Python package from main only.
 name: Publish Python Package to PyPI
 
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   pypi-publish:
     name: PyPI Release Publication
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       id-token: write # Required for trusted publishing
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Configure Python Environment
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.x"
+          python-version: "3.12"
 
-      - name: Install GDAL System Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gdal-bin libgdal-dev
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
 
-      - name: Configure PDM Environment
-        uses: pdm-project/setup-pdm@v4
-        with:
-          python-version: "3.x"
-          cache: true
+      - name: Sync environment
+        run: uv sync --group dev
+
+      - name: Run tests
+        run: uv run pytest -q
 
       - name: Build Python Package
-        run: pdm build
+        run: uv build
+
+      - name: Audit built wheel contents
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import zipfile
+
+          wheels = sorted(Path("dist").glob("*.whl"))
+          if not wheels:
+              raise SystemExit("No wheel produced in dist/")
+
+          forbidden_roots = {"docs", "tests", "outputs", "pyscripts"}
+          with zipfile.ZipFile(wheels[0]) as wheel:
+              offenders = sorted(
+                  name for name in wheel.namelist()
+                  if name.split("/", 1)[0] in forbidden_roots
+              )
+
+          if offenders:
+              print("Forbidden wheel entries detected:")
+              for name in offenders:
+                  print(name)
+              raise SystemExit(1)
+          PY
+
+      - name: Validate distributions
+        run: uvx twine check dist/*
 
       - name: Upload Distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

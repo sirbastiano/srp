@@ -5,7 +5,6 @@ the Copernicus Data Search API and from Terrasar-X product XML files.
 
 import re
 from pathlib import Path
-from shapely.geometry import shape, MultiPoint, MultiPolygon, Polygon
 import xml.etree.ElementTree as ET
 
 def _parse_gml_coordinates(text: str, axis_order: str) -> list[tuple[float, float]]:
@@ -88,7 +87,9 @@ def sentinel1_wkt_extractor_manifest(
         'gml': 'http://www.opengis.net/gml',
     }
 
-    polygons: list[Polygon] = []
+    from shapely.geometry import MultiPolygon, Polygon
+
+    polygons = []
     for footprint in root.findall('.//safe:footPrint', namespaces):
         coords_el = footprint.find('.//gml:coordinates', namespaces)
         if coords_el is not None and coords_el.text:
@@ -137,6 +138,7 @@ def sentinel1_wkt_extractor_cdse(product_name: str, display_results: bool = Fals
     Returns:
         str | None: WKT representation of the product footprint polygon, or None if not found.
     """
+    from shapely.geometry import MultiPolygon, shape
     from phidown.search import CopernicusDataSearcher
 
     searcher = CopernicusDataSearcher()
@@ -182,15 +184,24 @@ def terrasar_wkt_extractor(product_path: Path) -> str:
     """
     if isinstance(product_path, str):
         product_path = Path(product_path)
-    assert product_path.exists(), f"Product path {product_path} does not exist."
-    assert product_path.suffix.lower() == '.xml', f"Product path {product_path} is not an XML file."
+    if not product_path.exists():
+        raise FileNotFoundError(f"Product path {product_path} does not exist.")
+    if product_path.suffix.lower() != '.xml':
+        raise ValueError(f"Product path {product_path} is not an XML file.")
     
     tree = ET.parse(product_path)
     root = tree.getroot()
 
-    # Find all sceneCornerCoord elements and extract coordinates
-    corners = [(float(corner.find('lon').text), float(corner.find('lat').text)) 
-               for corner in root.findall('.//sceneCornerCoord')]
+    corners = []
+    for corner in root.findall('.//sceneCornerCoord'):
+        lon_text = corner.findtext('lon')
+        lat_text = corner.findtext('lat')
+        if lon_text is None or lat_text is None:
+            continue
+        corners.append((float(lon_text), float(lat_text)))
+
+    if len(corners) < 3:
+        raise ValueError(f"Could not find at least three sceneCornerCoord lon/lat pairs in {product_path}.")
 
     # Close the polygon by repeating the first point at the end
     if corners:
@@ -198,6 +209,8 @@ def terrasar_wkt_extractor(product_path: Path) -> str:
 
     # Create WKT polygon string
     return f"POLYGON(({', '.join(f'{lon} {lat}' for lon, lat in corners)}))"
+
+
 def _safe_dir_from_product_path(product_path: str | Path) -> Path:
     if isinstance(product_path, str):
         product_path = Path(product_path)
@@ -261,6 +274,8 @@ def sentinel1_swath_wkt_extractor_safe(
             print(f'Not enough geolocation points for swath {swath_norm}')
         return None
 
+    from shapely.geometry import MultiPoint
+
     polygon = MultiPoint(points).convex_hull
     if polygon.is_empty:
         return None
@@ -289,6 +304,8 @@ def nisar_wkt_extractor(product_path: Path) -> str:
     Returns:
         2D WKT POLYGON string in EPSG:4326.
     """
+    import h5py
+
     with h5py.File(str(product_path), 'r') as f:
         raw = f['science/LSAR/identification/boundingPolygon'][()]
         if isinstance(raw, bytes):
@@ -371,6 +388,8 @@ def sentinel1_swath_wkt_extractor_safe(
         if verbose:
             print(f'Not enough geolocation points for swath {swath_norm}')
         return None
+
+    from shapely.geometry import MultiPoint
 
     polygon = MultiPoint(points).convex_hull
     if polygon.is_empty:

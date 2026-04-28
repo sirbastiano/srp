@@ -1,6 +1,11 @@
+"""Standalone complex-valued loss helpers.
+
+These functions were kept in a backup-named module before. The normal module
+name keeps them discoverable by standard Python imports and packaging tools.
+"""
+
 import torch
 import torch.nn.functional as F
-import math
 
 def loss_split_mse(pred: torch.Tensor, target: torch.Tensor):
     # pred, target: complex tensors (dtype=torch.cfloat)

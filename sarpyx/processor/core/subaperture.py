@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import warnings
-from meta import Handler
-import utilis as ut
+from .meta import Handler
+from . import utilis as ut
 
 warnings.filterwarnings("ignore")
 

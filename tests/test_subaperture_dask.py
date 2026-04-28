@@ -377,7 +377,7 @@ class TestPolDetectionRobustNaming:
         assert pols == ["VH", "VV"]
 
     def test_dim_group_scan_accepts_non_lprefix(self, tmp_path):
-        from sarpyx.processor.core.dim_updater import _scan_data_dir_for_groups
+        from sarpyx.snapflow.dim_updater import _scan_data_dir_for_groups
 
         for name in (
             "CAL_i_VH.hdr",

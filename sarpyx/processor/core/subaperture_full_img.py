@@ -14,7 +14,7 @@ from rasterio.windows import Window
 
 from .meta import Handler
 from . import utilis as ut
-from .dim_updater import update_dim_add_bands_from_data_dir
+from sarpyx.snapflow.dim_updater import update_dim_add_bands_from_data_dir
 
 warnings.filterwarnings("ignore")
 logger = logging.getLogger(__name__)

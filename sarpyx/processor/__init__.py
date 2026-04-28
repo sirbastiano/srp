@@ -1,7 +1,7 @@
 """SAR processing package with lazy submodule imports.
 
 The previous eager imports pulled in heavy optional dependencies at package
-import time, which makes lightweight utilities such as ``dim_updater`` slow to
+import time, which makes lightweight utilities such as ``constants`` slow to
 import and can block CLI startup. Keep package import side-effect free.
 """
 

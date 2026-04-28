@@ -1,7 +1,7 @@
 """Core processing components with lazy attribute resolution.
 
 Avoid importing focus/torch-heavy modules just to reach unrelated helpers such
-as ``dim_updater``.
+as ``constants``.
 """
 
 import importlib

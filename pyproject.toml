@@ -6,10 +6,11 @@ build-backend = "setuptools.build_meta"
 name = "sarpyx"
 version = "0.1.8"
 description = "A swissknife for SAR processing."
+readme = { file = "README.md", content-type = "text/markdown" }
 authors = [
     { name = "Roberto Del Prete", email = "roberto.delprete@esa.int" }
 ]
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
 requires-python = ">=3.11, <4"
 dependencies = [
     "matplotlib",
@@ -56,18 +57,15 @@ copernicus = [
 ]
 
 [project.scripts]
-sarpyx = "sarpyx.cli.main:main"
-sarpyx-decode = "sarpyx.cli.decode:main"
-sarpyx-focus = "sarpyx.cli.focus:main"
-sarpyx-shipdet = "sarpyx.cli.shipdet:main"
-sarpyx-unzip = "sarpyx.cli.unzip:main"
-sarpyx-upload = "sarpyx.cli.upload:main"
+sarpyx = "sarpyx.cli.worldsar:main"
 
 [tool.setuptools]
-packages = { find = {} }
+include-package-data = false
 
-[tool.setuptools.package-data]
-"*" = ["*.csv", "*.json", "*.xml"]
+[tool.setuptools.packages.find]
+include = ["sarpyx*"]
+namespaces = false
+
 [dependency-groups]
 dev = [
     "pytest==8.4.0",

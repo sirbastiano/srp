@@ -928,7 +928,7 @@ make recreate
   <h2 id=\"troubleshooting\">Troubleshooting</h2>
   <ul>
     <li>SNAP missing: verify <code>SNAP_HOME</code> and <code>gpt</code> in <code>PATH</code>.</li>
-    <li>Grid errors: set <code>GRID_PATH</code> or provide <code>./grid/grid_10km.geojson</code>.</li>
+    <li>Grid errors: set <code>GRID_PATH</code> or provide a mounted <code>*.geojson</code> file under <code>./grid/</code>. The container no longer generates grids automatically.</li>
     <li>Upload auth failures: set <code>HF_TOKEN</code> or run Hugging Face CLI login.</li>
   </ul>
 
@@ -1058,7 +1058,6 @@ def make_configuration_page() -> str:
     config_files = [
         "pyproject.toml",
         "uv.lock",
-        "pdm.lock",
         "docker-compose.yml",
         "Dockerfile",
         "Makefile",
@@ -1229,7 +1228,7 @@ def make_faq_page() -> str:
   <p>Set <code>--gpt-path</code> or ensure <code>gpt</code> is on <code>PATH</code> and SNAP is installed.</p>
 
   <h3 id=\"issue-grid-missing\">Grid file missing</h3>
-  <p>Set <code>GRID_PATH</code> or provide <code>./grid/grid_10km.geojson</code> before running compose targets.</p>
+  <p>Set <code>GRID_PATH</code> or provide a <code>*.geojson</code> file under <code>./grid/</code> before running compose targets. The container does not generate grids automatically.</p>
 
   <h3 id=\"issue-upload-auth\">Upload authentication failure</h3>
   <p>Set <code>HF_TOKEN</code> or run Hugging Face CLI login before <code>sarpyx upload</code>.</p>

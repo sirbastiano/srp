@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 echo "=== Container Startup Script ==="
 
@@ -25,28 +25,20 @@ shopt -s nullglob
 GRID_GEOJSON_FILES=("${GRID_DIR}"/*.geojson)
 shopt -u nullglob
 
-if [ -n "${GRID_PATH_CANDIDATE}" ] && [ -f "${GRID_PATH_CANDIDATE}" ] && [[ "${GRID_PATH_CANDIDATE}" == *.geojson ]]; then
-    export GRID_PATH="${GRID_PATH_CANDIDATE}"
-    echo "Using mounted/configured grid file: ${GRID_PATH}"
+if [ -n "${GRID_PATH_CANDIDATE}" ]; then
+    if [ -f "${GRID_PATH_CANDIDATE}" ] && [[ "${GRID_PATH_CANDIDATE}" == *.geojson ]]; then
+        export GRID_PATH="${GRID_PATH_CANDIDATE}"
+        echo "Using mounted/configured grid file: ${GRID_PATH}"
+    else
+        echo "ERROR: GRID_PATH must point to an existing .geojson file inside the container. Received: ${GRID_PATH_CANDIDATE}" >&2
+        exit 1
+    fi
 elif [ ${#GRID_GEOJSON_FILES[@]} -gt 0 ]; then
     export GRID_PATH="${GRID_GEOJSON_FILES[0]}"
     echo "Using existing grid file: ${GRID_PATH}"
 else
-    echo "No .geojson grid found in ${GRID_DIR}. Generating grid on startup..."
-    (
-        cd "${GRID_DIR}"
-        python -m sarpyx.utils.grid
-    )
-    shopt -s nullglob
-    GRID_GEOJSON_FILES=("${GRID_DIR}"/*.geojson)
-    shopt -u nullglob
-    if [ ${#GRID_GEOJSON_FILES[@]} -gt 0 ]; then
-        export GRID_PATH="${GRID_GEOJSON_FILES[0]}"
-        echo "Grid generation completed: ${GRID_PATH}"
-    else
-        echo "ERROR: Grid generation did not create any .geojson in ${GRID_DIR}" >&2
-        exit 1
-    fi
+    echo "ERROR: No .geojson grid found in ${GRID_DIR}. Mount a grid file or set GRID_PATH to an existing in-container .geojson file." >&2
+    exit 1
 fi
 
 # Execute the CMD passed to the container

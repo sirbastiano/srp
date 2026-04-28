@@ -67,9 +67,9 @@
 <li>
 <p><strong>Verify Installation</strong>:
    <code>bash
-   pip show sarpyx
-   # or
-   pdm list | grep sarpyx</code></p>
+   python -m pip show sarpyx
+   # or, inside the managed environment
+   uv run python -c "import sarpyx; print(sarpyx.__version__)"</code></p>
 </li>
 <li>
 <p><strong>Check Python Environment</strong>:
@@ -101,11 +101,10 @@ ERROR:<span class="w"> </span>pip<span class="err">&#39;</span>s<span class="w">
    pip install sarpyx</code></p>
 </li>
 <li>
-<p><strong>Use PDM for Better Dependency Management</strong>:
+<p><strong>Use uv for Better Dependency Management</strong>:
    <code>bash
-   pdm init
-   pdm add sarpyx
-   pdm install</code></p>
+   uv sync
+   uv sync --group dev</code></p>
 </li>
 <li>
 <p><strong>Check Conflicting Packages</strong>:

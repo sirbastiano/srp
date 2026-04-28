@@ -27,9 +27,11 @@ Before installing sarpyx, ensure you have:
 
 If you run `sarpyx` via the provided container, the entrypoint uses this order:
 
-1. `GRID_PATH` (or `grid_path`) if it points to an existing `*.geojson`
+1. `GRID_PATH` (or `grid_path`) if it points to an existing in-container `*.geojson`
 2. first `*.geojson` found under `/workspace/grid`
-3. startup-time generation only if no `*.geojson` exists
+
+If neither is available, the container exits with an error. Startup-time grid
+generation has been removed.
 
 To use your own mounted grid, place any GeoJSON in `./grid`:
 
@@ -42,7 +44,7 @@ docker compose up
 If you use `docker-compose`, mount the grid directory and optionally set `GRID_PATH` to choose a specific file:
 
 ```bash
-- ./grid:/workspace/grid
+- ./grid:/workspace/grid:ro
 - GRID_PATH=/workspace/grid/my_region.geojson
 ```
 
@@ -56,16 +58,16 @@ pip install sarpyx
 
 For specific versions:
 ```bash
-pip install sarpyx==0.1.5
+pip install sarpyx==<version>
 ```
 
-### 2. Using PDM (Recommended for Development)
+### 2. Using uv (Recommended for Development and CI)
 
-PDM (Python Dependency Management) is the preferred tool for development:
+`uv` is the canonical tool for local installation, testing, and builds:
 
-1. **Install PDM:**
+1. **Install uv:**
    ```bash
-   pip install pdm
+   pip install uv
    ```
 
 2. **Clone the repository:**
@@ -76,12 +78,13 @@ PDM (Python Dependency Management) is the preferred tool for development:
 
 3. **Install dependencies:**
    ```bash
-   pdm install
+   uv sync
    ```
 
-4. **For development with extras:**
+4. **For development and optional Copernicus tooling:**
    ```bash
-   pdm install -G dev -G test -G docs
+   uv sync --group dev
+   uv sync --group dev --extra copernicus
    ```
 
 ### 3. Development Installation
@@ -91,7 +94,7 @@ For contributors or advanced users who want the latest features:
 ```bash
 git clone https://github.com/ESA-PhiLab/sarpyx.git
 cd sarpyx
-pip install -e .
+uv sync --group dev
 ```
 
 This creates an editable installation that reflects code changes immediately.
@@ -108,6 +111,13 @@ print(f"sarpyx version: {sarpyx.__version__}")
 from sarpyx.utils import show_image
 from sarpyx.sla import SubLookAnalysis
 print("Installation successful!")
+```
+
+For the managed `uv` environment:
+
+```bash
+uv run python -c "import sarpyx; print(sarpyx.__version__)"
+uv run sarpyx --help
 ```
 
 ## Optional Dependencies
@@ -206,10 +216,10 @@ conda activate sarpyx
 
 ### Development Environment
 
-For development work, also install development tools:
+For development work, use the managed toolchain:
 
 ```bash
-pip install pytest black flake8 mypy sphinx
+uv sync --group dev
+uv run pytest -q
+uv build
 ```
-
-This ensures you have all tools needed for testing, linting, and documentation generation.

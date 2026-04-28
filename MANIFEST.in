@@ -1,0 +1,12 @@
+include LICENSE
+include README.md
+include pyproject.toml
+recursive-include sarpyx *.py
+prune build
+prune dist
+prune docs/_site
+prune outputs
+prune sarpyx.egg-info
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude .DS_Store

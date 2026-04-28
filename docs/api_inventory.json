@@ -1134,7 +1134,7 @@
     "imports": []
   },
   {
-    "module": "sarpyx/processor/core/dim_updater.py",
+    "module": "sarpyx/snapflow/dim_updater.py",
     "all": null,
     "public_functions": [
       {

@@ -4,7 +4,7 @@ from torch import nn
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 
-from constants import load_constants, load_constants_from_meta
+from .constants import load_constants, load_constants_from_meta
 import pandas as pd 
 import numpy as np
 

@@ -7,7 +7,8 @@ Run locally:
     make docker-test
 
 Run in CI:
-    Pytest is installed at runtime before running the tests.
+    Pytest is installed at runtime and this test file is mounted into the
+    container from the host workspace.
 """
 
 import importlib
@@ -126,17 +127,16 @@ class TestSnapEnvironment:
         assert shutil.which("gpt"), "SNAP gpt not found on PATH"
 
 
-# ── 6. Filesystem layout ────────────────────────────────────────────
+# ── 6. Grid configuration ───────────────────────────────────────────
 
 @pytest.mark.skipif(not IN_DOCKER_IMAGE, reason="Docker image checks only")
-class TestFilesystem:
-    """Check expected files / dirs inside the container."""
+class TestGridConfiguration:
+    """Check that the runtime grid contract is satisfied."""
 
-    def test_workspace_exists(self):
-        assert os.path.isdir("/workspace"), "/workspace not found"
+    def test_grid_path_set(self):
+        assert os.environ.get("GRID_PATH"), "GRID_PATH is not set"
 
-    def test_grid_exists(self):
-        grid_dir = "/workspace/grid"
-        assert os.path.isdir(grid_dir), f"{grid_dir} missing"
-        # Should contain at least one file produced by sarpyx.utils.grid
-        assert os.listdir(grid_dir), f"{grid_dir} is empty"
+    def test_grid_path_exists(self):
+        grid_path = os.environ.get("GRID_PATH", "")
+        assert grid_path.endswith(".geojson"), f"GRID_PATH is not a .geojson: {grid_path}"
+        assert os.path.isfile(grid_path), f"GRID_PATH missing: {grid_path}"

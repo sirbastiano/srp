@@ -3378,7 +3378,7 @@
     "all": null
   },
   {
-    "module": "sarpyx/processor/core/dim_updater.py",
+    "module": "sarpyx/snapflow/dim_updater.py",
     "description": null,
     "public_functions": [
       {

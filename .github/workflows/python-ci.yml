@@ -1,0 +1,61 @@
+name: Python CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Sync environment
+        run: uv sync --group dev
+
+      - name: Run tests
+        run: uv run pytest -q
+
+      - name: Build distributions
+        run: uv build
+
+      - name: Audit built wheel contents
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import zipfile
+
+          wheels = sorted(Path("dist").glob("*.whl"))
+          if not wheels:
+              raise SystemExit("No wheel produced in dist/")
+
+          forbidden_roots = {"docs", "tests", "outputs", "pyscripts"}
+          with zipfile.ZipFile(wheels[0]) as wheel:
+              offenders = sorted(
+                  name for name in wheel.namelist()
+                  if name.split("/", 1)[0] in forbidden_roots
+              )
+
+          if offenders:
+              print("Forbidden wheel entries detected:")
+              for name in offenders:
+                  print(name)
+              raise SystemExit(1)
+          PY

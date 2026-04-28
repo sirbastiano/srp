@@ -16,6 +16,7 @@ __all__ = [
     "prepare_pair",
     "run_pair_workflow",
     "run_processing_pipeline",
+    "update_dim_add_bands_from_data_dir",
 ]
 
 __version__ = '0.1.5'
@@ -34,6 +35,7 @@ _EXPORT_MODULES = {
     "prepare_pair": "snap2stamps",
     "run_pair_workflow": "snap2stamps",
     "run_processing_pipeline": "snap2stamps",
+    "update_dim_add_bands_from_data_dir": "dim_updater",
 }
 
 _module_cache = {}
