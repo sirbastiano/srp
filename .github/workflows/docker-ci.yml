@@ -1,13 +1,4 @@
-# ──────────────────────────────────────────────────────────────
-# CI/CD – Docker build, test, and publish
-# ──────────────────────────────────────────────────────────────
-# Triggers:
-#   • Pull requests touching Docker/runtime files         → build + smoke test
-#   • Pushes to main touching Docker/runtime files        → build + smoke test + push tested image
-#   • Manual dispatch                                     → build + smoke test + optional push of tested image
-# ──────────────────────────────────────────────────────────────
-
-name: Docker Build & Publish
+name: Docker CI
 
 on:
   pull_request:
@@ -21,26 +12,8 @@ on:
       - "sarpyx/**"
       - "tests/**"
       - "support/**"
-      - ".github/workflows/docker.yml"
-  push:
-    branches: [main]
-    paths:
-      - "Dockerfile"
-      - "docker-compose.yml"
-      - ".dockerignore"
-      - "entrypoint.sh"
-      - "start-jupyter.sh"
-      - "sarpyx/**"
-      - "tests/**"
-      - "pyproject.toml"
-      - "support/**"
-      - ".github/workflows/docker.yml"
-  workflow_dispatch:
-    inputs:
-      push_image:
-        description: "Push image to Docker Hub after build?"
-        required: false
-        default: "false"
+      - ".github/workflows/docker-ci.yml"
+      - ".github/workflows/docker-publish.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -51,7 +24,7 @@ env:
   DOCKER_TEST_GRID: /workspace/grid/grid_smoke.geojson
 
 jobs:
-  docker:
+  docker-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 180
 
@@ -120,30 +93,3 @@ jobs:
       - name: Remove Jupyter smoke container
         if: always()
         run: docker rm -f sarpyx-jupyter-smoke || true
-
-      - name: Log in to Docker Hub
-        if: >-
-          (
-            github.event_name == 'push' ||
-            (github.event_name == 'workflow_dispatch' && github.event.inputs.push_image == 'true')
-          )
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Tag and push tested Docker image
-        if: >-
-          (
-            github.event_name == 'push' ||
-            (github.event_name == 'workflow_dispatch' && github.event.inputs.push_image == 'true')
-          )
-        run: |
-          docker tag "${{ env.DOCKER_IMAGE }}:ci" "${{ env.DOCKER_IMAGE }}:${GITHUB_SHA}"
-          docker push "${{ env.DOCKER_IMAGE }}:${GITHUB_SHA}"
-
-          if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
-            docker tag "${{ env.DOCKER_IMAGE }}:ci" "${{ env.DOCKER_IMAGE }}:latest"
-            docker push "${{ env.DOCKER_IMAGE }}:latest"
-          fi
-        shell: bash

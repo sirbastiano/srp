@@ -1,0 +1,110 @@
+name: Docker Publish
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - ".dockerignore"
+      - "entrypoint.sh"
+      - "start-jupyter.sh"
+      - "pyproject.toml"
+      - "sarpyx/**"
+      - "tests/**"
+      - "support/**"
+      - ".github/workflows/docker-ci.yml"
+      - ".github/workflows/docker-publish.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOCKER_IMAGE: sirbastiano94/sarpyx
+  DOCKER_TEST_GRID: /workspace/grid/grid_smoke.geojson
+
+jobs:
+  docker-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          version: v0.11.2
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          load: true
+          platforms: linux/amd64
+          tags: ${{ env.DOCKER_IMAGE }}:ci
+          cache-from: type=gha,scope=sarpyx-docker
+          cache-to: type=gha,mode=max,scope=sarpyx-docker
+
+      - name: Run mounted Docker smoke tests
+        run: |
+          docker run --rm \
+            -e GRID_PATH="${GRID_PATH}" \
+            -v "${GITHUB_WORKSPACE}/tests:/opt/smoke-tests:ro" \
+            -v "${GITHUB_WORKSPACE}/tests/fixtures:/workspace/grid:ro" \
+            ${{ env.DOCKER_IMAGE }}:ci \
+            sh -lc "python3.11 -m pip install --no-cache-dir pytest==8.4.0 && python3.11 -m pytest /opt/smoke-tests/test_docker.py -q --tb=short"
+        env:
+          GRID_PATH: ${{ env.DOCKER_TEST_GRID }}
+        shell: bash
+
+      - name: Start Jupyter smoke container
+        run: |
+          docker run -d --rm \
+            --name sarpyx-jupyter-smoke \
+            -p 127.0.0.1:8888:8888 \
+            -e GRID_PATH="${GRID_PATH}" \
+            -e JUPYTER_TOKEN=ci-smoke-token \
+            -v "${GITHUB_WORKSPACE}/tests/fixtures:/workspace/grid:ro" \
+            ${{ env.DOCKER_IMAGE }}:ci \
+            /usr/local/bin/start-jupyter.sh
+        env:
+          GRID_PATH: ${{ env.DOCKER_TEST_GRID }}
+        shell: bash
+
+      - name: Wait for Jupyter health check
+        run: |
+          for attempt in {1..30}; do
+            if curl -fsS "http://127.0.0.1:8888/lab?token=ci-smoke-token" >/dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          docker logs sarpyx-jupyter-smoke
+          exit 1
+        shell: bash
+
+      - name: Dump Jupyter smoke logs
+        if: always()
+        run: docker logs sarpyx-jupyter-smoke || true
+
+      - name: Remove Jupyter smoke container
+        if: always()
+        run: docker rm -f sarpyx-jupyter-smoke || true
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Tag and push tested Docker image
+        run: |
+          docker tag "${{ env.DOCKER_IMAGE }}:ci" "${{ env.DOCKER_IMAGE }}:${GITHUB_SHA}"
+          docker push "${{ env.DOCKER_IMAGE }}:${GITHUB_SHA}"
+          docker tag "${{ env.DOCKER_IMAGE }}:ci" "${{ env.DOCKER_IMAGE }}:latest"
+          docker push "${{ env.DOCKER_IMAGE }}:latest"
+        shell: bash
