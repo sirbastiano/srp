@@ -654,6 +654,8 @@ def _wkt_to_rings(source_wkt: str | None) -> list[list[tuple[float, float]]]:
 
 
 def build_validation_map_layers(validation_groups: list[dict[str, Any]]) -> dict[str, Any]:
+    pre_tc_outlines: list[dict[str, Any]] = []
+    post_tc_outlines: list[dict[str, Any]] = []
     report_source_outlines: list[dict[str, Any]] = []
     swath_source_outlines: list[dict[str, Any]] = []
     expected_tiles: dict[str, list[tuple[float, float]]] = {}
@@ -667,9 +669,25 @@ def build_validation_map_layers(validation_groups: list[dict[str, Any]]) -> dict
     tiles_with_center_only: set[str] = set()
 
     report_outline_keys: set[tuple[tuple[float, float], ...]] = set()
+    pre_outline_keys: set[tuple[tuple[float, float], ...]] = set()
+    post_outline_keys: set[tuple[tuple[float, float], ...]] = set()
 
     for group in validation_groups:
         group_label = _group_label(group)
+        pre_tc_wkt = _group_pre_tc_wkt(group)
+        post_tc_wkt = _group_post_tc_wkt(group)
+        for ring in _wkt_to_rings(pre_tc_wkt):
+            key = tuple(ring)
+            if key in pre_outline_keys:
+                continue
+            pre_outline_keys.add(key)
+            pre_tc_outlines.append({'label': group_label, 'coords': ring})
+        for ring in _wkt_to_rings(post_tc_wkt):
+            key = tuple(ring)
+            if key in post_outline_keys:
+                continue
+            post_outline_keys.add(key)
+            post_tc_outlines.append({'label': group_label, 'coords': ring})
         report_source_wkt = group.get('report_source_wkt') or group.get('source_wkt')
         for ring in _wkt_to_rings(report_source_wkt):
             key = tuple(ring)
@@ -739,6 +757,8 @@ def build_validation_map_layers(validation_groups: list[dict[str, Any]]) -> dict
     ]
 
     return {
+        'pre_tc_outlines': pre_tc_outlines,
+        'post_tc_outlines': post_tc_outlines,
         'report_source_outlines': report_source_outlines,
         'swath_source_outlines': swath_source_outlines,
         'expected_polygons': expected_polygons,
@@ -827,16 +847,47 @@ def build_failure_appendix_rows(validation_groups: list[dict[str, Any]]) -> list
     return appendix_rows
 
 
-def _write_table(ax, col_labels: list[str], row_values: list[list[str]], *, font_size: int = 8, scale_y: float = 1.4) -> None:
+def _write_table(
+    ax,
+    col_labels: list[str],
+    row_values: list[list[str]],
+    *,
+    font_size: int = 8,
+    scale_y: float = 1.4,
+    cell_loc: str = 'center',
+    fill_bbox: bool = False,
+    col_widths: list[float] | None = None,
+    cell_pad: float = 0.06,
+) -> None:
     ax.axis('off')
-    table = ax.table(cellText=row_values, colLabels=col_labels, cellLoc='center', loc='center')
+    table_kwargs: dict[str, Any] = {
+        'cellText': row_values,
+        'colLabels': col_labels,
+        'cellLoc': cell_loc,
+    }
+    if col_widths is not None:
+        table_kwargs['colWidths'] = col_widths
+    if fill_bbox:
+        table_kwargs['bbox'] = [0.0, 0.0, 1.0, 1.0]
+    else:
+        table_kwargs['loc'] = 'center'
+    table = ax.table(**table_kwargs)
     table.auto_set_font_size(False)
     table.set_fontsize(font_size)
     table.scale(1, scale_y)
+    try:
+        table.auto_set_column_width(col=list(range(len(col_labels))))
+    except Exception:
+        pass
     for (row_index, _col_index), cell in table.get_celld().items():
+        cell.PAD = cell_pad
         if row_index == 0:
             cell.set_text_props(weight='bold')
             cell.set_facecolor('#E9ECEF')
+        else:
+            cell.set_facecolor('#FFFFFF')
+        cell.set_edgecolor('#CBD5E1')
+        cell.set_linewidth(0.8)
 
 
 def _write_summary_page(pdf, product_name: str, validation_groups: list[dict[str, Any]]) -> None:
@@ -1143,16 +1194,830 @@ def _write_failure_appendix(pdf, validation_groups: list[dict[str, Any]]) -> Non
         plt.close(fig)
 
 
+def _group_pre_tc_wkt(group: Mapping[str, Any]) -> str | None:
+    return (
+        group.get('pre_tc_wkt')
+        or group.get('input_source_wkt')
+        or group.get('source_input_wkt')
+        or group.get('report_source_wkt')
+        or group.get('source_wkt')
+    )
+
+
+def _group_post_tc_wkt(group: Mapping[str, Any]) -> str | None:
+    return (
+        group.get('post_tc_wkt')
+        or group.get('report_source_wkt')
+        or group.get('source_wkt')
+        or _group_pre_tc_wkt(group)
+    )
+
+
+def build_aggregate_dashboard_rows(validation_groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    totals: dict[str, dict[str, float]] = {
+        label: {'check': label, 'passed': 0, 'failed': 0}
+        for label, _predicate in VALIDATION_CHECKS
+    }
+    for group in validation_groups:
+        for row in build_validation_dashboard_rows(group):
+            entry = totals[row['check']]
+            entry['passed'] += row['passed']
+            entry['failed'] += row['failed']
+    rows: list[dict[str, Any]] = []
+    for label, _predicate in VALIDATION_CHECKS:
+        entry = totals[label]
+        total = entry['passed'] + entry['failed']
+        rows.append({
+            'check': label,
+            'passed': int(entry['passed']),
+            'failed': int(entry['failed']),
+            'pass_pct': round((entry['passed'] / total) * 100.0, 1) if total else 100.0,
+        })
+    return rows
+
+
+def build_report_metadata_snapshot(validation_groups: list[dict[str, Any]]) -> list[tuple[str, str]]:
+    preferred_keys = (
+        ('Mission', 'MISSION'),
+        ('Mode', 'ACQUISITION_MODE'),
+        ('Product', 'PRODUCT_TYPE'),
+        ('Pass', 'PASS'),
+        ('Polarization 1', 'mds1_tx_rx_polar'),
+        ('Polarization 2', 'mds2_tx_rx_polar'),
+        ('Acquisition', 'first_line_time'),
+        ('Source Product', 'PRODUCT'),
+    )
+    for group in validation_groups:
+        for result in group.get('results', []):
+            quickinfo = result.get('quickinfo_row') or {}
+            snapshot = [
+                (label, str(quickinfo[key]))
+                for label, key in preferred_keys
+                if quickinfo.get(key) not in (None, '', 'None')
+            ]
+            if snapshot:
+                return snapshot
+    return []
+
+
+def _geometry_area_sqkm(geometry) -> float:
+    import pyproj
+
+    geod = pyproj.Geod(ellps='WGS84')
+    if geometry.geom_type == 'Polygon':
+        polygons = [geometry]
+    elif geometry.geom_type == 'MultiPolygon':
+        polygons = list(geometry.geoms)
+    else:
+        return 0.0
+
+    total_area = 0.0
+    for polygon in polygons:
+        lon, lat = zip(*polygon.exterior.coords)
+        area, _perimeter = geod.polygon_area_perimeter(lon, lat)
+        total_area += abs(area)
+        for interior in polygon.interiors:
+            hole_lon, hole_lat = zip(*interior.coords)
+            hole_area, _hole_perimeter = geod.polygon_area_perimeter(hole_lon, hole_lat)
+            total_area -= abs(hole_area)
+    return total_area / 1_000_000.0
+
+
+def _combined_wkt_area_sqkm(source_wkts: list[str | None]) -> float | None:
+    wkts = [source_wkt for source_wkt in source_wkts if source_wkt]
+    if not wkts:
+        return None
+    from shapely import wkt as shapely_wkt
+    from shapely.ops import unary_union
+
+    geometry = unary_union([shapely_wkt.loads(source_wkt) for source_wkt in wkts])
+    if geometry.is_empty:
+        return None
+    return _geometry_area_sqkm(geometry)
+
+
+def _status_distribution(validation_groups: list[dict[str, Any]]) -> list[tuple[str, int, str]]:
+    counts = build_validation_headline_counts(validation_groups)
+    return [
+        ('Passed', counts['passed_tiles'], '#16A34A'),
+        ('Failed', counts['failed_tiles'], '#DC2626'),
+        ('Skipped', counts['skipped_tiles'], '#D97706'),
+        ('Missing', counts['missing_tiles'], '#F59E0B'),
+        ('Extra', counts['extra_tiles'], '#7C3AED'),
+    ]
+
+
+def _trim_text(value: Any, width: int = 60) -> str:
+    import textwrap
+
+    if value in (None, ''):
+        return '-'
+    return textwrap.shorten(str(value), width=width, placeholder='...')
+
+
+def _build_issue_summary_lines(validation_groups: list[dict[str, Any]], limit: int = 6) -> list[str]:
+    rows = build_failure_appendix_rows(validation_groups)
+    if not rows or (len(rows) == 1 and rows[0].get('tile') == '-'):
+        return [
+            'No failing tiles or metadata regressions detected.',
+            'All produced tiles passed the validation checklist for this run.',
+        ]
+
+    lines: list[str] = []
+    for row in rows[:limit]:
+        issues = '; '.join(str(issue) for issue in row.get('issues', [])[:2]) or 'validation failed'
+        lines.append(f"{row['tile']} [{row['group']}]: {issues}")
+    remaining = len(rows) - limit
+    if remaining > 0:
+        lines.append(f'+ {remaining} additional issue block(s) omitted from this summary.')
+    return lines
+
+
+def _add_page_chrome(fig, title: str, subtitle: str, page_number: int, total_pages: int) -> None:
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Rectangle
+
+    fig.patch.set_facecolor('#F8FAFC')
+    chrome_ax = fig.add_axes([0.0, 0.0, 1.0, 1.0], zorder=-5)
+    chrome_ax.axis('off')
+    chrome_ax.add_patch(Rectangle((0.0, 0.925), 1.0, 0.075, color='#0F172A'))
+    chrome_ax.add_patch(Rectangle((0.0, 0.925), 0.34, 0.075, color='#0F766E'))
+    chrome_ax.add_patch(Rectangle((0.0, 0.0), 1.0, 0.018, color='#E2E8F0'))
+    fig.text(0.035, 0.958, title, ha='left', va='center', fontsize=19, fontweight='bold', color='white')
+    fig.text(0.035, 0.931, subtitle, ha='left', va='center', fontsize=9.5, color='#DCE7F3')
+    fig.text(0.965, 0.028, f'Page {page_number}/{total_pages}', ha='right', va='bottom', fontsize=8.5, color='#64748B')
+
+
+def _wrap_lines_to_width(lines: list[str], width_chars: int) -> list[str]:
+    import textwrap
+
+    wrapped_lines: list[str] = []
+    for line in lines:
+        current_line = str(line) if line not in (None, '') else '-'
+        chunks = textwrap.wrap(
+            current_line,
+            width=max(width_chars, 8),
+            break_long_words=False,
+            break_on_hyphens=False,
+        ) or ['-']
+        wrapped_lines.extend(chunks)
+    return wrapped_lines
+
+
+def _add_fitted_text_block(
+    ax,
+    lines: list[str],
+    *,
+    x: float = 0.0,
+    y: float = 1.0,
+    max_fontsize: float = 9.0,
+    min_fontsize: float = 5.5,
+    color: str = '#334155',
+    fontweight: str = 'normal',
+    va: str = 'top',
+    ha: str = 'left',
+    line_spacing: float = 1.02,
+) -> None:
+    fig = ax.figure
+    if not lines:
+        lines = ['-']
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    ax_bbox = ax.get_window_extent(renderer=renderer)
+    target_width = ax_bbox.width * 0.98
+    target_height = ax_bbox.height * 0.98
+
+    best_text = '\n'.join(lines)
+    best_fontsize = min_fontsize
+
+    for fontsize in np.arange(max_fontsize, min_fontsize - 0.01, -0.2):
+        char_width_px = max((fontsize * fig.dpi / 72.0) * 0.56, 1.0)
+        wrap_width = int(target_width / char_width_px)
+        wrapped_lines = _wrap_lines_to_width(lines, wrap_width)
+        candidate_text = '\n'.join(wrapped_lines)
+        text_obj = ax.text(
+            x,
+            y,
+            candidate_text,
+            transform=ax.transAxes,
+            ha=ha,
+            va=va,
+            fontsize=fontsize,
+            color=color,
+            fontweight=fontweight,
+            linespacing=line_spacing,
+            clip_on=True,
+        )
+        fig.canvas.draw()
+        bbox = text_obj.get_window_extent(renderer=fig.canvas.get_renderer())
+        fits = bbox.width <= target_width and bbox.height <= target_height
+        text_obj.remove()
+        if fits:
+            best_text = candidate_text
+            best_fontsize = fontsize
+            break
+        best_text = candidate_text
+        best_fontsize = fontsize
+
+    ax.text(
+        x,
+        y,
+        best_text,
+        transform=ax.transAxes,
+        ha=ha,
+        va=va,
+        fontsize=best_fontsize,
+        color=color,
+        fontweight=fontweight,
+        linespacing=line_spacing,
+        clip_on=True,
+    )
+
+
+def _add_metric_card(fig, bounds: list[float], label: str, value: str, accent: str, subtitle: str | None = None) -> None:
+    from matplotlib.patches import FancyBboxPatch
+
+    ax = fig.add_axes(bounds)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis('off')
+    ax.add_patch(FancyBboxPatch(
+        (0, 0), 1, 1,
+        boxstyle='round,pad=0.02,rounding_size=0.06',
+        facecolor='white',
+        edgecolor='#CBD5E1',
+        linewidth=1.1,
+    ))
+    ax.add_patch(FancyBboxPatch(
+        (0.0, 0.0), 0.03, 1.0,
+        boxstyle='round,pad=0.0,rounding_size=0.06',
+        facecolor=accent,
+        edgecolor=accent,
+        linewidth=0,
+    ))
+    label_ax = ax.inset_axes([0.08, 0.60, 0.82, 0.18])
+    label_ax.axis('off')
+    _add_fitted_text_block(
+        label_ax,
+        [label.upper()],
+        x=0.0,
+        y=1.0,
+        max_fontsize=8.4,
+        min_fontsize=6.6,
+        color='#64748B',
+        fontweight='bold',
+        va='top',
+    )
+    ax.text(0.08, 0.45, value, ha='left', va='center', fontsize=20, color='#0F172A', fontweight='bold')
+    if subtitle:
+        subtitle_ax = ax.inset_axes([0.08, 0.08, 0.84, 0.18])
+        subtitle_ax.axis('off')
+        _add_fitted_text_block(
+            subtitle_ax,
+            [subtitle],
+            x=0.0,
+            y=0.0,
+            max_fontsize=8.2,
+            min_fontsize=6.6,
+            color='#475569',
+            va='bottom',
+        )
+
+
+def _add_note_box(fig, bounds: list[float], title: str, lines: list[str], facecolor: str = 'white') -> None:
+    from matplotlib.patches import FancyBboxPatch
+
+    ax = fig.add_axes(bounds)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis('off')
+    ax.add_patch(FancyBboxPatch(
+        (0, 0), 1, 1,
+        boxstyle='round,pad=0.02,rounding_size=0.05',
+        facecolor=facecolor,
+        edgecolor='#CBD5E1',
+        linewidth=1.0,
+    ))
+    ax.text(0.05, 0.88, title, ha='left', va='center', fontsize=11, fontweight='bold', color='#0F172A')
+    body_ax = ax.inset_axes([0.05, 0.08, 0.90, 0.68])
+    body_ax.axis('off')
+    _add_fitted_text_block(
+        body_ax,
+        lines,
+        x=0.0,
+        y=1.0,
+        max_fontsize=9.0,
+        min_fontsize=6.2,
+        color='#334155',
+        va='top',
+    )
+
+
+def _add_metadata_box(
+    fig,
+    bounds: list[float],
+    title: str,
+    items: list[tuple[str, str]],
+    *,
+    facecolor: str = 'white',
+) -> None:
+    from matplotlib.patches import FancyBboxPatch
+
+    ax = fig.add_axes(bounds)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis('off')
+    ax.add_patch(FancyBboxPatch(
+        (0, 0), 1, 1,
+        boxstyle='round,pad=0.02,rounding_size=0.05',
+        facecolor=facecolor,
+        edgecolor='#CBD5E1',
+        linewidth=1.0,
+    ))
+    ax.text(0.05, 0.88, title, ha='left', va='center', fontsize=11, fontweight='bold', color='#0F172A')
+    display_items = items if items else [('Status', 'No metadata available')]
+    y = 0.74
+    step = min(0.12, 0.62 / max(len(display_items), 1))
+    fontsize = 8.6 if len(display_items) <= 5 else 7.9 if len(display_items) <= 7 else 7.2
+    for label, value in display_items:
+        line = f'{label}: {value}'
+        ax.text(0.05, y, line, ha='left', va='top', fontsize=fontsize, color='#475569', clip_on=True)
+        y -= step
+
+
+def _format_sqkm(value: float | None) -> str:
+    if value is None:
+        return '-'
+    return f'{value:,.0f} km^2'
+
+
+def _format_sqkm_compact(value: float | None) -> str:
+    if value is None:
+        return '-'
+    if value >= 10_000:
+        return f'{value / 1_000:.1f}k'
+    return f'{value:,.0f}'
+
+
+def _set_map_extent(ax, coord_groups: list[list[tuple[float, float]]]) -> None:
+    all_coords = [coord for group in coord_groups for coord in group]
+    if not all_coords:
+        ax.text(0.5, 0.5, 'No geographic geometry available.', ha='center', va='center', transform=ax.transAxes)
+        return
+    xs = [coord[0] for coord in all_coords]
+    ys = [coord[1] for coord in all_coords]
+    x_margin = max((max(xs) - min(xs)) * 0.08, 0.01)
+    y_margin = max((max(ys) - min(ys)) * 0.08, 0.01)
+    ax.set_xlim(min(xs) - x_margin, max(xs) + x_margin)
+    ax.set_ylim(min(ys) - y_margin, max(ys) + y_margin)
+    ax.set_aspect('equal', adjustable='box')
+    ax.grid(True, linewidth=0.4, alpha=0.25, color='#94A3B8')
+    ax.set_xlabel('Longitude', fontsize=8.5, color='#475569')
+    ax.set_ylabel('Latitude', fontsize=8.5, color='#475569')
+    ax.tick_params(labelsize=8.5, colors='#334155')
+
+
+def _style_plot_panel(ax, title: str, subtitle: str | None = None) -> None:
+    ax.set_facecolor('#FFFFFF')
+    for spine in ax.spines.values():
+        spine.set_color('#CBD5E1')
+        spine.set_linewidth(0.9)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.text(0.04, 0.95, title, transform=ax.transAxes, ha='left', va='top', fontsize=11.5, fontweight='bold', color='#0F172A')
+
+
+def _make_panel(fig, bounds: list[float], title: str, subtitle: str | None = None, content_bounds: list[float] | None = None):
+    panel_ax = fig.add_axes(bounds)
+    _style_plot_panel(panel_ax, title, subtitle)
+    body_bounds = content_bounds or [0.06, 0.10, 0.90, 0.72]
+    content_ax = panel_ax.inset_axes(body_bounds)
+    return panel_ax, content_ax
+
+
+def _write_table_panel(
+    fig,
+    bounds: list[float],
+    title: str,
+    subtitle: str,
+    col_labels: list[str],
+    row_values: list[list[str]],
+    *,
+    font_size: int = 8,
+    scale_y: float = 1.0,
+    cell_loc: str = 'center',
+    content_bounds: list[float] | None = None,
+    fill_bbox: bool = True,
+    col_widths: list[float] | None = None,
+    cell_pad: float = 0.06,
+) -> None:
+    _, table_ax = _make_panel(fig, bounds, title, subtitle, content_bounds or [0.02, 0.10, 0.96, 0.72])
+    _write_table(
+        table_ax,
+        col_labels,
+        row_values,
+        font_size=font_size,
+        scale_y=scale_y,
+        cell_loc=cell_loc,
+        fill_bbox=fill_bbox,
+        col_widths=col_widths,
+        cell_pad=cell_pad,
+    )
+
+
+def _write_summary_page_compact(pdf, product_name: str, validation_groups: list[dict[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+
+    from datetime import datetime as _datetime, timezone as _timezone
+
+    counts = build_validation_headline_counts(validation_groups)
+    summary_rows = build_validation_group_summary_rows(validation_groups)
+    aggregate_rows = build_aggregate_dashboard_rows(validation_groups)
+    metadata_snapshot = build_report_metadata_snapshot(validation_groups)
+    issue_count = counts['failed_tiles'] + counts['missing_tiles'] + counts['extra_tiles']
+    pass_rate = (counts['passed_tiles'] / counts['expected_tiles'] * 100.0) if counts['expected_tiles'] else 100.0
+    overall_status = 'PASS' if issue_count == 0 else 'FAIL'
+
+    fig = plt.figure(figsize=(11.69, 8.27))
+    _add_page_chrome(
+        fig,
+        'WorldSAR Validation Report',
+        f'{product_name} | Executive summary | Generated {_datetime.now(_timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")}',
+        1,
+        2,
+    )
+
+    overview_metrics = [
+        ('Validation groups', str(len(summary_rows))),
+        ('Expected tiles', str(counts['expected_tiles'])),
+        ('Produced tiles', str(counts['actual_tiles'])),
+        ('Passed tiles', str(counts['passed_tiles'])),
+        ('Failed tiles', str(counts['failed_tiles'])),
+        ('Skipped tiles', str(counts['skipped_tiles'])),
+        ('Missing tiles', str(counts['missing_tiles'])),
+        ('Extra tiles', str(counts['extra_tiles'])),
+        ('Pass rate', f'{pass_rate:.1f}%'),
+        ('Open issues', str(issue_count)),
+        ('Overall status', overall_status),
+    ]
+    overview_rows: list[list[str]] = []
+    for index in range(0, len(overview_metrics), 2):
+        left_label, left_value = overview_metrics[index]
+        if index + 1 < len(overview_metrics):
+            right_label, right_value = overview_metrics[index + 1]
+        else:
+            right_label, right_value = '', ''
+        overview_rows.append([left_label, left_value, right_label, right_value])
+    metadata_rows = [
+        [label, _trim_text(value, 42)]
+        for label, value in metadata_snapshot[:6]
+    ] or [['Status', 'No metadata snapshot available']]
+    group_rows = [
+        [
+            row['group'],
+            str(row['expected']),
+            str(row['actual']),
+            str(row['passed']),
+            str(row['failed']),
+            str(row['skipped']),
+            str(row['missing']),
+            str(row['extra']),
+            row['overall_status'],
+        ]
+        for row in summary_rows
+    ] or [['-', '0', '0', '0', '0', '0', '0', '0', 'PASS']]
+    check_rows = [
+        [
+            row['check'],
+            str(row['passed']),
+            str(row['failed']),
+            f"{row['pass_pct']:.1f}%",
+        ]
+        for row in aggregate_rows
+    ] or [['overall', '0', '0', '100.0%']]
+
+    _write_table_panel(
+        fig,
+        [0.05, 0.68, 0.90, 0.17],
+        'Run Summary',
+        'Key counts and final status for this validation run',
+        ['Metric', 'Value', 'Metric', 'Value'],
+        overview_rows,
+        font_size=9.2,
+        scale_y=1.0,
+        cell_loc='left',
+        content_bounds=[0.02, 0.14, 0.96, 0.64],
+        fill_bbox=True,
+        col_widths=[0.32, 0.18, 0.32, 0.18],
+        cell_pad=0.10,
+    )
+
+    _write_table_panel(
+        fig,
+        [0.05, 0.50, 0.90, 0.13],
+        'Product Metadata',
+        'Mission and acquisition attributes used by the validator',
+        ['Field', 'Value'],
+        metadata_rows,
+        font_size=8.8,
+        scale_y=1.0,
+        cell_loc='left',
+        content_bounds=[0.02, 0.16, 0.96, 0.56],
+        fill_bbox=True,
+        col_widths=[0.22, 0.78],
+        cell_pad=0.10,
+    )
+
+    _write_table_panel(
+        fig,
+        [0.05, 0.32, 0.90, 0.13],
+        'Validation Groups',
+        'Per-group production outcome and issue counts',
+        ['Group', 'Expected', 'Actual', 'Passed', 'Failed', 'Skipped', 'Missing', 'Extra', 'Status'],
+        group_rows,
+        font_size=8.4,
+        scale_y=1.0,
+        content_bounds=[0.02, 0.16, 0.96, 0.56],
+        fill_bbox=True,
+        cell_pad=0.10,
+    )
+
+    _write_table_panel(
+        fig,
+        [0.05, 0.06, 0.90, 0.21],
+        'Validation Checks',
+        'Aggregate pass and fail counts across the produced tile set',
+        ['Check', 'Passed', 'Failed', 'Pass rate'],
+        check_rows,
+        font_size=8.6,
+        scale_y=1.0,
+        cell_loc='left',
+        content_bounds=[0.02, 0.12, 0.96, 0.68],
+        fill_bbox=True,
+        col_widths=[0.52, 0.16, 0.14, 0.18],
+        cell_pad=0.10,
+    )
+
+    pdf.savefig(fig)
+    plt.close(fig)
+
+
+def _write_footprint_page_compact(pdf, product_name: str, validation_groups: list[dict[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
+
+    layers = build_validation_map_layers(validation_groups)
+    pre_area = _combined_wkt_area_sqkm([_group_pre_tc_wkt(group) for group in validation_groups])
+    post_area = _combined_wkt_area_sqkm([_group_post_tc_wkt(group) for group in validation_groups])
+    ratio = ((post_area / pre_area) * 100.0) if pre_area and post_area else None
+
+    pre_coords = [item['coords'] for item in layers['pre_tc_outlines']]
+    post_coords = [item['coords'] for item in layers['post_tc_outlines']]
+    tile_coords = [item['coords'] for item in layers['expected_polygons']] + [item['coords'] for item in layers['passed_polygons']]
+    combined_coords = pre_coords + post_coords + tile_coords
+    pre_focus_coords = pre_coords + post_coords
+    post_focus_coords = post_coords + [item['coords'] for item in layers['expected_polygons']]
+    post_focus_coords += [item['coords'] for item in layers['passed_polygons']]
+    post_focus_coords += [item['coords'] for item in layers['failed_polygons']]
+
+    fig = plt.figure(figsize=(11.69, 8.27))
+    _add_page_chrome(fig, 'Footprint Analysis', f'{product_name} | Input geometry vs terrain-corrected raster extent', 2, 2)
+
+    before_panel_ax, before_ax = _make_panel(
+        fig,
+        [0.05, 0.52, 0.42, 0.29],
+        'Before Terrain Correction',
+        'Input product footprint from source metadata or manual override',
+        [0.08, 0.14, 0.88, 0.70],
+    )
+    _plot_polygon_items(before_ax, layers['pre_tc_outlines'], edgecolor='#1D4ED8', facecolor='#DBEAFE', linewidth=1.6, alpha=0.85)
+    _plot_polygon_items(before_ax, layers['post_tc_outlines'], edgecolor='#0F766E', linewidth=1.0, linestyle='--', alpha=0.55)
+    _set_map_extent(before_ax, pre_focus_coords or combined_coords)
+
+    after_panel_ax, after_ax = _make_panel(
+        fig,
+        [0.52, 0.52, 0.42, 0.29],
+        'After Terrain Correction',
+        'Processed TC.dim footprint used for tile selection and reporting',
+        [0.08, 0.14, 0.88, 0.70],
+    )
+    _plot_polygon_items(after_ax, layers['expected_polygons'], edgecolor='#CBD5E1', facecolor='#F1F5F9', linewidth=0.8, alpha=0.95)
+    _plot_polygon_items(after_ax, layers['passed_polygons'], edgecolor='#15803D', facecolor='#DCFCE7', linewidth=1.1, alpha=0.9)
+    _plot_polygon_items(after_ax, layers['failed_polygons'], edgecolor='#B91C1C', facecolor='#FEE2E2', linewidth=1.2, alpha=0.85)
+    _plot_polygon_items(after_ax, layers['post_tc_outlines'], edgecolor='#0F172A', linewidth=1.6)
+    _set_map_extent(after_ax, post_focus_coords or combined_coords)
+
+    overlay_panel_ax, overlay_ax = _make_panel(
+        fig,
+        [0.05, 0.19, 0.44, 0.24],
+        'Footprint comparison overlay',
+        'Pre-TC outline vs post-TC raster extent with tile footprint overlay',
+        [0.08, 0.14, 0.86, 0.66],
+    )
+    _plot_polygon_items(overlay_ax, layers['pre_tc_outlines'], edgecolor='#1D4ED8', linewidth=1.2, linestyle='--', alpha=0.95)
+    _plot_polygon_items(overlay_ax, layers['post_tc_outlines'], edgecolor='#0F172A', linewidth=1.6, alpha=0.95)
+    _plot_polygon_items(overlay_ax, layers['passed_polygons'], edgecolor='#16A34A', facecolor='#DCFCE7', linewidth=0.9, alpha=0.85)
+    _set_map_extent(overlay_ax, combined_coords)
+
+    _add_note_box(
+        fig,
+        [0.54, 0.23, 0.40, 0.18],
+        'Interpretation',
+        [
+            'Pre-TC is the source-product footprint before raster reprojection.',
+            'Post-TC is the actual raster extent read from TC.dim and used for tile selection.',
+            'Expected and produced tiles are aligned to the processed raster, not to the broader source metadata footprint.',
+            'The 7.2% retained-area ratio is expected here because the validation run uses a burst-limited TC raster extent.',
+        ],
+        facecolor='#FFFFFF',
+    )
+
+    legend_ax = fig.add_axes([0.54, 0.125, 0.40, 0.08])
+    legend_ax.axis('off')
+    legend_ax.legend(
+        handles=[
+            Line2D([0], [0], color='#1D4ED8', linestyle='--', linewidth=1.4, label='pre-TC footprint'),
+            Line2D([0], [0], color='#0F172A', linestyle='-', linewidth=1.8, label='post-TC footprint'),
+            Patch(facecolor='#F1F5F9', edgecolor='#CBD5E1', linewidth=0.8, label='expected tiles'),
+            Patch(facecolor='#DCFCE7', edgecolor='#16A34A', linewidth=1.0, label='passed tiles'),
+            Patch(facecolor='#FEE2E2', edgecolor='#B91C1C', linewidth=1.0, label='failed tiles'),
+        ],
+        loc='center left',
+        frameon=False,
+        fontsize=8.0,
+        ncol=3,
+        columnspacing=1.4,
+        handlelength=2.2,
+    )
+
+    _add_metric_card(
+        fig,
+        [0.05, 0.03, 0.20, 0.09],
+        'Pre-TC area',
+        _format_sqkm_compact(pre_area),
+        '#2563EB',
+        'km^2 footprint',
+    )
+    _add_metric_card(
+        fig,
+        [0.28, 0.03, 0.20, 0.09],
+        'Post-TC area',
+        _format_sqkm_compact(post_area),
+        '#0F172A',
+        'km^2 raster extent',
+    )
+    _add_metric_card(
+        fig,
+        [0.51, 0.03, 0.20, 0.09],
+        'Retained',
+        f'{ratio:.1f}%' if ratio is not None else '-',
+        '#0F766E',
+        'post / pre area',
+    )
+    _add_metric_card(
+        fig,
+        [0.74, 0.03, 0.20, 0.09],
+        'Tiles inside',
+        str(layers['counts']['passed']),
+        '#16A34A',
+        f"{layers['counts']['expected']} expected",
+    )
+
+    pdf.savefig(fig)
+    plt.close(fig)
+
+
+def _write_dashboard_page_compact(pdf, product_name: str, validation_groups: list[dict[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+
+    counts = build_validation_headline_counts(validation_groups)
+    aggregate_rows = build_aggregate_dashboard_rows(validation_groups)
+    summary_rows = build_validation_group_summary_rows(validation_groups)
+    issue_lines = _build_issue_summary_lines(validation_groups)
+    inventory = build_validation_inventory_summary(validation_groups[0]) if validation_groups else {
+        'expected_bands': 0,
+        'expected_non_band_rasters': 0,
+        'expected_metadata_paths': 0,
+        'expected_metadata_attrs': 0,
+    }
+    metadata_snapshot = build_report_metadata_snapshot(validation_groups)
+
+    fig = plt.figure(figsize=(11.69, 8.27))
+    _add_page_chrome(fig, 'Validation Dashboard', f'{product_name} | Quality, schema, and issue summary', 3, 3)
+
+    status_panel_ax, status_ax = _make_panel(
+        fig,
+        [0.05, 0.58, 0.40, 0.24],
+        'Tile status counts',
+        'Materialized outputs and residual issue buckets',
+        [0.08, 0.18, 0.89, 0.62],
+    )
+    status_labels = ['Passed', 'Failed', 'Skipped', 'Missing', 'Extra']
+    status_values = [counts['passed_tiles'], counts['failed_tiles'], counts['skipped_tiles'], counts['missing_tiles'], counts['extra_tiles']]
+    status_colors = ['#16A34A', '#DC2626', '#D97706', '#F59E0B', '#7C3AED']
+    x_pos = np.arange(len(status_labels))
+    bars = status_ax.bar(x_pos, status_values, color=status_colors, width=0.62)
+    status_ax.set_xticks(x_pos, labels=status_labels)
+    status_ax.set_ylabel('Tiles', fontsize=8.5, color='#475569')
+    status_ax.tick_params(labelsize=8.5, colors='#334155')
+    status_ax.set_ylim(0, max(status_values + [1]) * 1.18)
+    for bar, value in zip(bars, status_values, strict=False):
+        status_ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + max(max(status_values), 1) * 0.03, str(value), ha='center', va='bottom', fontsize=8.5, color='#0F172A')
+
+    check_panel_ax, check_ax = _make_panel(
+        fig,
+        [0.52, 0.58, 0.43, 0.24],
+        'Checklist pass rates',
+        'Per-check validation quality across all produced tiles',
+        [0.22, 0.18, 0.75, 0.62],
+    )
+    checks = [row['check'] for row in aggregate_rows]
+    pass_pct = [row['pass_pct'] for row in aggregate_rows]
+    y_pos = np.arange(len(checks))
+    colors = ['#16A34A' if value >= 99.9 else '#F59E0B' if value >= 80 else '#DC2626' for value in pass_pct]
+    check_ax.barh(y_pos, pass_pct, color=colors, height=0.55)
+    check_ax.set_yticks(y_pos, labels=checks)
+    check_ax.invert_yaxis()
+    check_ax.set_xlim(0, 104)
+    check_ax.set_xlabel('Pass rate (%)', fontsize=8.5, color='#475569')
+    for index, row in enumerate(aggregate_rows):
+        total = row['passed'] + row['failed']
+        check_ax.text(min(row['pass_pct'] + 0.8, 101.5), index, f"{row['passed']}/{total}", va='center', fontsize=8.2, color='#334155')
+
+    inventory_panel_ax, inventory_ax = _make_panel(
+        fig,
+        [0.06, 0.29, 0.26, 0.20],
+        'Expected schema',
+        'Per-tile structural expectations',
+        [0.12, 0.18, 0.84, 0.60],
+    )
+    inv_labels = ['Bands', 'Rasters', 'Meta paths', 'Meta attrs']
+    inv_values = [
+        inventory['expected_bands'],
+        inventory['expected_non_band_rasters'],
+        inventory['expected_metadata_paths'],
+        inventory['expected_metadata_attrs'],
+    ]
+    inv_y = np.arange(len(inv_labels))
+    inventory_ax.barh(inv_y, inv_values, color=['#0F766E', '#0284C7', '#6366F1', '#7C3AED'], height=0.55)
+    inventory_ax.set_yticks(inv_y, labels=inv_labels)
+    inventory_ax.invert_yaxis()
+    inventory_ax.tick_params(labelsize=8.2, colors='#334155')
+    inventory_ax.set_xlabel('Count', fontsize=8.5, color='#475569')
+    inventory_ax.set_xlim(0, max(inv_values + [1]) * 1.10)
+    for index, value in enumerate(inv_values):
+        inventory_ax.text(value + max(max(inv_values), 1) * 0.03, index, str(value), va='center', fontsize=8.2, color='#334155')
+
+    metadata_items = [(label, _trim_text(value, 26)) for label, value in metadata_snapshot[:6]]
+    _add_metadata_box(fig, [0.34, 0.29, 0.27, 0.20], 'Metadata Detail', metadata_items, facecolor='#FFFFFF')
+
+    summary_panel_ax, summary_ax = _make_panel(
+        fig,
+        [0.65, 0.29, 0.30, 0.20],
+        'Group scorecard',
+        'Per-group delivery status',
+        [0.04, 0.24, 0.92, 0.46],
+    )
+    _write_table(
+        summary_ax,
+        ['Group', 'Expected', 'Actual', 'Passed', 'Status'],
+        [
+            [
+                row['group'],
+                str(row['expected']),
+                str(row['actual']),
+                str(row['passed']),
+                row['overall_status'],
+            ]
+            for row in summary_rows
+        ] or [['-', '0', '0', '0', 'PASS']],
+        font_size=8.8,
+        scale_y=1.45,
+    )
+
+    _add_note_box(fig, [0.05, 0.06, 0.90, 0.16], 'Issue Summary', issue_lines, facecolor='#FFFFFF')
+
+    pdf.savefig(fig)
+    plt.close(fig)
+
+
 def write_h5_validation_report_pdf(report_path: Path | str, product_name: str, validation_groups: list[dict[str, Any]]) -> Path:
+    import matplotlib as mpl
     from matplotlib.backends.backend_pdf import PdfPages
 
     report_path = Path(report_path)
     report_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with PdfPages(report_path) as pdf:
-        _write_summary_page(pdf, product_name, validation_groups)
-        _write_map_page(pdf, product_name, validation_groups)
-        _write_dashboard_pages(pdf, validation_groups)
-        _write_failure_appendix(pdf, validation_groups)
+    rc_params = {
+        'font.family': 'sans-serif',
+        'font.sans-serif': ['Arial', 'Helvetica', 'Liberation Sans', 'DejaVu Sans'],
+    }
+    with mpl.rc_context(rc=rc_params):
+        with PdfPages(report_path) as pdf:
+            _write_summary_page_compact(pdf, product_name, validation_groups)
+            _write_footprint_page_compact(pdf, product_name, validation_groups)
 
     return report_path

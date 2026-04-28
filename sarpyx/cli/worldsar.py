@@ -185,6 +185,13 @@ def add_worldsar_arguments(parser: argparse.ArgumentParser) -> None:
         help='Last Sentinel-1 TOPS burst index to include in TOPSAR-Split.'
     )
     parser.add_argument(
+        '--sentinel-tc-source-band',
+        dest='sentinel_tc_source_band',
+        type=str,
+        default=None,
+        help='Optional single Sentinel band name to keep during Terrain-Correction for smoke-test runs.'
+    )
+    parser.add_argument(
         '--skip-preprocessing',
         dest='skip_preprocessing',
         action='store_true',
@@ -736,6 +743,7 @@ def _sentinel_post_chain(
     product_path,
     orbit_type='Sentinel Precise (Auto Download)',
     orbit_continue_on_fail=False,
+    sentinel_tc_source_band=None,
 ):
     """Calibration → DerampDemod → Deburst → PolDecomp → TC  (shared by each swath)."""
     fp_orb = _apply_sentinel_orbit_file(
@@ -794,6 +802,8 @@ def _sentinel_post_chain(
     fp_tc = op.TerrainCorrection(
         map_projection='AUTO:42001',
         pixel_spacing_in_meter=10.0,
+        source_bands=[sentinel_tc_source_band] if sentinel_tc_source_band else None,
+        save_selected_source_band=True,
     )
     if fp_tc is None:
         raise RuntimeError(f'Terrain Correction failed: {op.last_error_summary()}')
@@ -808,6 +818,7 @@ def pipeline_sentinel(
     sentinel_swath=None,
     sentinel_first_burst=1,
     sentinel_last_burst=9999,
+    sentinel_tc_source_band=None,
     **_,
 ):
     """Sentinel-1 pipeline.
@@ -837,6 +848,7 @@ def pipeline_sentinel(
                 product_path=product_path,
                 orbit_type=orbit_type,
                 orbit_continue_on_fail=orbit_continue_on_fail,
+                sentinel_tc_source_band=sentinel_tc_source_band,
             )
         return results                    # {IW1: path, IW2: path, IW3: path}
     
@@ -882,6 +894,8 @@ def pipeline_sentinel(
     fp_tc = op.TerrainCorrection(
         map_projection='AUTO:42001',
         pixel_spacing_in_meter=10.0,
+        source_bands=[sentinel_tc_source_band] if sentinel_tc_source_band else None,
+        save_selected_source_band=True,
     )
     if fp_tc is None:
         raise RuntimeError(f'Terrain Correction failed: {op.last_error_summary()}')
@@ -1125,6 +1139,49 @@ def _read_geotransform(dim_path: Path) -> tuple:
     raise RuntimeError(f'Could not extract geotransform from {dim_path}')
 
 
+def _read_raster_size(dim_path: Path) -> tuple[int, int]:
+    """Read raster width/height from a BEAM-DIMAP .dim file."""
+    tree = ET.parse(dim_path)
+    root = tree.getroot()
+    raster_dimensions = root.find('.//Raster_Dimensions')
+    if raster_dimensions is None:
+        raise RuntimeError(f'Could not extract raster dimensions from {dim_path}')
+    ncols = raster_dimensions.findtext('NCOLS')
+    nrows = raster_dimensions.findtext('NROWS')
+    if ncols is None or nrows is None:
+        raise RuntimeError(f'Raster dimensions are incomplete in {dim_path}')
+    return int(ncols), int(nrows)
+
+
+def _read_crs_wkt(dim_path: Path) -> str:
+    """Read the BEAM-DIMAP coordinate reference system WKT."""
+    tree = ET.parse(dim_path)
+    root = tree.getroot()
+    crs_wkt = root.findtext('.//Coordinate_Reference_System/WKT')
+    if crs_wkt is None or not crs_wkt.strip():
+        raise RuntimeError(f'Could not extract CRS WKT from {dim_path}')
+    return crs_wkt
+
+
+def _dim_footprint_wkt(dim_path: Path) -> str:
+    """Derive a lon/lat footprint WKT from a BEAM-DIMAP raster."""
+    geotransform = _read_geotransform(dim_path)
+    ncols, nrows = _read_raster_size(dim_path)
+    crs = pyproj.CRS.from_wkt(_read_crs_wkt(dim_path))
+    transformer = pyproj.Transformer.from_crs(crs, 4326, always_xy=True)
+
+    origin_x, px_w, rot_x, origin_y, rot_y, px_h = geotransform
+    corners = [
+        (origin_x, origin_y),
+        (origin_x + ncols * px_w, origin_y + ncols * rot_y),
+        (origin_x + ncols * px_w + nrows * rot_x, origin_y + ncols * rot_y + nrows * px_h),
+        (origin_x + nrows * rot_x, origin_y + nrows * px_h),
+    ]
+    lonlat_corners = [transformer.transform(x, y) for x, y in corners]
+    lonlat_corners.append(lonlat_corners[0])
+    return 'POLYGON ((' + ', '.join(f'{lon} {lat}' for lon, lat in lonlat_corners) + '))'
+
+
 def _utm_bbox_to_pixel_region(utm_bbox: tuple, geotransform: tuple) -> str:
     """Convert a UTM bounding box to a SNAP Subset region string 'x,y,width,height'.
 
@@ -1144,6 +1201,20 @@ def _utm_bbox_to_pixel_region(utm_bbox: tuple, geotransform: tuple) -> str:
     height    = int(round((y_max - y_min) / abs(px_h)))
 
     return f'{col_start},{row_start},{width},{height}'
+
+
+def _pixel_region_is_within_bounds(region: str, raster_size: tuple[int, int]) -> bool:
+    """Return True when a SNAP region string fits entirely inside the raster."""
+    col_start, row_start, width, height = (int(value) for value in region.split(','))
+    ncols, nrows = raster_size
+    return (
+        width > 0
+        and height > 0
+        and col_start >= 0
+        and row_start >= 0
+        and col_start + width <= ncols
+        and row_start + height <= nrows
+    )
 
 
 def _update_h5_corners(h5_path: Path, utm_bbox: tuple, epsg: int) -> None:
@@ -1191,7 +1262,10 @@ def _cut_single_tile(rect, product_path, cuts_dir, product_mode, gpt_memory, gpt
             epsg = int(rect['BL']['properties']['epsg'].split(':')[1])
             utm_bbox = grid_cell_utm_bbox(rect, epsg)
             gt = _read_geotransform(product_path)
+            raster_size = _read_raster_size(product_path)
             region = _utm_bbox_to_pixel_region(utm_bbox, gt)
+            if not _pixel_region_is_within_bounds(region, raster_size):
+                raise ValueError(f'Pixel region {region} is outside raster bounds {raster_size[0]}x{raster_size[1]}.')
             tile_path = Path(subset(
                 product_path, cuts_dir,
                 output_name=tile_name, region=region,
@@ -1203,7 +1277,12 @@ def _cut_single_tile(rect, product_path, cuts_dir, product_mode, gpt_memory, gpt
         reason = f'{type(exc).__name__}: {exc}'
         # Tiles at the edge of the global grid can be outside the product footprint.
         # Treat these as expected skips, not hard failures.
-        if 'does not intersect with product bounds' in reason:
+        normalized_reason = reason.lower()
+        if (
+            'does not intersect with product bounds' in normalized_reason
+            or ('pixel region' in normalized_reason and 'invalid' in normalized_reason)
+            or ('outside raster bounds' in normalized_reason)
+        ):
             return {'tile': tile_name, 'status': 'skipped', 'reason': reason, 'output_path': str(tile_path)}
         return {'tile': tile_name, 'status': 'failed', 'reason': reason, 'output_path': str(tile_path)}
 
@@ -1334,6 +1413,8 @@ def _validate_tile_group(cuts_dir, intermediate_product, swath=None, tiling_resu
             'extra_tiles': extra_tiles,
             'skipped_tiles': skipped_tiles,
             'failed_tiles': failed_tiles,
+            'pre_tc_wkt': tiling_result.get('pre_tc_wkt'),
+            'post_tc_wkt': tiling_result.get('post_tc_wkt') or tiling_result.get('report_source_wkt') or tiling_result.get('source_wkt'),
             'source_wkt': tiling_result.get('source_wkt'),
             'report_source_wkt': tiling_result.get('report_source_wkt') or tiling_result.get('source_wkt'),
             'expected_tile_geometries': tiling_result.get('expected_tile_geometries', {}),
@@ -1471,11 +1552,12 @@ def _ensure_grid_file(grid_path, base_path):
     return generated
 
 
-def _find_existing_intermediates(output_dir: Path, product_mode: str) -> dict | Path:
+def _find_existing_intermediates(output_dir: Path, product_mode: str, sentinel_swath: str | None = None) -> dict | Path:
     """Locate existing BEAM-DIMAP intermediate products for --skip-preprocessing."""
     if product_mode == 'S1TOPS':
         result = {}
-        for swath in ('IW1', 'IW2', 'IW3'):
+        swaths = (sentinel_swath,) if sentinel_swath else ('IW1', 'IW2', 'IW3')
+        for swath in swaths:
             dims = sorted((output_dir / swath).glob('*.dim'), key=lambda p: p.stat().st_mtime, reverse=True)
             if not dims:
                 raise FileNotFoundError(f'No .dim intermediate found in {output_dir / swath}')
@@ -1503,11 +1585,12 @@ def _run_preprocessing(
     sentinel_swath=None,
     sentinel_first_burst=1,
     sentinel_last_burst=9999,
+    sentinel_tc_source_band=None,
     skip=False,
 ):
     if not prepro or skip:
         if skip:
-            return _find_existing_intermediates(output_dir, product_mode)
+            return _find_existing_intermediates(output_dir, product_mode, sentinel_swath=sentinel_swath)
         return product_path
     result = ROUTER[product_mode](
         product_path, output_dir,
@@ -1515,6 +1598,7 @@ def _run_preprocessing(
         sentinel_swath=sentinel_swath,
         sentinel_first_burst=sentinel_first_burst,
         sentinel_last_burst=sentinel_last_burst,
+        sentinel_tc_source_band=sentinel_tc_source_band,
         gpt_memory=gpt_memory, gpt_parallelism=gpt_parallelism, gpt_timeout=gpt_timeout,
     )
     # TOPS returns {IW1: path, IW2: path, IW3: path}; others return a single path.
@@ -1562,7 +1646,7 @@ def _run_tiling(product_wkt, grid_geoj_path, source_product, intermediate_produc
     expected_tile_geometries = _shared_normalize_expected_tile_geometries(rectangles)
     skipped_tiles = sorted({r['tile'] for r in results if r.get('status') == 'skipped'})
     failed_tiles = sorted({r['tile'] for r in results if r.get('status') == 'failed'})
-    required_tiles = sorted(set(expected_tiles) - skipped_tiles)
+    required_tiles = sorted(set(expected_tiles) - set(skipped_tiles))
     actual_tiles = sorted({p.stem for p in cuts_dir.glob('*.h5')})
     missing_tiles = sorted(set(required_tiles) - set(actual_tiles))
     extra_tiles = sorted(set(actual_tiles) - set(expected_tiles))
@@ -1598,7 +1682,13 @@ def _run_tiling(product_wkt, grid_geoj_path, source_product, intermediate_produc
 
 
 def _resolve_tiling_wkt(product_wkt, source_product, intermediate_product, product_mode, swath=None):
-    """Prefer the processed product footprint when tiling a single TOPS swath."""
+    """Prefer the processed raster footprint when building validation tiles."""
+    intermediate_path = Path(intermediate_product)
+    if intermediate_path.suffix.lower() == '.dim':
+        try:
+            return _dim_footprint_wkt(intermediate_path)
+        except Exception as exc:
+            print(f'[WARN] Failed to derive raster footprint from {intermediate_path}: {type(exc).__name__}: {exc}')
     if product_mode == 'S1TOPS' and swath:
         derived_wkt = sentinel1_swath_wkt_extractor_safe(source_product, swath, display_results=False, verbose=False)
         if derived_wkt:
@@ -1622,7 +1712,8 @@ def _run_tops_swath_tiling(product_wkt, grid_geoj_path, product_path, intermedia
                 swath_wkt, grid_geoj_path, product_path,
                 swath_product, cuts_outdir / swath, product_mode, **gpt_kwargs,
             )
-            tiling_result['report_source_wkt'] = product_wkt
+            tiling_result['pre_tc_wkt'] = product_wkt
+            tiling_result['post_tc_wkt'] = swath_wkt
             name = tiling_result['name']
             report_name = report_name or name
             if tiling_result['cut_failed']:
@@ -1642,8 +1733,10 @@ def _run_tops_swath_tiling(product_wkt, grid_geoj_path, product_path, intermedia
                 swath_product,
                 swath=swath,
                 tiling_result={
+                    'pre_tc_wkt': product_wkt,
+                    'post_tc_wkt': swath_wkt,
                     'source_wkt': swath_wkt,
-                    'report_source_wkt': product_wkt,
+                    'report_source_wkt': swath_wkt,
                 },
             )
             validation_groups.append(validation_group)
@@ -1818,6 +1911,7 @@ def run(args) -> int:
         sentinel_swath=args.sentinel_swath,
         sentinel_first_burst=args.sentinel_first_burst,
         sentinel_last_burst=args.sentinel_last_burst,
+        sentinel_tc_source_band=args.sentinel_tc_source_band,
         skip=args.skip_preprocessing,
         **gpt_kwargs,
     )
@@ -1829,12 +1923,14 @@ def run(args) -> int:
         )
     else:
         name = intermediate.stem
+        tiling_wkt = _resolve_tiling_wkt(product_wkt, product_path, intermediate, product_mode)
         if tiling:
             tiling_result = _run_tiling(
-                product_wkt, grid_geoj_path, product_path,
+                tiling_wkt, grid_geoj_path, product_path,
                 intermediate, cuts_outdir, product_mode, **gpt_kwargs,
             )
-            tiling_result['report_source_wkt'] = product_wkt
+            tiling_result['pre_tc_wkt'] = product_wkt
+            tiling_result['post_tc_wkt'] = tiling_wkt
             name = tiling_result['name']
             validation_group = _validate_tile_group(
                 tiling_result['cuts_dir'],
@@ -1854,8 +1950,10 @@ def run(args) -> int:
                 cuts_outdir / name,
                 intermediate,
                 tiling_result={
-                    'source_wkt': product_wkt,
-                    'report_source_wkt': product_wkt,
+                    'pre_tc_wkt': product_wkt,
+                    'post_tc_wkt': tiling_wkt,
+                    'source_wkt': tiling_wkt,
+                    'report_source_wkt': tiling_wkt,
                 },
             )
             pdf_path = cuts_outdir / f'{name}_h5_validation_report.pdf'

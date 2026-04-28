@@ -42,10 +42,13 @@ NISAR_VALIDATE_DB ?= outputs/validate-nisar/db
 SENTINEL_GPT_PATH ?= /Applications/esa-snap/bin/gpt
 SENTINEL_VALIDATE_IW ?= IW1
 SENTINEL_VALIDATE_BURST ?= 1
+SENTINEL_VALIDATE_TC_SOURCE_BAND ?= Alpha
+# Optional manual override for the Sentinel validation footprint.
+# Leave blank to derive expected coverage from the processed *_TC.dim raster.
+SENTINEL_VALIDATE_WKT ?=
 SENTINEL_GPT_MEMORY ?= 8G
 SENTINEL_GPT_PARALLELISM ?= 1
 SENTINEL_GPT_TIMEOUT ?= 14400
-SENTINEL_VALIDATE_WKT ?= POLYGON ((12.838793 39.964848, 13.278038 42.237534, 11.652645 42.557785, 11.209282 40.299591, 12.838793 39.964848))
 
 SIF ?= sarpyx.sif
 SIF_TMPDIR ?= $(CURDIR)/.singularity/tmp
@@ -258,11 +261,11 @@ prune-docker: check-docker ## Prune local Docker data
 validate-sentinel: check-uv check-sentinel-product check-sentinel-grid check-sentinel-gpt ## Run a smoke pipeline test on the Sentinel-1 SAFE product
 	@mkdir -p "$(SENTINEL_VALIDATE_OUT)" "$(SENTINEL_VALIDATE_CUTS)" "$(SENTINEL_VALIDATE_DB)" "$(SENTINEL_VALIDATE_SNAP_USERDIR)"
 	@sentinel_skip_preprocessing=""; \
-	if find "$(SENTINEL_VALIDATE_OUT)/$(SENTINEL_VALIDATE_IW)" -maxdepth 1 -type f -name '*.dim' | grep -q .; then \
+	if find "$(SENTINEL_VALIDATE_OUT)/$(SENTINEL_VALIDATE_IW)" -maxdepth 1 -type f -name '*_TC.dim' | grep -q .; then \
 		echo "Reusing existing Sentinel TerrainCorrection product from $(SENTINEL_VALIDATE_OUT)/$(SENTINEL_VALIDATE_IW)"; \
 		sentinel_skip_preprocessing="--skip-preprocessing"; \
 	fi; \
-	uv run sarpyx worldsar \
+		PRODUCT_WKT="$(SENTINEL_VALIDATE_WKT)" uv run sarpyx \
 		--input "$(SENTINEL_VALIDATE_SAFE)" \
 		--output "$(SENTINEL_VALIDATE_OUT)" \
 		--cuts-outdir "$(SENTINEL_VALIDATE_CUTS)" \
@@ -273,12 +276,12 @@ validate-sentinel: check-uv check-sentinel-product check-sentinel-grid check-sen
 		--gpt-memory "$(SENTINEL_GPT_MEMORY)" \
 		--gpt-parallelism "$(SENTINEL_GPT_PARALLELISM)" \
 		--gpt-timeout "$(SENTINEL_GPT_TIMEOUT)" \
-		--sentinel-swath "$(SENTINEL_VALIDATE_IW)" \
-		--sentinel-first-burst "$(SENTINEL_VALIDATE_BURST)" \
-		--sentinel-last-burst "$(SENTINEL_VALIDATE_BURST)" \
-		--product-wkt "$(SENTINEL_VALIDATE_WKT)" \
-		--orbit-continue-on-fail \
-		$$sentinel_skip_preprocessing
+			--sentinel-swath "$(SENTINEL_VALIDATE_IW)" \
+			--sentinel-first-burst "$(SENTINEL_VALIDATE_BURST)" \
+			--sentinel-last-burst "$(SENTINEL_VALIDATE_BURST)" \
+			--sentinel-tc-source-band "$(SENTINEL_VALIDATE_TC_SOURCE_BAND)" \
+			--orbit-continue-on-fail \
+			$$sentinel_skip_preprocessing
 	@cut_report=$$(find "$(SENTINEL_VALIDATE_CUTS)" -type f -name '*_cuts_report_*.txt' | sort | head -n 1); \
 	pdf_report=$$(find "$(SENTINEL_VALIDATE_CUTS)" -maxdepth 1 -type f -name '*_h5_validation_report.pdf' | sort | head -n 1); \
 	tile_count=$$(find "$(SENTINEL_VALIDATE_CUTS)" -type f -name '*.h5' | wc -l | tr -d ' '); \
@@ -297,7 +300,7 @@ validate-sentinel: check-uv check-sentinel-product check-sentinel-grid check-sen
 validate-tsx: check-uv check-tsx-product check-tsx-grid check-sentinel-gpt ## Run TerraSAR-X validation using a deterministic subset before tiling
 	@mkdir -p "$(TSX_VALIDATE_PREPROCESS_OUT)" "$(TSX_VALIDATE_OUT)" "$(TSX_VALIDATE_CUTS)" "$(TSX_VALIDATE_DB)" "$(TSX_VALIDATE_SNAP_USERDIR)"
 	uv run python -c 'from pathlib import Path; import xml.etree.ElementTree as ET; from pyproj import Transformer; from sarpyx.cli import worldsar; product_path = Path(r"$(TSX_VALIDATE_PRODUCT)"); preprocess_out = Path(r"$(TSX_VALIDATE_PREPROCESS_OUT)"); subset_out = Path(r"$(TSX_VALIDATE_OUT)"); subset_name = "$(TSX_VALIDATE_SUBSET_NAME)"; subset_region = "$(TSX_VALIDATE_SUBSET_REGION)"; wkt_file = Path(r"$(TSX_VALIDATE_SUBSET_WKT_FILE)"); gpt_memory = "$(SENTINEL_GPT_MEMORY)"; gpt_parallelism = $(SENTINEL_GPT_PARALLELISM); gpt_timeout = $(SENTINEL_GPT_TIMEOUT); preprocess_out.mkdir(parents=True, exist_ok=True); subset_out.mkdir(parents=True, exist_ok=True); existing_dims = sorted(preprocess_out.glob("*.dim"), key=lambda path: path.stat().st_mtime, reverse=True); intermediate = existing_dims[0] if existing_dims else Path(worldsar.pipeline_tsx_csg(product_path, preprocess_out, gpt_memory=gpt_memory, gpt_parallelism=gpt_parallelism, gpt_timeout=gpt_timeout)); print(f"Reusing existing TSX TerrainCorrection product: {intermediate}") if existing_dims else None; subset_dim = Path(worldsar._run_gpt_op(intermediate, subset_out, "BEAM-DIMAP", "Subset", region=subset_region, copy_metadata=True, output_name=subset_name, gpt_memory=gpt_memory, gpt_parallelism=gpt_parallelism, gpt_timeout=gpt_timeout)); tree = ET.parse(subset_dim); root = tree.getroot(); gt = worldsar._read_geotransform(subset_dim); ncols = int(root.findtext(".//Raster_Dimensions/NCOLS")); nrows = int(root.findtext(".//Raster_Dimensions/NROWS")); crs_name = root.findtext(".//Coordinate_Reference_System/NAME", default="EPSG:4326"); epsg = 4326; epsg = int(crs_name.upper().split("EPSG:")[1].split()[0]) if "EPSG:" in crs_name.upper() else epsg; origin_x, px_w, rot_x, origin_y, rot_y, px_h = gt; corners = [(origin_x, origin_y), (origin_x + ncols * px_w, origin_y + ncols * rot_y), (origin_x + ncols * px_w + nrows * rot_x, origin_y + ncols * rot_y + nrows * px_h), (origin_x + nrows * rot_x, origin_y + nrows * px_h)]; corners = [Transformer.from_crs(epsg, 4326, always_xy=True).transform(x, y) for x, y in corners] if epsg != 4326 else corners; corners.append(corners[0]); wkt_file.write_text("POLYGON((" + ", ".join(f"{lon} {lat}" for lon, lat in corners) + "))\n", encoding="utf-8"); print(subset_dim); print(wkt_file)'
-	uv run sarpyx worldsar \
+	uv run sarpyx \
 		--input "$(TSX_VALIDATE_PRODUCT)" \
 		--output "$(TSX_VALIDATE_OUT)" \
 		--cuts-outdir "$(TSX_VALIDATE_CUTS)" \
@@ -313,7 +316,7 @@ validate-tsx: check-uv check-tsx-product check-tsx-grid check-sentinel-gpt ## Ru
 
 validate-nisar: check-uv check-nisar-product check-nisar-grid ## Run NISAR validation using the shared worldsar tiling and H5 checks
 	@mkdir -p "$(NISAR_VALIDATE_OUT)" "$(NISAR_VALIDATE_CUTS)" "$(NISAR_VALIDATE_DB)"
-	uv run sarpyx worldsar \
+	uv run sarpyx \
 		--input "$(NISAR_VALIDATE_PRODUCT)" \
 		--output "$(NISAR_VALIDATE_OUT)" \
 		--cuts-outdir "$(NISAR_VALIDATE_CUTS)" \
