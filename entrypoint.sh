@@ -16,14 +16,9 @@ else
     echo "Warning: SNAP_HOME not found at ${SNAP_HOME}"
 fi
 
-GRID_DIR="/workspace/grid"
 GRID_PATH_CANDIDATE="${GRID_PATH:-${grid_path:-}}"
 
 echo "Preparing grid assets..."
-mkdir -p "${GRID_DIR}"
-shopt -s nullglob
-GRID_GEOJSON_FILES=("${GRID_DIR}"/*.geojson)
-shopt -u nullglob
 
 if [ -n "${GRID_PATH_CANDIDATE}" ]; then
     if [ -f "${GRID_PATH_CANDIDATE}" ] && [[ "${GRID_PATH_CANDIDATE}" == *.geojson ]]; then
@@ -33,12 +28,19 @@ if [ -n "${GRID_PATH_CANDIDATE}" ]; then
         echo "ERROR: GRID_PATH must point to an existing .geojson file inside the container. Received: ${GRID_PATH_CANDIDATE}" >&2
         exit 1
     fi
-elif [ ${#GRID_GEOJSON_FILES[@]} -gt 0 ]; then
-    export GRID_PATH="${GRID_GEOJSON_FILES[0]}"
-    echo "Using existing grid file: ${GRID_PATH}"
 else
+    GRID_DIR="${GRID_DIR:-/workspace/grid}"
+    mkdir -p "${GRID_DIR}"
+    shopt -s nullglob
+    GRID_GEOJSON_FILES=("${GRID_DIR}"/*.geojson)
+    shopt -u nullglob
+    if [ ${#GRID_GEOJSON_FILES[@]} -gt 0 ]; then
+        export GRID_PATH="${GRID_GEOJSON_FILES[0]}"
+        echo "Using existing grid file: ${GRID_PATH}"
+    else
     echo "ERROR: No .geojson grid found in ${GRID_DIR}. Mount a grid file or set GRID_PATH to an existing in-container .geojson file." >&2
     exit 1
+    fi
 fi
 
 # Execute the CMD passed to the container
