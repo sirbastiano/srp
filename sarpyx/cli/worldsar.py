@@ -15,6 +15,7 @@ import shutil
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
+import zipfile
 from datetime import datetime
 from functools import partial
 from pathlib import Path
@@ -41,6 +42,9 @@ load_dotenv()
 
 DEFAULT_ZARR_CHUNK_SIZE = (32, 32)
 DEFAULT_ORBIT_TYPE = 'Sentinel Precise (Auto Download)'
+TERRASAR_GEOCODED_VARIANTS = frozenset({'EEC', 'GEC'})
+TERRASAR_COMPLEX_VARIANTS = frozenset({'SSC', 'SLC'})
+TERRASAR_DETECTED_VARIANTS = frozenset({'MGD', 'GRD'})
 
 
 def add_worldsar_arguments(parser: argparse.ArgumentParser) -> None:
@@ -903,14 +907,52 @@ def pipeline_sentinel(
 
 
 def pipeline_tsx_csg(product_path, output_dir, gpt_memory=None, gpt_parallelism=None, gpt_timeout=None, **_):
-    """TerraSAR-X / COSMO-SkyMed: calibration → terrain correction."""
-    gpt_product_path = _resolve_terrasar_product_xml(product_path) if _is_terrasar_product(product_path) else product_path
+    """TerraSAR-X / TanDEM-X / COSMO-SkyMed preprocessing."""
+    terrasar_product_xml = _resolve_terrasar_product_xml_if_supported(product_path)
+    is_terrasar = terrasar_product_xml is not None
+    gpt_product_path = terrasar_product_xml if is_terrasar else product_path
     op = _create_gpt_operator(gpt_product_path, output_dir, 'BEAM-DIMAP', gpt_memory, gpt_parallelism, gpt_timeout)
-    if op.Calibration(output_complex=True) is None:
-        raise RuntimeError('Calibration failed.')
-    # TODO: Add subaperture.
-    if op.TerrainCorrection(map_projection='AUTO:42001', pixel_spacing_in_meter=5.0) is None:
-        raise RuntimeError('Terrain Correction failed.')
+
+    if is_terrasar:
+        metadata = _read_terrasar_metadata(Path(gpt_product_path))
+        print(
+            'TerraSAR-X/TanDEM-X metadata: '
+            f"variant={metadata.get('variant') or 'UNKNOWN'}, "
+            f"product_type={metadata.get('product_type') or 'UNKNOWN'}, "
+            f"imaging_mode={metadata.get('imaging_mode') or 'UNKNOWN'}, "
+            f"image_data_type={metadata.get('image_data_type') or 'UNKNOWN'}, "
+            f"projection={metadata.get('projection') or 'UNKNOWN'}"
+        )
+    else:
+        metadata = {}
+
+    if is_terrasar and _terrasar_is_geocoded(metadata):
+        print('TerraSAR-X/TanDEM-X geocoded product detected; normalizing to BEAM-DIMAP with Write.')
+        output_file = Path(output_dir) / f'{Path(gpt_product_path).stem}_WRITE.dim'
+        if op.write(output_file=output_file, format_name='BEAM-DIMAP') is None:
+            raise RuntimeError(f'Write failed: {op.last_error_summary()}')
+        return op.prod_path
+
+    output_complex = True
+    if is_terrasar:
+        if _terrasar_is_complex(metadata):
+            output_complex = True
+        elif _terrasar_is_detected(metadata):
+            output_complex = False
+        else:
+            print(
+                'WARNING: TerraSAR-X/TanDEM-X product variant could not be classified; '
+                'using complex calibration for backward compatibility.'
+            )
+
+    if op.Calibration(output_complex=output_complex) is None:
+        raise RuntimeError(f'Calibration failed: {op.last_error_summary()}')
+    if op.TerrainCorrection(
+        map_projection='AUTO:42001',
+        pixel_spacing_in_meter=5.0,
+        output_complex=output_complex,
+    ) is None:
+        raise RuntimeError(f'Terrain Correction failed: {op.last_error_summary()}')
     return op.prod_path
 
 
@@ -1010,13 +1052,63 @@ def _xml_has_scene_corners(xml_path: Path) -> bool:
     return len(valid_corners) >= 3
 
 
+def _safe_extract_zip(archive_path: Path, target_dir: Path) -> None:
+    """Extract a ZIP archive while rejecting path traversal entries."""
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target_root = target_dir.resolve()
+    with zipfile.ZipFile(archive_path) as archive:
+        for member in archive.infolist():
+            member_path = (target_dir / member.filename).resolve()
+            if target_root != member_path and target_root not in member_path.parents:
+                raise ValueError(f'Unsafe ZIP member path in {archive_path}: {member.filename}')
+        archive.extractall(target_dir)
+
+
+def _terrasar_archive_extract_dir(archive_path: Path) -> Path:
+    archive_stat = archive_path.stat()
+    safe_stem = re.sub(r'[^A-Za-z0-9_.-]+', '_', archive_path.stem)
+    archive_key = f'{safe_stem}_{archive_stat.st_size}_{archive_stat.st_mtime_ns}'
+    return archive_path.parent / '.sarpyx_extracted' / archive_key
+
+
+def _extract_terrasar_archive(archive_path: Path) -> Path:
+    if not zipfile.is_zipfile(archive_path):
+        raise ValueError(f'TerraSAR-X/TanDEM-X archive is not a valid ZIP file: {archive_path}')
+
+    extract_dir = _terrasar_archive_extract_dir(archive_path)
+    marker = extract_dir / '.sarpyx_extract_complete'
+    if marker.exists():
+        return extract_dir
+
+    _safe_extract_zip(archive_path, extract_dir)
+
+    for nested_zip in sorted(extract_dir.rglob('*.zip')) + sorted(extract_dir.rglob('*.ZIP')):
+        if nested_zip == archive_path or not nested_zip.is_file():
+            continue
+        nested_target = nested_zip.with_suffix('')
+        nested_marker = nested_target / '.sarpyx_extract_complete'
+        if nested_marker.exists():
+            continue
+        _safe_extract_zip(nested_zip, nested_target)
+        nested_marker.write_text('ok\n', encoding='utf-8')
+
+    marker.write_text('ok\n', encoding='utf-8')
+    return extract_dir
+
+
 def _resolve_terrasar_product_xml(product_path) -> Path:
-    """Return the TerraSAR-X/TanDEM-X product XML for a file or product directory."""
+    """Return the TerraSAR-X/TanDEM-X product XML for an XML, ZIP archive, or product directory."""
     product_path = Path(product_path)
     if product_path.is_file():
-        if product_path.suffix.lower() != '.xml':
-            raise ValueError(f'TerraSAR-X/TanDEM-X products must be an XML metadata file or directory, got: {product_path}')
-        return product_path
+        suffix = product_path.suffix.lower()
+        if suffix == '.xml':
+            return product_path
+        if suffix == '.zip':
+            return _resolve_terrasar_product_xml(_extract_terrasar_archive(product_path))
+        raise ValueError(
+            'TerraSAR-X/TanDEM-X products must be an XML metadata file, ZIP archive, '
+            f'or directory, got: {product_path}'
+        )
     if not product_path.is_dir():
         raise FileNotFoundError(f'TerraSAR-X/TanDEM-X product path does not exist: {product_path}')
 
@@ -1033,6 +1125,107 @@ def _resolve_terrasar_product_xml(product_path) -> Path:
         f'Multiple TerraSAR-X/TanDEM-X metadata XML files with sceneCornerCoord found under {product_path}: '
         f'{candidate_list}. Pass the intended XML path directly.'
     )
+
+
+def _xml_local_name(tag: str) -> str:
+    return tag.rsplit('}', 1)[-1] if '}' in tag else tag
+
+
+def _xml_first_text(root: ET.Element, *local_names: str) -> str | None:
+    wanted = {name.lower() for name in local_names}
+    for element in root.iter():
+        if _xml_local_name(element.tag).lower() in wanted and element.text is not None:
+            value = element.text.strip()
+            if value:
+                return value
+    return None
+
+
+def _normalize_metadata_token(value: str | None) -> str | None:
+    if value is None:
+        return None
+    normalized = value.strip().upper()
+    return normalized or None
+
+
+def _variant_from_product_type(product_type: str | None) -> str | None:
+    product_type = _normalize_metadata_token(product_type)
+    if product_type is None:
+        return None
+    variant = product_type.split('_', 1)[0]
+    return variant or None
+
+
+def _read_terrasar_metadata(product_xml: Path) -> dict[str, str | None]:
+    root = ET.parse(product_xml).getroot()
+    product_type = _xml_first_text(root, 'productType')
+    product_variant = _xml_first_text(root, 'productVariant')
+    variant = _normalize_metadata_token(product_variant) or _variant_from_product_type(product_type)
+    return {
+        'mission': _normalize_metadata_token(_xml_first_text(root, 'mission', 'platform', 'shortName')),
+        'variant': variant,
+        'product_type': _normalize_metadata_token(product_type),
+        'imaging_mode': _normalize_metadata_token(_xml_first_text(root, 'imagingMode', 'operationalMode')),
+        'image_data_type': _normalize_metadata_token(_xml_first_text(root, 'imageDataType')),
+        'projection': _normalize_metadata_token(_xml_first_text(root, 'projection')),
+        'map_projection': _normalize_metadata_token(_xml_first_text(root, 'mapProjection')),
+        'radiometric_correction': _normalize_metadata_token(_xml_first_text(root, 'radiometricCorrection')),
+    }
+
+
+def _terrasar_product_variant(product_xml: Path) -> str | None:
+    return _read_terrasar_metadata(product_xml)['variant']
+
+
+def _terrasar_is_geocoded(metadata: dict[str, str | None]) -> bool:
+    variant = metadata.get('variant')
+    return (
+        variant in TERRASAR_GEOCODED_VARIANTS
+        or metadata.get('projection') == 'MAP'
+        or metadata.get('map_projection') is not None
+    )
+
+
+def _terrasar_is_complex(metadata: dict[str, str | None]) -> bool:
+    variant = metadata.get('variant')
+    return (
+        variant in TERRASAR_COMPLEX_VARIANTS
+        or metadata.get('image_data_type') == 'COMPLEX'
+    )
+
+
+def _terrasar_is_detected(metadata: dict[str, str | None]) -> bool:
+    variant = metadata.get('variant')
+    return (
+        variant in TERRASAR_DETECTED_VARIANTS
+        or metadata.get('image_data_type') == 'DETECTED'
+    )
+
+
+def _metadata_indicates_terrasar(metadata: dict[str, str | None]) -> bool:
+    mission = metadata.get('mission') or ''
+    return (
+        any(token in mission for token in ('TSX', 'TDX', 'TERRASAR', 'TANDEMX'))
+        or metadata.get('variant') in (
+            TERRASAR_GEOCODED_VARIANTS
+            | TERRASAR_COMPLEX_VARIANTS
+            | TERRASAR_DETECTED_VARIANTS
+        )
+        or bool(metadata.get('product_type'))
+    )
+
+
+def _resolve_terrasar_product_xml_if_supported(product_path) -> Path | None:
+    if _is_terrasar_product(product_path):
+        return _resolve_terrasar_product_xml(product_path)
+    try:
+        candidate = _resolve_terrasar_product_xml(product_path)
+    except (FileNotFoundError, ValueError, zipfile.BadZipFile, ET.ParseError):
+        return None
+    metadata = _read_terrasar_metadata(candidate)
+    if _metadata_indicates_terrasar(metadata):
+        return candidate
+    return None
 
 
 def infer_product_mode(product_path: Path) -> str:
@@ -1059,6 +1252,9 @@ def infer_product_mode(product_path: Path) -> str:
         if '_IW_' in name or '_EW_' in name or 'TOPS' in name:
             return 'S1TOPS'
         return 'S1TOPS'
+
+    if product_path.exists() and _resolve_terrasar_product_xml_if_supported(product_path) is not None:
+        return 'TSX'
 
     raise ValueError(
         f'Could not infer product mode from input path: {product_path}. '
@@ -1182,6 +1378,32 @@ def _dim_footprint_wkt(dim_path: Path) -> str:
     return 'POLYGON ((' + ', '.join(f'{lon} {lat}' for lon, lat in lonlat_corners) + '))'
 
 
+def _feature_with_coords(template: dict, lon: float, lat: float) -> dict:
+    feature = copy.deepcopy(template)
+    feature['geometry']['coordinates'] = [lon, lat]
+    return feature
+
+
+def _rectangle_from_bl_anchor(bl_feature: dict) -> dict:
+    epsg = int(bl_feature['properties']['epsg'].split(':')[1])
+    x_min, y_min, x_max, y_max = grid_cell_utm_bbox({'BL': bl_feature}, epsg)
+    transformer = pyproj.Transformer.from_crs(epsg, 4326, always_xy=True)
+    bl_lon, bl_lat = transformer.transform(x_min, y_min)
+    tl_lon, tl_lat = transformer.transform(x_min, y_max)
+    tr_lon, tr_lat = transformer.transform(x_max, y_max)
+    br_lon, br_lat = transformer.transform(x_max, y_min)
+    return {
+        'TL': _feature_with_coords(bl_feature, tl_lon, tl_lat),
+        'TR': _feature_with_coords(bl_feature, tr_lon, tr_lat),
+        'BR': _feature_with_coords(bl_feature, br_lon, br_lat),
+        'BL': _feature_with_coords(bl_feature, bl_lon, bl_lat),
+    }
+
+
+def _fallback_rectangles_from_contained_points(contained: list[dict]) -> list[dict]:
+    return [_rectangle_from_bl_anchor(feature) for feature in contained]
+
+
 def _utm_bbox_to_pixel_region(utm_bbox: tuple, geotransform: tuple) -> str:
     """Convert a UTM bounding box to a SNAP Subset region string 'x,y,width,height'.
 
@@ -1215,6 +1437,93 @@ def _pixel_region_is_within_bounds(region: str, raster_size: tuple[int, int]) ->
         and col_start + width <= ncols
         and row_start + height <= nrows
     )
+
+
+def _read_abstract_metadata_attrs(dim_path: Path) -> dict[str, str]:
+    root = ET.parse(dim_path).getroot()
+    abstract_metadata = root.find(".//MDElem[@name='Abstracted_Metadata']")
+    if abstract_metadata is None:
+        return {}
+    return {
+        attr.get('name'): (attr.text or '').strip()
+        for attr in abstract_metadata.findall('MDATTR')
+        if attr.get('name') and (attr.text or '').strip()
+    }
+
+
+def _read_band_metadata(dim_path: Path, band_name: str) -> dict[str, str]:
+    root = ET.parse(dim_path).getroot()
+    for spectral_band in root.findall('./Image_Interpretation/Spectral_Band_Info'):
+        if (spectral_band.findtext('BAND_NAME') or '').strip() != band_name:
+            continue
+        return {
+            'unit': (spectral_band.findtext('PHYSICAL_UNIT') or 'unknown').strip() or 'unknown',
+            'scaling_factor': (spectral_band.findtext('SCALING_FACTOR') or '1.0').strip() or '1.0',
+            'scaling_offset': (spectral_band.findtext('SCALING_OFFSET') or '0.0').strip() or '0.0',
+            'log10_scaled': (spectral_band.findtext('LOG10_SCALED') or 'false').strip() or 'false',
+        }
+    return {
+        'unit': 'unknown',
+        'scaling_factor': '1.0',
+        'scaling_offset': '0.0',
+        'log10_scaled': 'false',
+    }
+
+
+def _write_h5_subset_from_dim(dim_path: Path, region: str, output_path: Path) -> Path:
+    """Write an H5 tile directly from a BEAM-DIMAP raster window.
+
+    This is used when SNAP's HDF5 writer fails on metadata attributes after a
+    valid Subset computation.
+    """
+    import rasterio
+    from rasterio.windows import Window
+
+    col_start, row_start, width, height = (int(value) for value in region.split(','))
+    band_names = _shared_resolve_expected_band_names(dim_path)
+    if not band_names:
+        raise RuntimeError(f'No materialized bands found in {dim_path}')
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.unlink(missing_ok=True)
+    abstract_metadata = _read_abstract_metadata_attrs(dim_path)
+
+    with h5py.File(output_path, 'w') as h5_file:
+        bands_group = h5_file.create_group('bands')
+        metadata_group = h5_file.create_group('metadata')
+        abstract_group = metadata_group.create_group('Abstracted_Metadata')
+        for key, value in abstract_metadata.items():
+            abstract_group.attrs[key] = value
+
+        data_dir = get_data_dir_from_dim(dim_path)
+        window = Window(col_start, row_start, width, height)
+        for band_name in band_names:
+            hdr_path = data_dir / f'{band_name}.hdr'
+            if not hdr_path.exists():
+                raise FileNotFoundError(f'Band header not found for H5 export: {hdr_path}')
+            raster_path = data_dir / f'{band_name}.img'
+            if not raster_path.exists():
+                raise FileNotFoundError(f'Band raster not found for H5 export: {raster_path}')
+            with rasterio.open(raster_path) as src:
+                data = src.read(1, window=window)
+            dataset = bands_group.create_dataset(
+                band_name,
+                data=data,
+                compression='gzip',
+                compression_opts=4,
+                chunks=True,
+            )
+            band_metadata = _read_band_metadata(dim_path, band_name)
+            dataset.attrs['CLASS'] = 'org.esa.snap.core.datamodel.Band'
+            dataset.attrs['IMAGE_VERSION'] = '1.0'
+            dataset.attrs['log10_scaled'] = band_metadata['log10_scaled']
+            dataset.attrs['raster_height'] = int(data.shape[0])
+            dataset.attrs['raster_width'] = int(data.shape[1])
+            dataset.attrs['scaling_factor'] = band_metadata['scaling_factor']
+            dataset.attrs['scaling_offset'] = band_metadata['scaling_offset']
+            dataset.attrs['unit'] = band_metadata['unit']
+
+    return output_path
 
 
 def _update_h5_corners(h5_path: Path, utm_bbox: tuple, epsg: int) -> None:
@@ -1266,11 +1575,19 @@ def _cut_single_tile(rect, product_path, cuts_dir, product_mode, gpt_memory, gpt
             region = _utm_bbox_to_pixel_region(utm_bbox, gt)
             if not _pixel_region_is_within_bounds(region, raster_size):
                 raise ValueError(f'Pixel region {region} is outside raster bounds {raster_size[0]}x{raster_size[1]}.')
-            tile_path = Path(subset(
-                product_path, cuts_dir,
-                output_name=tile_name, region=region,
-                gpt_memory=gpt_memory, gpt_parallelism=gpt_parallelism, gpt_timeout=gpt_timeout,
-            ))
+            try:
+                tile_path = Path(subset(
+                    product_path, cuts_dir,
+                    output_name=tile_name, region=region,
+                    gpt_memory=gpt_memory, gpt_parallelism=gpt_parallelism, gpt_timeout=gpt_timeout,
+                ))
+            except RuntimeError as exc:
+                tile_path = cuts_dir / f'{tile_name}.h5'
+                print(
+                    f'SNAP HDF5 subset failed for {tile_name}: {exc}. '
+                    'Writing H5 tile directly from DIMAP raster.'
+                )
+                _write_h5_subset_from_dim(product_path, region, tile_path)
             _update_h5_corners(tile_path, utm_bbox, epsg)
         return _validate_tile_result(tile_name, tile_path, 'tile cut')
     except Exception as exc:
@@ -1627,6 +1944,12 @@ def _run_tiling(product_wkt, grid_geoj_path, source_product, intermediate_produc
         raise ValueError('No grid points contained; check WKT and grid CRS alignment.')
 
     rectangles = rectanglify(contained)
+    if not rectangles:
+        rectangles = _fallback_rectangles_from_contained_points(contained)
+        print(
+            'No complete four-corner grid rectangles formed; '
+            f'falling back to {len(rectangles)} contained grid-point tile anchors.'
+        )
     if not rectangles:
         raise ValueError('No rectangles formed; check WKT coverage and grid alignment.')
 

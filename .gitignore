@@ -1,6 +1,7 @@
 # Environments
 .conda
 .env
+secret.env
 .venv
 env/
 venv/
@@ -43,6 +44,7 @@ decoded_data/
 focused_data/
 compressed_data/
 decompressed_data/
+runs/
 
 aws/
 # Byte-compiled / optimized / DLL files

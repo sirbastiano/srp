@@ -6,6 +6,7 @@ the Copernicus Data Search API and from Terrasar-X product XML files.
 import re
 from pathlib import Path
 import xml.etree.ElementTree as ET
+from math import atan2
 
 def _parse_gml_coordinates(text: str, axis_order: str) -> list[tuple[float, float]]:
     points: list[tuple[float, float]] = []
@@ -23,6 +24,35 @@ def _parse_gml_coordinates(text: str, axis_order: str) -> list[tuple[float, floa
             lon, lat = first, second
         points.append((lon, lat))
     return points
+
+
+def _ordered_polygon_coords(points: list[tuple[float, float]]) -> list[tuple[float, float]]:
+    """Return non-self-crossing polygon coordinates from unordered footprint corners."""
+    unique_points = list(dict.fromkeys(points))
+    if len(unique_points) < 3:
+        return unique_points
+
+    center_lon = sum(lon for lon, _lat in unique_points) / len(unique_points)
+    center_lat = sum(lat for _lon, lat in unique_points) / len(unique_points)
+    ordered = sorted(
+        unique_points,
+        key=lambda point: atan2(point[1] - center_lat, point[0] - center_lon),
+    )
+
+    try:
+        from shapely.geometry import MultiPoint, Polygon
+        from shapely.geometry.polygon import orient
+
+        polygon = Polygon(ordered)
+        if not polygon.is_valid or polygon.area == 0:
+            polygon = MultiPoint(unique_points).convex_hull
+        if polygon.geom_type == 'Polygon':
+            polygon = orient(polygon, sign=1.0)
+            return [(float(lon), float(lat)) for lon, lat in polygon.exterior.coords[:-1]]
+    except Exception:
+        pass
+
+    return ordered
 
 
 def _parse_gml_pos_list(text: str, axis_order: str) -> list[tuple[float, float]]:
@@ -203,9 +233,8 @@ def terrasar_wkt_extractor(product_path: Path) -> str:
     if len(corners) < 3:
         raise ValueError(f"Could not find at least three sceneCornerCoord lon/lat pairs in {product_path}.")
 
-    # Close the polygon by repeating the first point at the end
-    if corners:
-        corners.append(corners[0])
+    corners = _ordered_polygon_coords(corners)
+    corners.append(corners[0])
 
     # Create WKT polygon string
     return f"POLYGON(({', '.join(f'{lon} {lat}' for lon, lat in corners)}))"

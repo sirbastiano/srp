@@ -751,9 +751,15 @@ def build_validation_map_layers(validation_groups: list[dict[str, Any]]) -> dict
         for tile_name in sorted(missing_tiles)
         if tile_name in expected_tiles
     ]
+    skipped_polygons = [
+        {'tile': tile_name, 'coords': expected_tiles[tile_name]}
+        for tile_name in sorted(skipped_tiles)
+        if tile_name in expected_tiles
+    ]
     expected_polygons = [
         {'tile': tile_name, 'coords': coords}
         for tile_name, coords in sorted(expected_tiles.items())
+        if tile_name not in skipped_tiles
     ]
 
     return {
@@ -762,6 +768,7 @@ def build_validation_map_layers(validation_groups: list[dict[str, Any]]) -> dict
         'report_source_outlines': report_source_outlines,
         'swath_source_outlines': swath_source_outlines,
         'expected_polygons': expected_polygons,
+        'skipped_polygons': skipped_polygons,
         'missing_polygons': missing_polygons,
         'passed_polygons': passed_polygons,
         'failed_polygons': failed_polygons,
@@ -986,6 +993,7 @@ def _write_map_page(pdf, product_name: str, validation_groups: list[dict[str, An
     info_ax.axis('off')
 
     _plot_polygon_items(map_ax, layers['expected_polygons'], edgecolor='#C7CED6', linewidth=0.8)
+    _plot_polygon_items(map_ax, layers['skipped_polygons'], edgecolor='#D97706', facecolor='#FEF3C7', linewidth=0.9, alpha=0.55, hatch='..')
     _plot_polygon_items(map_ax, layers['missing_polygons'], edgecolor='#F59F00', linewidth=1.3, hatch='////')
     _plot_polygon_items(map_ax, layers['passed_polygons'], edgecolor='#2B8A3E', facecolor='#D3F9D8', linewidth=1.2, alpha=0.75)
     _plot_polygon_items(map_ax, layers['failed_polygons'], edgecolor='#C92A2A', facecolor='#FFE3E3', linewidth=1.2, alpha=0.8)
@@ -1025,7 +1033,7 @@ def _write_map_page(pdf, product_name: str, validation_groups: list[dict[str, An
         )
 
     all_coords: list[tuple[float, float]] = []
-    for layer_name in ('report_source_outlines', 'swath_source_outlines', 'expected_polygons', 'missing_polygons', 'passed_polygons', 'failed_polygons', 'extra_polygons'):
+    for layer_name in ('report_source_outlines', 'swath_source_outlines', 'expected_polygons', 'skipped_polygons', 'missing_polygons', 'passed_polygons', 'failed_polygons', 'extra_polygons'):
         for item in layers[layer_name]:
             all_coords.extend(item['coords'])
     for layer_name in ('passed_points', 'failed_points', 'extra_points'):
@@ -1049,6 +1057,7 @@ def _write_map_page(pdf, product_name: str, validation_groups: list[dict[str, An
     legend_handles = [
         Patch(facecolor='none', edgecolor='#000000', linewidth=1.4, label='product footprint'),
         Patch(facecolor='none', edgecolor='#C7CED6', linewidth=0.8, label='expected tiles'),
+        Patch(facecolor='#FEF3C7', edgecolor='#D97706', linewidth=0.9, hatch='..', label='skipped tiles'),
         Patch(facecolor='#D3F9D8', edgecolor='#2B8A3E', linewidth=1.2, label='passed tiles'),
         Patch(facecolor='#FFE3E3', edgecolor='#C92A2A', linewidth=1.2, label='failed tiles'),
         Patch(facecolor='none', edgecolor='#F59F00', linewidth=1.3, hatch='////', label='missing tiles'),
@@ -1784,13 +1793,13 @@ def _write_footprint_page_compact(pdf, product_name: str, validation_groups: lis
     post_focus_coords += [item['coords'] for item in layers['failed_polygons']]
 
     fig = plt.figure(figsize=(11.69, 8.27))
-    _add_page_chrome(fig, 'Footprint Analysis', f'{product_name} | Input geometry vs terrain-corrected raster extent', 2, 2)
+    _add_page_chrome(fig, 'Footprint Analysis', f'{product_name} | Source geometry vs processed raster extent', 2, 2)
 
     before_panel_ax, before_ax = _make_panel(
         fig,
         [0.05, 0.52, 0.42, 0.29],
-        'Before Terrain Correction',
-        'Input product footprint from source metadata or manual override',
+        'Source Product Footprint',
+        'Input footprint from source metadata or manual override',
         [0.08, 0.14, 0.88, 0.70],
     )
     _plot_polygon_items(before_ax, layers['pre_tc_outlines'], edgecolor='#1D4ED8', facecolor='#DBEAFE', linewidth=1.6, alpha=0.85)
@@ -1800,8 +1809,8 @@ def _write_footprint_page_compact(pdf, product_name: str, validation_groups: lis
     after_panel_ax, after_ax = _make_panel(
         fig,
         [0.52, 0.52, 0.42, 0.29],
-        'After Terrain Correction',
-        'Processed TC.dim footprint used for tile selection and reporting',
+        'Processed Raster Footprint',
+        'Processed raster extent used for tile selection and reporting',
         [0.08, 0.14, 0.88, 0.70],
     )
     _plot_polygon_items(after_ax, layers['expected_polygons'], edgecolor='#CBD5E1', facecolor='#F1F5F9', linewidth=0.8, alpha=0.95)
@@ -1814,7 +1823,7 @@ def _write_footprint_page_compact(pdf, product_name: str, validation_groups: lis
         fig,
         [0.05, 0.19, 0.44, 0.24],
         'Footprint comparison overlay',
-        'Pre-TC outline vs post-TC raster extent with tile footprint overlay',
+        'Source outline vs processed raster extent with tile footprint overlay',
         [0.08, 0.14, 0.86, 0.66],
     )
     _plot_polygon_items(overlay_ax, layers['pre_tc_outlines'], edgecolor='#1D4ED8', linewidth=1.2, linestyle='--', alpha=0.95)
@@ -1827,10 +1836,10 @@ def _write_footprint_page_compact(pdf, product_name: str, validation_groups: lis
         [0.54, 0.23, 0.40, 0.18],
         'Interpretation',
         [
-            'Pre-TC is the source-product footprint before raster reprojection.',
-            'Post-TC is the actual raster extent read from TC.dim and used for tile selection.',
-            'Expected and produced tiles are aligned to the processed raster, not to the broader source metadata footprint.',
-            'The 7.2% retained-area ratio is expected here because the validation run uses a burst-limited TC raster extent.',
+            'Source footprint is read from product metadata or a manual WKT override.',
+            'Processed footprint is read from the BEAM-DIMAP raster extent used for tile selection.',
+            'Skipped tile anchors outside raster bounds are excluded from the overlay to avoid overstating coverage.',
+            f"Extent-area ratio: {ratio:.1f}%." if ratio is not None else 'Extent-area ratio unavailable.',
         ],
         facecolor='#FFFFFF',
     )
@@ -1839,8 +1848,8 @@ def _write_footprint_page_compact(pdf, product_name: str, validation_groups: lis
     legend_ax.axis('off')
     legend_ax.legend(
         handles=[
-            Line2D([0], [0], color='#1D4ED8', linestyle='--', linewidth=1.4, label='pre-TC footprint'),
-            Line2D([0], [0], color='#0F172A', linestyle='-', linewidth=1.8, label='post-TC footprint'),
+            Line2D([0], [0], color='#1D4ED8', linestyle='--', linewidth=1.4, label='source footprint'),
+            Line2D([0], [0], color='#0F172A', linestyle='-', linewidth=1.8, label='processed footprint'),
             Patch(facecolor='#F1F5F9', edgecolor='#CBD5E1', linewidth=0.8, label='expected tiles'),
             Patch(facecolor='#DCFCE7', edgecolor='#16A34A', linewidth=1.0, label='passed tiles'),
             Patch(facecolor='#FEE2E2', edgecolor='#B91C1C', linewidth=1.0, label='failed tiles'),
@@ -1856,7 +1865,7 @@ def _write_footprint_page_compact(pdf, product_name: str, validation_groups: lis
     _add_metric_card(
         fig,
         [0.05, 0.03, 0.20, 0.09],
-        'Pre-TC area',
+        'Source area',
         _format_sqkm_compact(pre_area),
         '#2563EB',
         'km^2 footprint',
@@ -1864,7 +1873,7 @@ def _write_footprint_page_compact(pdf, product_name: str, validation_groups: lis
     _add_metric_card(
         fig,
         [0.28, 0.03, 0.20, 0.09],
-        'Post-TC area',
+        'Processed area',
         _format_sqkm_compact(post_area),
         '#0F172A',
         'km^2 raster extent',
@@ -1872,10 +1881,10 @@ def _write_footprint_page_compact(pdf, product_name: str, validation_groups: lis
     _add_metric_card(
         fig,
         [0.51, 0.03, 0.20, 0.09],
-        'Retained',
+        'Extent ratio',
         f'{ratio:.1f}%' if ratio is not None else '-',
         '#0F766E',
-        'post / pre area',
+        'processed / source',
     )
     _add_metric_card(
         fig,

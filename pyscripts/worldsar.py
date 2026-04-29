@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+
+
 def create_parser() -> argparse.ArgumentParser:
     from sarpyx.cli.worldsar import add_worldsar_arguments
 
@@ -288,6 +290,7 @@ def _run_tops_swath_tiling(product_wkt, grid_geoj_path, product_path, intermedia
         )
     if any(result['status'] != 'success' for group in validation_groups for result in group['results']):
         raise RuntimeError(f'H5 validation failed; report: {pdf_path}')
+
 
 if __name__ == "__main__":
     main()

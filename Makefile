@@ -68,6 +68,7 @@ SNAP_INSTALL_PARENT ?= $(CURDIR)
 	check-docker check-compose check-uv check-wget check-singularity check-hf \
 	check-grid check-sentinel-product check-sentinel-grid check-sentinel-gpt check-tsx-product check-tsx-grid check-nisar-product check-nisar-grid \
 	clean-venv venv install-deps install-phidown setup \
+	test clean-dist build wheel-audit dist-check ci bump-version publish-testpypi publish-pypi publish \
 	install-snap \
 	validate-sentinel validate-tsx validate-nisar validate validate-all \
 	docker-build docker-test docker-push docker-all prune-docker \
@@ -169,6 +170,37 @@ install-phidown: check-uv ## Add phidown dependency with uv
 
 setup: clean-venv venv install-deps ## Recreate venv and install dependencies
 	@echo "Setup complete."
+
+test: check-uv ## Run Python test suite
+	uv sync --group dev
+	uv run pytest -q
+
+clean-dist: ## Remove built Python distributions
+	rm -rf dist
+
+build: check-uv clean-dist ## Build Python source and wheel distributions
+	uv build
+
+wheel-audit: build ## Verify wheel does not include non-package roots
+	python -c 'exec("""from pathlib import Path\nimport zipfile\n\nwheels = sorted(Path(\"dist\").glob(\"*.whl\"))\nif not wheels:\n    raise SystemExit(\"No wheel produced in dist/\")\n\nforbidden_roots = {\"docs\", \"tests\", \"outputs\", \"pyscripts\"}\nwith zipfile.ZipFile(wheels[0]) as wheel:\n    offenders = sorted(\n        name for name in wheel.namelist()\n        if name.split(\"/\", 1)[0] in forbidden_roots\n    )\n\nif offenders:\n    print(\"Forbidden wheel entries detected:\")\n    for name in offenders:\n        print(name)\n    raise SystemExit(1)\nprint(f\"Wheel audit passed: {wheels[0]}\")\n""")'
+
+dist-check: wheel-audit ## Validate built distributions with twine
+	uvx twine check dist/*
+
+ci: test dist-check ## Run local Python CI checks
+
+bump-version: check-uv ## Bump project patch version in pyproject.toml and uv.lock
+	python -c 'exec("""from pathlib import Path\n\npath = Path(\"pyproject.toml\")\ntext = path.read_text(encoding=\"utf-8\")\nlines = text.splitlines()\nversion = None\nfor line in lines:\n    if line.startswith(\"version = \"):\n        version = line.split(\"\\\"\", 2)[1]\n        break\nif version is None:\n    raise SystemExit(\"No project version found in pyproject.toml\")\nparts = version.split(\".\")\nif len(parts) != 3 or not all(part.isdigit() for part in parts):\n    raise SystemExit(f\"Only numeric MAJOR.MINOR.PATCH versions can be bumped automatically, got: {version}\")\nmajor, minor, patch = map(int, parts)\nnew_version = f\"{major}.{minor}.{patch + 1}\"\npath.write_text(text.replace(f\"version = \\\"{version}\\\"\", f\"version = \\\"{new_version}\\\"\", 1), encoding=\"utf-8\")\nprint(f\"Bumped sarpyx version: {version} -> {new_version}\")\n""")'
+	uv lock
+
+publish-testpypi: dist-check ## Upload distributions to TestPyPI using twine credentials
+	uvx twine upload --repository testpypi dist/*
+
+publish-pypi: dist-check ## Upload distributions to PyPI using secret.env credentials
+	python -c 'exec("""import configparser\nimport os\nimport subprocess\nfrom pathlib import Path\n\nconfig = configparser.ConfigParser(interpolation=None)\nconfig.read(\"secret.env\")\nif \"pypi\" not in config:\n    raise SystemExit(\"secret.env is missing [pypi]\")\nusername = config[\"pypi\"].get(\"username\")\npassword = config[\"pypi\"].get(\"password\")\nif not username or not password:\n    raise SystemExit(\"secret.env [pypi] must contain username and password\")\ndists = sorted(str(path) for pattern in (\"*.whl\", \"*.tar.gz\") for path in Path(\"dist\").glob(pattern))\nif not dists:\n    raise SystemExit(\"No distributions found in dist/\")\nenv = os.environ.copy()\nenv[\"TWINE_USERNAME\"] = username\nenv[\"TWINE_PASSWORD\"] = password\nenv[\"TWINE_NON_INTERACTIVE\"] = \"1\"\nsubprocess.run([\"uvx\", \"twine\", \"upload\", *dists], env=env, check=True)\n""")'
+
+publish: bump-version ## Bump patch version, build/check, and publish to PyPI
+	$(MAKE) publish-pypi
 
 # ---------- SNAP ----------
 install-snap: check-wget ## Install SNAP and configure default memory
