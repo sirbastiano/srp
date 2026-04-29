@@ -1,19 +1,7 @@
 name: Docker CI
 
 on:
-  pull_request:
-    paths:
-      - "Dockerfile"
-      - "docker-compose.yml"
-      - ".dockerignore"
-      - "entrypoint.sh"
-      - "start-jupyter.sh"
-      - "pyproject.toml"
-      - "sarpyx/**"
-      - "tests/**"
-      - "support/**"
-      - ".github/workflows/docker-ci.yml"
-      - ".github/workflows/docker-publish.yml"
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
