@@ -3,7 +3,7 @@ from __future__ import annotations
 import shutil
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping
 
 import h5py
 import numpy as np
@@ -184,6 +184,285 @@ def _copy_group(source: h5py.Group, target: zarr.Group, chunk_size: tuple[int, i
             _copy_dataset(obj, target, chunk_size)
         else:
             raise TypeError(f'Unsupported HDF5 object at {obj.name}: {type(obj)!r}')
+
+
+MergeConflictPolicy = Literal['raise', 'first']
+
+
+def _copy_h5_attrs(source: h5py.AttributeManager, target: h5py.AttributeManager) -> None:
+    for key, value in source.items():
+        target[key] = value
+
+
+def _h5_dataset_paths(group: h5py.Group) -> list[str]:
+    paths: list[str] = []
+
+    def collect(name: str, obj: h5py.Group | h5py.Dataset) -> None:
+        if isinstance(obj, h5py.Dataset):
+            paths.append(name)
+
+    group.visititems(collect)
+    return sorted(paths)
+
+
+def _valid_merge_mask(data: np.ndarray, nodata_values: tuple[float, ...]) -> np.ndarray:
+    if np.issubdtype(data.dtype, np.floating):
+        mask = np.isfinite(data)
+    else:
+        mask = np.ones(data.shape, dtype=bool)
+    for nodata in nodata_values:
+        mask &= data != nodata
+    return mask
+
+
+def _arrays_equal(left: np.ndarray, right: np.ndarray) -> bool:
+    try:
+        return bool(np.array_equal(left, right, equal_nan=True))
+    except TypeError:
+        return bool(np.array_equal(left, right))
+
+
+def _copy_h5_dataset(
+    source: h5py.Dataset,
+    target_parent: h5py.Group,
+    name: str,
+) -> h5py.Dataset:
+    copied = target_parent.create_dataset(
+        name,
+        data=source[()],
+        dtype=source.dtype,
+        chunks=source.chunks,
+        compression=source.compression,
+        compression_opts=source.compression_opts,
+        shuffle=source.shuffle,
+        fletcher32=source.fletcher32,
+        fillvalue=source.fillvalue,
+    )
+    _copy_h5_attrs(source.attrs, copied.attrs)
+    return copied
+
+
+def _copy_h5_group(source: h5py.Group, target: h5py.Group) -> None:
+    _copy_h5_attrs(source.attrs, target.attrs)
+    for name, obj in source.items():
+        if isinstance(obj, h5py.Group):
+            child = target.create_group(name)
+            _copy_h5_group(obj, child)
+        elif isinstance(obj, h5py.Dataset):
+            _copy_h5_dataset(obj, target, name)
+        else:
+            raise TypeError(f'Unsupported HDF5 object at {obj.name}: {type(obj)!r}')
+
+
+def _require_h5_parent(target: h5py.File, dataset_path: str) -> h5py.Group:
+    parent_path = dataset_path.rsplit('/', 1)[0]
+    return target.require_group(parent_path)
+
+
+def _merge_h5_dataset(
+    target: h5py.File,
+    source: h5py.File,
+    dataset_path: str,
+    *,
+    source_path: Path,
+    conflict_policy: MergeConflictPolicy,
+    nodata_values: tuple[float, ...],
+) -> str:
+    source_dataset = source[dataset_path]
+    if dataset_path not in target:
+        parent = _require_h5_parent(target, dataset_path)
+        _copy_h5_dataset(source_dataset, parent, dataset_path.rsplit('/', 1)[-1])
+        return 'copied'
+
+    target_dataset = target[dataset_path]
+    if not isinstance(target_dataset, h5py.Dataset):
+        raise TypeError(f'Target path exists but is not a dataset: {dataset_path}')
+    if source_dataset.shape != target_dataset.shape:
+        raise ValueError(
+            f'Cannot merge {dataset_path}: shape mismatch '
+            f'{target_dataset.shape} != {source_dataset.shape}'
+        )
+    if source_dataset.dtype != target_dataset.dtype:
+        raise ValueError(
+            f'Cannot merge {dataset_path}: dtype mismatch '
+            f'{target_dataset.dtype} != {source_dataset.dtype}'
+        )
+
+    source_data = source_dataset[()]
+    target_data = target_dataset[()]
+    if _arrays_equal(target_data, source_data):
+        return 'identical'
+
+    source_valid = _valid_merge_mask(source_data, nodata_values)
+    target_valid = _valid_merge_mask(target_data, nodata_values)
+    fill_mask = source_valid & ~target_valid
+    conflict_mask = source_valid & target_valid
+    if conflict_mask.any():
+        conflicts = source_data[conflict_mask] != target_data[conflict_mask]
+        if np.issubdtype(source_data.dtype, np.floating):
+            conflicts &= ~(np.isnan(source_data[conflict_mask]) & np.isnan(target_data[conflict_mask]))
+        has_conflict = bool(np.any(conflicts))
+    else:
+        has_conflict = False
+
+    if has_conflict and conflict_policy == 'raise':
+        raise ValueError(f'Conflicting valid pixels while merging {dataset_path} from {source_path}')
+
+    if fill_mask.any():
+        merged = target_data.copy()
+        merged[fill_mask] = source_data[fill_mask]
+        target_dataset[...] = merged
+
+    if has_conflict:
+        return 'conflict_kept_first'
+    return 'merged'
+
+
+def _merge_h5_file(
+    source_path: Path,
+    target_path: Path,
+    *,
+    conflict_policy: MergeConflictPolicy,
+    nodata_values: tuple[float, ...],
+) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    with h5py.File(target_path, 'a') as target, h5py.File(source_path, 'r') as source:
+        for dataset_path in _h5_dataset_paths(source):
+            status = _merge_h5_dataset(
+                target,
+                source,
+                dataset_path,
+                source_path=source_path,
+                conflict_policy=conflict_policy,
+                nodata_values=nodata_values,
+            )
+            counts[status] = counts.get(status, 0) + 1
+
+        merged_sources = [
+            normalize_attribute_value(value)
+            for value in np.atleast_1d(target.attrs.get('merged_sources', []))
+        ]
+        source_text = str(source_path)
+        if source_text not in merged_sources:
+            merged_sources.append(source_text)
+        target.attrs['merged_sources'] = np.array(merged_sources, dtype=h5py.string_dtype('utf-8'))
+
+    return counts
+
+
+def _discover_worldsar_swath_products(input_root: Path, swaths: tuple[str, ...]) -> dict[str, list[Path]]:
+    products: dict[str, list[Path]] = {}
+    for swath in swaths:
+        swath_dir = input_root / swath
+        if not swath_dir.is_dir():
+            continue
+        for product_dir in sorted(path for path in swath_dir.iterdir() if path.is_dir()):
+            if any(product_dir.glob('*.h5')):
+                products.setdefault(product_dir.name, []).append(product_dir)
+    return products
+
+
+def merge_worldsar_iw_tiles(
+    input_root: Path | str,
+    output_root: Path | str | None = None,
+    *,
+    product_name: str | None = None,
+    swaths: tuple[str, ...] = ('IW1', 'IW2', 'IW3'),
+    conflict_policy: MergeConflictPolicy = 'first',
+    nodata_values: tuple[float, ...] = (0.0,),
+    overwrite: bool = False,
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    """Merge WorldSAR Sentinel IW tile folders into one product tile folder.
+
+    The expected layout is ``input_root/IW1/<product>/*.h5``,
+    ``input_root/IW2/<product>/*.h5`` and ``input_root/IW3/<product>/*.h5``.
+    Output is written to ``output_root/<product>``; when ``output_root`` is not
+    provided it defaults to ``input_root``.
+
+    Merge rules are intentionally conservative:
+    - tiles present in only one swath are copied unchanged;
+    - duplicate tile names get a union of all datasets;
+    - same-path datasets that are exactly equal are stored once;
+    - same-path datasets with source valid pixels where the target has no-data
+      are pixel-filled into the canonical dataset;
+    - same-path datasets with different valid values at the same pixel keep
+      the first value by default, after filling any no-data pixels. Set
+      ``conflict_policy='raise'`` to fail instead of accepting those overlaps.
+    """
+
+    root = Path(input_root).expanduser()
+    if not root.is_absolute():
+        root = (Path.cwd() / root).absolute()
+    destination_root = Path(output_root).expanduser() if output_root is not None else root
+    if not destination_root.is_absolute():
+        destination_root = (Path.cwd() / destination_root).absolute()
+
+    if conflict_policy not in {'raise', 'first'}:
+        raise ValueError(f'Unsupported conflict_policy: {conflict_policy}')
+    if not root.is_dir():
+        raise FileNotFoundError(f'Input root does not exist: {root}')
+
+    products = _discover_worldsar_swath_products(root, swaths)
+    if product_name is None:
+        if len(products) != 1:
+            raise ValueError(
+                'product_name is required when the input root contains '
+                f'{len(products)} products: {sorted(products)}'
+            )
+        product_name = next(iter(products))
+    if product_name not in products:
+        raise FileNotFoundError(f'Product {product_name!r} not found under {root}')
+
+    product_dirs = products[product_name]
+    tile_sources: dict[str, list[Path]] = {}
+    for product_dir in product_dirs:
+        for tile_path in sorted(product_dir.glob('*.h5')):
+            tile_sources.setdefault(tile_path.name, []).append(tile_path)
+
+    output_dir = destination_root / product_name
+    summary: dict[str, Any] = {
+        'product_name': product_name,
+        'output_dir': str(output_dir),
+        'swath_dirs': [str(path) for path in product_dirs],
+        'tile_count': len(tile_sources),
+        'duplicate_tile_count': sum(1 for paths in tile_sources.values() if len(paths) > 1),
+        'copied_tiles': 0,
+        'merged_tiles': 0,
+        'dataset_actions': {},
+        'dry_run': dry_run,
+    }
+    if dry_run:
+        return summary
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for tile_name, sources in sorted(tile_sources.items()):
+        output_path = output_dir / tile_name
+        if output_path.exists():
+            if not overwrite:
+                raise FileExistsError(f'Output tile already exists: {output_path}')
+            output_path.unlink()
+
+        with h5py.File(sources[0], 'r') as source, h5py.File(output_path, 'w') as target:
+            _copy_h5_group(source, target)
+            target.attrs['merged_sources'] = np.array([str(sources[0])], dtype=h5py.string_dtype('utf-8'))
+
+        if len(sources) == 1:
+            summary['copied_tiles'] += 1
+            continue
+
+        summary['merged_tiles'] += 1
+        for source_path in sources[1:]:
+            counts = _merge_h5_file(
+                source_path,
+                output_path,
+                conflict_policy=conflict_policy,
+                nodata_values=nodata_values,
+            )
+            for action, count in counts.items():
+                summary['dataset_actions'][action] = summary['dataset_actions'].get(action, 0) + count
+
+    return summary
 
 
 def convert_tile_h5_to_zarr(

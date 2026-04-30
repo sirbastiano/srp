@@ -18,6 +18,7 @@ from sarpyx.utils.worldsar_h5 import (
     convert_tile_h5_to_zarr,
     enrich_validation_results_with_h5_structure,
     extract_tile_geometry_from_abstract_metadata,
+    merge_worldsar_iw_tiles,
     normalize_expected_tile_geometries,
     resolve_expected_band_names_from_dim_product,
     validate_h5_tile,
@@ -90,6 +91,89 @@ def test_convert_tile_h5_to_zarr_preserves_nested_structure_and_attributes(tmp_p
     assert root['bands']['Band_A'].attrs['unit'] == 'linear'
     np.testing.assert_array_equal(root['geolocation']['latitude'][:], np.linspace(0.0, 1.0, 4).reshape(2, 2))
     assert root['metadata']['Abstracted_Metadata'].attrs['MISSION'] == 'MISSION-value'
+
+
+def _write_merge_tile(path: Path, bands: dict[str, np.ndarray]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with h5py.File(path, 'w') as h5_file:
+        h5_file.attrs['source'] = path.parent.parent.name
+        bands_group = h5_file.create_group('bands')
+        for name, data in bands.items():
+            dataset = bands_group.create_dataset(name, data=np.asarray(data, dtype=np.float32))
+            dataset.attrs['unit'] = 'linear'
+        metadata = h5_file.create_group('metadata')
+        metadata.create_group('Abstracted_Metadata').attrs['PRODUCT'] = path.parent.name
+
+
+def test_merge_worldsar_iw_tiles_unions_unique_and_complementary_bands(tmp_path: Path) -> None:
+    product = 'S1_TEST_PRODUCT'
+    _write_merge_tile(
+        tmp_path / 'IW1' / product / '001U_001R.h5',
+        {
+            'common': np.array([[1, 0], [2, 0]], dtype=np.float32),
+            'i_IW1_VV': np.ones((2, 2), dtype=np.float32),
+        },
+    )
+    _write_merge_tile(
+        tmp_path / 'IW2' / product / '001U_001R.h5',
+        {
+            'common': np.array([[0, 3], [0, 4]], dtype=np.float32),
+            'i_IW2_VV': np.full((2, 2), 2, dtype=np.float32),
+        },
+    )
+    _write_merge_tile(
+        tmp_path / 'IW3' / product / '002U_001R.h5',
+        {'i_IW3_VV': np.full((2, 2), 3, dtype=np.float32)},
+    )
+
+    summary = merge_worldsar_iw_tiles(tmp_path)
+
+    assert summary['output_dir'] == str(tmp_path / product)
+    assert summary['tile_count'] == 2
+    assert summary['duplicate_tile_count'] == 1
+    assert summary['copied_tiles'] == 1
+    assert summary['merged_tiles'] == 1
+    with h5py.File(tmp_path / product / '001U_001R.h5', 'r') as merged:
+        assert sorted(merged['bands']) == ['common', 'i_IW1_VV', 'i_IW2_VV']
+        np.testing.assert_array_equal(
+            merged['bands/common'][()],
+            np.array([[1, 3], [2, 4]], dtype=np.float32),
+        )
+    with h5py.File(tmp_path / product / '002U_001R.h5', 'r') as copied:
+        assert sorted(copied['bands']) == ['i_IW3_VV']
+
+
+def test_merge_worldsar_iw_tiles_preserves_conflicting_same_name_bands(tmp_path: Path) -> None:
+    product = 'S1_TEST_PRODUCT'
+    _write_merge_tile(
+        tmp_path / 'IW1' / product / '001U_001R.h5',
+        {'Alpha': np.array([[1, 2], [0, 0]], dtype=np.float32)},
+    )
+    _write_merge_tile(
+        tmp_path / 'IW2' / product / '001U_001R.h5',
+        {'Alpha': np.array([[9, 2], [3, 0]], dtype=np.float32)},
+    )
+
+    summary = merge_worldsar_iw_tiles(tmp_path)
+
+    assert summary['dataset_actions']['conflict_kept_first'] == 1
+    with h5py.File(tmp_path / product / '001U_001R.h5', 'r') as merged:
+        assert sorted(merged['bands']) == ['Alpha']
+        np.testing.assert_array_equal(
+            merged['bands/Alpha'][()],
+            np.array([[1, 2], [3, 0]], dtype=np.float32),
+        )
+
+
+def test_merge_worldsar_iw_tiles_dry_run_reports_product_without_writes(tmp_path: Path) -> None:
+    product = 'S1_TEST_PRODUCT'
+    _write_merge_tile(tmp_path / 'IW1' / product / '001U_001R.h5', {'i_IW1_VV': np.ones((2, 2))})
+
+    summary = merge_worldsar_iw_tiles(tmp_path, dry_run=True)
+
+    assert summary['dry_run'] is True
+    assert summary['tile_count'] == 1
+    assert not (tmp_path / product).exists()
 
 
 def test_validate_h5_tile_reports_missing_arrays_and_metadata_structure(tmp_path: Path) -> None:
