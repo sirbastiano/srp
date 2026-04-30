@@ -16,7 +16,7 @@ Topics covered:
 - Error propagation analysis
 - Quality control workflows
 
-Author: SARPYX Development Team
+Authors: Roberto Del Prete, Gabriele Daga, Sebastian Fieldhouse, Juanfrancisco Amieva, Cedric Leonard, Valerio Marsocci, Eva Gmelich Mejling
 License: MIT
 """
 

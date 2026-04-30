@@ -11,6 +11,18 @@ authors:
   - name: Roberto Del Prete
     corresponding: true
     affiliation: "1"
+  - name: Gabriele Daga
+    affiliation: "1"
+  - name: Sebastian Fieldhouse
+    affiliation: "1"
+  - name: Juanfrancisco Amieva
+    affiliation: "1"
+  - name: Cedric Leonard
+    affiliation: "1"
+  - name: Valerio Marsocci
+    affiliation: "1"
+  - name: Eva Gmelich Mejling
+    affiliation: "1"
 affiliations:
   - index: 1
     name: ESA Φ-lab, European Space Agency, Italy

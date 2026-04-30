@@ -108,6 +108,6 @@ You can also pass `--grid-path` to the `worldsar` CLI command.
 ##
 <div align="center">
 
-**With Love By:** Roberto Del Prete
+**With Love By:** Roberto Del Prete, Gabriele Daga, Sebastian Fieldhouse, Juanfrancisco Amieva, Cedric Leonard, Valerio Marsocci, Eva Gmelich Mejling
 
 </div>

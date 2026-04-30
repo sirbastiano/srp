@@ -7,7 +7,7 @@ This module demonstrates ship detection capabilities using SARPYX with
 Constant False Alarm Rate (CFAR) algorithms for maritime surveillance
 and vessel monitoring applications.
 
-Author: SARPYX Development Team
+Authors: Roberto Del Prete, Gabriele Daga, Sebastian Fieldhouse, Juanfrancisco Amieva, Cedric Leonard, Valerio Marsocci, Eva Gmelich Mejling
 License: MIT
 """
 

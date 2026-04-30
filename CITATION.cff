@@ -13,6 +13,18 @@ authors:
     affiliation: "European Space Agency (ESA)"
     # Add ORCID if desired:
     # orcid: "https://orcid.org/0000-0000-0000-0000"
+  - family-names: "Daga"
+    given-names: "Gabriele"
+  - family-names: "Fieldhouse"
+    given-names: "Sebastian"
+  - family-names: "Amieva"
+    given-names: "Juanfrancisco"
+  - family-names: "Leonard"
+    given-names: "Cedric"
+  - family-names: "Marsocci"
+    given-names: "Valerio"
+  - family-names: "Gmelich Mejling"
+    given-names: "Eva"
 keywords:
   - synthetic aperture radar
   - SAR

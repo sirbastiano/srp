@@ -17,7 +17,7 @@ Topics covered:
 - Integration with external tools
 - Real-time processing capabilities
 
-Author: SARPYX Development Team
+Authors: Roberto Del Prete, Gabriele Daga, Sebastian Fieldhouse, Juanfrancisco Amieva, Cedric Leonard, Valerio Marsocci, Eva Gmelich Mejling
 License: MIT
 """
 

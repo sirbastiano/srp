@@ -7,7 +7,7 @@ This module demonstrates vegetation monitoring capabilities using SARPYX,
 including various vegetation indices, phenology analysis, and change detection
 for agricultural and forest applications.
 
-Author: SARPYX Development Team
+Authors: Roberto Del Prete, Gabriele Daga, Sebastian Fieldhouse, Juanfrancisco Amieva, Cedric Leonard, Valerio Marsocci, Eva Gmelich Mejling
 License: MIT
 """
 

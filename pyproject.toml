@@ -8,7 +8,13 @@ version = "0.1.10"
 description = "A swissknife for SAR processing."
 readme = { file = "README.md", content-type = "text/markdown" }
 authors = [
-    { name = "Roberto Del Prete", email = "roberto.delprete@esa.int" }
+    { name = "Roberto Del Prete", email = "roberto.delprete@esa.int" },
+    { name = "Gabriele Daga" },
+    { name = "Sebastian Fieldhouse" },
+    { name = "Juanfrancisco Amieva" },
+    { name = "Cedric Leonard" },
+    { name = "Valerio Marsocci" },
+    { name = "Eva Gmelich Mejling" },
 ]
 license = "Apache-2.0"
 requires-python = ">=3.11, <4"
