@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use sarpyx, please cite the software and, once available, the associated JOSS paper."
+type: software
+title: "sarpyx"
+version: 0.1.10
+date-released: 2026-04-30
+license: Apache-2.0
+url: "https://github.com/ESA-PhiLab/sarpyx"
+repository-code: "https://github.com/ESA-PhiLab/sarpyx"
+authors:
+  - family-names: "Del Prete"
+    given-names: "Roberto"
+    affiliation: "European Space Agency (ESA)"
+    # Add ORCID if desired:
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+keywords:
+  - synthetic aperture radar
+  - SAR
+  - remote sensing
+  - ESA SNAP
+  - geospatial
+  - Zarr
+abstract: >
+  sarpyx is a Python toolkit for reproducible SAR processing, SNAP-backed workflows,
+  tiling, and sub-aperture analysis.
+# After the JOSS paper is accepted, consider adding a preferred-citation block
+# pointing to the JOSS article DOI.

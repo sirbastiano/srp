@@ -8,7 +8,7 @@ Thank you for your interest in contributing to sarpyx! This guide will help you 
 
 ```bash
 # Clone the repository
-git clone https://github.com/ESA-sarpyx/sarpyx.git
+git clone https://github.com/ESA-PhiLab/sarpyx.git
 cd sarpyx
 
 # Sync the local environment

@@ -1,0 +1,21 @@
+{
+  "title": "sarpyx",
+  "version": "0.1.10",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "apache-2.0",
+  "language": "eng",
+  "creators": [
+    {
+      "name": "Del Prete, Roberto",
+      "affiliation": "European Space Agency (ESA)"
+    }
+  ],
+  "keywords": [
+    "synthetic aperture radar",
+    "SAR",
+    "remote sensing",
+    "ESA SNAP",
+    "geospatial"
+  ]
+}

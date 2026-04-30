@@ -64,7 +64,16 @@ python -m pip install -e .
 
 ## Docs
 
-See [docs/user_guide/README.md](docs/user_guide/README.md) for usage and workflows, and [docs/developer_guide/contributing.md](docs/developer_guide/contributing.md) for contributor commands.
+See the documentation site at https://esa-philab.github.io/sarpyx/ for installation,
+quick start, architecture, usage guides, testing, and contributing information.
+
+## Community and citation
+
+- [Contributing guide](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+- [Citation metadata](CITATION.cff)
+- [Reviewer smoke test](REVIEWER_SMOKE_TEST.md)
+- [JOSS paper draft](paper.md)
 
 ## Container grid configuration
 

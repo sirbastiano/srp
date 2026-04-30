@@ -1181,7 +1181,7 @@ def make_contributing_page() -> str:
   <h1 id=\"contributing\">Contributing</h1>
 
   <h2 id=\"setup\">Setup</h2>
-  <pre><code class=\"language-bash\">git clone https://github.com/ESA-sarpyx/sarpyx.git
+  <pre><code class=\"language-bash\">git clone https://github.com/ESA-PhiLab/sarpyx.git
 cd sarpyx
 uv venv .venv
 source .venv/bin/activate
