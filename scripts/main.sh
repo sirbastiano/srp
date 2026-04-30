@@ -112,6 +112,7 @@ PRODUCT_NAME="$(basename "${PROD_PATH}")"
 # ---- Parameters ----
 GPT_MEMORY="${GPT_MEMORY:-64G}"
 GPT_TIMEOUT="${GPT_TIMEOUT:-3600}"
+SENTINEL_SUBAPS="${SENTINEL_SUBAPS:-2}"
 # SNAP userdir stores cache/config; GPT binary location is independent.
 GPT_PATH="${GPT_PATH:-gpt}"
 GRID_PATH="${GRID_PATH:-${WORKSPACE_PREFIX}/grid/grid_10km.geojson}"
@@ -130,6 +131,8 @@ GRID_HOST_DIR="${GRID_HOST_DIR:-}"
 [[ -d "${SNAP_USER_DIR}" ]] || { echo "ERROR: SNAP_USER_DIR not found: ${SNAP_USER_DIR}" >&2; exit 2; }
 [[ "${GRID_PATH}" == /* ]] || { echo "ERROR: GRID_PATH must be an absolute in-container path: ${GRID_PATH}" >&2; exit 2; }
 [[ "${GRID_PATH}" == *.geojson ]] || { echo "ERROR: GRID_PATH must end with .geojson: ${GRID_PATH}" >&2; exit 2; }
+[[ "${SENTINEL_SUBAPS}" =~ ^[0-9]+$ ]] || { echo "ERROR: SENTINEL_SUBAPS must be an integer: ${SENTINEL_SUBAPS}" >&2; exit 2; }
+[[ "${SENTINEL_SUBAPS}" -ge 2 ]] || { echo "ERROR: SENTINEL_SUBAPS must be >= 2: ${SENTINEL_SUBAPS}" >&2; exit 2; }
 
 FALLBACK_OUTPUT_ROOT="${BASE_DIR}/outputs"
 use_fallback_outputs() {
@@ -232,6 +235,7 @@ echo "GRID_BIND=${GRID_BIND_SOURCE}:${GRID_BIND_TARGET}:ro"
 echo "LEGACY_GRID_BIND=${LEGACY_GRID_BIND_SOURCE}:/workspace/grid:ro"
 echo "GRID_PATH=${GRID_PATH}"
 echo "CONTAINER_RUNTIME=${CONTAINER_RUNTIME}"
+echo "SENTINEL_SUBAPS=${SENTINEL_SUBAPS}"
 
 # ---- Run ----
 "${CONTAINER_RUNTIME}" run \
@@ -255,4 +259,5 @@ echo "CONTAINER_RUNTIME=${CONTAINER_RUNTIME}"
     --db-dir "${WORKSPACE_PREFIX}/db" \
     --gpt-memory "${GPT_MEMORY}" \
     --gpt-parallelism "${GPT_PARALLELISM}" \
-    --gpt-timeout "${GPT_TIMEOUT}"
+    --gpt-timeout "${GPT_TIMEOUT}" \
+    --sentinel-subaps "${SENTINEL_SUBAPS}"

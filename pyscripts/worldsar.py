@@ -65,6 +65,7 @@ def _sentinel_post_chain(
     orbit_type='Sentinel Precise (Auto Download)',
     orbit_continue_on_fail=False,
     sentinel_tc_source_band=None,
+    sentinel_subap_decompositions=None,
 ):
     fp_orb = _apply_sentinel_orbit_file(
         op,
@@ -84,7 +85,7 @@ def _sentinel_post_chain(
     op.do_subaps(
         dim_path=op.prod_path,
         safe_path=product_path,
-        n_decompositions=[2],
+        n_decompositions=sentinel_subap_decompositions or [2],
         byte_order=1,
         VERBOSE=False,
         update_dim=False,
@@ -139,6 +140,7 @@ def pipeline_sentinel(
     sentinel_first_burst=1,
     sentinel_last_burst=9999,
     sentinel_tc_source_band=None,
+    sentinel_subap_decompositions=None,
     **_,
 ):
     from pathlib import Path
@@ -166,6 +168,7 @@ def pipeline_sentinel(
                 orbit_type=orbit_type,
                 orbit_continue_on_fail=orbit_continue_on_fail,
                 sentinel_tc_source_band=sentinel_tc_source_band,
+                sentinel_subap_decompositions=sentinel_subap_decompositions,
             )
         return results
 
@@ -181,7 +184,7 @@ def pipeline_sentinel(
     op.do_subaps(
         safe_path=product_path,
         dim_path=op.prod_path,
-        n_decompositions=[3],
+        n_decompositions=sentinel_subap_decompositions or [2],
         byte_order=1,
         VERBOSE=False,
         update_dim=False,

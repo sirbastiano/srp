@@ -7,7 +7,7 @@ This module demonstrates various data input/output operations in SARPYX,
 including reading SAR data, handling different formats, and basic data
 manipulation.
 
-Author: SARPYX Development Team
+Authors: Roberto Del Prete, Gabriele Daga, Sebastian Fieldhouse, Juanfrancisco Amieva, Cedric Leonard, Valerio Marsocci, Eva Gmelich Mejling
 License: MIT
 """
 

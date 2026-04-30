@@ -7,7 +7,7 @@ This module demonstrates advanced polarimetric SAR data analysis capabilities
 using SARPYX, including decomposition techniques, target characterization,
 and polarimetric feature extraction.
 
-Author: SARPYX Development Team
+Authors: Roberto Del Prete, Gabriele Daga, Sebastian Fieldhouse, Juanfrancisco Amieva, Cedric Leonard, Valerio Marsocci, Eva Gmelich Mejling
 License: MIT
 """
 

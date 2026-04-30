@@ -245,6 +245,23 @@ def test_gpt_do_subaps_forwards_update_dim(tmp_path: Path, monkeypatch: pytest.M
     assert captured["chunk_cols"] == 128
 
 
+def test_worldsar_parser_accepts_sentinel_subaps_alias():
+    from sarpyx.cli.worldsar import create_parser
+
+    args = create_parser().parse_args(
+        [
+            "--input",
+            "input.SAFE",
+            "--output",
+            "out",
+            "--sentinel-subaps",
+            "5",
+        ]
+    )
+
+    assert args.sentinel_subap_decompositions == [5]
+
+
 def test_sentinel_post_chain_fails_fast_before_merge_and_tc(tmp_path: Path):
     merge_called = False
 
@@ -401,12 +418,108 @@ def test_pipeline_sentinel_strip_uses_update_dim_false_and_real_pdec_path(
     assert Path(result) == tmp_path / "tc.dim"
     assert fake_op.do_subaps_kwargs is not None
     assert fake_op.do_subaps_kwargs["update_dim"] is False
+    assert fake_op.do_subaps_kwargs["n_decompositions"] == [2]
     assert len(merge_calls) == 1
     assert Path(merge_calls[0]["src_dim"]) == tmp_path / "cal.dim"
     assert Path(merge_calls[0]["pdec_dim"]) == tmp_path / "pdec.dim"
     assert merge_calls[0]["is_tops"] is False
     assert merge_calls[0]["overwrite_copied_files"] is False
     assert merge_calls[0]["backup"] is False
+
+
+def test_pipeline_sentinel_strip_forwards_requested_subap_decomposition(
+    tmp_path: Path,
+):
+    class FakeOp:
+        def __init__(self):
+            self.prod_path = tmp_path / "input.dim"
+            self.do_subaps_kwargs: dict[str, object] | None = None
+
+        def ApplyOrbitFile(self, **_kwargs):
+            self.prod_path = tmp_path / "orb.dim"
+            return str(self.prod_path)
+
+        def Calibration(self, **_kwargs):
+            self.prod_path = tmp_path / "cal.dim"
+            return str(self.prod_path)
+
+        def do_subaps(self, **kwargs):
+            self.do_subaps_kwargs = kwargs
+
+        def polarimetric_decomposition(self, **_kwargs):
+            self.prod_path = tmp_path / "pdec.dim"
+            return str(self.prod_path)
+
+        def TerrainCorrection(self, **_kwargs):
+            self.prod_path = tmp_path / "tc.dim"
+            return str(self.prod_path)
+
+        def last_error_summary(self):
+            return "unused"
+
+    fake_op = FakeOp()
+
+    def fake_create_gpt_operator(*_args, **_kwargs):
+        return fake_op
+
+    pipeline_sentinel.__globals__["_create_gpt_operator"] = fake_create_gpt_operator
+    pipeline_sentinel.__globals__["merge_iq_into_pdec"] = lambda **_kwargs: None
+    pipeline_sentinel.__globals__["_sentinel_post_chain"] = _sentinel_post_chain
+
+    pipeline_sentinel(
+        product_path=str(tmp_path / "input.SAFE"),
+        output_dir=tmp_path / "out",
+        is_TOPS=False,
+        sentinel_subap_decompositions=[5],
+    )
+
+    assert fake_op.do_subaps_kwargs is not None
+    assert fake_op.do_subaps_kwargs["n_decompositions"] == [5]
+
+
+def test_sentinel_post_chain_forwards_requested_subap_decomposition(tmp_path: Path):
+    class FakeOp:
+        def __init__(self):
+            self.prod_path = tmp_path / "initial.dim"
+            self.do_subaps_kwargs: dict[str, object] | None = None
+
+        def ApplyOrbitFile(self, **_kwargs):
+            return str(tmp_path / "orb.dim")
+
+        def Calibration(self, **_kwargs):
+            return str(tmp_path / "cal.dim")
+
+        def TopsarDerampDemod(self):
+            return str(tmp_path / "deramp.dim")
+
+        def Deburst(self):
+            self.prod_path = tmp_path / "deb.dim"
+            return str(self.prod_path)
+
+        def do_subaps(self, **kwargs):
+            self.do_subaps_kwargs = kwargs
+
+        def polarimetric_decomposition(self, **_kwargs):
+            return str(tmp_path / "pdec.dim")
+
+        def TerrainCorrection(self, **_kwargs):
+            self.prod_path = tmp_path / "tc.dim"
+            return str(self.prod_path)
+
+        def last_error_summary(self):
+            return "unused"
+
+    _sentinel_post_chain.__globals__["merge_iq_into_pdec"] = lambda **_kwargs: None
+
+    op = FakeOp()
+    _sentinel_post_chain(
+        op=op,
+        product_path=str(tmp_path / "input.SAFE"),
+        sentinel_subap_decompositions=[5],
+    )
+
+    assert op.do_subaps_kwargs is not None
+    assert op.do_subaps_kwargs["n_decompositions"] == [5]
 
 
 def test_sentinel_post_chain_continues_on_offline_orbit_download_failure(tmp_path: Path):

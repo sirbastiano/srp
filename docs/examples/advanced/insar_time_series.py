@@ -8,7 +8,7 @@ analysis capabilities using SARPYX, including Persistent Scatterer
 Interferometry (PSI), Small Baseline Subset (SBAS), and advanced
 atmospheric correction techniques.
 
-Author: SARPYX Development Team
+Authors: Roberto Del Prete, Gabriele Daga, Sebastian Fieldhouse, Juanfrancisco Amieva, Cedric Leonard, Valerio Marsocci, Eva Gmelich Mejling
 License: MIT
 """
 
