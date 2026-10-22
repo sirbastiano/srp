@@ -240,6 +240,35 @@ def test_final_cleanup_removes_nested_tiling_intermediates(tmp_path: Path) -> No
     assert not (output_dir / "pdfs" / "product").exists()
 
 
+def test_named_isolated_preprocessing_root_replaces_previous_run(tmp_path: Path) -> None:
+    from sarpyx.snapflow import preprocessing
+
+    output_dir = tmp_path / "worldsar_output"
+    product = "S1A_IW_SLC__1SDV_20180921T175241_20180921T175308_023800_0298AE_B95D"
+    first_root = preprocessing._create_isolated_preprocessing_root(output_dir, product)
+    stale_file = first_root / "stale.dim"
+    stale_file.write_text("old run")
+
+    second_root = preprocessing._create_isolated_preprocessing_root(output_dir, product)
+
+    assert second_root == output_dir / f"worldsar_tmp_{product}"
+    assert second_root.is_dir()
+    assert not stale_file.exists()
+
+
+@pytest.mark.parametrize("name", ["../escape", "nested/name", "", "bad name"])
+def test_named_isolated_preprocessing_root_rejects_unsafe_names(
+    tmp_path: Path,
+    name: str,
+) -> None:
+    from sarpyx.snapflow import preprocessing
+
+    with pytest.raises(ValueError):
+        preprocessing._create_isolated_preprocessing_root(tmp_path, name)
+
+
+
+
 @pytest.mark.parametrize(
     "tiling",
     [

@@ -85,6 +85,7 @@ def _run_preprocessing(
     pre_write_hook=None,
     report_outdir=None,
     product_name=None,
+    preprocessing_root_name=None,
     keep_intermediate=True,
     skip=False,
 ):
@@ -129,6 +130,7 @@ def _run_preprocessing(
         pre_write_hook=pre_write_hook,
         report_outdir=report_outdir,
         product_name=product_name,
+        preprocessing_root_name=preprocessing_root_name,
         keep_intermediate=keep_intermediate,
     )
     if isinstance(result, dict):
@@ -341,6 +343,7 @@ def run(args) -> int:
             pre_write_hook=pre_write_hook,
             report_outdir=report_outdir,
             product_name=product_name,
+            preprocessing_root_name=args.preprocessing_root_name,
             keep_intermediate=args.keep_intermediate,
             skip=args.skip_preprocessing,
             **gpt_kwargs,

@@ -62,6 +62,16 @@ def add_worldsar_arguments(parser: argparse.ArgumentParser) -> None:
         help="Chunk size for Zarr outputs (default: 128 128).",
     )
     parser.add_argument("--overwrite-zarr", dest="overwrite_zarr", action="store_true")
+    parser.add_argument(
+        "--preprocessing-root-name",
+        dest="preprocessing_root_name",
+        type=str,
+        default=None,
+        help=(
+            "Use the deterministic directory worldsar_tmp_<name> below --output, "
+            "replacing it if it already exists. By default a random suffix is used."
+        ),
+    )
     parser.add_argument("--tile-writer", dest="tile_writer", type=str, default="zarr", help="Tile artifact writer: h5, zarr, numpy/npz, npy, geotiff/tif, or pickle.")
     parser.add_argument(
         "--gpt-path",
